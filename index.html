@@ -3,238 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronomètre d'Entraînement Intelligent V2.2</title>
-    <!-- Import Font Awesome for Icons -->
+    <title>Workout Timer GDrive</title>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Import Chart.js for Charts -->
-    <!-- Note: Using an external library for charting as pure JS/SVG charts are very complex -->
-    <!-- and Chart.js provides a much better, interactive, and maintainable solution -->
-    <!-- respecting the spirit of "best UI possible". -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Google Identity Services (GIS) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         /* Global Styles & Variables */
         :root {
-            --primary-color-light: #4a90e2;
-            --secondary-color-light: #f5f5f5;
-            --text-color-light: #333;
-            --bg-color-light: #ffffff;
-            --accent-color-light: #50e3c2;
-            --border-color-light: #e0e0e0;
-            --danger-color-light: #e74c3c;
-            --warning-color-light: #f39c12;
-            --success-color-light: #2ecc71;
-            --info-color-light: #3498db;
-            --chart-grid-color-light: rgba(0, 0, 0, 0.1);
-            --chart-tooltip-bg-light: rgba(0, 0, 0, 0.7);
-            --chart-tooltip-text-light: #ffffff;
-
-            --primary-color-dark: #58a6ff;
-            --secondary-color-dark: #161b22;
-            --text-color-dark: #c9d1d9;
-            --bg-color-dark: #0d1117;
-            --accent-color-dark: #30d3b0;
-            --border-color-dark: #30363d;
-            --danger-color-dark: #f85149;
-            --warning-color-dark: #e3b341;
-            --success-color-dark: #3fb950;
-            --info-color-dark: #58a6ff;
-            --chart-grid-color-dark: rgba(255, 255, 255, 0.1);
-            --chart-tooltip-bg-dark: rgba(255, 255, 255, 0.8);
-            --chart-tooltip-text-dark: #111;
-
-
-            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --border-radius: 8px;
-            --transition-speed: 0.3s;
-            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-
-            /* Default Light Theme */
-            --primary-color: var(--primary-color-light);
-            --secondary-color: var(--secondary-color-light);
-            --text-color: var(--text-color-light);
-            --bg-color: var(--bg-color-light);
-            --accent-color: var(--accent-color-light);
-            --border-color: var(--border-color-light);
-            --danger-color: var(--danger-color-light);
-            --warning-color: var(--warning-color-light);
-            --success-color: var(--success-color-light);
-             --info-color: var(--info-color-light);
-             --chart-grid-color: var(--chart-grid-color-light);
-             --chart-tooltip-bg: var(--chart-tooltip-bg-light);
-             --chart-tooltip-text: var(--chart-tooltip-text-light);
+            --primary-color-light: #4a90e2; --secondary-color-light: #f5f5f5; --text-color-light: #333; --bg-color-light: #ffffff; --accent-color-light: #50e3c2; --border-color-light: #e0e0e0; --danger-color-light: #e74c3c; --warning-color-light: #f39c12; --success-color-light: #2ecc71; --info-color-light: #3498db; --chart-grid-color-light: rgba(0, 0, 0, 0.1); --chart-tooltip-bg-light: rgba(0, 0, 0, 0.7); --chart-tooltip-text-light: #ffffff;
+            --primary-color-dark: #58a6ff; --secondary-color-dark: #161b22; --text-color-dark: #c9d1d9; --bg-color-dark: #0d1117; --accent-color-dark: #30d3b0; --border-color-dark: #30363d; --danger-color-dark: #f85149; --warning-color-dark: #e3b341; --success-color-dark: #3fb950; --info-color-dark: #58a6ff; --chart-grid-color-dark: rgba(255, 255, 255, 0.1); --chart-tooltip-bg-dark: rgba(255, 255, 255, 0.8); --chart-tooltip-text-dark: #111;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --border-radius: 8px; --transition-speed: 0.3s; --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --primary-color: var(--primary-color-light); --secondary-color: var(--secondary-color-light); --text-color: var(--text-color-light); --bg-color: var(--bg-color-light); --accent-color: var(--accent-color-light); --border-color: var(--border-color-light); --danger-color: var(--danger-color-light); --warning-color: var(--warning-color-light); --success-color: var(--success-color-light); --info-color: var(--info-color-light); --chart-grid-color: var(--chart-grid-color-light); --chart-tooltip-bg: var(--chart-tooltip-bg-light); --chart-tooltip-text: var(--chart-tooltip-text-light);
         }
-
         body.dark-theme {
-            --primary-color: var(--primary-color-dark);
-            --secondary-color: var(--secondary-color-dark);
-            --text-color: var(--text-color-dark);
-            --bg-color: var(--bg-color-dark);
-            --accent-color: var(--accent-color-dark);
-            --border-color: var(--border-color-dark);
-            --danger-color: var(--danger-color-dark);
-            --warning-color: var(--warning-color-dark);
-            --success-color: var(--success-color-dark);
-            --info-color: var(--info-color-dark);
-            --chart-grid-color: var(--chart-grid-color-dark);
-            --chart-tooltip-bg: var(--chart-tooltip-bg-dark);
-             --chart-tooltip-text: var(--chart-tooltip-text-dark);
+            --primary-color: var(--primary-color-dark); --secondary-color: var(--secondary-color-dark); --text-color: var(--text-color-dark); --bg-color: var(--bg-color-dark); --accent-color: var(--accent-color-dark); --border-color: var(--border-color-dark); --danger-color: var(--danger-color-dark); --warning-color: var(--warning-color-dark); --success-color: var(--success-color-dark); --info-color: var(--info-color-dark); --chart-grid-color: var(--chart-grid-color-dark); --chart-tooltip-bg: var(--chart-tooltip-bg-dark); --chart-tooltip-text: var(--chart-tooltip-text-dark);
         }
-
         /* Reset and Base Styles */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
-            display: flex; flex-direction: column; min-height: 100vh;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; } html { scroll-behavior: smooth; }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; display: flex; flex-direction: column; min-height: 100vh; }
         .container { max-width: 900px; margin: 0 auto; padding: 20px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
-
         /* Header & Navigation */
         header { background-color: var(--secondary-color); padding: 15px 20px; border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto; flex-wrap: wrap; gap: 10px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto; flex-wrap: wrap; gap: 15px; }
         header h1 { font-size: 1.8em; color: var(--primary-color); margin: 0; font-weight: 600; white-space: nowrap; }
         nav ul { list-style: none; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         nav button, .theme-toggle button, .history-controls button, .action-btn { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: var(--border-radius); cursor: pointer; font-size: 0.9em; font-weight: 500; transition: background-color var(--transition-speed) ease, transform 0.1s ease, opacity 0.2s ease; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-        nav button:hover, .theme-toggle button:hover, .history-controls button:hover, .action-btn:hover { opacity: 0.9; }
-        nav button:active, .theme-toggle button:active, .history-controls button:active, .action-btn:active { transform: scale(0.98); }
-        nav button.active { background-color: var(--accent-color); color: var(--bg-color); font-weight: bold; }
-        #nav-history { background-color: var(--info-color); }
-        #nav-history.active { background-color: var(--accent-color); }
-        .theme-toggle button { background-color: transparent; color: var(--text-color); font-size: 1.2em; padding: 5px; }
-        .theme-toggle button:hover { opacity: 1; color: var(--primary-color); }
-
+        nav button:hover, .theme-toggle button:hover, .history-controls button:hover, .action-btn:hover { opacity: 0.9; } nav button:active, .theme-toggle button:active, .history-controls button:active, .action-btn:active { transform: scale(0.98); } nav button.active { background-color: var(--accent-color); color: var(--bg-color); font-weight: bold; } #nav-history { background-color: var(--info-color); } #nav-history.active { background-color: var(--accent-color); } .theme-toggle button { background-color: transparent; color: var(--text-color); font-size: 1.2em; padding: 5px; } .theme-toggle button:hover { opacity: 1; color: var(--primary-color); }
+        /* Auth Controls */
+        .auth-controls { display: flex; gap: 10px; align-items: center; margin-left: 15px; }
+        .auth-controls button { background-color: var(--success-color); padding: 6px 12px; font-size: 0.85em; }
+        .auth-controls button#signout-button { background-color: var(--danger-color); }
+        #drive-status { font-size: 0.8em; opacity: 0.7; margin-left: 5px;}
+        .logged-out #signin-button { display: inline-flex; } .logged-out #signout-button { display: none; } .logged-out #drive-status { display: none; }
+        .logged-in #signin-button { display: none; } .logged-in #signout-button { display: inline-flex; } .logged-in #drive-status { display: inline-block; }
         /* Main Content Area */
         main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 30px; position: relative; }
         .workout-section, .history-section { background-color: var(--secondary-color); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 100%; max-width: 600px; text-align: center; transition: background-color var(--transition-speed) ease, max-height 0.5s ease-out, opacity 0.5s ease-out, padding 0.5s ease-out, margin-bottom 0.5s ease-out; position: relative; overflow: hidden; margin-bottom: 30px; }
         .section-hidden { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border: none; overflow: hidden; }
-
         /* Timer Display */
-        .timer-display { margin-bottom: 30px; position: relative; }
-        .timer-circle { width: 200px; height: 200px; margin: 0 auto; position: relative; border-radius: 50%; background: conic-gradient(var(--accent-color) 0%, var(--border-color) 0%); display: flex; justify-content: center; align-items: center; transition: background var(--transition-speed) ease; }
-        .timer-circle::before { content: ''; position: absolute; width: 85%; height: 85%; background-color: var(--secondary-color); border-radius: 50%; transition: background-color var(--transition-speed) ease; }
-        .time-left { font-size: 3.5em; font-weight: bold; color: var(--primary-color); z-index: 1; transition: color var(--transition-speed) ease; }
-        .timer-state { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 0.9em; color: var(--warning-color); font-weight: bold; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease; background-color: var(--secondary-color); padding: 2px 8px; border-radius: 4px; }
-        .timer-state.visible { opacity: 1; }
-
+        .timer-display { margin-bottom: 30px; position: relative; } .timer-circle { width: 200px; height: 200px; margin: 0 auto; position: relative; border-radius: 50%; background: conic-gradient(var(--accent-color) 0%, var(--border-color) 0%); display: flex; justify-content: center; align-items: center; transition: background var(--transition-speed) ease; } .timer-circle::before { content: ''; position: absolute; width: 85%; height: 85%; background-color: var(--secondary-color); border-radius: 50%; transition: background-color var(--transition-speed) ease; } .time-left { font-size: 3.5em; font-weight: bold; color: var(--primary-color); z-index: 1; transition: color var(--transition-speed) ease; } .timer-state { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 0.9em; color: var(--warning-color); font-weight: bold; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease; background-color: var(--secondary-color); padding: 2px 8px; border-radius: 4px; } .timer-state.visible { opacity: 1; }
         /* Workout Info */
-        .workout-info { margin-bottom: 30px; min-height: 160px; position: relative; }
-        .exercise-card { padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--bg-color); transition: transform 0.4s ease, opacity 0.4s ease, background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; text-align: left; }
-        .exercise-card h2, .exercise-card h3 { color: var(--primary-color); margin-bottom: 5px; font-size: 1.4em; }
-        .exercise-card h3 { font-size: 1.1em; opacity: 0.8; }
-        .exercise-card p { font-size: 1em; color: var(--text-color); margin-bottom: 5px; }
-        .exercise-card p strong { color: var(--accent-color); }
-        .exercise-enter { opacity: 0; transform: translateY(20px); }
-        .exercise-exit { opacity: 0; transform: translateY(-20px); position: absolute; width: calc(100% - 30px); left: 15px; }
-        .current-exercise .exercise-card { border-left: 5px solid var(--primary-color); }
-        .next-exercise .exercise-card { border-left: 5px solid var(--accent-color); opacity: 0.7; }
-        .next-exercise h3 { color: var(--accent-color); }
-        .progress-tracker { font-size: 0.9em; color: var(--text-color); margin-bottom: 20px; opacity: 0.8; }
-
+        .workout-info { margin-bottom: 30px; min-height: 160px; position: relative; } .exercise-card { padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--bg-color); transition: transform 0.4s ease, opacity 0.4s ease, background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; text-align: left; } .exercise-card h2, .exercise-card h3 { color: var(--primary-color); margin-bottom: 5px; font-size: 1.4em; } .exercise-card h3 { font-size: 1.1em; opacity: 0.8; } .exercise-card p { font-size: 1em; color: var(--text-color); margin-bottom: 5px; } .exercise-card p strong { color: var(--accent-color); } .exercise-enter { opacity: 0; transform: translateY(20px); } .exercise-exit { opacity: 0; transform: translateY(-20px); position: absolute; width: calc(100% - 30px); left: 15px; } .current-exercise .exercise-card { border-left: 5px solid var(--primary-color); } .next-exercise .exercise-card { border-left: 5px solid var(--accent-color); opacity: 0.7; } .next-exercise h3 { color: var(--accent-color); } .progress-tracker { font-size: 0.9em; color: var(--text-color); margin-bottom: 20px; opacity: 0.8; }
         /* Controls */
-        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 20px; }
-        .controls button { background-color: var(--primary-color); color: white; border: none; padding: 12px 15px; border-radius: var(--border-radius); cursor: pointer; font-size: 0.95em; font-weight: 500; transition: background-color var(--transition-speed) ease, transform 0.1s ease, opacity 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
-        .controls button:hover { opacity: 0.9; }
-        .controls button:active { transform: scale(0.97); }
-        .controls button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; }
-        .controls .pause-btn { background-color: var(--warning-color); }
-        .controls .skip-btn { background-color: var(--accent-color); color: var(--bg-color); }
-        .controls .finish-btn { background-color: var(--info-color); }
-        .controls .reset-btn { background-color: var(--danger-color); grid-column: span 2; }
-         @media (min-width: 520px) { .controls { grid-template-columns: repeat(4, 1fr); } .controls .reset-btn { grid-column: auto; } }
-         @media (max-width: 359px) { .controls { grid-template-columns: 1fr; } .controls .reset-btn { grid-column: auto; } }
-
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 20px; } .controls button { background-color: var(--primary-color); color: white; border: none; padding: 12px 15px; border-radius: var(--border-radius); cursor: pointer; font-size: 0.95em; font-weight: 500; transition: background-color var(--transition-speed) ease, transform 0.1s ease, opacity 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; } .controls button:hover { opacity: 0.9; } .controls button:active { transform: scale(0.97); } .controls button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; } .controls .pause-btn { background-color: var(--warning-color); } .controls .skip-btn { background-color: var(--accent-color); color: var(--bg-color); } .controls .finish-btn { background-color: var(--info-color); } .controls .reset-btn { background-color: var(--danger-color); grid-column: span 2; }
         /* History Section */
-         .history-section { max-width: 800px; text-align: left; }
-        .history-section h2 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
+         .history-section { max-width: 800px; text-align: left; } .history-section h2 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
         .history-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
-        .history-filters button { background-color: var(--info-color); opacity: 0.7; }
-         .history-filters button.active { opacity: 1; font-weight: bold; background-color: var(--primary-color); }
+        .history-filters button { background-color: var(--info-color); opacity: 0.7; } .history-filters button.active { opacity: 1; font-weight: bold; background-color: var(--primary-color); }
         .history-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        #import-csv-input { display: none; }
-        #import-csv-label { background-color: var(--success-color); }
-        #export-csv-btn { background-color: var(--success-color); }
-
         /* Chart Container */
-        .chart-container {
-            position: relative;
-            margin: 25px auto; /* Center and add space */
-            padding: 15px;
-            background-color: var(--bg-color); /* Match card background */
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            max-width: 100%; /* Ensure it doesn't overflow */
-            height: 350px; /* Fixed height for consistency */
-            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
-        }
-        .chart-container canvas {
-            max-width: 100%;
-            height: 100% !important; /* Override potential inline style from Chart.js if needed */
-        }
-
+        .chart-container { position: relative; margin: 25px auto; padding: 15px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); max-width: 100%; height: 350px; transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; } .chart-container canvas { max-width: 100%; height: 100% !important; }
         /* Stats Display */
-        .stats-display { background-color: var(--bg-color); padding: 15px; border-radius: var(--border-radius); margin-bottom: 25px; border: 1px solid var(--border-color); transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
-        .stats-display h3 { color: var(--primary-color); margin-bottom: 10px; text-align: center; }
-        .stats-display p { margin-bottom: 8px; font-size: 0.95em; }
-         .stats-display p strong { color: var(--accent-color); font-weight: 600; }
-        .motivational-message { font-style: italic; color: var(--success-color); margin-top: 15px; text-align: center; font-weight: 500; }
-
+        .stats-display { background-color: var(--bg-color); padding: 15px; border-radius: var(--border-radius); margin-bottom: 25px; border: 1px solid var(--border-color); transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; } .stats-display h3 { color: var(--primary-color); margin-bottom: 10px; text-align: center; } .stats-display p { margin-bottom: 8px; font-size: 0.95em; } .stats-display p strong { color: var(--accent-color); font-weight: 600; } .motivational-message { font-style: italic; color: var(--success-color); margin-top: 15px; text-align: center; font-weight: 500; }
         /* History List */
-        .history-list { list-style: none; padding: 0; max-height: 300px; /* Reduced height */ overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); }
-        .history-list li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 12px 15px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background-color 0.2s ease; gap: 5px 10px; }
-        .history-list li:last-child { border-bottom: none; }
-         .history-list li:nth-child(even) { background-color: var(--secondary-color); }
-        .history-list li:hover { background-color: rgba(var(--primary-color-rgb, 74, 144, 226), 0.1); }
-        .history-item-date { font-weight: 500; flex-basis: 180px; flex-grow: 1; }
-        .history-item-type { flex-basis: 80px; text-align: center; }
-        .history-item-duration { flex-basis: 80px; text-align: right; color: var(--accent-color); font-weight: bold; }
-
+        .history-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); } .history-list li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 12px 15px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background-color 0.2s ease; gap: 5px 10px; } .history-list li:last-child { border-bottom: none; } .history-list li:nth-child(even) { background-color: var(--secondary-color); } .history-list li:hover { background-color: rgba(var(--primary-color-rgb, 74, 144, 226), 0.1); } .history-item-date { font-weight: 500; flex-basis: 180px; flex-grow: 1; } .history-item-type { flex-basis: 80px; text-align: center; } .history-item-duration { flex-basis: 80px; text-align: right; color: var(--accent-color); font-weight: bold; }
         /* Helper for RGBA */
-        body { --primary-color-rgb: 74, 144, 226; }
-        body.dark-theme { --primary-color-rgb: 88, 166, 255; }
-
+        body { --primary-color-rgb: 74, 144, 226; } body.dark-theme { --primary-color-rgb: 88, 166, 255; }
         /* Message Area */
-        .message-area { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.8); color: white; padding: 12px 25px; border-radius: var(--border-radius); z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .message-area.visible { opacity: 1; transform: translate(-50%, -10px); }
-
+        .message-area { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.8); color: white; padding: 12px 25px; border-radius: var(--border-radius); z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 2px 10px rgba(0,0,0,0.3); } .message-area.visible { opacity: 1; transform: translate(-50%, -10px); }
         /* Footer */
         footer { text-align: center; padding: 15px; margin-top: 30px; font-size: 0.85em; color: var(--text-color); opacity: 0.7; border-top: 1px solid var(--border-color); transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content { justify-content: center; }
-            header h1 { font-size: 1.5em; margin-bottom: 10px; width: 100%; text-align: center; }
-            nav { width: 100%; } nav ul { justify-content: center; }
-            .timer-circle { width: 180px; height: 180px; } .time-left { font-size: 3em; }
-            .controls { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-            .controls button { padding: 10px 15px; font-size: 0.9em; }
-            .history-controls { flex-direction: column; align-items: stretch; gap: 10px;}
-            .history-filters { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
-            .history-actions { justify-content: center; }
-             .history-list li { flex-direction: column; align-items: flex-start; gap: 5px; }
-             .history-item-date, .history-item-type, .history-item-duration { flex-basis: auto; text-align: left; width: 100%; }
-             .chart-container { height: 300px; } /* Adjust chart height */
-        }
-         @media (max-width: 480px) {
-             .container { padding: 15px; }
-             .workout-section, .history-section { padding: 20px; }
-             .timer-circle { width: 150px; height: 150px; } .time-left { font-size: 2.5em; }
-             .controls { grid-template-columns: 1fr; } .controls .reset-btn { grid-column: auto; }
-             nav button, .action-btn { padding: 8px 10px; font-size: 0.8em; }
-             .history-filters button { padding: 6px 8px; font-size: 0.8em; }
-             .chart-container { height: 250px; } /* Adjust chart height */
-        }
+        /* Responsive */
+        @media (max-width: 768px) { .header-content { justify-content: center; } header h1 { font-size: 1.5em; margin-bottom: 10px; width: 100%; text-align: center; } nav { width: 100%; } nav ul { justify-content: center; } .auth-controls { width: 100%; justify-content: center; margin-left: 0; margin-top: 10px; } .timer-circle { width: 180px; height: 180px; } .time-left { font-size: 3em; } .controls { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); } .controls button { padding: 10px 15px; font-size: 0.9em; } .history-controls { flex-direction: column; align-items: stretch; gap: 10px;} .history-filters { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; } .history-actions { justify-content: center; } .history-list li { flex-direction: column; align-items: flex-start; gap: 5px; } .history-item-date, .history-item-type, .history-item-duration { flex-basis: auto; text-align: left; width: 100%; } .chart-container { height: 300px; } }
+        @media (max-width: 480px) { .container { padding: 15px; } .workout-section, .history-section { padding: 20px; } .timer-circle { width: 150px; height: 150px; } .time-left { font-size: 2.5em; } .controls { grid-template-columns: 1fr; } .controls .reset-btn { grid-column: auto; } nav button, .action-btn, .auth-controls button { padding: 8px 10px; font-size: 0.8em; } .history-filters button { padding: 6px 8px; font-size: 0.8em; } .chart-container { height: 250px; } }
+        @media (min-width: 520px) { .controls { grid-template-columns: repeat(4, 1fr); } .controls .reset-btn { grid-column: auto; } }
+        @media (max-width: 359px) { .controls { grid-template-columns: 1fr; } .controls .reset-btn { grid-column: auto; } }
     </style>
 </head>
-<body>
+<body class="logged-out"> <!-- Start logged out -->
 
     <header>
         <div class="header-content">
-            <h1><i class="fas fa-dumbbell"></i> Workout Timer V2.2</h1>
+            <h1><i class="fas fa-dumbbell"></i> Workout Timer GDrive</h1>
             <nav>
                 <ul>
                     <li><button id="nav-push" data-workout="Push">Push</button></li>
@@ -243,10 +87,14 @@
                     <li><button id="nav-history"><i class="fas fa-history"></i> Historique</button></li>
                 </ul>
             </nav>
+            <!-- Auth Controls -->
+            <div class="auth-controls">
+                <button id="signin-button"><i class="fab fa-google"></i> Connecter Drive</button>
+                <button id="signout-button"><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
+                 <span id="drive-status"></span>
+            </div>
             <div class="theme-toggle">
-                <button id="theme-toggle-btn" aria-label="Toggle theme">
-                    <i class="fas fa-moon"></i>
-                </button>
+                <button id="theme-toggle-btn" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
             </div>
         </div>
     </header>
@@ -255,14 +103,8 @@
         <main>
             <!-- Workout Timer Section -->
             <div class="workout-section" id="workout-section">
-                <div class="timer-display">
-                    <div class="timer-circle" id="timer-circle"> <span class="time-left" id="time-left">00:00</span> </div>
-                    <div class="timer-state" id="timer-state"></div>
-                </div>
-                <div class="workout-info" id="workout-info">
-                    <div class="current-exercise" id="current-exercise-container"> <p>Sélectionnez un entraînement ou consultez l'historique.</p> </div>
-                    <div class="next-exercise" id="next-exercise-container"></div>
-                </div>
+                <div class="timer-display"><div class="timer-circle" id="timer-circle"><span class="time-left" id="time-left">00:00</span></div><div class="timer-state" id="timer-state"></div></div>
+                <div class="workout-info" id="workout-info"><div class="current-exercise" id="current-exercise-container"><p>Connectez-vous à Google Drive pour charger/sauvegarder l'historique.</p></div><div class="next-exercise" id="next-exercise-container"></div></div>
                 <div class="progress-tracker" id="progress-tracker"></div>
                 <div class="controls">
                     <button id="start-pause-btn" disabled><i class="fas fa-play"></i> Démarrer</button>
@@ -271,10 +113,9 @@
                     <button id="reset-btn" class="reset-btn" disabled><i class="fas fa-redo"></i> Réinitialiser</button>
                 </div>
             </div>
-
             <!-- History Section (Initially hidden) -->
             <div class="history-section section-hidden" id="history-section">
-                 <h2><i class="fas fa-chart-line"></i> Historique & Statistiques</h2>
+                 <h2><i class="fas fa-chart-line"></i> Historique & Statistiques (Drive)</h2>
                  <div class="history-controls">
                      <div class="history-filters">
                          <button data-period="week" class="active"><i class="fas fa-calendar-week"></i> Semaine</button>
@@ -282,362 +123,315 @@
                          <button data-period="year"><i class="fas fa-calendar-check"></i> Année</button>
                          <button data-period="all"><i class="fas fa-infinity"></i> Tout</button>
                      </div>
+                     <!-- Actions manuelles CSV supprimées -->
                      <div class="history-actions">
-                          <label for="import-csv-input" id="import-csv-label" class="action-btn"> <i class="fas fa-upload"></i> Importer CSV </label>
-                          <input type="file" id="import-csv-input" accept=".csv">
-                          <button id="export-csv-btn" class="action-btn"> <i class="fas fa-download"></i> Exporter CSV </button>
+                        <span style="font-size: 0.8em; opacity: 0.7;">Données synchronisées avec Google Drive</span>
                      </div>
                  </div>
-
-                 <!-- Chart Container -->
-                 <div class="chart-container">
-                    <canvas id="history-chart-canvas"></canvas>
-                 </div>
-
-                 <div class="stats-display" id="stats-display">
-                     <h3>Statistiques (Cette Semaine)</h3>
-                     <p>Chargement des statistiques...</p>
-                     <p class="motivational-message" id="motivational-message"></p>
-                 </div>
-
-                 <ul class="history-list" id="history-list">
-                     <li>Aucun historique trouvé pour cette période.</li>
-                 </ul>
+                 <div class="chart-container"><canvas id="history-chart-canvas"></canvas></div>
+                 <div class="stats-display" id="stats-display"><h3>Statistiques</h3><p>Connectez-vous pour voir les stats.</p><p class="motivational-message" id="motivational-message"></p></div>
+                 <ul class="history-list" id="history-list"><li>Connectez-vous pour voir l'historique.</li></ul>
             </div>
         </main>
     </div>
 
     <footer>
-        <p>© 2024 Chronomètre d'Entraînement Intelligent V2.2. Analyse tes progrès ! <i class="fas fa-chart-bar" style="color: var(--accent-color)"></i></p>
+        <p>© 2024 Workout Timer GDrive. <i class="fab fa-google-drive" style="color: var(--success-color)"></i></p>
     </footer>
-
     <div id="message-area" class="message-area"></div>
 
     <script>
+        // --- CONFIGURATION ---
+        const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; // TON ID CLIENT ICI
+        const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const HISTORY_FILENAME = "workout_timer_history.csv"; // Nom du fichier sur Drive
+
         // --- DATA ---
-        const workouts = {
+        const workouts = { /* ... Tes données d'exercices Push/Pull/Legs ... */
              Push: [ { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 13 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 13 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 14 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Overhead Press', details: 'Élastique 15kg', reps: 12 }, { type: 'exercise', name: 'Triceps Pushdown', details: 'Élastique 15kg', reps: 15 }, { type: 'break', duration: 60 }, { type: 'exercise', name: 'Overhead Press', details: 'Élastique 15kg', reps: 12 }, { type: 'exercise', name: 'Triceps Pushdown', details: 'Élastique 15kg', reps: 15 }, ],
             Pull: [ { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 12 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 14 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 12 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 14 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 13 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 15 }, { type: 'break', duration: 75 }, { type: 'exercise', name: 'Bicep Curls', details: 'Élastique 15 kg', reps: 12 }, { type: 'exercise', name: 'Lat Pulldown (Band)', details: 'Élastique 25 kg', reps: 12 }, { type: 'break', duration: 60 }, { type: 'exercise', name: 'Bicep Curls', details: 'Élastique 15 kg', reps: 12 }, { type: 'exercise', name: 'Lat Pulldown (Band)', details: 'Élastique 25 kg', reps: 12 }, ],
             Legs: [ { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 13 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 10 }, { type: 'break', duration: 90 }, { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 13 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 10 }, { type: 'break', duration: 90 }, { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 14 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 11 }, { type: 'break', duration: 90 }, { type: 'exercise', name: 'Romanian Deadlift (Band)', details: 'Élastique 25kg', reps: 15 }, { type: 'exercise', name: 'Calf Raises', details: 'Bodyweight or Band', reps: 20 }, { type: 'break', duration: 60 }, { type: 'exercise', name: 'Romanian Deadlift (Band)', details: 'Élastique 25kg', reps: 15 }, { type: 'exercise', name: 'Calf Raises', details: 'Bodyweight or Band', reps: 20 }, ]
         };
 
         // --- DOM Elements ---
-        const timeLeftDisplay = document.getElementById('time-left'); const timerCircle = document.getElementById('timer-circle'); const timerStateDisplay = document.getElementById('timer-state'); const currentExerciseContainer = document.getElementById('current-exercise-container'); const nextExerciseContainer = document.getElementById('next-exercise-container'); const progressTracker = document.getElementById('progress-tracker'); const startPauseBtn = document.getElementById('start-pause-btn'); const skipBtn = document.getElementById('skip-btn'); const finishBtn = document.getElementById('finish-btn'); const resetBtn = document.getElementById('reset-btn'); const navButtons = document.querySelectorAll('nav button[data-workout]'); const navHistoryBtn = document.getElementById('nav-history'); const themeToggleBtn = document.getElementById('theme-toggle-btn'); const messageArea = document.getElementById('message-area'); const workoutSection = document.getElementById('workout-section'); const historySection = document.getElementById('history-section'); const historyList = document.getElementById('history-list'); const statsDisplay = document.getElementById('stats-display'); const motivationalMessage = document.getElementById('motivational-message'); const historyFilterBtns = document.querySelectorAll('.history-filters button'); const exportCsvBtn = document.getElementById('export-csv-btn'); const importCsvInput = document.getElementById('import-csv-input'); const importCsvLabel = document.getElementById('import-csv-label');
-        const historyChartCanvas = document.getElementById('history-chart-canvas'); // Chart canvas
+        const timeLeftDisplay = document.getElementById('time-left'); const timerCircle = document.getElementById('timer-circle'); const timerStateDisplay = document.getElementById('timer-state'); const currentExerciseContainer = document.getElementById('current-exercise-container'); const nextExerciseContainer = document.getElementById('next-exercise-container'); const progressTracker = document.getElementById('progress-tracker'); const startPauseBtn = document.getElementById('start-pause-btn'); const skipBtn = document.getElementById('skip-btn'); const finishBtn = document.getElementById('finish-btn'); const resetBtn = document.getElementById('reset-btn'); const navButtons = document.querySelectorAll('nav button[data-workout]'); const navHistoryBtn = document.getElementById('nav-history'); const themeToggleBtn = document.getElementById('theme-toggle-btn'); const messageArea = document.getElementById('message-area'); const workoutSection = document.getElementById('workout-section'); const historySection = document.getElementById('history-section'); const historyList = document.getElementById('history-list'); const statsDisplay = document.getElementById('stats-display'); const motivationalMessage = document.getElementById('motivational-message'); const historyFilterBtns = document.querySelectorAll('.history-filters button');
+        const historyChartCanvas = document.getElementById('history-chart-canvas');
+        const signInButton = document.getElementById('signin-button'); const signOutButton = document.getElementById('signout-button'); const driveStatusElement = document.getElementById('drive-status');
 
         // --- State Variables ---
-        let currentWorkoutType = null; let currentWorkoutPlan = []; let currentItemIndex = 0; let timerInterval = null; let totalTime = 0; let timeLeft = 0; let isTimerRunning = false; let isWorkoutActive = false; let workoutFinished = false; let currentState = 'idle'; let workoutStartTime = null; let workoutHistory = []; let currentHistoryPeriod = 'week';
-        let historyChart = null; // Variable to hold the chart instance
+        let currentWorkoutType = null; let currentWorkoutPlan = []; let currentItemIndex = 0; let timerInterval = null; let totalTime = 0; let timeLeft = 0; let isTimerRunning = false; let isWorkoutActive = false; let workoutFinished = false; let currentState = 'idle'; let workoutStartTime = null; let workoutHistory = []; let currentHistoryPeriod = 'week'; let historyChart = null;
+        let googleAccessToken = null; let googleDriveFileId = null; let tokenClient = null;
 
         // --- Audio & Vibration ---
-        let endSound = null; try { const audioContext = new (window.AudioContext || window.webkitAudioContext)(); endSound = () => { const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain(); oscillator.connect(gainNode); gainNode.connect(audioContext.destination); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioContext.currentTime); gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); oscillator.start(); oscillator.stop(audioContext.currentTime + 0.3); }; } catch (e) { console.warn("Web Audio API non supporté."); endSound = () => console.log("Beep!"); } const vibrate = (duration = [100, 50, 100]) => { if ('vibrate' in navigator) { navigator.vibrate(duration); } };
+        let endSound = null; try { const audioContext = new (window.AudioContext || window.webkitAudioContext)(); endSound = () => { const o = audioContext.createOscillator(), g = audioContext.createGain(); o.connect(g); g.connect(audioContext.destination); o.type = 'sine'; o.frequency.setValueAtTime(440, audioContext.currentTime); g.gain.setValueAtTime(0.5, audioContext.currentTime); o.start(); o.stop(audioContext.currentTime + 0.3); }; } catch (e) { console.warn("Web Audio API non supporté."); endSound = () => console.log("Beep!"); } const vibrate = (d = [100, 50, 100]) => { if ('vibrate' in navigator) navigator.vibrate(d); };
 
-        // --- Core Timer Functions ---
-        function formatTime(seconds) { const minutes = Math.floor(seconds / 60); const remainingSeconds = Math.round(seconds % 60); return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
-        function formatTimeForChart(seconds) { return (seconds / 60).toFixed(1); } // Format time in minutes for chart tooltips/axes
+        // --- GIS & Drive API Logic ---
+        window.onGoogleLibraryLoad = () => { // Fonction appelée par le script GIS une fois chargé
+             console.log("GIS Library Loaded");
+             tokenClient = google.accounts.oauth2.initTokenClient({
+                 client_id: GOOGLE_CLIENT_ID,
+                 scope: GOOGLE_DRIVE_SCOPES,
+                 callback: tokenCallback, // Fonction appelée quand le jeton est reçu/rafraîchi
+                 error_callback: handleTokenError,
+             });
+             console.log("Token Client Initialized");
+        };
 
-        function updateTimerDisplay() { timeLeftDisplay.textContent = formatTime(timeLeft); let progressPercentage = 0; if (totalTime > 0 && (currentState === 'break' || currentState === 'paused')) { progressPercentage = ((totalTime - timeLeft) / totalTime) * 100; } else { progressPercentage = 0; } timerCircle.style.background = `conic-gradient(var(--accent-color) ${progressPercentage}%, var(--border-color) 0%)`; }
+        function handleTokenError(error) { console.error("Token Client Error:", error); showMessage(`Erreur Auth Google: ${error.type || error.message || 'Inconnue'}`, 5000); updateAuthUI(false); }
 
-        function updateWorkoutInfo(animate = false) {
-            const currentItem = currentWorkoutPlan[currentItemIndex];
-            const nextItem = (currentItemIndex + 1 < currentWorkoutPlan.length) ? currentWorkoutPlan[currentItemIndex + 1] : null;
-            const createCard = (item, isCurrent) => { if (!item) return ''; const title = isCurrent ? 'En cours' : 'Suivant'; const tagName = isCurrent ? 'h2' : 'h3'; let content = `<${tagName}>${title}: ${item.name || 'Pause'}</${tagName}>`; if (item.details) content += `<p>${item.details}</p>`; if (item.reps) content += `<p><strong>${item.reps} reps</strong></p>`; if (item.duration) content += `<p><strong>Pause: ${formatTime(item.duration)}</strong></p>`; return `<div class="exercise-card">${content}</div>`; };
-            const currentCardHTML = createCard(currentItem, true); const nextCardHTML = createCard(nextItem, false);
-            const updateDOM = () => { let fc = '', fn = '', fp = ''; if (currentState === 'idle') { fc = `<p>Sélectionnez un entraînement ou consultez l'historique.</p>`; } else if (currentState === 'finished') { const dt = workoutStartTime ? formatTime((Date.now() - workoutStartTime) / 1000) : 'N/A'; fc = `<div class="exercise-card"><h2><i class="fas fa-check-circle" style="color: var(--success-color)"></i> Terminé !</h2><p>Félicitations ! Temps: ${dt}</p></div>`; fp = `Terminé (${currentWorkoutPlan.length}/${currentWorkoutPlan.length})`; } else if (currentItem) { fc = currentCardHTML; fn = nextCardHTML; fp = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`; } else { fc = `<p>Chargement...</p>`; } currentExerciseContainer.innerHTML = fc; nextExerciseContainer.innerHTML = fn; progressTracker.textContent = fp; requestAnimationFrame(() => { const nc = currentExerciseContainer.querySelector('.exercise-card'); const nn = nextExerciseContainer.querySelector('.exercise-card'); if(nc) nc.classList.remove('exercise-enter', 'exercise-exit'); if(nn) nn.classList.remove('exercise-enter', 'exercise-exit'); }); };
-            if (animate) { const oc = currentExerciseContainer.querySelector('.exercise-card'); const on = nextExerciseContainer.querySelector('.exercise-card'); if (oc) oc.classList.add('exercise-exit'); if (on) on.classList.add('exercise-exit'); const ad = 400; setTimeout(() => { updateDOM(); const nc = currentExerciseContainer.querySelector('.exercise-card'); const nn = nextExerciseContainer.querySelector('.exercise-card'); if (nc) { nc.classList.add('exercise-enter'); requestAnimationFrame(() => { requestAnimationFrame(() => { nc.classList.remove('exercise-enter'); }); }); } if (nn) { nn.classList.add('exercise-enter'); requestAnimationFrame(() => { requestAnimationFrame(() => { nn.classList.remove('exercise-enter'); }); }); } }, ad / 2); } else { updateDOM(); }
+        function tokenCallback(tokenResponse) {
+             if (tokenResponse && tokenResponse.access_token) {
+                 console.log("Access Token Received");
+                 googleAccessToken = tokenResponse.access_token;
+                 updateAuthUI(true);
+                 showMessage("Connecté à Google Drive.", 2000);
+                 loadHistoryFromDrive(); // Charger l'historique maintenant
+             } else {
+                 console.error("Token Response Error:", tokenResponse);
+                 showMessage("Erreur: Jeton Google invalide.", 5000);
+                 updateAuthUI(false);
+             }
         }
 
-        function setState(newState) {
+        function handleAuthClick() { if (!tokenClient) { showMessage("Bibliothèque Google en cours de chargement...", 3000); return; } console.log("Requesting Access Token..."); driveStatusElement.textContent = 'Connexion...'; tokenClient.requestAccessToken({ prompt: 'consent' }); }
+        function handleSignoutClick() { if (googleAccessToken) { google.accounts.oauth2.revoke(googleAccessToken, () => { console.log('Token revoked'); googleAccessToken = null; googleDriveFileId = null; updateAuthUI(false); showMessage("Déconnecté de Google Drive.", 2000); workoutHistory = []; displayHistory(currentHistoryPeriod); }); } } // Efface l'historique local à la déconnexion
+        function updateAuthUI(isLoggedIn) { document.body.classList.toggle('logged-in', isLoggedIn); document.body.classList.toggle('logged-out', !isLoggedIn); driveStatusElement.textContent = isLoggedIn ? 'Connecté' : ''; googleAccessToken = isLoggedIn ? googleAccessToken : null; googleDriveFileId = isLoggedIn ? googleDriveFileId : null; }
+
+        async function findOrCreateHistoryFile() {
+            if (!googleAccessToken) { showMessage("Non connecté.", 3000); return null; }
+            if (googleDriveFileId) return googleDriveFileId;
+            console.log(`Searching/Creating: ${HISTORY_FILENAME}`); driveStatusElement.textContent = 'Cherche/Crée fichier...';
+            try {
+                const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(HISTORY_FILENAME)}'+and+trashed=false&spaces=drive&fields=files(id,name)`;
+                const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
+                if (!searchRes.ok) throw new Error(`Erreur recherche (${searchRes.status})`);
+                const searchData = await searchRes.json();
+                if (searchData.files && searchData.files.length > 0) { googleDriveFileId = searchData.files[0].id; console.log(`Fichier trouvé: ${googleDriveFileId}`); }
+                else {
+                    const createUrl = `https://www.googleapis.com/drive/v3/files`;
+                    const metadata = { name: HISTORY_FILENAME, mimeType: 'text/csv' };
+                    const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) });
+                    if (!createRes.ok) throw new Error(`Erreur création (${createRes.status})`);
+                    const createData = await createRes.json(); googleDriveFileId = createData.id; console.log(`Fichier créé: ${googleDriveFileId}`);
+                    await updateFileContent(googleDriveFileId, "DateISO,WorkoutType,DurationSeconds,EntryID\n"); // Écrit l'en-tête
+                }
+                driveStatusElement.textContent = 'Fichier prêt'; setTimeout(() => updateAuthUI(true), 1500); // Retour à "Connecté"
+                return googleDriveFileId;
+            } catch (error) { console.error("Erreur find/create file:", error); showMessage(`Erreur Drive Fichier: ${error.message}`, 5000); driveStatusElement.textContent = 'Erreur fichier'; googleDriveFileId = null; return null; }
+        }
+
+        async function readFileContent(fileId) {
+            if (!googleAccessToken || !fileId) return null; console.log(`Lecture fichier: ${fileId}`); driveStatusElement.textContent = 'Lecture...';
+            const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
+                if (!response.ok) { if (response.status === 404) { console.warn("Fichier non trouvé (404):", fileId); googleDriveFileId = null; return ""; } throw new Error(`Erreur lecture (${response.status})`); }
+                const content = await response.text(); console.log("Lecture réussie."); driveStatusElement.textContent = 'Lecture OK'; setTimeout(() => updateAuthUI(true), 1500); return content;
+            } catch (error) { console.error("Error reading file:", error); showMessage(`Erreur Drive Lecture: ${error.message}`, 5000); driveStatusElement.textContent = 'Erreur lecture'; return null; }
+        }
+
+        async function updateFileContent(fileId, content) {
+            if (!googleAccessToken || !fileId) return false; console.log(`Sauvegarde fichier: ${fileId}`); driveStatusElement.textContent = 'Sauvegarde...';
+            const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+            try {
+                const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'text/csv' }, body: content });
+                if (!response.ok) throw new Error(`Erreur écriture (${response.status})`);
+                console.log("Sauvegarde réussie."); showMessage("Historique sauvegardé sur Drive.", 2500); driveStatusElement.textContent = 'Sauvegarde OK'; setTimeout(() => updateAuthUI(true), 1500); return true;
+            } catch (error) { console.error("Error updating file:", error); showMessage(`Erreur Drive Écriture: ${error.message}`, 5000); driveStatusElement.textContent = 'Erreur sauvegarde'; return false; }
+        }
+
+        // --- Core Timer Functions ---
+        function formatTime(seconds) { const m = Math.floor(seconds / 60); const s = Math.round(seconds % 60); return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
+        function formatTimeForChart(seconds) { return (seconds / 60).toFixed(1); } // Minutes for chart data
+        function updateTimerDisplay() { timeLeftDisplay.textContent = formatTime(timeLeft); let p = 0; if (totalTime > 0 && (currentState === 'break' || currentState === 'paused')) { p = ((totalTime - timeLeft) / totalTime) * 100; } timerCircle.style.background = `conic-gradient(var(--accent-color) ${p}%, var(--border-color) 0%)`; }
+
+        function updateWorkoutInfo(animate = false) { // Garde la logique d'affichage existante
+            const currentItem = currentWorkoutPlan[currentItemIndex]; const nextItem = (currentItemIndex + 1 < currentWorkoutPlan.length) ? currentWorkoutPlan[currentItemIndex + 1] : null;
+            const createCard = (item, isCurrent) => { if (!item) return ''; const title = isCurrent ? 'En cours' : 'Suivant'; const tagName = isCurrent ? 'h2' : 'h3'; let c = `<${tagName}>${title}: ${item.name || 'Pause'}</${tagName}>`; if (item.details) c += `<p>${item.details}</p>`; if (item.reps) c += `<p><strong>${item.reps} reps</strong></p>`; if (item.duration) c += `<p><strong>Pause: ${formatTime(item.duration)}</strong></p>`; return `<div class="exercise-card">${c}</div>`; };
+            const currentCardHTML = createCard(currentItem, true); const nextCardHTML = createCard(nextItem, false);
+            const updateDOM = () => { let fc = '', fn = '', fp = ''; if (currentState === 'idle') { fc = googleAccessToken ? `<p>Sélectionnez un entraînement.</p>` : `<p>Connectez-vous à Google Drive pour commencer.</p>`; } else if (currentState === 'finished') { const dt = workoutStartTime ? formatTime((Date.now() - workoutStartTime) / 1000) : 'N/A'; fc = `<div class="exercise-card"><h2><i class="fas fa-check-circle" style="color: var(--success-color)"></i> Terminé !</h2><p>Félicitations ! Temps: ${dt}</p></div>`; fp = `Terminé (${currentWorkoutPlan.length}/${currentWorkoutPlan.length})`; } else if (currentItem) { fc = currentCardHTML; fn = nextCardHTML; fp = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`; } else { fc = `<p>Chargement...</p>`; } currentExerciseContainer.innerHTML = fc; nextExerciseContainer.innerHTML = fn; progressTracker.textContent = fp; requestAnimationFrame(() => { const nc = currentExerciseContainer.querySelector('.exercise-card'), nn = nextExerciseContainer.querySelector('.exercise-card'); if(nc) nc.classList.remove('exercise-enter', 'exercise-exit'); if(nn) nn.classList.remove('exercise-enter', 'exercise-exit'); }); };
+            if (animate) { const oc = currentExerciseContainer.querySelector('.exercise-card'), on = nextExerciseContainer.querySelector('.exercise-card'); if (oc) oc.classList.add('exercise-exit'); if (on) on.classList.add('exercise-exit'); const ad = 400; setTimeout(() => { updateDOM(); const nc = currentExerciseContainer.querySelector('.exercise-card'), nn = nextExerciseContainer.querySelector('.exercise-card'); if (nc) { nc.classList.add('exercise-enter'); requestAnimationFrame(() => { requestAnimationFrame(() => { nc.classList.remove('exercise-enter'); }); }); } if (nn) { nn.classList.add('exercise-enter'); requestAnimationFrame(() => { requestAnimationFrame(() => { nn.classList.remove('exercise-enter'); }); }); } }, ad / 2); } else { updateDOM(); }
+        }
+
+        function setState(newState) { // Garde la logique de state machine existante
             const previousState = currentState; currentState = newState; timerStateDisplay.classList.remove('visible'); clearInterval(timerInterval);
             if (['idle', 'finished'].includes(previousState) && ['exercise', 'break', 'paused'].includes(newState)) { if(workoutStartTime === null) { workoutStartTime = Date.now(); console.log("Workout started:", new Date(workoutStartTime)); } }
             startPauseBtn.disabled = true; skipBtn.disabled = true; finishBtn.disabled = true; resetBtn.disabled = true; startPauseBtn.classList.remove('pause-btn');
+            // --- Logique des états ---
             switch (newState) {
-                case 'idle': startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer'; startPauseBtn.disabled = currentWorkoutPlan.length === 0; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; updateTimerDisplay(); break;
+                case 'idle': startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer'; startPauseBtn.disabled = !googleAccessToken || currentWorkoutPlan.length === 0; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; updateTimerDisplay(); break; // Désactivé si non connecté
                 case 'exercise': startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Fait'; startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'EXERCICE'; timerStateDisplay.classList.add('visible'); timeLeft = 0; totalTime = 0; updateTimerDisplay(); break;
                 case 'break': startPauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause'; startPauseBtn.disabled = false; startPauseBtn.classList.add('pause-btn'); skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; isTimerRunning = true; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'PAUSE'; timerStateDisplay.classList.add('visible'); startBreakTimer(); break;
                 case 'paused': startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre'; startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'EN PAUSE'; timerStateDisplay.classList.add('visible'); break;
-                case 'finished': startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Terminé'; resetBtn.disabled = false; isTimerRunning = false; isWorkoutActive = false; workoutFinished = true; timerStateDisplay.textContent = 'FINI !'; timerStateDisplay.classList.add('visible'); timeLeft = 0; totalTime = 0; updateTimerDisplay(); showMessage('Entraînement terminé ! Bravo !', 4000); vibrate([200, 100, 200]); if (endSound) endSound(); saveWorkoutToHistory(); clearInProgressState(); break;
+                case 'finished': startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Terminé'; resetBtn.disabled = false; isTimerRunning = false; isWorkoutActive = false; workoutFinished = true; timerStateDisplay.textContent = 'FINI !'; timerStateDisplay.classList.add('visible'); timeLeft = 0; totalTime = 0; updateTimerDisplay(); showMessage('Entraînement terminé ! Bravo !', 4000); vibrate([200, 100, 200]); if (endSound) endSound(); saveWorkoutToHistory(); clearInProgressState(); break; // saveWorkoutToHistory appelle saveHistoryToDrive
             }
+             // Assure que le bouton démarrer est désactivé si pas de plan chargé ou non connecté
+             if (newState === 'idle') startPauseBtn.disabled = !googleAccessToken || currentWorkoutPlan.length === 0;
         }
 
         function startBreakTimer() { clearInterval(timerInterval); updateTimerDisplay(); timerInterval = setInterval(() => { if (timeLeft > 0) { timeLeft--; updateTimerDisplay(); } else { handleItemCompletion(true); } }, 1000); }
 
-        function handleItemCompletion(naturalCompletion = false) {
+        function handleItemCompletion(naturalCompletion = false) { // Garde la logique existante
              if(naturalCompletion && currentState === 'break') { if (endSound) endSound(); vibrate(); }
              currentItemIndex++;
-             saveInProgressState(); // Save before potentially finishing
+             saveInProgressState(); // Sauvegarde l'état local *avant* potentiellement finir
              if (currentItemIndex >= currentWorkoutPlan.length) { setState('finished'); updateWorkoutInfo(true); }
              else { const nextItem = currentWorkoutPlan[currentItemIndex]; if (nextItem.type === 'exercise') { setState('exercise'); } else { totalTime = nextItem.duration; timeLeft = nextItem.duration; setState('break'); } updateWorkoutInfo(true); }
         }
 
-        function forceFinishWorkout() { if (!isWorkoutActive || workoutFinished) return; if (confirm("Terminer cet entraînement maintenant ?")) { clearInterval(timerInterval); setState('finished'); updateWorkoutInfo(true); showMessage("Entraînement terminé manuellement.", 3000); } }
-        function loadWorkout(type) { if (!workouts[type]) return; if (isWorkoutActive && !workoutFinished) { if (!confirm("Arrêter l'entraînement en cours (progrès perdus) ?")) { return; } else { clearInProgressState(); } } currentWorkoutType = type; currentWorkoutPlan = workouts[type]; currentItemIndex = 0; workoutStartTime = null; setActiveWorkoutNav(type); showSection('workout'); clearInterval(timerInterval); isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; const firstItem = currentWorkoutPlan[0]; if (firstItem.type === 'exercise') { setState('exercise'); } else { totalTime = firstItem.duration; timeLeft = firstItem.duration; setState('paused'); timeLeftDisplay.textContent = formatTime(timeLeft); timerStateDisplay.textContent = 'PRÊT ?'; timerStateDisplay.classList.add('visible'); startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer Pause'; } updateWorkoutInfo(false); showMessage(`Programme ${type} chargé. Prêt !`); saveInProgressState(); }
-        function resetCurrentWorkout() { clearInterval(timerInterval); const typeToReset = currentWorkoutType; currentWorkoutType = null; currentWorkoutPlan = []; currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; clearInProgressState(); setState('idle'); setActiveWorkoutNav(null); updateWorkoutInfo(); if (typeToReset) { showMessage(`${typeToReset} réinitialisé.`); } else { showMessage(`Application réinitialisée.`); } }
-        function showMessage(msg, duration = 3500) { messageArea.textContent = msg; messageArea.classList.add('visible'); if (messageArea.timeoutId) clearTimeout(messageArea.timeoutId); messageArea.timeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageArea.timeoutId = null; }, duration); }
+        function forceFinishWorkout() { // Garde la logique existante
+            if (!isWorkoutActive || workoutFinished) return;
+            if (confirm("Terminer cet entraînement maintenant (sauvegardera la progression actuelle) ?")) {
+                clearInterval(timerInterval); setState('finished'); updateWorkoutInfo(true); showMessage("Entraînement terminé manuellement.", 3000);
+            }
+        }
+
+        function loadWorkout(type) { // Modifié pour vérifier connexion
+            if (!googleAccessToken) { showMessage("Connectez-vous à Google Drive pour commencer un entraînement.", 4000); return; }
+            if (!workouts[type]) return;
+            if (isWorkoutActive && !workoutFinished) { if (!confirm("Arrêter l'entraînement en cours (progrès perdus) ?")) { return; } else { clearInProgressState(); } }
+            currentWorkoutType = type; currentWorkoutPlan = workouts[type]; currentItemIndex = 0; workoutStartTime = null; setActiveWorkoutNav(type); showSection('workout'); clearInterval(timerInterval); isTimerRunning = false; isWorkoutActive = true; workoutFinished = false;
+            const firstItem = currentWorkoutPlan[0]; if (firstItem.type === 'exercise') { setState('exercise'); } else { totalTime = firstItem.duration; timeLeft = firstItem.duration; setState('paused'); timeLeftDisplay.textContent = formatTime(timeLeft); timerStateDisplay.textContent = 'PRÊT ?'; timerStateDisplay.classList.add('visible'); startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer Pause'; }
+            updateWorkoutInfo(false); showMessage(`Programme ${type} chargé. Prêt !`); saveInProgressState();
+        }
+
+        function resetCurrentWorkout() { // Garde logique existante
+            clearInterval(timerInterval); const typeToReset = currentWorkoutType; currentWorkoutType = null; currentWorkoutPlan = []; currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; clearInProgressState(); setState('idle'); setActiveWorkoutNav(null); updateWorkoutInfo(); if (typeToReset) { showMessage(`${typeToReset} réinitialisé.`); } else { showMessage(`Application réinitialisée.`); }
+        }
+
+        function showMessage(msg, duration = 3500) { // Inchangé
+             messageArea.textContent = msg; messageArea.classList.add('visible'); if (messageArea.timeoutId) clearTimeout(messageArea.timeoutId); messageArea.timeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageArea.timeoutId = null; }, duration);
+         }
 
         // --- Theme Toggle ---
-        function applyTheme(theme) {
-             const body = document.body; const isDark = theme === 'dark';
-             body.classList.toggle('dark-theme', isDark);
-             themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-             localStorage.setItem('theme', theme);
-             body.style.setProperty('--primary-color-rgb', isDark ? '88, 166, 255' : '74, 144, 226');
-             // Re-render chart with potentially new colors if history section is visible
-             if (historyChart && !historySection.classList.contains('section-hidden')) {
-                 // Destroy and redraw chart to apply new theme colors reliably
-                // displayHistory(currentHistoryPeriod); // This recalculates data, simpler to just update colors
-                 updateChartTheme();
-             }
+        function applyTheme(theme) { // Inchangé (mais updateChartTheme est appelé si besoin)
+             const body = document.body; const isDark = theme === 'dark'; body.classList.toggle('dark-theme', isDark); themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; localStorage.setItem('theme', theme); body.style.setProperty('--primary-color-rgb', isDark ? '88, 166, 255' : '74, 144, 226'); if (historyChart && !historySection.classList.contains('section-hidden')) { updateChartTheme(); }
         }
-
-        function updateChartTheme() {
-            if (!historyChart) return;
-            const isDark = document.body.classList.contains('dark-theme');
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid-color').trim();
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-            const tooltipBg = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-bg').trim();
-            const tooltipColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-text').trim();
-
-            historyChart.options.scales.x.grid.color = gridColor;
-            historyChart.options.scales.y.grid.color = gridColor;
-            historyChart.options.scales.x.ticks.color = textColor;
-            historyChart.options.scales.y.ticks.color = textColor;
-            historyChart.options.plugins.tooltip.backgroundColor = tooltipBg;
-            historyChart.options.plugins.tooltip.titleColor = tooltipColor;
-            historyChart.options.plugins.tooltip.bodyColor = tooltipColor;
-            historyChart.options.plugins.legend.labels.color = textColor;
-
-            historyChart.update(); // Apply changes
+        function updateChartTheme() { // Inchangé
+            if (!historyChart) return; const isDark = document.body.classList.contains('dark-theme'); const gc = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid-color').trim(); const tc = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim(); const tb = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-bg').trim(); const ttc = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-text').trim();
+            historyChart.options.scales.x.grid.color = gc; historyChart.options.scales.y.grid.color = gc; historyChart.options.scales.x.ticks.color = tc; historyChart.options.scales.y.ticks.color = tc; historyChart.options.plugins.tooltip.backgroundColor = tb; historyChart.options.plugins.tooltip.titleColor = ttc; historyChart.options.plugins.tooltip.bodyColor = ttc; historyChart.options.plugins.legend.labels.color = tc; historyChart.update();
         }
-
 
         // --- UI Section Management ---
-        function showSection(sectionName) { if (sectionName === 'history') { workoutSection.classList.add('section-hidden'); historySection.classList.remove('section-hidden'); navHistoryBtn.classList.add('active'); navButtons.forEach(btn => btn.classList.remove('active')); displayHistory(currentHistoryPeriod); } else { workoutSection.classList.remove('section-hidden'); historySection.classList.add('section-hidden'); navHistoryBtn.classList.remove('active'); setActiveWorkoutNav(currentWorkoutType); } }
+        function showSection(sectionName) { // Inchangé
+             if (sectionName === 'history') { workoutSection.classList.add('section-hidden'); historySection.classList.remove('section-hidden'); navHistoryBtn.classList.add('active'); navButtons.forEach(btn => btn.classList.remove('active')); displayHistory(currentHistoryPeriod); } else { workoutSection.classList.remove('section-hidden'); historySection.classList.add('section-hidden'); navHistoryBtn.classList.remove('active'); setActiveWorkoutNav(currentWorkoutType); } }
         function setActiveWorkoutNav(workoutType) { navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.workout === workoutType); }); }
 
-        // --- Local Storage Persistence ---
-        const IN_PROGRESS_KEY = 'workoutStateInProgress'; const HISTORY_KEY = 'workoutHistory';
-        function saveInProgressState() { if (!isWorkoutActive || workoutFinished || currentState === 'idle') { return; } const stateToSave = { type: currentWorkoutType, index: currentItemIndex, timeLeft: timeLeft, totalTime: totalTime, currentState: currentState, startTime: workoutStartTime }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); } catch (e) { console.error("Sauvegarde échouée (en cours):", e); showMessage("Erreur: Sauvegarde de progression échouée.", 5000); } }
-        function loadInProgressState() {
+        // --- Local Storage Persistence (pour état EN COURS seulement) ---
+        const IN_PROGRESS_KEY = 'workoutStateInProgress';
+        function saveInProgressState() { // Inchangé (sauvegarde état local)
+             if (!isWorkoutActive || workoutFinished || currentState === 'idle') { return; } const stateToSave = { type: currentWorkoutType, index: currentItemIndex, timeLeft: timeLeft, totalTime: totalTime, currentState: currentState, startTime: workoutStartTime }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); } catch (e) { console.error("Sauvegarde échouée (en cours):", e); showMessage("Erreur: Sauvegarde progression locale échouée.", 5000); } }
+        function loadInProgressState() { // Inchangé (charge état local)
              const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) return false;
-             try { const savedState = JSON.parse(savedStateJSON); console.log("État en cours trouvé:", savedState); if (!savedState.type || !workouts[savedState.type] || typeof savedState.index !== 'number' || typeof savedState.currentState !== 'string') { console.warn("État en cours invalide. Suppression."); clearInProgressState(); return false; }
-                 if (confirm(`Reprendre l'entraînement "${savedState.type}" (${savedState.currentState}) ?`)) {
+             try { const savedState = JSON.parse(savedStateJSON); if (!savedState.type || !workouts[savedState.type] || typeof savedState.index !== 'number' || typeof savedState.currentState !== 'string') { console.warn("État en cours local invalide."); clearInProgressState(); return false; }
+                 if (confirm(`Reprendre l'entraînement local "${savedState.type}" (${savedState.currentState}) ?`)) {
+                     // On ne charge depuis localStorage QUE si on est connecté à Drive ? Ou toujours ?
+                     // Décision : Toujours permettre de reprendre l'état local, indépendamment de Drive.
                      currentWorkoutType = savedState.type; currentWorkoutPlan = workouts[currentWorkoutType]; currentItemIndex = savedState.index; timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; workoutStartTime = savedState.startTime; isWorkoutActive = true; workoutFinished = false; setActiveWorkoutNav(currentWorkoutType); showSection('workout');
                      const stateToRestore = savedState.currentState; setState(stateToRestore);
                      if (stateToRestore === 'break') { clearInterval(timerInterval); isTimerRunning = false; currentState = 'paused'; startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre'; startPauseBtn.classList.remove('pause-btn'); timerStateDisplay.textContent = 'EN PAUSE'; timerStateDisplay.classList.add('visible'); }
-                     updateWorkoutInfo(false); updateTimerDisplay(); showMessage(`Progression ${currentWorkoutType} restaurée.`); return true;
+                     updateWorkoutInfo(false); updateTimerDisplay(); showMessage(`Progression locale ${currentWorkoutType} restaurée.`); return true;
                  } else { clearInProgressState(); return false; }
-             } catch (e) { console.error("Erreur chargement état (en cours):", e); clearInProgressState(); return false; }
+             } catch (e) { console.error("Erreur chargement état local:", e); clearInProgressState(); return false; }
          }
-        function clearInProgressState() { localStorage.removeItem(IN_PROGRESS_KEY); console.log("État en cours supprimé."); }
+        function clearInProgressState() { localStorage.removeItem(IN_PROGRESS_KEY); console.log("État en cours local supprimé."); } // Inchangé
 
-        // --- History Management ---
-        function loadHistory() { const historyJSON = localStorage.getItem(HISTORY_KEY); try { workoutHistory = historyJSON ? JSON.parse(historyJSON) : []; if (!Array.isArray(workoutHistory)) { console.warn("Historique invalide. Réinitialisation."); workoutHistory = []; saveHistory(); } workoutHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); console.log("Historique chargé:", workoutHistory.length, "entrées"); } catch (e) { console.error("Erreur chargement historique:", e); workoutHistory = []; showMessage("Erreur: Impossible de charger l'historique.", 5000); } }
-        function saveHistory() { try { workoutHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); localStorage.setItem(HISTORY_KEY, JSON.stringify(workoutHistory)); console.log("Historique sauvegardé:", workoutHistory.length, "entrées"); } catch (e) { console.error("Erreur sauvegarde historique:", e); showMessage("Erreur: Impossible de sauvegarder l'historique.", 5000); } }
-        function saveWorkoutToHistory() {
-             if (!currentWorkoutType || workoutStartTime === null) { console.warn("Sauvegarde historique annulée: Type/heure début manquant(e). State:", currentState, "Start Time:", workoutStartTime); if (currentState === 'finished') { showMessage("Entraînement terminé sans sauvegarde (pas démarré correctement).", 4000); } return; }
-             const endTime = Date.now(); const durationSeconds = Math.max(0, Math.round((endTime - workoutStartTime) / 1000)); const entryId = workoutStartTime.toString(); const alreadyExists = workoutHistory.some(entry => entry.id === entryId);
-             if (alreadyExists) { console.warn("Sauvegarde historique annulée: Entrée déjà existante pour cet ID (heure de début)."); return; }
-             const historyEntry = { id: entryId, date: new Date(endTime).toISOString(), type: currentWorkoutType, duration: durationSeconds }; console.log("Ajout à l'historique :", historyEntry); workoutHistory.unshift(historyEntry); saveHistory();
-             if (!historySection.classList.contains('section-hidden')) { displayHistory(currentHistoryPeriod); } // Update history view if visible
-         }
+        // --- History Management (utilise les helpers Drive) ---
+        function parseAndLoadCsvData(csvContent) { // Inchangé (utilisé par loadHistoryFromDrive)
+            try { const lines = csvContent.split(/\r?\n/); const newHistory = []; const existingIDs = new Set(); if (lines.length < 1) { workoutHistory = []; return; } const potentialHeaderLine = lines[0].trim().toLowerCase(); const hasHeader = potentialHeaderLine.includes("dateiso") && potentialHeaderLine.includes("workouttype"); const startIndex = hasHeader ? 1 : 0; for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = line.split(','); if (values.length < 3) continue; const dateStr = values[0].trim(); const typeStr = values[1].trim(); const durationStr = values[2].trim(); const idStr = (values.length > 3) ? values[3].trim() : null; const date = new Date(dateStr); const duration = parseInt(durationStr, 10); if (isNaN(date.getTime()) || !workouts.hasOwnProperty(typeStr) || isNaN(duration) || duration < 0) { console.warn(`Ligne CSV ignorée (parsing): ${line}`); continue; } const entryId = idStr || date.getTime().toString(); if (existingIDs.has(entryId)) continue; newHistory.push({ id: entryId, date: date.toISOString(), type: typeStr, duration: duration }); existingIDs.add(entryId); } workoutHistory = newHistory; workoutHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); } catch (error) { console.error("Erreur parsing CSV:", error); showMessage(`Erreur parsing: ${error.message}`, 6000); workoutHistory = []; }
+        }
 
-        function displayHistory(period = 'week') {
-             currentHistoryPeriod = period;
-             historyFilterBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === period); });
+        function displayHistory(period = 'week') { // Inchangé (appelle renderChart)
+             currentHistoryPeriod = period; historyFilterBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === period); });
+             // Utilise l'historique actuel (chargé depuis Drive ou vide)
              const filteredHistory = filterHistoryByPeriod(workoutHistory, period);
-             historyList.innerHTML = ''; // Clear list
-             if (filteredHistory.length === 0) { historyList.innerHTML = `<li>Aucun historique trouvé pour cette période.</li>`; }
-             else { filteredHistory.forEach(entry => { const li = document.createElement('li'); const displayDate = new Date(entry.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); const displayDuration = formatTime(entry.duration); li.innerHTML = `<span class="history-item-date">${displayDate}</span><span class="history-item-type">${entry.type}</span><span class="history-item-duration">${displayDuration}</span>`; historyList.appendChild(li); }); }
-             displayStatsAndMotivation(filteredHistory, period);
-             renderHistoryChart(filteredHistory, period); // Render chart
+             historyList.innerHTML = '';
+             if (!googleAccessToken) { historyList.innerHTML = `<li>Connectez-vous pour voir l'historique.</li>`; }
+             else if (filteredHistory.length === 0) { historyList.innerHTML = `<li>Aucun historique trouvé pour cette période.</li>`; }
+             else { filteredHistory.forEach(entry => { const li = document.createElement('li'); const d = new Date(entry.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); const du = formatTime(entry.duration); li.innerHTML = `<span class="history-item-date">${d}</span><span class="history-item-type">${entry.type}</span><span class="history-item-duration">${du}</span>`; historyList.appendChild(li); }); }
+             displayStatsAndMotivation(filteredHistory, period); renderHistoryChart(filteredHistory, period);
          }
-
-        function filterHistoryByPeriod(history, period) {
+        function filterHistoryByPeriod(history, period) { // Inchangé
              const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
              return history.filter(entry => { const entryDate = new Date(entry.date); switch (period) { case 'week': const sow = new Date(today); sow.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)); return entryDate >= sow; case 'month': const som = new Date(now.getFullYear(), now.getMonth(), 1); return entryDate >= som; case 'year': const soy = new Date(now.getFullYear(), 0, 1); return entryDate >= soy; case 'all': default: return true; } });
         }
-        function displayStatsAndMotivation(filteredHistory, period) {
-             const stats = calculateStats(filteredHistory); let pt = ''; switch (period) { case 'week': pt = 'Cette Semaine'; break; case 'month': pt = 'Ce Mois'; break; case 'year': pt = 'Cette Année'; break; case 'all': pt = 'Total'; break; } const st = statsDisplay.querySelector('h3'); if(st) st.textContent = `Statistiques (${pt})`; let sh = `<p>Nb séances: <strong>${stats.count}</strong></p>`; if (stats.count > 0) { sh += `<p>Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p><p>Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p><p>+ fréquente: <strong>${stats.mostFrequentType||'N/A'}</strong> (${stats.frequency[stats.mostFrequentType]||0}x)</p>`; } else { sh += `<p>Aucune donnée.</p>`; } const th = statsDisplay.querySelector('h3')?.outerHTML || `<h3>Statistiques (${pt})</h3>`; statsDisplay.innerHTML = th + sh; let me = statsDisplay.querySelector('.motivational-message'); if (!me) { me = document.createElement('p'); me.className = 'motivational-message'; statsDisplay.appendChild(me); } me.textContent = generateMotivationalMessage(stats, period);
+         function displayStatsAndMotivation(filteredHistory, period) { // Inchangé
+             const stats = calculateStats(filteredHistory); let pt = ''; switch (period) { case 'week': pt = 'Cette Semaine'; break; case 'month': pt = 'Ce Mois'; break; case 'year': pt = 'Cette Année'; break; case 'all': pt = 'Total'; break; } const st = statsDisplay.querySelector('h3'); if(st) st.textContent = `Statistiques (${pt})`; let sh = ""; if (!googleAccessToken) { sh = "<p>Connectez-vous pour voir les stats.</p>"; } else if (stats.count === 0) { sh = "<p>Aucune donnée pour calculer les statistiques.</p>"; } else { sh = `<p>Nb séances: <strong>${stats.count}</strong></p><p>Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p><p>Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p><p>+ fréquente: <strong>${stats.mostFrequentType||'N/A'}</strong> (${stats.frequency[stats.mostFrequentType]||0}x)</p>`; } const th = statsDisplay.querySelector('h3')?.outerHTML || `<h3>Statistiques (${pt})</h3>`; statsDisplay.innerHTML = th + sh; let me = statsDisplay.querySelector('.motivational-message'); if (!me) { me = document.createElement('p'); me.className = 'motivational-message'; statsDisplay.appendChild(me); } me.textContent = googleAccessToken ? generateMotivationalMessage(stats, period) : "";
          }
-         function calculateStats(history) { const c = history.length; let td = 0; const f = { Push: 0, Pull: 0, Legs: 0 }; history.forEach(e => { td += e.duration; if (f.hasOwnProperty(e.type)) f[e.type]++; }); const ad = c > 0 ? td / c : 0; let mft = null; let mf = 0; for (const t in f) { if (f[t] > mf) { mf = f[t]; mft = t; } } return { count: c, totalDuration: td, avgDuration: ad, frequency: f, mostFrequentType: mft }; }
-         function generateMotivationalMessage(stats, period) { const { count } = stats; if (count === 0) return "Commence ton premier entraînement ! 💪"; if (period === 'week') { if (count >= 3) return `Super semaine (${count} séances) ! Continue ! 🔥`; if (count >= 1) return `Bien joué cette semaine ! Chaque pas compte. 👍`; } else if (period === 'month') { if (count >= 12) return `Incroyable (${count} séances ce mois-ci) ! 🚀`; if (count >= 5) return `${count} entraînements ce mois-ci, solide ! ✨`; if (count >= 1) return `Sur la bonne voie ce mois-ci ! 😊`; } else if (period === 'year' || period === 'all') { if (count >= 50) return `+${count} séances enregistrées ! Machine ! 🤖`; if (count >= 10) return `${count} séances, beau parcours ! 🎉`; } return "Chaque entraînement te rapproche de tes objectifs ! 🎯"; }
+         function calculateStats(history) { // Inchangé
+             const c = history.length; let td = 0; const f = { Push: 0, Pull: 0, Legs: 0 }; history.forEach(e => { td += e.duration; if (f.hasOwnProperty(e.type)) f[e.type]++; }); const ad = c > 0 ? td / c : 0; let mft = null; let mf = 0; for (const t in f) { if (f[t] > mf) { mf = f[t]; mft = t; } } return { count: c, totalDuration: td, avgDuration: ad, frequency: f, mostFrequentType: mft }; }
+         function generateMotivationalMessage(stats, period) { // Inchangé
+             const { count } = stats; if (count === 0) return "Commence ton premier entraînement ! 💪"; if (period === 'week') { if (count >= 3) return `Super semaine (${count} séances) ! Continue ! 🔥`; if (count >= 1) return `Bien joué cette semaine ! Chaque pas compte. 👍`; } else if (period === 'month') { if (count >= 12) return `Incroyable (${count} séances ce mois-ci) ! 🚀`; if (count >= 5) return `${count} entraînements ce mois-ci, solide ! ✨`; if (count >= 1) return `Sur la bonne voie ce mois-ci ! 😊`; } else if (period === 'year' || period === 'all') { if (count >= 50) return `+${count} séances enregistrées ! Machine ! 🤖`; if (count >= 10) return `${count} séances, beau parcours ! 🎉`; } return "Chaque entraînement te rapproche de tes objectifs ! 🎯"; }
 
         // --- Chart Rendering ---
-        function renderHistoryChart(filteredHistory, period) {
-            if (!historyChartCanvas) return;
-            const ctx = historyChartCanvas.getContext('2d');
-
-            // Data aggregation for the chart
-            const { labels, data } = aggregateChartData(filteredHistory, period);
-
-            // Destroy previous chart instance if it exists
-            if (historyChart) {
-                historyChart.destroy();
-            }
-
-            // Get theme-specific colors
-            const bodyStyles = getComputedStyle(document.documentElement);
-            const primaryColor = bodyStyles.getPropertyValue('--primary-color').trim();
-            const accentColor = bodyStyles.getPropertyValue('--accent-color').trim();
-            const gridColor = bodyStyles.getPropertyValue('--chart-grid-color').trim();
-            const textColor = bodyStyles.getPropertyValue('--text-color').trim();
-            const tooltipBg = bodyStyles.getPropertyValue('--chart-tooltip-bg').trim();
-            const tooltipColor = bodyStyles.getPropertyValue('--chart-tooltip-text').trim();
-
-            historyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Durée totale (minutes)',
-                        data: data.map(d => formatTimeForChart(d)), // Convert seconds to minutes for chart data
-                        backgroundColor: primaryColor + 'AA', // Use primary color with some transparency
-                        borderColor: primaryColor,
-                        borderWidth: 1,
-                        hoverBackgroundColor: accentColor,
-                        hoverBorderColor: accentColor,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Allow height to be controlled by container
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Durée (minutes)', color: textColor },
-                            grid: { color: gridColor },
-                            ticks: { color: textColor }
-                        },
-                        x: {
-                            title: { display: true, text: getChartXAxisTitle(period), color: textColor },
-                            grid: { color: gridColor },
-                            ticks: { color: textColor }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }, // Keep it simple, only one dataset
-                        tooltip: {
-                            backgroundColor: tooltipBg,
-                            titleColor: tooltipColor,
-                            bodyColor: tooltipColor,
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) { label += ': '; }
-                                    if (context.parsed.y !== null) {
-                                        // Show tooltip in minutes:seconds format using original seconds data
-                                        const originalSeconds = data[context.dataIndex]; // Access original seconds data
-                                        label += formatTime(originalSeconds);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+        function renderHistoryChart(filteredHistory, period) { // Inchangé
+            if (!historyChartCanvas) return; const ctx = historyChartCanvas.getContext('2d'); const { labels, data } = aggregateChartData(filteredHistory, period); if (historyChart) { historyChart.destroy(); }
+            const bs = getComputedStyle(document.documentElement); const pc = bs.getPropertyValue('--primary-color').trim(); const ac = bs.getPropertyValue('--accent-color').trim(); const gc = bs.getPropertyValue('--chart-grid-color').trim(); const tc = bs.getPropertyValue('--text-color').trim(); const tbg = bs.getPropertyValue('--chart-tooltip-bg').trim(); const ttc = bs.getPropertyValue('--chart-tooltip-text').trim();
+            historyChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Durée totale (minutes)', data: data.map(d => formatTimeForChart(d)), backgroundColor: pc + 'AA', borderColor: pc, borderWidth: 1, hoverBackgroundColor: ac, hoverBorderColor: ac, }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Durée (minutes)', color: tc }, grid: { color: gc }, ticks: { color: tc } }, x: { title: { display: true, text: getChartXAxisTitle(period), color: tc }, grid: { color: gc }, ticks: { color: tc } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tbg, titleColor: ttc, bodyColor: ttc, callbacks: { label: function(context) { let l = context.dataset.label || ''; if (l) l += ': '; if (context.parsed.y !== null) { const os = data[context.dataIndex]; l += formatTime(os); } return l; } } } } } });
         }
-
-        function aggregateChartData(history, period) {
-            const aggregated = new Map(); // Use Map for easier key handling (dates, strings)
-
-            // Define label generation logic based on period
-            switch (period) {
-                case 'week':
-                    // Labels: Mon, Tue, Wed, Thu, Fri, Sat, Sun
-                    const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-                    // Initialize map with 0 duration for each day
-                    daysOfWeek.forEach(day => aggregated.set(day, 0));
-                    history.forEach(entry => {
-                        const entryDate = new Date(entry.date);
-                        let dayIndex = entryDate.getDay(); // 0 = Sun, 1 = Mon, ...
-                        dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Adjust to Mon = 0, Sun = 6
-                        const dayName = daysOfWeek[dayIndex];
-                        aggregated.set(dayName, (aggregated.get(dayName) || 0) + entry.duration);
-                    });
-                    return { labels: daysOfWeek, data: Array.from(aggregated.values()) };
-
-                case 'month':
-                    // Labels: Week 1, Week 2, ... Week 5
-                     const weeksOfMonth = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'];
-                     weeksOfMonth.forEach(week => aggregated.set(week, 0));
-                     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                     history.forEach(entry => {
-                         const entryDate = new Date(entry.date);
-                         // Calculate week number within the month (simplified)
-                         const dayOfMonth = entryDate.getDate();
-                         const weekIndex = Math.floor((dayOfMonth - 1) / 7); // 0-based week index
-                         const weekName = weeksOfMonth[Math.min(weekIndex, 4)]; // Cap at Sem 5
-                         aggregated.set(weekName, (aggregated.get(weekName) || 0) + entry.duration);
-                     });
-                     return { labels: weeksOfMonth, data: Array.from(aggregated.values()) };
-
-
-                case 'year':
-                    // Labels: Jan, Feb, ..., Dec
-                    const monthsOfYear = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-                    monthsOfYear.forEach(month => aggregated.set(month, 0));
-                    history.forEach(entry => {
-                        const entryDate = new Date(entry.date);
-                        const monthIndex = entryDate.getMonth(); // 0 = Jan, 1 = Feb, ...
-                        const monthName = monthsOfYear[monthIndex];
-                        aggregated.set(monthName, (aggregated.get(monthName) || 0) + entry.duration);
-                    });
-                    return { labels: monthsOfYear, data: Array.from(aggregated.values()) };
-
-                case 'all':
-                default:
-                    // Labels: Years (e.g., 2023, 2024)
-                    history.forEach(entry => {
-                        const entryDate = new Date(entry.date);
-                        const year = entryDate.getFullYear();
-                        aggregated.set(year, (aggregated.get(year) || 0) + entry.duration);
-                    });
-                    // Sort years for labels
-                    const sortedYears = Array.from(aggregated.keys()).sort((a, b) => a - b);
-                    const sortedData = sortedYears.map(year => aggregated.get(year));
-                    return { labels: sortedYears.map(String), data: sortedData };
+        function aggregateChartData(history, period) { // Inchangé
+            const aggregated = new Map(); switch (period) {
+                case 'week': const dow = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; dow.forEach(d => aggregated.set(d, 0)); history.forEach(e => { const ed = new Date(e.date); let di = ed.getDay(); di = di === 0 ? 6 : di - 1; const dn = dow[di]; aggregated.set(dn, (aggregated.get(dn) || 0) + e.duration); }); return { labels: dow, data: Array.from(aggregated.values()) };
+                case 'month': const wom = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5']; wom.forEach(w => aggregated.set(w, 0)); history.forEach(e => { const ed = new Date(e.date); const dom = ed.getDate(); const wi = Math.floor((dom - 1) / 7); const wn = wom[Math.min(wi, 4)]; aggregated.set(wn, (aggregated.get(wn) || 0) + e.duration); }); return { labels: wom, data: Array.from(aggregated.values()) };
+                case 'year': const moy = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; moy.forEach(m => aggregated.set(m, 0)); history.forEach(e => { const ed = new Date(e.date); const mi = ed.getMonth(); const mn = moy[mi]; aggregated.set(mn, (aggregated.get(mn) || 0) + e.duration); }); return { labels: moy, data: Array.from(aggregated.values()) };
+                case 'all': default: history.forEach(e => { const ed = new Date(e.date); const y = ed.getFullYear(); aggregated.set(y, (aggregated.get(y) || 0) + e.duration); }); const sy = Array.from(aggregated.keys()).sort((a, b) => a - b); const sd = sy.map(y => aggregated.get(y)); return { labels: sy.map(String), data: sd };
             }
         }
+         function getChartXAxisTitle(period) { switch (period) { case 'week': return 'Jour'; case 'month': return 'Semaine'; case 'year': return 'Mois'; case 'all': return 'Année'; default: return ''; } }
 
-         function getChartXAxisTitle(period) {
-             switch (period) {
-                 case 'week': return 'Jour de la Semaine';
-                 case 'month': return 'Semaine du Mois';
-                 case 'year': return 'Mois';
-                 case 'all': return 'Année';
-                 default: return '';
-             }
-         }
 
-        // --- CSV Export/Import ---
-        function exportHistoryToCSV() { if (workoutHistory.length === 0) { showMessage("Aucun historique à exporter.", 3000); return; } const sh = [...workoutHistory].sort((a, b) => new Date(a.date) - new Date(b.date)); const h = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; const r = sh.map(e => `${e.date},${e.type},${e.duration},${e.id}`).join("\n"); const c = h + r; const b = new Blob([c], { type: 'text/csv;charset=utf-8;' }); const l = document.createElement("a"); const u = URL.createObjectURL(b); l.setAttribute("href", u); const ts = new Date().toISOString().slice(0, 10); l.setAttribute("download", `workout_history_${ts}.csv`); l.style.visibility = 'hidden'; document.body.appendChild(l); l.click(); document.body.removeChild(l); URL.revokeObjectURL(u); showMessage("Historique exporté.", 3000); }
-        function importHistoryFromCSV(file) { if (!file) return; const r = new FileReader(); r.onload = function(event) { const c = event.target.result; try { const l = c.split(/\r?\n/); if (l.length < 2) throw new Error("CSV vide/sans données."); const hl = l[0].trim().toLowerCase(); const hs = hl.split(','); const di = hs.findIndex(h => h.includes("dateiso")); const ti = hs.findIndex(h => h.includes("workouttype")); const dui = hs.findIndex(h => h.includes("durationseconds")); const idi = hs.findIndex(h => h.includes("entryid")); if (di === -1 || ti === -1 || dui === -1) throw new Error("Colonnes CSV manquantes."); let ic = 0; let sc = 0; const ei = new Set(workoutHistory.map(e => e.id)); for (let i = 1; i < l.length; i++) { const li = l[i].trim(); if (!li) continue; const v = li.split(','); if (v.length < Math.max(di, ti, dui) + 1) { sc++; continue; } const ds = v[di].trim(); const ts = v[ti].trim(); const dus = v[dui].trim(); const ids = (idi !== -1 && v.length > idi) ? v[idi].trim() : null; const d = new Date(ds); const du = parseInt(dus, 10); if (isNaN(d.getTime()) || !workouts.hasOwnProperty(ts) || isNaN(du) || du < 0) { sc++; continue; } const eid = ids || d.getTime().toString(); if (ei.has(eid)) { sc++; continue; } const ne = { id: eid, date: d.toISOString(), type: ts, duration: du }; workoutHistory.push(ne); ei.add(eid); ic++; } saveHistory(); displayHistory(currentHistoryPeriod); showMessage(`${ic} entrées importées. ${sc} lignes ignorées.`, 5000); } catch (error) { console.error("Erreur import CSV:", error); showMessage(`Erreur: ${error.message}`, 6000); } finally { importCsvInput.value = null; } }; r.onerror = function() { console.error("Erreur lecture fichier:", r.error); showMessage("Erreur lecture fichier.", 5000); importCsvInput.value = null; }; r.readAsText(file); }
-
-        // --- Event Listeners ---
-        navButtons.forEach(b => { b.addEventListener('click', () => { loadWorkout(b.dataset.workout); }); });
-        navHistoryBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { if (!confirm("Arrêter l'entraînement en cours (SANS sauvegarde) ?")) { return; } else { resetCurrentWorkout(); setTimeout(() => showSection('history'), 50); } } else { showSection('history'); } });
-        startPauseBtn.addEventListener('click', () => { if (currentState === 'idle' && currentWorkoutPlan.length > 0) { const fi = currentWorkoutPlan[0]; if (fi.type === 'exercise') { setState('exercise'); } else { totalTime = fi.duration; timeLeft = fi.duration; setState('break'); } updateWorkoutInfo(true); } else if (currentState === 'exercise') { handleItemCompletion(); } else if (currentState === 'break') { setState('paused'); } else if (currentState === 'paused') { setState('break'); } saveInProgressState(); });
-        skipBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { showMessage("Passage étape suivante."); handleItemCompletion(false); } });
-        finishBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { forceFinishWorkout(); } });
-        resetBtn.addEventListener('click', () => { if (isWorkoutActive || currentState !== 'idle') { if (confirm("Réinitialiser ? Progression perdue.")) { resetCurrentWorkout(); } } });
-        themeToggleBtn.addEventListener('click', () => { const isDark = document.body.classList.contains('dark-theme'); applyTheme(isDark ? 'light' : 'dark'); });
-        historyFilterBtns.forEach(b => { b.addEventListener('click', () => { displayHistory(b.dataset.period); }); });
-        exportCsvBtn.addEventListener('click', exportHistoryToCSV);
-        importCsvInput.addEventListener('change', (event) => { const file = event.target.files[0]; importHistoryFromCSV(file); });
-        window.addEventListener('beforeunload', saveInProgressState);
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
+         // --- MODIFIED Initialization ---
+         document.addEventListener('DOMContentLoaded', () => {
              applyTheme(localStorage.getItem('theme') || 'light');
-             loadHistory();
+
+             // L'historique sera chargé après la connexion via tokenCallback
+             workoutHistory = []; // Start empty
+             updateAuthUI(false); // Set initial UI to logged out
+             displayHistory(currentHistoryPeriod); // Display empty state for history initially
+
+             // Essayer de reprendre l'état local, indépendamment de Drive
              const resumed = loadInProgressState();
-             if (!resumed) { showSection('workout'); setState('idle'); updateWorkoutInfo(); setActiveWorkoutNav(null); }
-             console.log("App initialisée. Resumed:", resumed);
+             if (!resumed) {
+                  showSection('workout');
+                  setState('idle');
+                  updateWorkoutInfo(); // Affiche le message "Connectez-vous..." si pas connecté
+                  setActiveWorkoutNav(null);
+             }
+
+              // Attacher les listeners
+             signInButton.addEventListener('click', handleAuthClick);
+             signOutButton.addEventListener('click', handleSignoutClick);
+             navButtons.forEach(b => { b.addEventListener('click', () => { loadWorkout(b.dataset.workout); }); });
+             navHistoryBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { if (!confirm("Arrêter l'entraînement en cours (SANS sauvegarde) ?")) { return; } else { resetCurrentWorkout(); setTimeout(() => showSection('history'), 50); } } else { showSection('history'); } });
+             startPauseBtn.addEventListener('click', () => { if (currentState === 'idle' && currentWorkoutPlan.length > 0) { const fi = currentWorkoutPlan[0]; if (fi.type === 'exercise') { setState('exercise'); } else { totalTime = fi.duration; timeLeft = fi.duration; setState('break'); } updateWorkoutInfo(true); } else if (currentState === 'exercise') { handleItemCompletion(); } else if (currentState === 'break') { setState('paused'); } else if (currentState === 'paused') { setState('break'); } saveInProgressState(); }); // saveInProgressState pour état local
+             skipBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { showMessage("Passage étape suivante."); handleItemCompletion(false); } });
+             finishBtn.addEventListener('click', () => { if (isWorkoutActive && !workoutFinished) { forceFinishWorkout(); } }); // forceFinish appelle setState('finished') qui sauvegarde
+             resetBtn.addEventListener('click', () => { if (isWorkoutActive || currentState !== 'idle') { if (confirm("Réinitialiser ? Progression locale perdue.")) { resetCurrentWorkout(); } } });
+             themeToggleBtn.addEventListener('click', () => { const isDark = document.body.classList.contains('dark-theme'); applyTheme(isDark ? 'light' : 'dark'); });
+             historyFilterBtns.forEach(b => { b.addEventListener('click', () => { displayHistory(b.dataset.period); }); });
+             // CSV Import/Export boutons sont supprimés de l'HTML
+
+             // Ne pas sauvegarder l'état local avant de quitter, car Drive est la source de vérité
+             // window.addEventListener('beforeunload', saveInProgressState); // COMMENTÉ/SUPPRIMÉ
+
+             console.log("App initialisée. Attente connexion Google.");
         });
 
     </script>
+    <!-- GIS Callback Function -->
+    <script>
+        // This function needs to be globally accessible for the GIS script callback
+        function gisLoadedCallback() {
+            if (typeof window.onGoogleLibraryLoad === 'function') {
+                window.onGoogleLibraryLoad();
+            } else {
+                console.error("onGoogleLibraryLoad function not found.");
+            }
+        }
+    </script>
+     <!-- Le script GIS est appelé via async defer, il appellera gisLoadedCallback -->
+     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoadedCallback()"></script>
+
 
 </body>
 </html>
