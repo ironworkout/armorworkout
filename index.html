@@ -66,30 +66,46 @@
         nav button, .theme-toggle button, .history-controls button, .action-btn {
             background-color: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: var(--border-radius); cursor: pointer; font-size: 0.95em; font-weight: 500; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        nav button:hover, .theme-toggle button:hover, .history-controls button:hover, .action-btn:hover {
+        /* Style spécifique pour les boutons désactivés */
+        nav button:disabled, .action-btn:disabled {
+             background-color: #bbb; color: #eee; cursor: not-allowed; opacity: 0.6; box-shadow: none; transform: none;
+        }
+        body.dark-theme nav button:disabled, body.dark-theme .action-btn:disabled {
+             background-color: #555; color: #999;
+        }
+        /* Hover/Active UNIQUEMENT si non désactivé */
+        nav button:not(:disabled):hover, .theme-toggle button:hover, .history-controls button:hover, .action-btn:not(:disabled):hover {
              background-color: var(--accent-color); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        nav button:active, .theme-toggle button:active, .history-controls button:active, .action-btn:active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        nav button:not(:disabled):active, .theme-toggle button:active, .history-controls button:active, .action-btn:not(:disabled):active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
         nav button.active { background-color: var(--accent-color); color: var(--bg-color); font-weight: bold; box-shadow: var(--primary-glow); }
         #nav-history { background-color: var(--info-color); } #nav-history.active { background-color: var(--accent-color); }
+        /* Theme toggle est toujours fonctionnel */
         .theme-toggle button { background-color: transparent; color: var(--text-color); font-size: 1.4em; padding: 5px; box-shadow: none; }
         .theme-toggle button:hover { background-color: rgba(var(--primary-color-rgb), 0.1); }
 
         /* --- Contrôles d'Authentification --- */
         .auth-controls { display: flex; gap: 10px; align-items: center; margin-left: 15px; }
         .auth-controls button { background-color: var(--success-color); padding: 7px 14px; font-size: 0.9em; }
+        .auth-controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .auth-controls button:active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .auth-controls button#signout-button { background-color: var(--danger-color); }
         #drive-status { font-size: 0.85em; opacity: 0.8; margin-left: 8px; transition: opacity 0.3s; min-width: 100px; text-align: right; font-style: italic; }
         #drive-status.loading { opacity: 1; font-weight: bold; color: var(--warning-color); }
 
-        /* Logique d'affichage connexion/déconnexion */
-        body.logged-out #signin-button { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-out #drive-status { display: none; }
-        body.logged-in #signin-button { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-in #drive-status { display: inline-block; }
+        /* Logique d'affichage connexion/déconnexion (CSS gère la VISIBILITÉ) */
+        body.logged-out #signin-button { display: inline-flex; } /* Affiché */
+        body.logged-out #signout-button { display: none; } /* Caché */
+        body.logged-out #drive-status { display: none; } /* Caché */
+        body.logged-in #signin-button { display: none; } /* Caché */
+        body.logged-in #signout-button { display: inline-flex; } /* Affiché */
+        body.logged-in #drive-status { display: inline-block; } /* Affiché */
 
         /* --- Contenu Principal --- */
         main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 40px; position: relative; }
         .workout-section, .history-section {
-            background-color: var(--secondary-color); padding: 35px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 100%; max-width: 650px; text-align: center; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Transition "rebondie" */ position: relative; overflow: visible; /* Permet ombres portées */ margin-bottom: 40px; border: 1px solid var(--border-color);
+            background-color: var(--secondary-color); padding: 35px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 100%; max-width: 650px; text-align: center; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); position: relative; overflow: visible; margin-bottom: 40px; border: 1px solid var(--border-color);
         }
         .section-hidden { transform: scale(0.9) translateY(30px); opacity: 0; pointer-events: none; max-height: 0; padding: 0; margin-bottom: 0; border: none; overflow: hidden; }
 
@@ -99,7 +115,7 @@
             width: 220px; height: 220px; margin: 0 auto; position: relative; border-radius: 50%; background: conic-gradient(var(--accent-color) 0%, var(--border-color) 0%); display: flex; justify-content: center; align-items: center; transition: background var(--transition-speed) ease, box-shadow var(--transition-speed) ease; box-shadow: inset 0 0 15px rgba(0,0,0,0.1), var(--primary-glow);
         }
         .timer-circle::before { content: ''; position: absolute; width: 88%; height: 88%; background-color: var(--secondary-color); border-radius: 50%; transition: background-color var(--transition-speed) ease; }
-        .time-left { font-size: 4em; font-weight: bold; color: var(--primary-color); z-index: 1; transition: color var(--transition-speed) ease; font-variant-numeric: tabular-nums; /* Pour éviter les sauts de largeur */ }
+        .time-left { font-size: 4em; font-weight: bold; color: var(--primary-color); z-index: 1; transition: color var(--transition-speed) ease; font-variant-numeric: tabular-nums; }
         .timer-state { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 1em; color: var(--warning-color); font-weight: bold; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; background-color: var(--secondary-color); padding: 3px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .timer-state.visible { opacity: 1; transform: translateX(-50%) translateY(5px); }
 
@@ -112,7 +128,7 @@
         .exercise-card p strong { color: var(--accent-color); font-weight: 600; }
         /* Animations d'entrée/sortie */
         .exercise-enter { opacity: 0; transform: translateX(30px); }
-        .exercise-exit { opacity: 0; transform: translateX(-30px); position: absolute; width: calc(100% - 40px); /* Ajusté pour padding */ left: 20px; }
+        .exercise-exit { opacity: 0; transform: translateX(-30px); position: absolute; width: calc(100% - 40px); left: 20px; }
         .current-exercise .exercise-card { border-left: 6px solid var(--primary-color); }
         .next-exercise .exercise-card { border-left: 6px solid var(--accent-color); opacity: 0.75; }
         .next-exercise h3 { color: var(--accent-color); }
@@ -121,16 +137,17 @@
         /* --- Contrôles Timer --- */
         .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 25px; }
         .controls button { background-color: var(--primary-color); color: white; border: none; padding: 14px 18px; border-radius: var(--border-radius); cursor: pointer; font-size: 1em; font-weight: 500; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .controls button:active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .controls button:disabled { background-color: #bbb; color: #eee; cursor: not-allowed; opacity: 0.6; box-shadow: none; transform: none; }
         body.dark-theme .controls button:disabled { background-color: #555; color: #999; }
-        .controls .pause-btn { background-color: var(--warning-color); } .controls .pause-btn:hover { background-color: color-mix(in srgb, var(--warning-color) 90%, black); }
-        .controls .skip-btn { background-color: var(--accent-color); color: var(--bg-color); } .controls .skip-btn:hover { background-color: color-mix(in srgb, var(--accent-color) 90%, black); }
-        .controls .finish-btn { background-color: var(--info-color); } .controls .finish-btn:hover { background-color: color-mix(in srgb, var(--info-color) 90%, black); }
-        .controls .reset-btn { background-color: var(--danger-color); } .controls .reset-btn:hover { background-color: color-mix(in srgb, var(--danger-color) 90%, black); }
-        /* Span reset button across columns if needed */
-        @media (min-width: 560px) { .controls { grid-template-columns: repeat(4, 1fr); } .controls .reset-btn { grid-column: span 1; /* Défaut */} }
+        .controls button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .controls button:not(:disabled):active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        .controls .pause-btn { background-color: var(--warning-color); } .controls .pause-btn:not(:disabled):hover { background-color: color-mix(in srgb, var(--warning-color) 90%, black); }
+        .controls .skip-btn { background-color: var(--accent-color); color: var(--bg-color); } .controls .skip-btn:not(:disabled):hover { background-color: color-mix(in srgb, var(--accent-color) 90%, black); }
+        .controls .finish-btn { background-color: var(--info-color); } .controls .finish-btn:not(:disabled):hover { background-color: color-mix(in srgb, var(--info-color) 90%, black); }
+        .controls .reset-btn { background-color: var(--danger-color); } .controls .reset-btn:not(:disabled):hover { background-color: color-mix(in srgb, var(--danger-color) 90%, black); }
+        /* Span reset button */
+        @media (min-width: 560px) { .controls { grid-template-columns: repeat(4, 1fr); } .controls .reset-btn { grid-column: span 1; } }
         @media (max-width: 559px) and (min-width: 400px) { .controls { grid-template-columns: repeat(2, 1fr); } .controls .reset-btn { grid-column: span 2; } }
         @media (max-width: 399px) { .controls { grid-template-columns: 1fr; } .controls .reset-btn { grid-column: auto; } }
 
@@ -166,12 +183,12 @@
         .history-list .no-history { text-align: center; padding: 20px; font-style: italic; opacity: 0.7; }
 
         /* Helper pour RGBA - Mis à jour par JS */
-        body { --primary-color-rgb: 74, 144, 226; --bg-color-rgb: 255, 255, 255; }
-        body.dark-theme { --primary-color-rgb: 88, 166, 255; --bg-color-rgb: 13, 17, 23; }
+        body { --primary-color-rgb: 74, 144, 226; --bg-color-rgb: 255, 255, 255; --text-color-rgb: 51, 51, 51; }
+        body.dark-theme { --primary-color-rgb: 88, 166, 255; --bg-color-rgb: 13, 17, 23; --text-color-rgb: 225, 225, 225; }
 
         /* --- Zone de Messages Flottante --- */
-        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--text-color-rgb, 51, 51, 51), 0.9); color: var(--bg-color); padding: 14px 28px; border-radius: var(--border-radius); z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none; font-size: 1em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-        body.dark-theme .message-area { background-color: rgba(var(--text-color-rgb, 225, 225, 225), 0.9); color: var(--bg-color); }
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--text-color-rgb), 0.9); color: var(--bg-color); padding: 14px 28px; border-radius: var(--border-radius); z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none; font-size: 1em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+        body.dark-theme .message-area { background-color: rgba(var(--text-color-rgb), 0.9); color: var(--bg-color); }
         .message-area.visible { opacity: 1; transform: translate(-50%, -10px); pointer-events: auto; }
 
         /* --- Pied de Page --- */
@@ -220,18 +237,21 @@
             <h1><i class="fas fa-dumbbell"></i> ArmorWorkout</h1>
             <nav>
                 <ul>
-                    <li><button id="nav-push" data-workout="Push">Push</button></li>
-                    <li><button id="nav-pull" data-workout="Pull">Pull</button></li>
-                    <li><button id="nav-legs" data-workout="Legs">Legs</button></li>
+                    <!-- Boutons désactivés initialement par JS via updateAuthUI -->
+                    <li><button id="nav-push" data-workout="Push" disabled>Push</button></li>
+                    <li><button id="nav-pull" data-workout="Pull" disabled>Pull</button></li>
+                    <li><button id="nav-legs" data-workout="Legs" disabled>Legs</button></li>
+                    <!-- Bouton Historique reste activé -->
                     <li><button id="nav-history"><i class="fas fa-history"></i> Historique</button></li>
                 </ul>
             </nav>
-            <!-- Contrôles Auth -->
+            <!-- Contrôles Auth (Visibilité gérée par CSS .logged-in/.logged-out) -->
             <div class="auth-controls">
                 <button id="signin-button"><i class="fab fa-google"></i> Connecter Drive</button>
                 <button id="signout-button"><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
                  <span id="drive-status"></span>
             </div>
+            <!-- Bouton Thème reste activé -->
             <div class="theme-toggle">
                 <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-moon"></i></button>
             </div>
@@ -250,13 +270,13 @@
                 </div>
                 <div class="workout-info" id="workout-info">
                      <div class="current-exercise" id="current-exercise-container">
-                         <!-- Message initial sera injecté par JS -->
                          <p>Connectez-vous à Google Drive pour charger votre historique et démarrer.</p>
                      </div>
                      <div class="next-exercise" id="next-exercise-container"></div>
                 </div>
                 <div class="progress-tracker" id="progress-tracker"></div>
                 <div class="controls">
+                    <!-- Boutons désactivés initialement par JS via updateAuthUI / setState -->
                     <button id="start-pause-btn" disabled><i class="fas fa-play"></i> Démarrer</button>
                     <button id="skip-btn" class="skip-btn" disabled><i class="fas fa-forward-step"></i> Suivant</button>
                     <button id="finish-btn" class="finish-btn" disabled><i class="fas fa-flag-checkered"></i> Terminer</button>
@@ -305,7 +325,7 @@
         // --- CONFIGURATION ---
         const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; // VOTRE ID CLIENT ICI
         const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        const HISTORY_FILENAME = "armorworkout_history.csv"; // Nom du fichier sur Drive (plus spécifique)
+        const HISTORY_FILENAME = "armorworkout_history.csv"; // Nom du fichier sur Drive
 
         // --- DONNÉES D'ENTRAÎNEMENT ---
         const workouts = {
@@ -363,12 +383,10 @@
         let endSound = null;
         let audioContext = null;
         function initAudioContext() {
-             // Initialiser le contexte audio sur une interaction utilisateur si nécessaire
              if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
                  try {
                      audioContext = new (window.AudioContext || window.webkitAudioContext)();
                      console.log("AudioContext initialisé.");
-                     // Créer une source factice pour "débloquer" l'audio sur certains navigateurs
                      const buffer = audioContext.createBuffer(1, 1, 22050);
                      const source = audioContext.createBufferSource();
                      source.buffer = buffer;
@@ -377,10 +395,9 @@
                      source.stop(audioContext.currentTime + 0.001);
                  } catch (e) {
                      console.warn("Impossible d'initialiser l'AudioContext:", e);
-                     audioContext = null; // Échec
+                     audioContext = null;
                  }
              }
-             // Définir la fonction endSound si l'AudioContext est prêt
              if (audioContext) {
                  endSound = () => {
                      if (!audioContext || audioContext.state === 'suspended') {
@@ -394,7 +411,6 @@
                      }
                  };
              } else {
-                 // Fallback si Web Audio n'est pas supporté ou a échoué
                  endSound = () => console.log("Beep! (Audio non disponible)");
              }
          }
@@ -404,26 +420,21 @@
              const g = audioContext.createGain();
              o.connect(g);
              g.connect(audioContext.destination);
-             o.type = 'triangle'; // Son un peu plus doux
+             o.type = 'triangle';
              o.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
              g.gain.setValueAtTime(0.3, audioContext.currentTime);
-             g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5); // Fondu rapide
+             g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
              o.start();
              o.stop(audioContext.currentTime + 0.5);
          }
         const vibrate = (pattern = [100, 50, 100]) => {
             if ('vibrate' in navigator) {
-                try {
-                    navigator.vibrate(pattern);
-                } catch (e) {
-                    console.warn("Vibration échouée:", e);
-                }
+                try { navigator.vibrate(pattern); } catch (e) { console.warn("Vibration échouée:", e); }
             }
         };
 
         // --- Logique Google Identity Services (GIS) & Drive API ---
 
-        // Callback appelé lorsque la bibliothèque GIS est chargée
         function gisLoadedCallback() {
             console.log("GIS Library Loaded");
             if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "VOTRE ID CLIENT ICI") {
@@ -436,9 +447,9 @@
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: GOOGLE_DRIVE_SCOPES,
-                    callback: tokenCallback, // Fonction appelée quand le jeton est reçu/rafraîchi
+                    callback: tokenCallback,
                     error_callback: handleTokenError,
-                    prompt: '' // Important pour éviter le popup au chargement si déjà autorisé
+                    prompt: ''
                 });
                 console.log("Token Client Initialized");
             } catch (error) {
@@ -451,7 +462,6 @@
 
         function handleTokenError(error) {
             console.error("Token Client Error:", error);
-            // Gérer les erreurs courantes différemment
             if (error.type === 'popup_closed') {
                 showMessage("Connexion Google annulée.", 3000);
                 driveStatusElement.textContent = 'Annulé';
@@ -462,25 +472,20 @@
                 showMessage(`Erreur Auth Google: ${error.type || error.message || 'Inconnue'}`, 5000);
                 driveStatusElement.textContent = 'Erreur Auth';
             }
-            updateAuthUI(false);
+            updateAuthUI(false); // Assure que l'UI est en mode déconnecté
         }
 
-        // Callback appelé après une demande de jeton réussie
-        async function tokenCallback(tokenResponse) { // Rendu async pour attendre le chargement de l'historique
+        async function tokenCallback(tokenResponse) {
             if (tokenResponse && tokenResponse.access_token) {
                 console.log("Access Token Received");
                 googleAccessToken = tokenResponse.access_token;
-                updateAuthUI(true);
+                updateAuthUI(true); // Met à jour l'UI en mode connecté AVANT de charger l'historique
                 showMessage("Connecté à Google Drive.", 2500);
-                // Charger l'historique depuis Drive MAINTENANT
-                await loadHistoryFromDrive(); // Attend que l'historique soit chargé
-                 // Si un entraînement était en cours localement, proposer de le reprendre APRÈS connexion
-                 const resumed = loadInProgressState(); // Vérifie s'il y a un état local
-                 if (!resumed && currentState === 'idle') {
-                      // Si rien n'est repris et qu'on est inactif, on peut activer le bouton démarrer
-                      checkEnableStartButton();
-                 }
-                 checkEnableStartButton(); // Vérifie l'état du bouton démarrer dans tous les cas
+                await loadHistoryFromDrive(); // Charger l'historique après connexion
+                const resumed = loadInProgressState(); // Vérifier s'il y a un état local à reprendre APRES connexion
+                if (!resumed && currentState === 'idle') {
+                     checkEnableStartButton(); // Activer 'Démarrer' si besoin
+                }
             } else {
                 console.error("Token Response Error or missing access_token:", tokenResponse);
                 showMessage("Erreur: Jeton Google invalide reçu.", 5000);
@@ -489,88 +494,94 @@
             }
         }
 
-        // Gère le clic sur le bouton de connexion
         function handleAuthClick() {
             if (!tokenClient) {
                 showMessage("Bibliothèque Google en cours de chargement...", 3000);
                 return;
             }
-             initAudioContext(); // Tente d'initialiser l'audio au premier clic pertinent
+             initAudioContext();
             console.log("Requesting Access Token...");
             driveStatusElement.textContent = 'Connexion...';
             driveStatusElement.classList.add('loading');
-            // Demande explicite avec consentement si nécessaire
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
-        // Gère le clic sur le bouton de déconnexion
         function handleSignoutClick() {
             if (googleAccessToken) {
                  driveStatusElement.textContent = 'Déconnexion...';
                  driveStatusElement.classList.add('loading');
-                 // Révoquer le jeton côté Google peut prendre un moment
                  google.accounts.oauth2.revoke(googleAccessToken, () => {
                      console.log('Token revoked');
                      googleAccessToken = null;
                      googleDriveFileId = null;
-                     workoutHistory = []; // Efface l'historique local
-                     updateAuthUI(false);
+                     workoutHistory = [];
+                     updateAuthUI(false); // Passe l'UI en mode déconnecté
                      showMessage("Déconnecté de Google Drive.", 2500);
-                     displayHistory(currentHistoryPeriod); // Affiche l'état vide/déconnecté
-                     resetCurrentWorkout(); // Réinitialise aussi l'état du timer
-                     driveStatusElement.textContent = ''; // Efface le statut après déconnexion
-                     driveStatusElement.classList.remove('loading');
+                     // resetCurrentWorkout est appelé dans updateAuthUI(false) si nécessaire
                  });
             } else {
-                 // Si pas de jeton mais l'UI est "logged in", forcer la mise à jour
-                 updateAuthUI(false);
-                 resetCurrentWorkout();
-                 driveStatusElement.textContent = '';
-                 driveStatusElement.classList.remove('loading');
+                 updateAuthUI(false); // Force l'état déconnecté si pas de jeton
             }
         }
 
+        // *** FONCTION CORRIGÉE ***
         // Met à jour l'interface utilisateur en fonction de l'état de connexion
         function updateAuthUI(isLoggedIn) {
+            console.log(`Mise à jour UI - Connecté: ${isLoggedIn}`);
             document.body.classList.toggle('logged-in', isLoggedIn);
             document.body.classList.toggle('logged-out', !isLoggedIn);
             driveStatusElement.textContent = isLoggedIn ? 'Connecté' : '';
-             driveStatusElement.classList.remove('loading'); // Assure que l'indicateur loading est retiré
+            driveStatusElement.classList.remove('loading');
 
-             if (!isLoggedIn) {
-                googleAccessToken = null;
+            if (!isLoggedIn) {
+                googleAccessToken = null; // Assure que le token est null
                 googleDriveFileId = null;
-                // Désactiver les boutons nécessitant une connexion
-                 startPauseBtn.disabled = true;
-                 skipBtn.disabled = true;
-                 finishBtn.disabled = true;
-                 resetBtn.disabled = true; // On peut réinitialiser même déconnecté? Non, plutôt désactiver.
-                 navButtons.forEach(btn => btn.disabled = true); // Désactiver sélection workout
-                 navHistoryBtn.disabled = false; // L'historique peut montrer le message "Connectez-vous"
-                 if (currentState !== 'idle') {
-                    resetCurrentWorkout(); // Si déconnexion pendant un workout, on réinitialise
-                 }
-                 updateWorkoutInfo(); // Met à jour le message initial
-            } else {
-                // Activer les boutons si un workout est sélectionné ou en cours
+
+                // Désactiver les boutons d'action et de sélection de workout
+                startPauseBtn.disabled = true;
+                skipBtn.disabled = true;
+                finishBtn.disabled = true;
+                resetBtn.disabled = true; // Désactivé si non connecté
+                navButtons.forEach(btn => btn.disabled = true);
+
+                // Garder activés : connexion, historique, thème
+                // signInButton : visibilité gérée par CSS, reste cliquable
+                signOutButton.disabled = false; // (sera caché par CSS de toute façon)
+                navHistoryBtn.disabled = false; // L'historique peut montrer "Connectez-vous"
+                themeToggleBtn.disabled = false; // Le thème fonctionne toujours
+
+                // Si un workout était en cours, le réinitialiser
+                if (isWorkoutActive || currentState !== 'idle') {
+                    resetCurrentWorkout();
+                } else {
+                    // S'assurer que le message initial est correct même si on n'était pas en cours
+                    updateWorkoutInfo();
+                }
+                 displayHistory(currentHistoryPeriod); // Met à jour l'affichage historique (message connexion)
+
+            } else { // Si connecté (isLoggedIn = true)
+                // Activer la navigation des workouts et l'historique
                 navButtons.forEach(btn => btn.disabled = false);
                 navHistoryBtn.disabled = false;
-                checkEnableStartButton(); // Vérifie si on peut démarrer
-                 // Les autres boutons (skip, finish, reset) sont gérés par setState
+                themeToggleBtn.disabled = false;
+
+                // L'état des boutons de contrôle (start, skip, finish, reset)
+                // sera géré par setState et checkEnableStartButton en fonction
+                // de si un workout est chargé/en cours.
+                 checkEnableStartButton(); // Met à jour l'état du bouton démarrer
+                 updateWorkoutInfo(); // Met à jour le message si besoin
             }
-             // Mettre à jour l'affichage de l'historique (qui montrera "Connectez-vous" si nécessaire)
-             displayHistory(currentHistoryPeriod);
         }
 
          // Vérifie si le bouton Démarrer doit être activé
          function checkEnableStartButton() {
              if (currentState === 'idle') {
+                 // Activer si connecté ET un workout est sélectionné
                  startPauseBtn.disabled = !googleAccessToken || !currentWorkoutType;
                  startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer';
              }
-             // Les autres états sont gérés par setState
+             // Les autres états (exercise, break, paused, finished) gèrent leur bouton start/pause via setState
          }
-
 
         // Trouve l'ID du fichier d'historique sur Drive, ou le crée s'il n'existe pas
         async function findOrCreateHistoryFile() {
@@ -578,7 +589,6 @@
                 showMessage("Non connecté à Google Drive.", 3000);
                 return null;
             }
-            // Si on a déjà l'ID, on le retourne directement
             if (googleDriveFileId) return googleDriveFileId;
 
             console.log(`Recherche/Création du fichier: ${HISTORY_FILENAME}`);
@@ -586,74 +596,51 @@
             driveStatusElement.classList.add('loading');
 
             try {
-                // 1. Rechercher le fichier par nom
                 const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(HISTORY_FILENAME)}'+and+mimeType='text/csv'+and+trashed=false&spaces=drive&fields=files(id,name)`;
                 const searchRes = await fetch(searchUrl, {
                     headers: { 'Authorization': `Bearer ${googleAccessToken}` }
                 });
 
                 if (!searchRes.ok) {
-                     // Si accès refusé, le jeton est peut-être invalide
                      if (searchRes.status === 401 || searchRes.status === 403) {
-                         console.warn("Accès refusé (401/403). Jeton invalide ou périmé ?");
-                         handleSignoutClick(); // Déconnecter pour forcer une nouvelle authentification
-                         showMessage("Session Google expirée ou invalide. Veuillez vous reconnecter.", 5000);
+                         console.warn("Accès refusé recherche (401/403). Jeton invalide?");
+                         handleSignoutClick(); // Déconnecter
+                         showMessage("Session Google expirée. Veuillez vous reconnecter.", 5000);
                          return null;
                      }
                     throw new Error(`Erreur recherche fichier (${searchRes.status} ${searchRes.statusText})`);
                 }
-
                 const searchData = await searchRes.json();
 
                 if (searchData.files && searchData.files.length > 0) {
-                    // Fichier trouvé
                     googleDriveFileId = searchData.files[0].id;
-                    console.log(`Fichier d'historique trouvé: ${googleDriveFileId}`);
-                    driveStatusElement.textContent = 'Fichier prêt';
-                    driveStatusElement.classList.remove('loading');
-                    setTimeout(() => updateAuthUI(true), 1500); // Retour à "Connecté" visuellement
-                    return googleDriveFileId;
+                    console.log(`Fichier trouvé: ${googleDriveFileId}`);
                 } else {
-                    // Fichier non trouvé, il faut le créer
-                    console.log(`Fichier '${HISTORY_FILENAME}' non trouvé. Création...`);
+                    console.log(`Fichier non trouvé. Création...`);
                     driveStatusElement.textContent = 'Crée fichier...';
                     const createUrl = `https://www.googleapis.com/drive/v3/files`;
-                    const metadata = {
-                        name: HISTORY_FILENAME,
-                        mimeType: 'text/csv',
-                        // On peut ajouter une description si on veut
-                        // description: 'Historique des entraînements généré par ArmorWorkout'
-                    };
+                    const metadata = { name: HISTORY_FILENAME, mimeType: 'text/csv' };
                     const createRes = await fetch(createUrl, {
                         method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${googleAccessToken}`,
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify(metadata)
                     });
-
-                    if (!createRes.ok) {
-                        throw new Error(`Erreur création fichier (${createRes.status} ${createRes.statusText})`);
-                    }
-
+                    if (!createRes.ok) throw new Error(`Erreur création fichier (${createRes.status} ${createRes.statusText})`);
                     const createData = await createRes.json();
                     googleDriveFileId = createData.id;
-                    console.log(`Fichier d'historique créé: ${googleDriveFileId}`);
-
-                    // Écrire l'en-tête CSV initial dans le nouveau fichier
-                    await updateFileContent(googleDriveFileId, "DateISO,WorkoutType,DurationSeconds,EntryID\n");
-                     driveStatusElement.textContent = 'Fichier créé';
-                     driveStatusElement.classList.remove('loading');
-                     setTimeout(() => updateAuthUI(true), 1500);
-                    return googleDriveFileId;
+                    console.log(`Fichier créé: ${googleDriveFileId}`);
+                    await updateFileContent(googleDriveFileId, "DateISO,WorkoutType,DurationSeconds,EntryID\n"); // Écrit l'en-tête
                 }
+                driveStatusElement.textContent = 'Fichier prêt';
+                driveStatusElement.classList.remove('loading');
+                setTimeout(() => { if(googleAccessToken) driveStatusElement.textContent = 'Connecté'; }, 1500); // Retour visuel à "Connecté"
+                return googleDriveFileId;
             } catch (error) {
-                console.error("Erreur lors de la recherche/création du fichier Drive:", error);
+                console.error("Erreur find/create file:", error);
                 showMessage(`Erreur Drive (Fichier): ${error.message}`, 6000);
                 driveStatusElement.textContent = 'Erreur fichier';
                 driveStatusElement.classList.remove('loading');
-                googleDriveFileId = null; // Réinitialiser l'ID en cas d'erreur
+                googleDriveFileId = null;
                 return null;
             }
         }
@@ -661,80 +648,67 @@
         // Lit le contenu du fichier CSV depuis Google Drive
         async function readFileContent(fileId) {
             if (!googleAccessToken || !fileId) return null;
-            console.log(`Lecture du fichier Drive: ${fileId}`);
+            console.log(`Lecture fichier Drive: ${fileId}`);
             driveStatusElement.textContent = 'Lecture historique...';
             driveStatusElement.classList.add('loading');
             const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
             try {
-                const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${googleAccessToken}` }
-                });
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!response.ok) {
-                    // Gérer spécifiquement le cas où le fichier a été supprimé manuellement
                     if (response.status === 404) {
-                        console.warn("Fichier d'historique non trouvé sur Drive (404):", fileId);
-                        showMessage("Fichier d'historique introuvable. Il sera recréé.", 4000);
-                        googleDriveFileId = null; // Forcer la recréation au prochain appel
-                        return ""; // Retourner une chaîne vide pour indiquer qu'il n'y a pas d'historique
+                        console.warn("Fichier non trouvé (404):", fileId);
+                        showMessage("Fichier d'historique introuvable sur Drive. Il sera recréé.", 4000);
+                        googleDriveFileId = null; return "";
                     }
                      if (response.status === 401 || response.status === 403) {
-                         console.warn("Accès refusé lecture (401/403). Jeton invalide ?");
-                         handleSignoutClick();
-                         showMessage("Session Google expirée. Veuillez vous reconnecter.", 5000);
-                         return null;
+                         console.warn("Accès refusé lecture (401/403). Jeton invalide?");
+                         handleSignoutClick(); showMessage("Session Google expirée. Veuillez vous reconnecter.", 5000); return null;
                      }
                     throw new Error(`Erreur lecture fichier (${response.status} ${response.statusText})`);
                 }
                 const content = await response.text();
-                console.log("Lecture du fichier Drive réussie.");
+                console.log("Lecture Drive réussie.");
                 driveStatusElement.textContent = 'Lecture OK';
                 driveStatusElement.classList.remove('loading');
-                setTimeout(() => updateAuthUI(true), 1500);
+                setTimeout(() => { if(googleAccessToken) driveStatusElement.textContent = 'Connecté'; }, 1500);
                 return content;
             } catch (error) {
-                console.error("Erreur lors de la lecture du fichier Drive:", error);
+                console.error("Erreur lecture fichier Drive:", error);
                 showMessage(`Erreur Drive (Lecture): ${error.message}`, 6000);
                 driveStatusElement.textContent = 'Erreur lecture';
                 driveStatusElement.classList.remove('loading');
-                return null; // Retourner null en cas d'erreur de lecture
+                return null;
             }
         }
 
         // Met à jour le contenu du fichier CSV sur Google Drive
         async function updateFileContent(fileId, content) {
             if (!googleAccessToken || !fileId) return false;
-            console.log(`Mise à jour du fichier Drive: ${fileId}`);
+            console.log(`Mise à jour fichier Drive: ${fileId}`);
             driveStatusElement.textContent = 'Sauvegarde...';
             driveStatusElement.classList.add('loading');
-            // Utilise l'endpoint d'upload simple pour écraser le contenu
             const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
             try {
                 const response = await fetch(url, {
-                    method: 'PATCH', // PATCH est utilisé pour mettre à jour le contenu (media)
-                    headers: {
-                        'Authorization': `Bearer ${googleAccessToken}`,
-                        'Content-Type': 'text/csv'
-                    },
-                    body: content // Le contenu CSV brut
+                    method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'text/csv' }, body: content
                 });
                 if (!response.ok) {
                      if (response.status === 401 || response.status === 403) {
-                         console.warn("Accès refusé écriture (401/403). Jeton invalide ?");
-                         handleSignoutClick();
-                         showMessage("Session Google expirée. Sauvegarde échouée. Veuillez vous reconnecter.", 6000);
-                         return false;
+                         console.warn("Accès refusé écriture (401/403). Jeton invalide?");
+                         handleSignoutClick(); showMessage("Session Google expirée. Sauvegarde échouée.", 6000); return false;
                      }
                     throw new Error(`Erreur écriture fichier (${response.status} ${response.statusText})`);
                 }
-                const responseData = await response.json(); // Récupérer les détails du fichier mis à jour
+                const responseData = await response.json();
                 console.log("Sauvegarde Drive réussie.", responseData);
-                showMessage("Historique sauvegardé sur Google Drive.", 2500);
+                // Le message de succès est maintenant souvent dans saveWorkoutToHistory ou saveHistoryToDrive
+                // showMessage("Historique sauvegardé sur Google Drive.", 2500);
                 driveStatusElement.textContent = 'Sauvegarde OK';
                 driveStatusElement.classList.remove('loading');
-                setTimeout(() => updateAuthUI(true), 1500);
+                 setTimeout(() => { if(googleAccessToken) driveStatusElement.textContent = 'Connecté'; }, 1500);
                 return true;
             } catch (error) {
-                console.error("Erreur lors de la mise à jour du fichier Drive:", error);
+                console.error("Erreur mise à jour fichier Drive:", error);
                 showMessage(`Erreur Drive (Écriture): ${error.message}`, 6000);
                 driveStatusElement.textContent = 'Erreur sauvegarde';
                 driveStatusElement.classList.remove('loading');
@@ -742,1291 +716,179 @@
             }
         }
 
-
         // --- Fonctions Cœur du Timer ---
         function formatTime(seconds) {
-             const absSeconds = Math.abs(Math.round(seconds));
-             const m = Math.floor(absSeconds / 60);
-             const s = absSeconds % 60;
-             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+             const absSeconds = Math.abs(Math.round(seconds)); const m = Math.floor(absSeconds / 60); const s = absSeconds % 60; return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
-
-        function formatTimeForChart(seconds) {
-             return parseFloat((seconds / 60).toFixed(1)); // Minutes avec une décimale pour Chart.js
-        }
+        function formatTimeForChart(seconds) { return parseFloat((seconds / 60).toFixed(1)); }
 
         function updateTimerDisplay() {
             timeLeftDisplay.textContent = formatTime(timeLeft);
             let progressPercent = 0;
-            // La progression n'a de sens que pendant une pause
-            if ((currentState === 'break' || currentState === 'paused') && totalTime > 0) {
-                progressPercent = Math.max(0, Math.min(100, ((totalTime - timeLeft) / totalTime) * 100));
-            } else if (currentState === 'finished') {
-                 progressPercent = 100; // Cercle plein à la fin
-            }
+            if ((currentState === 'break' || currentState === 'paused') && totalTime > 0) { progressPercent = Math.max(0, Math.min(100, ((totalTime - timeLeft) / totalTime) * 100)); }
+            else if (currentState === 'finished') { progressPercent = 100; }
             timerCircle.style.background = `conic-gradient(var(--accent-color) ${progressPercent}%, var(--border-color) 0%)`;
         }
 
         function updateWorkoutInfo(animate = false) {
-            const currentItem = currentWorkoutPlan[currentItemIndex];
-            const nextItem = (currentItemIndex + 1 < currentWorkoutPlan.length) ? currentWorkoutPlan[currentItemIndex + 1] : null;
-
-            const createCardHTML = (item, isCurrent) => {
-                if (!item) return '';
-                const title = isCurrent ? 'En cours' : 'Suivant';
-                const tagName = isCurrent ? 'h2' : 'h3';
-                const icon = item.type === 'exercise' ? '<i class="fas fa-weight-hanging"></i>' : '<i class="fas fa-coffee"></i>';
-
-                let cardContent = `<${tagName}>${icon} ${title}: ${item.name || 'Repos'}</${tagName}>`;
-                if (item.details) cardContent += `<p>${item.details}</p>`;
-                if (item.reps) cardContent += `<p><strong>${item.reps} reps</strong></p>`;
-                if (item.duration) cardContent += `<p><strong><i class="fas fa-clock"></i> Durée: ${formatTime(item.duration)}</strong></p>`;
-                return `<div class="exercise-card">${cardContent}</div>`;
-            };
-
-            const currentCardHTML = createCardHTML(currentItem, true);
-            const nextCardHTML = createCardHTML(nextItem, false);
-
-            const updateDOMContent = () => {
-                let finalCurrentHTML = '', finalNextHTML = '', finalProgressText = '';
-
-                if (currentState === 'idle') {
-                    finalCurrentHTML = googleAccessToken
-                        ? `<p>Sélectionnez un entraînement (Push, Pull, Legs) pour commencer.</p>`
-                        : `<p>Connectez-vous à Google Drive pour charger votre historique et sélectionner un entraînement.</p>`;
-                } else if (currentState === 'finished') {
-                    const durationFinished = workoutStartTime ? formatTime((Date.now() - workoutStartTime) / 1000) : 'N/A';
-                    finalCurrentHTML = `<div class="exercise-card"><h2><i class="fas fa-check-circle" style="color: var(--success-color)"></i> Entraînement Terminé !</h2><p>Félicitations ! Temps total: <strong>${durationFinished}</strong></p></div>`;
-                    finalProgressText = `Terminé (${currentWorkoutPlan.length}/${currentWorkoutPlan.length})`;
-                } else if (currentItem) {
-                    finalCurrentHTML = currentCardHTML;
-                    finalNextHTML = nextCardHTML;
-                    finalProgressText = `Étape ${currentItemIndex + 1} / ${currentWorkoutPlan.length}`;
-                } else {
-                    finalCurrentHTML = `<p>Chargement...</p>`; // État intermédiaire possible
-                }
-
-                currentExerciseContainer.innerHTML = finalCurrentHTML;
-                nextExerciseContainer.innerHTML = finalNextHTML;
-                progressTracker.textContent = finalProgressText;
-
-                 // Force reflow pour les animations CSS (si nécessaire après mise à jour du contenu)
-                void currentExerciseContainer.offsetWidth;
-                 void nextExerciseContainer.offsetWidth;
-            };
-
-            if (animate && currentState !== 'idle' && currentState !== 'finished') {
-                const oldCurrentCard = currentExerciseContainer.querySelector('.exercise-card');
-                const oldNextCard = nextExerciseContainer.querySelector('.exercise-card');
-
-                // Appliquer la classe de sortie
-                if (oldCurrentCard) oldCurrentCard.classList.add('exercise-exit');
-                if (oldNextCard) oldNextCard.classList.add('exercise-exit');
-
-                // Attendre la fin de l'animation de sortie avant de mettre à jour le DOM et d'animer l'entrée
-                const animationDuration = 400; // Doit correspondre à la durée dans CSS
-                setTimeout(() => {
-                    updateDOMContent(); // Met à jour le contenu HTML
-
-                    // Sélectionner les nouvelles cartes
-                    const newCurrentCard = currentExerciseContainer.querySelector('.exercise-card');
-                    const newNextCard = nextExerciseContainer.querySelector('.exercise-card');
-
-                    // Appliquer la classe d'entrée (si les cartes existent)
-                    if (newCurrentCard) newCurrentCard.classList.add('exercise-enter');
-                    if (newNextCard) newNextCard.classList.add('exercise-enter');
-
-                    // Utiliser requestAnimationFrame pour retirer la classe d'entrée après le rendu
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            if (newCurrentCard) newCurrentCard.classList.remove('exercise-enter');
-                            if (newNextCard) newNextCard.classList.remove('exercise-enter');
-                        });
-                    });
-                }, animationDuration / 2); // Mettre à jour le DOM à mi-chemin de l'animation de sortie
-
-            } else {
-                updateDOMContent(); // Mettre à jour sans animation
-            }
+            const currentItem = currentWorkoutPlan[currentItemIndex]; const nextItem = (currentItemIndex + 1 < currentWorkoutPlan.length) ? currentWorkoutPlan[currentItemIndex + 1] : null;
+            const createCardHTML = (item, isCurrent) => { if (!item) return ''; const title = isCurrent ? 'En cours' : 'Suivant'; const tagName = isCurrent ? 'h2' : 'h3'; const icon = item.type === 'exercise' ? '<i class="fas fa-weight-hanging"></i>' : '<i class="fas fa-coffee"></i>'; let cardContent = `<${tagName}>${icon} ${title}: ${item.name || 'Repos'}</${tagName}>`; if (item.details) cardContent += `<p>${item.details}</p>`; if (item.reps) cardContent += `<p><strong>${item.reps} reps</strong></p>`; if (item.duration) cardContent += `<p><strong><i class="fas fa-clock"></i> Durée: ${formatTime(item.duration)}</strong></p>`; return `<div class="exercise-card">${cardContent}</div>`; };
+            const currentCardHTML = createCardHTML(currentItem, true); const nextCardHTML = createCardHTML(nextItem, false);
+            const updateDOMContent = () => { let finalCurrentHTML = '', finalNextHTML = '', finalProgressText = ''; if (currentState === 'idle') { finalCurrentHTML = googleAccessToken ? `<p>Sélectionnez un entraînement (Push, Pull, Legs) pour commencer.</p>` : `<p>Connectez-vous à Google Drive pour charger votre historique et sélectionner un entraînement.</p>`; } else if (currentState === 'finished') { const durationFinished = workoutStartTime ? formatTime((Date.now() - workoutStartTime) / 1000) : 'N/A'; finalCurrentHTML = `<div class="exercise-card"><h2><i class="fas fa-check-circle" style="color: var(--success-color)"></i> Entraînement Terminé !</h2><p>Félicitations ! Temps total: <strong>${durationFinished}</strong></p></div>`; finalProgressText = `Terminé (${currentWorkoutPlan.length}/${currentWorkoutPlan.length})`; } else if (currentItem) { finalCurrentHTML = currentCardHTML; finalNextHTML = nextCardHTML; finalProgressText = `Étape ${currentItemIndex + 1} / ${currentWorkoutPlan.length}`; } else { finalCurrentHTML = `<p>Chargement...</p>`; } currentExerciseContainer.innerHTML = finalCurrentHTML; nextExerciseContainer.innerHTML = finalNextHTML; progressTracker.textContent = finalProgressText; void currentExerciseContainer.offsetWidth; void nextExerciseContainer.offsetWidth; };
+            if (animate && currentState !== 'idle' && currentState !== 'finished') { const oldCurrentCard = currentExerciseContainer.querySelector('.exercise-card'); const oldNextCard = nextExerciseContainer.querySelector('.exercise-card'); if (oldCurrentCard) oldCurrentCard.classList.add('exercise-exit'); if (oldNextCard) oldNextCard.classList.add('exercise-exit'); const animationDuration = 400; setTimeout(() => { updateDOMContent(); const newCurrentCard = currentExerciseContainer.querySelector('.exercise-card'); const newNextCard = nextExerciseContainer.querySelector('.exercise-card'); if (newCurrentCard) newCurrentCard.classList.add('exercise-enter'); if (newNextCard) newNextCard.classList.add('exercise-enter'); requestAnimationFrame(() => { requestAnimationFrame(() => { if (newCurrentCard) newCurrentCard.classList.remove('exercise-enter'); if (newNextCard) newNextCard.classList.remove('exercise-enter'); }); }); }, animationDuration / 2); }
+            else { updateDOMContent(); }
         }
 
-
         function setState(newState) {
-            const previousState = currentState;
-            currentState = newState;
-            console.log(`Transition State: ${previousState} -> ${newState}`);
+            const previousState = currentState; currentState = newState; console.log(`Transition State: ${previousState} -> ${newState}`);
+            timerStateDisplay.classList.remove('visible'); clearInterval(timerInterval); timerInterval = null;
+             if (['idle'].includes(previousState) && ['exercise', 'break', 'paused'].includes(newState)) { if (workoutStartTime === null) { workoutStartTime = Date.now(); console.log("Début entraînement:", new Date(workoutStartTime)); } }
+            // Gérer l'état activé/désactivé des boutons ici est plus fiable
+            startPauseBtn.disabled = true; skipBtn.disabled = true; finishBtn.disabled = true; resetBtn.disabled = true; startPauseBtn.classList.remove('pause-btn');
 
-            timerStateDisplay.classList.remove('visible');
-            clearInterval(timerInterval); // Arrête tout timer précédent
-            timerInterval = null; // Réinitialise la référence
-
-            // Démarre le suivi du temps total de l'entraînement la première fois qu'on quitte 'idle'
-             if (['idle'].includes(previousState) && ['exercise', 'break', 'paused'].includes(newState)) {
-                 if (workoutStartTime === null) {
-                     workoutStartTime = Date.now();
-                     console.log("Début de l'entraînement:", new Date(workoutStartTime));
-                 }
-             }
-
-            // Réinitialise l'état des boutons, puis active/désactive selon le nouvel état
-            startPauseBtn.disabled = true;
-            skipBtn.disabled = true;
-            finishBtn.disabled = true;
-            resetBtn.disabled = true;
-             startPauseBtn.classList.remove('pause-btn'); // Retire le style 'pause' par défaut
-
-            // --- Logique spécifique à chaque état ---
             switch (newState) {
                 case 'idle':
                     startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer';
-                    // Le bouton démarrer est activé seulement si connecté ET un workout est choisi
-                    startPauseBtn.disabled = !googleAccessToken || !currentWorkoutType;
-                    resetBtn.disabled = !currentWorkoutType; // On peut reset si un workout est chargé
-                    isTimerRunning = false;
-                    isWorkoutActive = false;
-                    workoutFinished = false;
-                    timeLeft = 0;
-                    totalTime = 0;
-                    // workoutStartTime = null; // Ne pas réinitialiser ici pour le calcul final si on revient à idle via reset
-                    updateTimerDisplay();
+                    startPauseBtn.disabled = !googleAccessToken || !currentWorkoutType; // Dépend connexion ET sélection
+                    resetBtn.disabled = !googleAccessToken || !currentWorkoutType; // Idem pour reset
+                    isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; updateTimerDisplay();
                     break;
-
                 case 'exercise':
                     startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Fait';
-                    startPauseBtn.disabled = false;
-                    skipBtn.disabled = false;
-                    finishBtn.disabled = false;
-                    resetBtn.disabled = false;
-                    isTimerRunning = false;
-                    isWorkoutActive = true;
-                    workoutFinished = false;
-                    timerStateDisplay.textContent = 'EXERCICE';
-                    timerStateDisplay.classList.add('visible');
-                    timeLeft = 0; // Pas de timer pour l'exercice lui-même
-                    totalTime = 0;
-                    updateTimerDisplay(); // Met le cercle à 0%
+                    startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
+                    isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'EXERCICE'; timerStateDisplay.classList.add('visible'); timeLeft = 0; totalTime = 0; updateTimerDisplay();
                     break;
-
                 case 'break':
                     startPauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-                    startPauseBtn.disabled = false;
-                    startPauseBtn.classList.add('pause-btn'); // Style spécifique pause
-                    skipBtn.disabled = false; // On peut skipper la pause
-                    finishBtn.disabled = false;
-                    resetBtn.disabled = false;
-                    isTimerRunning = true;
-                    isWorkoutActive = true;
-                    workoutFinished = false;
-                    timerStateDisplay.textContent = 'REPOS';
-                    timerStateDisplay.classList.add('visible');
-                    startBreakTimer(); // Démarre le décompte
+                    startPauseBtn.disabled = false; startPauseBtn.classList.add('pause-btn'); skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
+                    isTimerRunning = true; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'REPOS'; timerStateDisplay.classList.add('visible'); startBreakTimer();
                     break;
-
                 case 'paused':
-                    // Vient de 'break'. Le temps restant (timeLeft) est conservé.
                     startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre';
-                    startPauseBtn.disabled = false;
-                    skipBtn.disabled = false; // On peut skipper même en pause
-                    finishBtn.disabled = false;
-                    resetBtn.disabled = false;
-                    isTimerRunning = false; // Le timer est arrêté
-                    isWorkoutActive = true; // L'entraînement est toujours actif
-                    workoutFinished = false;
-                    timerStateDisplay.textContent = 'EN PAUSE';
-                    timerStateDisplay.classList.add('visible');
-                    updateTimerDisplay(); // Affiche le temps restant sans décompter
+                    startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
+                    isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; timerStateDisplay.textContent = 'EN PAUSE'; timerStateDisplay.classList.add('visible'); updateTimerDisplay();
                     break;
-
                 case 'finished':
                     startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Terminé';
-                    startPauseBtn.disabled = true; // Pas d'action après la fin
-                    skipBtn.disabled = true;
-                    finishBtn.disabled = true;
-                    resetBtn.disabled = false; // On peut réinitialiser pour en commencer un autre
-                    isTimerRunning = false;
-                    isWorkoutActive = false;
-                    workoutFinished = true;
-                    timerStateDisplay.textContent = 'FINI !';
-                    timerStateDisplay.classList.add('visible');
-                    timeLeft = 0; totalTime = 0; // Réinitialise les temps de pause
-                    updateTimerDisplay(); // Affiche 00:00
-                    showMessage('Entraînement terminé ! Bravo ! 💪', 4000);
-                    vibrate([200, 100, 200]);
-                    if (endSound) endSound();
-
-                    // *** CORRECTION MAJEURE : Appeler saveWorkoutToHistory ICI ***
-                    saveWorkoutToHistory(); // Sauvegarde l'entrée terminée dans workoutHistory ET déclenche la sauvegarde Drive
-
-                    clearInProgressState(); // Efface l'état local "en cours"
-                    currentWorkoutType = null; // Désélectionne le workout
-                    setActiveWorkoutNav(null); // Désactive le bouton de nav
-                     // workoutStartTime n'est PAS réinitialisé ici pour être utilisé par saveWorkoutToHistory
+                    startPauseBtn.disabled = true; skipBtn.disabled = true; finishBtn.disabled = true;
+                    resetBtn.disabled = !googleAccessToken; // On peut reset si connecté
+                    isTimerRunning = false; isWorkoutActive = false; workoutFinished = true; timerStateDisplay.textContent = 'FINI !'; timerStateDisplay.classList.add('visible'); timeLeft = 0; totalTime = 0; updateTimerDisplay();
+                    showMessage('Entraînement terminé ! Bravo ! 💪', 4000); vibrate([200, 100, 200]); if (endSound) endSound();
+                    saveWorkoutToHistory(); // Sauvegarde l'historique
+                    clearInProgressState(); // Efface état local
+                    currentWorkoutType = null; setActiveWorkoutNav(null); // Désélectionne
                     break;
             }
-
-             // Assure que le bouton Démarrer est correctement mis à jour après chaque changement d'état
              if (newState === 'idle') checkEnableStartButton();
-
-            // Met à jour l'affichage de l'exercice actuel/suivant
-             // Ne pas animer si on passe de idle/finished à un état actif pour la première fois
              const shouldAnimateInfo = previousState !== 'idle' && previousState !== 'finished';
              updateWorkoutInfo(shouldAnimateInfo);
         }
 
-        function startBreakTimer() {
-            if (timerInterval) clearInterval(timerInterval); // Sécurité
-            updateTimerDisplay(); // Affichage initial
-            timerInterval = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateTimerDisplay();
-                } else {
-                    handleItemCompletion(true); // true = complétion naturelle
-                }
-            }, 1000);
-        }
+        function startBreakTimer() { if (timerInterval) clearInterval(timerInterval); updateTimerDisplay(); timerInterval = setInterval(() => { if (timeLeft > 0) { timeLeft--; updateTimerDisplay(); } else { handleItemCompletion(true); } }, 1000); }
 
-        // Gère la fin d'un item (exercice 'fait' ou fin de pause)
         function handleItemCompletion(naturalCompletion = false) {
-            if (currentState === 'finished') return; // Ne rien faire si déjà fini
-
-             if (naturalCompletion && currentState === 'break') { // Fin naturelle d'une pause
-                 if (endSound) endSound();
-                 vibrate();
-             }
-             if (!naturalCompletion && currentState === 'break') { // Skip d'une pause
-                 // Optionnel : jouer un son différent pour le skip ?
-             }
-
-             currentItemIndex++; // Passe à l'item suivant
-
-             saveInProgressState(); // Sauvegarde l'état local *avant* de potentiellement finir
-
-             if (currentItemIndex >= currentWorkoutPlan.length) {
-                 // Fin de l'entraînement
-                 setState('finished');
-             } else {
-                 // Passe à l'item suivant
-                 const nextItem = currentWorkoutPlan[currentItemIndex];
-                 if (nextItem.type === 'exercise') {
-                     setState('exercise');
-                 } else { // C'est une pause
-                     totalTime = nextItem.duration;
-                     timeLeft = nextItem.duration;
-                     setState('break'); // Démarre directement la pause
-                 }
-                 // L'animation est gérée dans setState via updateWorkoutInfo
-             }
+            if (currentState === 'finished') return;
+             if (naturalCompletion && currentState === 'break') { if (endSound) endSound(); vibrate(); }
+             currentItemIndex++; saveInProgressState();
+             if (currentItemIndex >= currentWorkoutPlan.length) { setState('finished'); }
+             else { const nextItem = currentWorkoutPlan[currentItemIndex]; if (nextItem.type === 'exercise') { setState('exercise'); } else { totalTime = nextItem.duration; timeLeft = nextItem.duration; setState('break'); } }
         }
 
-        // Termine l'entraînement prématurément
         function forceFinishWorkout() {
             if (!isWorkoutActive || workoutFinished) return;
-
-            // Demander confirmation
             if (confirm("Terminer cet entraînement maintenant ? La progression sera sauvegardée.")) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-
-                // *** CORRECTION : setState appelle maintenant saveWorkoutToHistory ***
-                setState('finished'); // Passe à l'état 'fini', ce qui déclenchera la sauvegarde
-
+                clearInterval(timerInterval); timerInterval = null;
+                setState('finished'); // Déclenche la sauvegarde via saveWorkoutToHistory
                 showMessage("Entraînement terminé manuellement.", 3000);
             }
         }
 
-
-        // Charge un plan d'entraînement (Push, Pull, Legs)
         function loadWorkout(type) {
-            // Vérifier si connecté
-            if (!googleAccessToken) {
-                showMessage("Connectez-vous à Google Drive pour commencer un entraînement.", 4000);
-                return;
-            }
-             // Vérifier si un autre entraînement est en cours
-             if (isWorkoutActive && !workoutFinished && currentWorkoutType !== type) {
-                 if (!confirm(`Un entraînement "${currentWorkoutType}" est en cours. Voulez-vous l'arrêter (la progression sera perdue) et charger "${type}" ?`)) {
-                     return; // L'utilisateur annule
-                 } else {
-                     resetCurrentWorkout(); // Arrêter et réinitialiser l'ancien
-                 }
-             } else if (currentWorkoutType === type && isWorkoutActive && !workoutFinished) {
-                  showMessage(`L'entraînement "${type}" est déjà en cours.`, 2000);
-                  showSection('workout'); // S'assurer que la section workout est visible
-                  return; // Ne rien faire si on recharge le même
-             }
+            if (!googleAccessToken) { showMessage("Connectez-vous à Google Drive pour commencer.", 4000); return; }
+             if (isWorkoutActive && !workoutFinished && currentWorkoutType !== type) { if (!confirm(`Arrêter l'entraînement "${currentWorkoutType}" (progrès perdus) et charger "${type}" ?`)) { return; } else { resetCurrentWorkout(); } }
+             else if (currentWorkoutType === type && isWorkoutActive && !workoutFinished) { showMessage(`"${type}" est déjà en cours.`, 2000); showSection('workout'); return; }
+            if (!workouts[type]) { console.error(`Type inconnu: ${type}`); return; }
 
-            if (!workouts[type]) {
-                console.error(`Type d'entraînement inconnu: ${type}`);
-                return;
-            }
+            console.log(`Chargement workout: ${type}`);
+            currentWorkoutType = type; currentWorkoutPlan = JSON.parse(JSON.stringify(workouts[type])); currentItemIndex = 0; workoutStartTime = null; workoutFinished = false; isWorkoutActive = false;
+            setActiveWorkoutNav(type); showSection('workout'); clearInterval(timerInterval); timerInterval = null; isTimerRunning = false;
 
-            console.log(`Chargement du workout: ${type}`);
-            currentWorkoutType = type;
-            currentWorkoutPlan = JSON.parse(JSON.stringify(workouts[type])); // Copie profonde pour éviter modifs
-            currentItemIndex = 0;
-            workoutStartTime = null; // Sera défini au premier passage à 'exercise' ou 'break'
-            workoutFinished = false;
-            isWorkoutActive = false; // Ne devient actif qu'au premier start/skip
-
-            setActiveWorkoutNav(type); // Met en évidence le bouton de nav
-            showSection('workout'); // Affiche la section timer
-            clearInterval(timerInterval); timerInterval = null; // Arrête tout timer précédent
-            isTimerRunning = false;
-
-            // Préparer le premier item
             const firstItem = currentWorkoutPlan[0];
-            if (firstItem.type === 'exercise') {
-                 setState('idle'); // Commence en 'idle', prêt à démarrer l'exercice
-                 timeLeft = 0; totalTime = 0; // Pas de temps initial
-            } else { // Le premier item est une pause
-                totalTime = firstItem.duration;
-                timeLeft = firstItem.duration;
-                setState('paused'); // Commence en pause, prêt à démarrer la pause
-                 startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer Pause';
-                 timerStateDisplay.textContent = 'PRÊT ?';
-                 timerStateDisplay.classList.add('visible');
-                 updateTimerDisplay();
-            }
-            // Met à jour l'affichage SANS animation initiale
-             updateWorkoutInfo(false);
-            showMessage(`Programme "${type}" chargé. Prêt à démarrer !`, 3000);
-            saveInProgressState(); // Sauvegarde l'état initial chargé localement
-             checkEnableStartButton(); // Active le bouton démarrer maintenant qu'un workout est chargé
+            if (firstItem.type === 'exercise') { setState('idle'); timeLeft = 0; totalTime = 0; }
+            else { totalTime = firstItem.duration; timeLeft = firstItem.duration; setState('paused'); startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer Pause'; timerStateDisplay.textContent = 'PRÊT ?'; timerStateDisplay.classList.add('visible'); updateTimerDisplay(); }
+            updateWorkoutInfo(false); showMessage(`Programme "${type}" chargé. Prêt !`, 3000); saveInProgressState(); checkEnableStartButton();
         }
 
-
-        // Réinitialise l'état actuel de l'entraînement
         function resetCurrentWorkout() {
-            console.log("Réinitialisation de l'entraînement.");
-            clearInterval(timerInterval); timerInterval = null;
-            const typeReset = currentWorkoutType; // Garde le type pour le message
-
-            // Réinitialiser toutes les variables d'état liées à l'entraînement en cours
-            currentWorkoutType = null;
-            currentWorkoutPlan = [];
-            currentItemIndex = 0;
-            workoutStartTime = null;
-            isTimerRunning = false;
-            isWorkoutActive = false;
-            workoutFinished = false;
-            timeLeft = 0;
-            totalTime = 0;
-
-            clearInProgressState(); // Efface la sauvegarde locale "en cours"
-            setState('idle'); // Retour à l'état initial (gère aussi l'UI des boutons)
-            setActiveWorkoutNav(null); // Désélectionne les boutons de navigation
-            updateWorkoutInfo(false); // Met à jour l'affichage (message initial)
-
-            if (typeReset) {
-                showMessage(`Entraînement "${typeReset}" réinitialisé.`, 2500);
-            } else {
-                // showMessage(`Application réinitialisée.`, 2000); // Moins utile peut-être
-            }
-             checkEnableStartButton(); // Met à jour l'état du bouton démarrer (sera désactivé)
+            console.log("Réinitialisation entraînement."); clearInterval(timerInterval); timerInterval = null; const typeReset = currentWorkoutType;
+            currentWorkoutType = null; currentWorkoutPlan = []; currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0;
+            clearInProgressState(); setState('idle'); setActiveWorkoutNav(null); updateWorkoutInfo(false);
+            if (typeReset) { showMessage(`Entraînement "${typeReset}" réinitialisé.`, 2500); }
+             checkEnableStartButton(); // Met à jour état bouton Démarrer
         }
 
-        // Affiche un message temporaire en bas de l'écran
         let messageTimeoutId = null;
-        function showMessage(msg, duration = 3500) {
-             messageArea.textContent = msg;
-             messageArea.classList.add('visible');
-             if (messageTimeoutId) clearTimeout(messageTimeoutId);
-             messageTimeoutId = setTimeout(() => {
-                 messageArea.classList.remove('visible');
-                 messageTimeoutId = null;
-             }, duration);
-         }
+        function showMessage(msg, duration = 3500) { messageArea.textContent = msg; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageTimeoutId = null; }, duration); }
 
         // --- Gestion du Thème ---
-        function applyTheme(theme) {
-             const body = document.body;
-             const isDark = theme === 'dark';
-             body.classList.toggle('dark-theme', isDark);
-             themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-             localStorage.setItem('theme', theme); // Sauvegarde le choix
-
-             // Mettre à jour les variables RGB pour les couleurs semi-transparentes
-             const primaryColor = getComputedStyle(body).getPropertyValue(isDark ? '--primary-color-dark' : '--primary-color-light').trim();
-             const bgColor = getComputedStyle(body).getPropertyValue(isDark ? '--bg-color-dark' : '--bg-color-light').trim();
-             const textColor = getComputedStyle(body).getPropertyValue(isDark ? '--text-color-dark' : '--text-color-light').trim();
-
-             body.style.setProperty('--primary-color-rgb', colorToRgb(primaryColor) || (isDark ? '88, 166, 255' : '74, 144, 226'));
-             body.style.setProperty('--bg-color-rgb', colorToRgb(bgColor) || (isDark ? '13, 17, 23' : '255, 255, 255'));
-             body.style.setProperty('--text-color-rgb', colorToRgb(textColor) || (isDark ? '225, 225, 225' : '51, 51, 51'));
-
-             // Mettre à jour le thème du graphique s'il est visible
-             if (historyChart && !historySection.classList.contains('section-hidden')) {
-                 updateChartTheme();
-             }
-         }
-         // Helper pour convertir hex/rgb en 'R, G, B'
-         function colorToRgb(color) {
-             if (!color) return null;
-             if (color.startsWith('#')) {
-                 const bigint = parseInt(color.slice(1), 16);
-                 const r = (bigint >> 16) & 255;
-                 const g = (bigint >> 8) & 255;
-                 const b = bigint & 255;
-                 return `${r}, ${g}, ${b}`;
-             } else if (color.startsWith('rgb')) {
-                 return color.match(/\d+/g).slice(0, 3).join(', ');
-             }
-             return null; // Format non reconnu
-         }
-
-        function updateChartTheme() {
-            if (!historyChart) return;
-            const isDark = document.body.classList.contains('dark-theme');
-             // Récupérer les couleurs CSS actuelles (après application du thème)
-             const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid-color').trim();
-             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-             const tooltipBg = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-bg').trim();
-             const tooltipText = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-text').trim();
-             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-             const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
-
-            // Mettre à jour les options du graphique
-            historyChart.options.scales.x.grid.color = gridColor;
-            historyChart.options.scales.y.grid.color = gridColor;
-            historyChart.options.scales.x.ticks.color = textColor;
-            historyChart.options.scales.y.ticks.color = textColor;
-             historyChart.options.scales.x.title.color = textColor;
-             historyChart.options.scales.y.title.color = textColor;
-            historyChart.options.plugins.tooltip.backgroundColor = tooltipBg;
-            historyChart.options.plugins.tooltip.titleColor = tooltipText;
-            historyChart.options.plugins.tooltip.bodyColor = tooltipText;
-            historyChart.options.plugins.legend.labels.color = textColor;
-
-             // Mettre à jour les couleurs des barres si nécessaire (peut rester dynamique via CSS vars si supporté)
-             historyChart.data.datasets[0].backgroundColor = primaryColor + 'AA'; // Ajoute transparence
-             historyChart.data.datasets[0].borderColor = primaryColor;
-             historyChart.data.datasets[0].hoverBackgroundColor = accentColor;
-             historyChart.data.datasets[0].hoverBorderColor = accentColor;
-
-
-            historyChart.update(); // Redessine le graphique avec les nouvelles couleurs
-        }
+        function applyTheme(theme) { const body = document.body; const isDark = theme === 'dark'; body.classList.toggle('dark-theme', isDark); themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; localStorage.setItem('theme', theme); const primaryColor = getComputedStyle(body).getPropertyValue(isDark ? '--primary-color-dark' : '--primary-color-light').trim(); const bgColor = getComputedStyle(body).getPropertyValue(isDark ? '--bg-color-dark' : '--bg-color-light').trim(); const textColor = getComputedStyle(body).getPropertyValue(isDark ? '--text-color-dark' : '--text-color-light').trim(); body.style.setProperty('--primary-color-rgb', colorToRgb(primaryColor) || (isDark ? '88, 166, 255' : '74, 144, 226')); body.style.setProperty('--bg-color-rgb', colorToRgb(bgColor) || (isDark ? '13, 17, 23' : '255, 255, 255')); body.style.setProperty('--text-color-rgb', colorToRgb(textColor) || (isDark ? '225, 225, 225' : '51, 51, 51')); if (historyChart && !historySection.classList.contains('section-hidden')) { updateChartTheme(); } }
+        function colorToRgb(color) { if (!color) return null; if (color.startsWith('#')) { const bigint = parseInt(color.slice(1), 16); const r = (bigint >> 16) & 255; const g = (bigint >> 8) & 255; const b = bigint & 255; return `${r}, ${g}, ${b}`; } else if (color.startsWith('rgb')) { return color.match(/\d+/g).slice(0, 3).join(', '); } return null; }
+        function updateChartTheme() { if (!historyChart) return; const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid-color').trim(); const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim(); const tooltipBg = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-bg').trim(); const tooltipText = getComputedStyle(document.documentElement).getPropertyValue('--chart-tooltip-text').trim(); const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(); const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(); historyChart.options.scales.x.grid.color = gridColor; historyChart.options.scales.y.grid.color = gridColor; historyChart.options.scales.x.ticks.color = textColor; historyChart.options.scales.y.ticks.color = textColor; historyChart.options.scales.x.title.color = textColor; historyChart.options.scales.y.title.color = textColor; historyChart.options.plugins.tooltip.backgroundColor = tooltipBg; historyChart.options.plugins.tooltip.titleColor = tooltipText; historyChart.options.plugins.tooltip.bodyColor = tooltipText; historyChart.options.plugins.legend.labels.color = textColor; historyChart.data.datasets[0].backgroundColor = primaryColor + 'BF'; historyChart.data.datasets[0].borderColor = primaryColor; historyChart.data.datasets[0].hoverBackgroundColor = accentColor + 'DF'; historyChart.data.datasets[0].hoverBorderColor = accentColor; historyChart.update(); }
 
         // --- Gestion Affichage Sections ---
-        function showSection(sectionName) {
-             if (sectionName === 'history') {
-                 workoutSection.classList.add('section-hidden');
-                 historySection.classList.remove('section-hidden');
-                 navHistoryBtn.classList.add('active');
-                 navButtons.forEach(btn => btn.classList.remove('active'));
-                 // S'assurer que l'historique est à jour quand on l'affiche
-                 displayHistory(currentHistoryPeriod);
-             } else { // 'workout' ou autre
-                 workoutSection.classList.remove('section-hidden');
-                 historySection.classList.add('section-hidden');
-                 navHistoryBtn.classList.remove('active');
-                 setActiveWorkoutNav(currentWorkoutType); // Réactive le bouton du workout actuel si sélectionné
-             }
-         }
-        function setActiveWorkoutNav(workoutType) {
-            navButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.workout === workoutType);
-            });
-        }
+        function showSection(sectionName) { if (sectionName === 'history') { workoutSection.classList.add('section-hidden'); historySection.classList.remove('section-hidden'); navHistoryBtn.classList.add('active'); navButtons.forEach(btn => btn.classList.remove('active')); displayHistory(currentHistoryPeriod); } else { workoutSection.classList.remove('section-hidden'); historySection.classList.add('section-hidden'); navHistoryBtn.classList.remove('active'); setActiveWorkoutNav(currentWorkoutType); } }
+        function setActiveWorkoutNav(workoutType) { navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.workout === workoutType); }); }
 
-        // --- Persistance Locale (pour état EN COURS uniquement) ---
+        // --- Persistance Locale (État EN COURS) ---
         const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
-
-        function saveInProgressState() {
-             // Ne sauvegarde que si un entraînement est actif mais pas terminé
-             if (!isWorkoutActive || workoutFinished || currentState === 'idle') {
-                  // Si on n'est plus actif, on efface la sauvegarde locale
-                  clearInProgressState();
-                  return;
-             }
-             // Crée l'objet d'état à sauvegarder
-             const stateToSave = {
-                 type: currentWorkoutType,
-                 index: currentItemIndex,
-                 timeLeft: timeLeft,
-                 totalTime: totalTime,
-                 currentState: currentState,
-                 startTime: workoutStartTime // Sauvegarde l'heure de début
-             };
-             try {
-                 localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave));
-                 console.log("État en cours sauvegardé localement:", stateToSave);
-             } catch (e) {
-                 console.error("Sauvegarde locale de l'état en cours échouée:", e);
-                 showMessage("Erreur: Sauvegarde de la progression locale échouée.", 5000);
-             }
-         }
-
-        function loadInProgressState() {
-             const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY);
-             if (!savedStateJSON) return false; // Pas d'état sauvegardé
-
-             try {
-                 const savedState = JSON.parse(savedStateJSON);
-                 // Validation simple de l'état sauvegardé
-                 if (!savedState.type || !workouts[savedState.type] || typeof savedState.index !== 'number' || typeof savedState.currentState !== 'string') {
-                     console.warn("État local 'en cours' invalide ou obsolète. Suppression.");
-                     clearInProgressState();
-                     return false;
-                 }
-
-                 // Proposer à l'utilisateur de reprendre
-                 // Ne proposer que si on est connecté (car l'historique dépend de Drive)
-                 if (googleAccessToken && confirm(`Un entraînement "${savedState.type}" (${savedState.currentState}) était en cours. Voulez-vous le reprendre ?`)) {
-                     console.log("Reprise de l'état local 'en cours'.");
-
-                     // Restaurer l'état
-                     currentWorkoutType = savedState.type;
-                     currentWorkoutPlan = JSON.parse(JSON.stringify(workouts[currentWorkoutType])); // Recharger une copie propre
-                     currentItemIndex = savedState.index;
-                     timeLeft = savedState.timeLeft;
-                     totalTime = savedState.totalTime;
-                     workoutStartTime = savedState.startTime; // Restaurer l'heure de début
-                     isWorkoutActive = true; // Marquer comme actif
-                     workoutFinished = false;
-
-                     setActiveWorkoutNav(currentWorkoutType);
-                     showSection('workout'); // Afficher la section workout
-
-                     // Restaurer l'état spécifique (exercise, break, paused)
-                     const stateToRestore = savedState.currentState;
-                      // On utilise setState pour gérer la logique des boutons et l'affichage
-                      // Mais on évite les effets secondaires de setState (comme redémarrer le startTime)
-                     currentState = stateToRestore; // Forcer l'état SANS passer par setState initialement
-                     console.log(`Reprise à l'état: ${currentState}`);
-
-                     // Ajustements spécifiques selon l'état repris
-                     if (stateToRestore === 'exercise') {
-                          startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Fait';
-                          startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
-                          timerStateDisplay.textContent = 'EXERCICE'; timerStateDisplay.classList.add('visible');
-                     } else if (stateToRestore === 'break') {
-                          // Si on reprend pendant une pause, on la met en pause pour que l'utilisateur la relance
-                          currentState = 'paused'; // On force 'paused' pour la reprise
-                          startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre';
-                          startPauseBtn.disabled = false; startPauseBtn.classList.remove('pause-btn');
-                          skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
-                          isTimerRunning = false;
-                          timerStateDisplay.textContent = 'EN PAUSE (Reprise)'; timerStateDisplay.classList.add('visible');
-                          // timeLeft et totalTime sont déjà restaurés
-                     } else if (stateToRestore === 'paused') {
-                          startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre';
-                           startPauseBtn.disabled = false; startPauseBtn.classList.remove('pause-btn');
-                           skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
-                          isTimerRunning = false;
-                          timerStateDisplay.textContent = 'EN PAUSE'; timerStateDisplay.classList.add('visible');
-                          // timeLeft et totalTime sont déjà restaurés
-                     } else {
-                          // Normalement, on ne devrait pas reprendre depuis 'idle' ou 'finished'
-                          console.warn("Reprise depuis un état inattendu:", stateToRestore);
-                          resetCurrentWorkout();
-                          return false;
-                     }
-
-                     updateWorkoutInfo(false); // Met à jour l'affichage SANS animation
-                     updateTimerDisplay(); // Met à jour l'affichage du timer
-                     showMessage(`Progression de l'entraînement "${currentWorkoutType}" restaurée.`, 3500);
-                     return true; // Reprise réussie
-
-                 } else if (googleAccessToken) {
-                     // L'utilisateur a refusé la reprise ou n'était pas connecté
-                     console.log("Reprise locale refusée ou impossible (non connecté). Suppression de l'état local.");
-                     clearInProgressState();
-                     return false;
-                 } else {
-                     // Pas connecté, on ne propose pas la reprise mais on garde l'état local au cas où
-                      console.log("Non connecté, impossible de proposer la reprise de l'état local.");
-                      return false;
-                 }
-             } catch (e) {
-                 console.error("Erreur lors du chargement/parsing de l'état local:", e);
-                 clearInProgressState(); // Nettoyer en cas d'erreur
-                 return false;
-             }
-         }
-
-        function clearInProgressState() {
-            localStorage.removeItem(IN_PROGRESS_KEY);
-            console.log("État local 'en cours' supprimé.");
-        }
+        function saveInProgressState() { if (!isWorkoutActive || workoutFinished || currentState === 'idle') { clearInProgressState(); return; } const stateToSave = { type: currentWorkoutType, index: currentItemIndex, timeLeft: timeLeft, totalTime: totalTime, currentState: currentState, startTime: workoutStartTime }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); console.log("État local sauvegardé:", stateToSave); } catch (e) { console.error("Sauvegarde locale échouée:", e); showMessage("Erreur: Sauvegarde locale échouée.", 5000); } }
+        function loadInProgressState() { const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) return false; try { const savedState = JSON.parse(savedStateJSON); if (!savedState.type || !workouts[savedState.type] || typeof savedState.index !== 'number' || typeof savedState.currentState !== 'string') { console.warn("État local invalide. Suppression."); clearInProgressState(); return false; } if (googleAccessToken && confirm(`Reprendre l'entraînement "${savedState.type}" (${savedState.currentState}) ?`)) { console.log("Reprise état local."); currentWorkoutType = savedState.type; currentWorkoutPlan = JSON.parse(JSON.stringify(workouts[currentWorkoutType])); currentItemIndex = savedState.index; timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; workoutStartTime = savedState.startTime; isWorkoutActive = true; workoutFinished = false; setActiveWorkoutNav(currentWorkoutType); showSection('workout'); const stateToRestore = savedState.currentState; currentState = stateToRestore; console.log(`Reprise état: ${currentState}`); if (stateToRestore === 'exercise') { startPauseBtn.innerHTML = '<i class="fas fa-check"></i> Fait'; startPauseBtn.disabled = false; skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; timerStateDisplay.textContent = 'EXERCICE'; timerStateDisplay.classList.add('visible'); } else if (stateToRestore === 'break') { currentState = 'paused'; startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre'; startPauseBtn.disabled = false; startPauseBtn.classList.remove('pause-btn'); skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; isTimerRunning = false; timerStateDisplay.textContent = 'EN PAUSE (Reprise)'; timerStateDisplay.classList.add('visible'); } else if (stateToRestore === 'paused') { startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre'; startPauseBtn.disabled = false; startPauseBtn.classList.remove('pause-btn'); skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false; isTimerRunning = false; timerStateDisplay.textContent = 'EN PAUSE'; timerStateDisplay.classList.add('visible'); } else { console.warn("Reprise état inattendu:", stateToRestore); resetCurrentWorkout(); return false; } updateWorkoutInfo(false); updateTimerDisplay(); showMessage(`Progression "${currentWorkoutType}" restaurée.`, 3500); return true; } else if (googleAccessToken) { console.log("Reprise locale refusée."); clearInProgressState(); return false; } else { console.log("Non connecté, reprise locale impossible."); return false; } } catch (e) { console.error("Erreur chargement état local:", e); clearInProgressState(); return false; } }
+        function clearInProgressState() { localStorage.removeItem(IN_PROGRESS_KEY); console.log("État local 'en cours' supprimé."); }
 
         // --- Gestion de l'Historique ---
-
-         // *** NOUVELLE FONCTION : Sauvegarde une entrée dans l'historique local et déclenche la sauvegarde Drive ***
-         function saveWorkoutToHistory() {
-             if (!currentWorkoutType || workoutStartTime === null) {
-                 console.warn("Impossible de sauvegarder : type d'entraînement ou heure de début manquants.");
-                 return;
-             }
-             if (!googleAccessToken) {
-                  showMessage("Connectez-vous pour sauvegarder l'historique sur Drive.", 4000);
-                  // On pourrait sauvegarder localement même déconnecté, mais la consigne est Drive.
-                  return;
-             }
-
-             const endTime = Date.now();
-             const durationSeconds = Math.round((endTime - workoutStartTime) / 1000);
-
-             // Vérifier si la durée est raisonnable (évite sauvegarde accidentelle si < quelques secondes?)
-             if (durationSeconds < 10) {
-                 console.warn(`Entraînement très court (${durationSeconds}s), sauvegarde annulée.`);
-                 // Optionnel : showMessage("Entraînement trop court pour être sauvegardé.", 3000);
-                 return;
-             }
-
-             // Créer la nouvelle entrée d'historique
-             const newEntry = {
-                 id: endTime.toString(), // Utiliser le timestamp de fin comme ID unique simple
-                 date: new Date(endTime).toISOString(), // Format ISO 8601 pour le tri et la cohérence
-                 type: currentWorkoutType,
-                 duration: durationSeconds
-             };
-
-             console.log("Ajout à l'historique local:", newEntry);
-
-             // Ajouter au début du tableau local
-             workoutHistory.unshift(newEntry);
-             // Pas besoin de retrier si on ajoute toujours au début
-
-             // Mettre à jour l'affichage immédiatement si la section historique est visible
-             if (!historySection.classList.contains('section-hidden')) {
-                 displayHistory(currentHistoryPeriod);
-             }
-
-             // Déclencher la sauvegarde vers Google Drive
-             saveHistoryToDrive(); // Cette fonction est async mais on n'a pas besoin d'attendre ici
-         }
-
-
-        // *** NOUVELLE FONCTION : Sauvegarde l'historique COMPLET sur Google Drive ***
-        async function saveHistoryToDrive() {
-            if (!googleAccessToken) {
-                console.warn("Tentative de sauvegarde Drive sans être connecté.");
-                return; // Ne rien faire si pas connecté
-            }
-
-            const fileId = await findOrCreateHistoryFile();
-            if (!fileId) {
-                showMessage("Impossible de trouver ou créer le fichier Drive. Sauvegarde échouée.", 5000);
-                return; // Arrêter si problème avec l'ID du fichier
-            }
-
-            // Convertir le tableau `workoutHistory` en chaîne CSV
-            // S'assurer que l'ordre est le plus récent en premier dans le tableau,
-            // mais le CSV peut être dans n'importe quel ordre, on le triera à la lecture.
-            // Inclure l'en-tête
-            let csvContent = "DateISO,WorkoutType,DurationSeconds,EntryID\n";
-            workoutHistory.forEach(entry => {
-                 // S'assurer que les données sont clean (pas de virgules dans les types etc.)
-                 const cleanType = entry.type.replace(/,/g, ''); // Simple nettoyage
-                 csvContent += `${entry.date},${cleanType},${entry.duration},${entry.id}\n`;
-            });
-
-            // Appeler la fonction pour mettre à jour le fichier sur Drive
-            const success = await updateFileContent(fileId, csvContent);
-
-            if (success) {
-                // Message déjà affiché par updateFileContent
-            } else {
-                 // Message d'erreur déjà affiché par updateFileContent
-            }
-        }
-
-         // *** NOUVELLE FONCTION : Charge l'historique depuis Drive ***
-         async function loadHistoryFromDrive() {
-             if (!googleAccessToken) {
-                  console.log("Chargement historique annulé (non connecté).");
-                  workoutHistory = []; // Assurer que l'historique local est vide
-                  displayHistory(currentHistoryPeriod); // Mettre à jour l'affichage (message "connectez-vous")
-                  return;
-             }
-
-             const fileId = await findOrCreateHistoryFile();
-             if (!fileId) {
-                 showMessage("Impossible d'accéder au fichier d'historique Drive.", 5000);
-                 workoutHistory = [];
-                 displayHistory(currentHistoryPeriod);
-                 return;
-             }
-
-             const csvContent = await readFileContent(fileId);
-
-             if (csvContent === null) {
-                 // Erreur de lecture (message déjà affiché)
-                 workoutHistory = []; // Vide l'historique en cas d'erreur
-             } else if (csvContent === "") {
-                  // Fichier trouvé mais vide (ou 404 géré par readFileContent)
-                  console.log("Fichier d'historique Drive vide ou non trouvé.");
-                  workoutHistory = [];
-             } else {
-                 // Parser le contenu CSV
-                 parseAndLoadCsvData(csvContent);
-                 console.log(`Historique chargé depuis Drive: ${workoutHistory.length} entrées.`);
-                 showMessage(`Historique chargé (${workoutHistory.length} séances).`, 2000);
-             }
-
-             // Mettre à jour l'affichage de l'historique (graphique, liste, stats)
-             displayHistory(currentHistoryPeriod);
-         }
-
-
-        // Parse le contenu CSV et charge les données dans workoutHistory
-        function parseAndLoadCsvData(csvContent) {
-            try {
-                const lines = csvContent.trim().split(/\r?\n/);
-                const newHistory = [];
-                const existingIDs = new Set(); // Pour éviter les doublons si ID présent
-
-                if (lines.length <= 1) { // Moins de 2 lignes = juste l'en-tête ou vide
-                    console.log("Fichier CSV vide ou ne contient que l'en-tête.");
-                    workoutHistory = [];
-                    return;
-                }
-
-                // Détecter l'en-tête (simple vérification)
-                 const headerLine = lines[0].trim().toLowerCase();
-                 const hasHeader = headerLine.includes("dateiso") && headerLine.includes("workouttype");
-                 const startIndex = hasHeader ? 1 : 0; // Commencer après l'en-tête si présent
-
-                for (let i = startIndex; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue; // Ignorer lignes vides
-
-                    const values = line.split(',');
-                    // Attendre au moins 3 valeurs: DateISO, WorkoutType, DurationSeconds. L'ID est optionnel.
-                    if (values.length < 3) {
-                         console.warn(`Ligne CSV ignorée (pas assez de valeurs): ${line}`);
-                         continue;
-                    }
-
-                    const dateStr = values[0].trim();
-                    const typeStr = values[1].trim();
-                    const durationStr = values[2].trim();
-                    const idStr = (values.length > 3) ? values[3].trim() : null; // ID optionnel
-
-                    const date = new Date(dateStr);
-                    const duration = parseInt(durationStr, 10);
-
-                    // Validation des données parsées
-                    if (isNaN(date.getTime())) { console.warn(`Ligne CSV ignorée (date invalide): ${line}`); continue; }
-                    if (!workouts.hasOwnProperty(typeStr)) { console.warn(`Ligne CSV ignorée (type inconnu): '${typeStr}' dans ${line}`); continue; }
-                    if (isNaN(duration) || duration < 0) { console.warn(`Ligne CSV ignorée (durée invalide): ${line}`); continue; }
-
-                    // Générer un ID si manquant (basé sur timestamp + index pour unicité simple)
-                    const entryId = idStr || `${date.getTime()}-${i}`;
-
-                    // Éviter les doublons basés sur l'ID
-                    if (existingIDs.has(entryId)) {
-                         console.warn(`Ligne CSV ignorée (ID dupliqué): ${entryId} dans ${line}`);
-                         continue;
-                    }
-
-                    newHistory.push({
-                        id: entryId,
-                        date: date.toISOString(), // Stocker en ISO pour cohérence
-                        type: typeStr,
-                        duration: duration // Stocker en secondes
-                    });
-                    existingIDs.add(entryId);
-                }
-
-                // Trier l'historique par date (du plus récent au plus ancien)
-                newHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                workoutHistory = newHistory; // Remplace l'historique local par celui de Drive
-
-            } catch (error) {
-                console.error("Erreur lors du parsing du CSV:", error);
-                showMessage(`Erreur de parsing de l'historique: ${error.message}`, 6000);
-                workoutHistory = []; // Réinitialiser en cas d'erreur majeure
-            }
-        }
-
-
-        // Affiche l'historique (liste, stats, graphique) pour la période donnée
-        function displayHistory(period = 'week') {
-            currentHistoryPeriod = period;
-             // Met à jour le bouton de filtre actif
-            historyFilterBtns.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.period === period);
-            });
-
-             const isConnected = googleAccessToken;
-             const historyToDisplay = isConnected ? workoutHistory : []; // Utilise l'historique chargé ou vide si déconnecté
-
-            // Filtrer l'historique par période
-            const filteredHistory = filterHistoryByPeriod(historyToDisplay, period);
-
-            // Mettre à jour la liste HTML
-            historyList.innerHTML = ''; // Vider la liste précédente
-            if (!isConnected) {
-                 historyList.innerHTML = `<li class="no-history">Connectez-vous à Google Drive pour voir l'historique.</li>`;
-            } else if (filteredHistory.length === 0) {
-                 historyList.innerHTML = `<li class="no-history">Aucun entraînement enregistré pour cette période.</li>`;
-            } else {
-                 filteredHistory.forEach(entry => {
-                     const li = document.createElement('li');
-                     // Formatage amélioré de la date/heure
-                     const entryDate = new Date(entry.date);
-                     const dateFormatted = entryDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
-                      const timeFormatted = entryDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                     const durationFormatted = formatTime(entry.duration); // Format MM:SS
-
-                     li.innerHTML = `
-                         <span class="history-item-date">${dateFormatted} <small>(${timeFormatted})</small></span>
-                         <span class="history-item-type">${entry.type}</span>
-                         <span class="history-item-duration">${durationFormatted}</span>
-                     `;
-                     historyList.appendChild(li);
-                 });
-            }
-
-            // Mettre à jour les statistiques et le message de motivation
-            displayStatsAndMotivation(filteredHistory, period, isConnected);
-
-            // Mettre à jour le graphique
-            renderHistoryChart(filteredHistory, period);
-        }
-
-        // Filtre le tableau d'historique en fonction de la période sélectionnée
-        function filterHistoryByPeriod(history, period) {
-             const now = new Date();
-             // Obtenir le début de la journée actuelle (à minuit) pour des comparaisons précises
-             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-             return history.filter(entry => {
-                 const entryDate = new Date(entry.date);
-                 const entryDateStart = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
-
-                 switch (period) {
-                     case 'week':
-                         // Début de la semaine (Lundi)
-                         const dayOfWeek = todayStart.getDay(); // 0 = Dimanche, 1 = Lundi, ...
-                         const diffToMonday = todayStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajuste pour Lundi
-                         const startOfWeek = new Date(todayStart.setDate(diffToMonday));
-                         return entryDateStart >= startOfWeek;
-                     case 'month':
-                         // Début du mois actuel
-                         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                         return entryDateStart >= startOfMonth;
-                     case 'year':
-                         // Début de l'année actuelle
-                         const startOfYear = new Date(now.getFullYear(), 0, 1);
-                         return entryDateStart >= startOfYear;
-                     case 'all':
-                     default:
-                         return true; // Inclure toutes les entrées
-                 }
-             });
-        }
-
-         // Affiche les statistiques calculées et un message de motivation
-         function displayStatsAndMotivation(filteredHistory, period, isConnected) {
-             const stats = calculateStats(filteredHistory);
-             let periodText = '';
-             switch (period) {
-                 case 'week': periodText = 'Cette Semaine'; break;
-                 case 'month': periodText = 'Ce Mois'; break;
-                 case 'year': periodText = 'Cette Année'; break;
-                 case 'all': periodText = 'Total'; break;
-             }
-
-             const statsTitleElement = statsDisplay.querySelector('h3');
-             if (statsTitleElement) statsTitleElement.textContent = `Statistiques (${periodText})`;
-
-             let statsHTML = "";
-             if (!isConnected) {
-                 statsHTML = "<p>Connectez-vous pour afficher les statistiques.</p>";
-             } else if (stats.count === 0) {
-                 statsHTML = "<p>Aucune donnée disponible pour calculer les statistiques sur cette période.</p>";
-             } else {
-                 statsHTML = `
-                     <p><i class="fas fa-calendar-check"></i> Nb séances: <strong>${stats.count}</strong></p>
-                     <p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p>
-                     <p><i class="fas fa-hourglass-half"></i> Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p>
-                     <p><i class="fas fa-star"></i> Type + fréquent: <strong>${stats.mostFrequentType || 'N/A'}</strong> (${stats.frequency[stats.mostFrequentType] || 0}x)</p>
-                 `;
-             }
-
-             // Injecter le HTML (en conservant le titre et le message motivationnel s'ils existent)
-             const messageElement = statsDisplay.querySelector('.motivational-message');
-             const messageContent = messageElement ? messageElement.textContent : ""; // Sauver le contenu actuel
-             statsDisplay.innerHTML = (statsTitleElement ? statsTitleElement.outerHTML : `<h3>Statistiques (${periodText})</h3>`) + statsHTML;
-
-             // Réinsérer ou créer l'élément de message motivationnel
-             let msgElem = statsDisplay.querySelector('.motivational-message');
-             if (!msgElem) {
-                 msgElem = document.createElement('p');
-                 msgElem.className = 'motivational-message';
-                 statsDisplay.appendChild(msgElem);
-             }
-             // Générer et afficher le message
-             msgElem.textContent = isConnected ? generateMotivationalMessage(stats, period) : "";
-         }
-
-         // Calcule les statistiques à partir d'un tableau d'historique filtré
-         function calculateStats(history) {
-             const count = history.length;
-             let totalDuration = 0;
-             const frequency = { Push: 0, Pull: 0, Legs: 0 }; // Initialise pour tous les types
-
-             history.forEach(entry => {
-                 totalDuration += entry.duration;
-                 if (frequency.hasOwnProperty(entry.type)) {
-                     frequency[entry.type]++;
-                 }
-             });
-
-             const avgDuration = count > 0 ? totalDuration / count : 0;
-
-             // Trouver le type le plus fréquent
-             let mostFrequentType = null;
-             let maxFrequency = 0;
-             for (const type in frequency) {
-                 if (frequency[type] > maxFrequency) {
-                     maxFrequency = frequency[type];
-                     mostFrequentType = type;
-                 }
-                 // Gestion égalité : prend le premier trouvé
-             }
-
-             return {
-                 count: count,
-                 totalDuration: totalDuration,
-                 avgDuration: avgDuration,
-                 frequency: frequency,
-                 mostFrequentType: mostFrequentType
-             };
-         }
-
-         // Génère un message de motivation basé sur les statistiques et la période
-         function generateMotivationalMessage(stats, period) {
-             const { count } = stats;
-             if (count === 0 && period !== 'all') return "Planifie ton prochain entraînement ! 📅";
-             if (count === 0 && period === 'all') return "Commence ton aventure fitness dès aujourd'hui ! 💪";
-
-             switch (period) {
-                 case 'week':
-                     if (count >= 5) return `Wow, ${count} séances cette semaine ! Une vraie machine ! 🔥`;
-                     if (count >= 3) return `Super semaine (${count} séances) ! La régularité paie ! 👍`;
-                     if (count >= 1) return `Bien joué cette semaine ! Chaque entraînement compte. ✨`;
-                     break; // Should not be reached if count > 0
-                 case 'month':
-                     if (count >= 15) return `Incroyable, ${count} séances ce mois-ci ! Tu es sur une lancée ! 🚀`;
-                     if (count >= 10) return `${count} entraînements ce mois-ci, très solide ! 🎉`;
-                     if (count >= 5) return `Belle progression ce mois-ci ! Continue comme ça. 😊`;
-                     if (count >= 1) return `Premier(s) pas ce mois-ci, c'est le début d'une grande aventure ! 🌱`;
-                      break;
-                 case 'year':
-                 case 'all':
-                     if (count >= 100) return `Plus de ${count} séances enregistrées ! Légendaire ! 🏆`;
-                     if (count >= 50) return `${count} séances au compteur ! Un athlète confirmé ! 🏋️‍♂️`;
-                     if (count >= 20) return `Déjà ${count} séances, beau parcours ! Continue sur cette voie ! 🌟`;
-                     if (count >= 1) return `Déjà ${count} entraînement(s) ! Chaque répétition te rapproche de tes objectifs. 🎯`;
-                      break;
-             }
-             // Message par défaut si aucune condition spécifique n'est remplie (ne devrait pas arriver souvent)
-             return "Continue tes efforts, tu es sur la bonne voie ! 💯";
-         }
+        function saveWorkoutToHistory() { if (!currentWorkoutType || workoutStartTime === null) { console.warn("Sauvegarde annulée: infos manquantes."); return; } if (!googleAccessToken) { showMessage("Connectez-vous pour sauvegarder l'historique.", 4000); return; } const endTime = Date.now(); const durationSeconds = Math.round((endTime - workoutStartTime) / 1000); if (durationSeconds < 10) { console.warn(`Entraînement trop court (${durationSeconds}s), sauvegarde annulée.`); return; } const newEntry = { id: endTime.toString(), date: new Date(endTime).toISOString(), type: currentWorkoutType, duration: durationSeconds }; console.log("Ajout historique local:", newEntry); workoutHistory.unshift(newEntry); if (!historySection.classList.contains('section-hidden')) { displayHistory(currentHistoryPeriod); } saveHistoryToDrive(); } // Déclenche la sauvegarde Drive
+        async function saveHistoryToDrive() { if (!googleAccessToken) return; const fileId = await findOrCreateHistoryFile(); if (!fileId) { showMessage("Impossible d'accéder au fichier Drive. Sauvegarde échouée.", 5000); return; } let csvContent = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; workoutHistory.forEach(entry => { const cleanType = entry.type.replace(/,/g, ''); csvContent += `${entry.date},${cleanType},${entry.duration},${entry.id}\n`; }); const success = await updateFileContent(fileId, csvContent); if (success) { console.log("Historique synchronisé avec Drive."); /* Message succès est dans updateFileContent */ } }
+         async function loadHistoryFromDrive() { if (!googleAccessToken) { console.log("Chargement historique annulé (non connecté)."); workoutHistory = []; displayHistory(currentHistoryPeriod); return; } const fileId = await findOrCreateHistoryFile(); if (!fileId) { showMessage("Impossible d'accéder au fichier historique Drive.", 5000); workoutHistory = []; displayHistory(currentHistoryPeriod); return; } const csvContent = await readFileContent(fileId); if (csvContent === null) { workoutHistory = []; } else if (csvContent === "") { console.log("Fichier historique Drive vide."); workoutHistory = []; } else { parseAndLoadCsvData(csvContent); console.log(`Historique chargé: ${workoutHistory.length} entrées.`); showMessage(`Historique chargé (${workoutHistory.length} séances).`, 2000); } displayHistory(currentHistoryPeriod); }
+        function parseAndLoadCsvData(csvContent) { try { const lines = csvContent.trim().split(/\r?\n/); const newHistory = []; const existingIDs = new Set(); if (lines.length <= 1) { console.log("CSV vide ou en-tête seul."); workoutHistory = []; return; } const headerLine = lines[0].trim().toLowerCase(); const hasHeader = headerLine.includes("dateiso") && headerLine.includes("workouttype"); const startIndex = hasHeader ? 1 : 0; for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = line.split(','); if (values.length < 3) { console.warn(`Ligne CSV ignorée (valeurs manquantes): ${line}`); continue; } const dateStr = values[0].trim(); const typeStr = values[1].trim(); const durationStr = values[2].trim(); const idStr = (values.length > 3) ? values[3].trim() : null; const date = new Date(dateStr); const duration = parseInt(durationStr, 10); if (isNaN(date.getTime())) { console.warn(`Ligne CSV ignorée (date invalide): ${line}`); continue; } if (!workouts.hasOwnProperty(typeStr)) { console.warn(`Ligne CSV ignorée (type inconnu): '${typeStr}' dans ${line}`); continue; } if (isNaN(duration) || duration < 0) { console.warn(`Ligne CSV ignorée (durée invalide): ${line}`); continue; } const entryId = idStr || `${date.getTime()}-${i}`; if (existingIDs.has(entryId)) { console.warn(`Ligne CSV ignorée (ID dupliqué): ${entryId} dans ${line}`); continue; } newHistory.push({ id: entryId, date: date.toISOString(), type: typeStr, duration: duration }); existingIDs.add(entryId); } newHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); workoutHistory = newHistory; } catch (error) { console.error("Erreur parsing CSV:", error); showMessage(`Erreur parsing historique: ${error.message}`, 6000); workoutHistory = []; } }
+        function displayHistory(period = 'week') { currentHistoryPeriod = period; historyFilterBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === period); }); const isConnected = googleAccessToken; const historyToDisplay = isConnected ? workoutHistory : []; const filteredHistory = filterHistoryByPeriod(historyToDisplay, period); historyList.innerHTML = ''; if (!isConnected) { historyList.innerHTML = `<li class="no-history">Connectez-vous pour voir l'historique.</li>`; } else if (filteredHistory.length === 0) { historyList.innerHTML = `<li class="no-history">Aucun entraînement pour cette période.</li>`; } else { filteredHistory.forEach(entry => { const li = document.createElement('li'); const entryDate = new Date(entry.date); const dateFormatted = entryDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }); const timeFormatted = entryDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationFormatted = formatTime(entry.duration); li.innerHTML = `<span class="history-item-date">${dateFormatted} <small>(${timeFormatted})</small></span><span class="history-item-type">${entry.type}</span><span class="history-item-duration">${durationFormatted}</span>`; historyList.appendChild(li); }); } displayStatsAndMotivation(filteredHistory, period, isConnected); renderHistoryChart(filteredHistory, period); }
+        function filterHistoryByPeriod(history, period) { const now = new Date(); const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); return history.filter(entry => { const entryDate = new Date(entry.date); const entryDateStart = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate()); switch (period) { case 'week': const dayOfWeek = todayStart.getDay(); const diffToMonday = todayStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); const startOfWeek = new Date(todayStart.getFullYear(), todayStart.getMonth(), diffToMonday); return entryDateStart >= startOfWeek; case 'month': const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); return entryDateStart >= startOfMonth; case 'year': const startOfYear = new Date(now.getFullYear(), 0, 1); return entryDateStart >= startOfYear; case 'all': default: return true; } }); }
+        function displayStatsAndMotivation(filteredHistory, period, isConnected) { const stats = calculateStats(filteredHistory); let periodText = ''; switch (period) { case 'week': periodText = 'Cette Semaine'; break; case 'month': periodText = 'Ce Mois'; break; case 'year': periodText = 'Cette Année'; break; case 'all': periodText = 'Total'; break; } const statsTitleElement = statsDisplay.querySelector('h3'); if (statsTitleElement) statsTitleElement.textContent = `Statistiques (${periodText})`; let statsHTML = ""; if (!isConnected) { statsHTML = "<p>Connectez-vous pour afficher les statistiques.</p>"; } else if (stats.count === 0) { statsHTML = "<p>Aucune donnée pour calculer les statistiques.</p>"; } else { statsHTML = `<p><i class="fas fa-calendar-check"></i> Nb séances: <strong>${stats.count}</strong></p><p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p><p><i class="fas fa-hourglass-half"></i> Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p><p><i class="fas fa-star"></i> Type + fréquent: <strong>${stats.mostFrequentType || 'N/A'}</strong> (${stats.frequency[stats.mostFrequentType] || 0}x)</p>`; } const messageElement = statsDisplay.querySelector('.motivational-message'); statsDisplay.innerHTML = (statsTitleElement ? statsTitleElement.outerHTML : `<h3>Statistiques (${periodText})</h3>`) + statsHTML; let msgElem = statsDisplay.querySelector('.motivational-message'); if (!msgElem) { msgElem = document.createElement('p'); msgElem.className = 'motivational-message'; statsDisplay.appendChild(msgElem); } msgElem.textContent = isConnected ? generateMotivationalMessage(stats, period) : ""; }
+        function calculateStats(history) { const count = history.length; let totalDuration = 0; const frequency = { Push: 0, Pull: 0, Legs: 0 }; history.forEach(entry => { totalDuration += entry.duration; if (frequency.hasOwnProperty(entry.type)) { frequency[entry.type]++; } }); const avgDuration = count > 0 ? totalDuration / count : 0; let mostFrequentType = null; let maxFrequency = 0; for (const type in frequency) { if (frequency[type] > maxFrequency) { maxFrequency = frequency[type]; mostFrequentType = type; } } return { count: count, totalDuration: totalDuration, avgDuration: avgDuration, frequency: frequency, mostFrequentType: mostFrequentType }; }
+        function generateMotivationalMessage(stats, period) { const { count } = stats; if (count === 0 && period !== 'all') return "Planifie ton prochain entraînement ! 📅"; if (count === 0 && period === 'all') return "Commence ton aventure fitness ! 💪"; switch (period) { case 'week': if (count >= 5) return `Wow, ${count} séances cette semaine ! Machine ! 🔥`; if (count >= 3) return `Super semaine (${count} séances) ! Régularité ! 👍`; if (count >= 1) return `Bien joué cette semaine ! Chaque entraînement compte. ✨`; break; case 'month': if (count >= 15) return `Incroyable, ${count} séances ce mois-ci ! En feu ! 🚀`; if (count >= 10) return `${count} entraînements ce mois-ci, solide ! 🎉`; if (count >= 5) return `Belle progression ce mois-ci ! Continue. 😊`; if (count >= 1) return `Premier(s) pas ce mois-ci, c'est parti ! 🌱`; break; case 'year': case 'all': if (count >= 100) return `+${count} séances ! Légendaire ! 🏆`; if (count >= 50) return `${count} séances ! Athlète confirmé ! 🏋️‍♂️`; if (count >= 20) return `${count} séances, beau parcours ! 🌟`; if (count >= 1) return `Déjà ${count} entraînement(s) ! Progrès ! 🎯`; break; } return "Continue tes efforts ! 💯"; }
 
         // --- Rendu du Graphique ---
-        function renderHistoryChart(filteredHistory, period) {
-            if (!historyChartCanvas) return;
-            const ctx = historyChartCanvas.getContext('2d');
-            const { labels, data } = aggregateChartData(filteredHistory, period);
-
-            // Détruire l'ancien graphique s'il existe pour éviter les problèmes de mémoire et de superposition
-            if (historyChart) {
-                historyChart.destroy();
-            }
-
-             // Si pas de données, afficher un message ou un graphique vide?
-            /* if (data.every(d => d === 0)) {
-                 // Option : afficher un message dans le canvas? C'est complexe.
-                 // Mieux vaut laisser le graphique vide et se fier à la liste/stats.
-                 console.log("Aucune donnée pour le graphique.");
-                 // On peut quand même créer un graphique vide pour la structure
-            } */
-
-
-             // Récupérer les couleurs dynamiquement depuis les CSS (après application du thème)
-             const bodyStyles = getComputedStyle(document.documentElement);
-             const primaryColor = bodyStyles.getPropertyValue('--primary-color').trim();
-             const accentColor = bodyStyles.getPropertyValue('--accent-color').trim();
-             const gridColor = bodyStyles.getPropertyValue('--chart-grid-color').trim();
-             const textColor = bodyStyles.getPropertyValue('--text-color').trim();
-             const tooltipBg = bodyStyles.getPropertyValue('--chart-tooltip-bg').trim();
-             const tooltipText = bodyStyles.getPropertyValue('--chart-tooltip-text').trim();
-
-             // Créer le nouveau graphique
-            historyChart = new Chart(ctx, {
-                type: 'bar', // Type de graphique
-                data: {
-                    labels: labels, // Labels pour l'axe X (jours, semaines, mois, années)
-                    datasets: [{
-                        label: 'Durée totale', // Légende du dataset
-                        data: data.map(d => formatTimeForChart(d)), // Données (durée en minutes)
-                        backgroundColor: primaryColor + 'BF', // Couleur de remplissage (avec transparence)
-                        borderColor: primaryColor, // Couleur de bordure
-                        borderWidth: 1, // Largeur de la bordure
-                        hoverBackgroundColor: accentColor + 'DF', // Couleur au survol
-                        hoverBorderColor: accentColor,
-                         borderRadius: 4, // Coins arrondis des barres
-                    }]
-                },
-                options: {
-                    responsive: true, // S'adapte à la taille du conteneur
-                    maintainAspectRatio: false, // Ne pas garder un ratio fixe, remplir le conteneur
-                    scales: {
-                        y: {
-                            beginAtZero: true, // Commencer l'axe Y à 0
-                            title: { display: true, text: 'Durée (minutes)', color: textColor, font: { size: 13 } },
-                            grid: { color: gridColor }, // Couleur des lignes de la grille Y
-                            ticks: { color: textColor } // Couleur des labels de l'axe Y
-                        },
-                        x: {
-                            title: { display: true, text: getChartXAxisTitle(period), color: textColor, font: { size: 13 } },
-                            grid: { color: gridColor }, // Couleur des lignes de la grille X
-                            ticks: { color: textColor } // Couleur des labels de l'axe X
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false // Cacher la légende (une seule série ici)
-                        },
-                        tooltip: {
-                            backgroundColor: tooltipBg, // Fond de l'infobulle
-                            titleColor: tooltipText, // Couleur du titre de l'infobulle
-                            bodyColor: tooltipText, // Couleur du corps de l'infobulle
-                            padding: 10,
-                            cornerRadius: var(--border-radius),
-                            displayColors: false, // Ne pas montrer le petit carré de couleur
-                            callbacks: {
-                                // Personnaliser le contenu de l'infobulle
-                                label: function(context) {
-                                     // Récupérer la durée originale en secondes depuis les données brutes agrégées
-                                     const originalDurationSeconds = data[context.dataIndex] || 0;
-                                     const formattedTime = formatTime(originalDurationSeconds); // Format MM:SS
-                                     return `Durée: ${formattedTime}`;
-                                }
-                            }
-                        }
-                    },
-                     // Ajouter une animation douce au chargement/mise à jour
-                     animation: {
-                         duration: 500,
-                         easing: 'easeOutCubic'
-                     }
-                }
-            });
-        }
-
-        // Agrège les données de l'historique pour le graphique selon la période
-        function aggregateChartData(history, period) {
-            const aggregated = new Map(); // Utilise une Map pour agréger les durées par label
-
-             // Pré-remplir la Map avec les labels attendus et une valeur de 0
-             const initializeMap = (labels) => labels.forEach(label => aggregated.set(label, 0));
-
-             switch (period) {
-                 case 'week':
-                     const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-                     initializeMap(daysOfWeek);
-                     history.forEach(entry => {
-                         const entryDate = new Date(entry.date);
-                         let dayIndex = entryDate.getDay(); // 0=Dim, 1=Lun, ...
-                         dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Ajuste pour Lundi=0, Dimanche=6
-                         const dayName = daysOfWeek[dayIndex];
-                         aggregated.set(dayName, (aggregated.get(dayName) || 0) + entry.duration);
-                     });
-                      // Retourne les labels dans l'ordre correct et les données correspondantes
-                      return { labels: daysOfWeek, data: daysOfWeek.map(day => aggregated.get(day)) };
-
-                 case 'month':
-                     // Agréger par semaine du mois (approximatif)
-                     const weeksOfMonth = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5+'];
-                     initializeMap(weeksOfMonth);
-                     history.forEach(entry => {
-                         const entryDate = new Date(entry.date);
-                         const dayOfMonth = entryDate.getDate();
-                          // Simple découpage par tranche de 7 jours
-                          const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4); // Index 0 à 4 (Sem 5+)
-                         const weekName = weeksOfMonth[weekIndex];
-                         aggregated.set(weekName, (aggregated.get(weekName) || 0) + entry.duration);
-                     });
-                     return { labels: weeksOfMonth, data: weeksOfMonth.map(week => aggregated.get(week)) };
-
-                 case 'year':
-                     const monthsOfYear = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-                     initializeMap(monthsOfYear);
-                     history.forEach(entry => {
-                         const entryDate = new Date(entry.date);
-                         const monthIndex = entryDate.getMonth(); // 0=Jan, 1=Fév, ...
-                         const monthName = monthsOfYear[monthIndex];
-                         aggregated.set(monthName, (aggregated.get(monthName) || 0) + entry.duration);
-                     });
-                     return { labels: monthsOfYear, data: monthsOfYear.map(month => aggregated.get(month)) };
-
-                 case 'all':
-                 default: // Agréger par année pour la vue "Tout"
-                     history.forEach(entry => {
-                         const entryDate = new Date(entry.date);
-                         const year = entryDate.getFullYear();
-                         aggregated.set(year, (aggregated.get(year) || 0) + entry.duration);
-                     });
-                      // Trier les années (clés de la Map)
-                      const sortedYears = Array.from(aggregated.keys()).sort((a, b) => a - b);
-                      // Extraire les données dans l'ordre des années triées
-                      const sortedData = sortedYears.map(year => aggregated.get(year));
-                      // Convertir les années en chaînes pour les labels
-                     return { labels: sortedYears.map(String), data: sortedData };
-             }
-         }
-
-         // Retourne le titre approprié pour l'axe X du graphique
-         function getChartXAxisTitle(period) {
-             switch (period) {
-                 case 'week': return 'Jour de la Semaine';
-                 case 'month': return 'Semaine du Mois';
-                 case 'year': return 'Mois';
-                 case 'all': return 'Année';
-                 default: return '';
-             }
-         }
-
+        function renderHistoryChart(filteredHistory, period) { if (!historyChartCanvas) return; const ctx = historyChartCanvas.getContext('2d'); const { labels, data } = aggregateChartData(filteredHistory, period); if (historyChart) { historyChart.destroy(); } const bodyStyles = getComputedStyle(document.documentElement); const primaryColor = bodyStyles.getPropertyValue('--primary-color').trim(); const accentColor = bodyStyles.getPropertyValue('--accent-color').trim(); const gridColor = bodyStyles.getPropertyValue('--chart-grid-color').trim(); const textColor = bodyStyles.getPropertyValue('--text-color').trim(); const tooltipBg = bodyStyles.getPropertyValue('--chart-tooltip-bg').trim(); const tooltipText = bodyStyles.getPropertyValue('--chart-tooltip-text').trim(); historyChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Durée totale', data: data.map(d => formatTimeForChart(d)), backgroundColor: primaryColor + 'BF', borderColor: primaryColor, borderWidth: 1, hoverBackgroundColor: accentColor + 'DF', hoverBorderColor: accentColor, borderRadius: 4, }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Durée (minutes)', color: textColor, font: { size: 13 } }, grid: { color: gridColor }, ticks: { color: textColor } }, x: { title: { display: true, text: getChartXAxisTitle(period), color: textColor, font: { size: 13 } }, grid: { color: gridColor }, ticks: { color: textColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 6, displayColors: false, callbacks: { label: function(context) { const originalDurationSeconds = data[context.dataIndex] || 0; const formattedTime = formatTime(originalDurationSeconds); return `Durée: ${formattedTime}`; } } } }, animation: { duration: 500, easing: 'easeOutCubic' } } }); }
+        function aggregateChartData(history, period) { const aggregated = new Map(); const initializeMap = (labels) => labels.forEach(label => aggregated.set(label, 0)); switch (period) { case 'week': const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; initializeMap(daysOfWeek); history.forEach(entry => { const entryDate = new Date(entry.date); let dayIndex = entryDate.getDay(); dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; const dayName = daysOfWeek[dayIndex]; aggregated.set(dayName, (aggregated.get(dayName) || 0) + entry.duration); }); return { labels: daysOfWeek, data: daysOfWeek.map(day => aggregated.get(day)) }; case 'month': const weeksOfMonth = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5+']; initializeMap(weeksOfMonth); history.forEach(entry => { const entryDate = new Date(entry.date); const dayOfMonth = entryDate.getDate(); const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4); const weekName = weeksOfMonth[weekIndex]; aggregated.set(weekName, (aggregated.get(weekName) || 0) + entry.duration); }); return { labels: weeksOfMonth, data: weeksOfMonth.map(week => aggregated.get(week)) }; case 'year': const monthsOfYear = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; initializeMap(monthsOfYear); history.forEach(entry => { const entryDate = new Date(entry.date); const monthIndex = entryDate.getMonth(); const monthName = monthsOfYear[monthIndex]; aggregated.set(monthName, (aggregated.get(monthName) || 0) + entry.duration); }); return { labels: monthsOfYear, data: monthsOfYear.map(month => aggregated.get(month)) }; case 'all': default: history.forEach(entry => { const entryDate = new Date(entry.date); const year = entryDate.getFullYear(); aggregated.set(year, (aggregated.get(year) || 0) + entry.duration); }); const sortedYears = Array.from(aggregated.keys()).sort((a, b) => a - b); const sortedData = sortedYears.map(year => aggregated.get(year)); return { labels: sortedYears.map(String), data: sortedData }; } }
+        function getChartXAxisTitle(period) { switch (period) { case 'week': return 'Jour de la Semaine'; case 'month': return 'Semaine du Mois'; case 'year': return 'Mois'; case 'all': return 'Année'; default: return ''; } }
 
          // --- Initialisation de l'Application ---
          document.addEventListener('DOMContentLoaded', () => {
-             console.log("DOM Chargé. Initialisation de l'application.");
+             console.log("DOM Chargé. Initialisation ArmorWorkout.");
+             const savedTheme = localStorage.getItem('theme') || 'light'; applyTheme(savedTheme);
+             workoutHistory = []; // Start empty
+             updateAuthUI(false); // Init UI en mode déconnecté (active Connect btn)
+             // displayHistory est appelé dans updateAuthUI
+             // resetCurrentWorkout est appelé dans updateAuthUI si besoin
+             // L'état local sera chargé après connexion dans tokenCallback
 
-             // Appliquer le thème sauvegardé ou le thème clair par défaut
-             const savedTheme = localStorage.getItem('theme') || 'light';
-             applyTheme(savedTheme);
-
-             // Initialiser l'UI à l'état déconnecté
-             workoutHistory = []; // Historique local commence vide
-             updateAuthUI(false); // Met l'UI en mode déconnecté, désactive boutons etc.
-             displayHistory(currentHistoryPeriod); // Affiche l'état initial vide de l'historique
-
-             // Essayer de reprendre un état local "en cours" SEULEMENT SI connecté.
-             // La logique de reprise est maintenant dans tokenCallback après la connexion.
-             // const resumed = loadInProgressState(); // On ne fait plus ça ici
-
-             // Initialiser l'état du timer à 'idle' et afficher le message initial
-             if (currentState === 'idle') { // Vérifier qu'on n'a pas repris un état
-                  resetCurrentWorkout(); // Assure un état propre au début
-             }
-
-             // Attacher les écouteurs d'événements
+             // Attacher les écouteurs d'événements (simplifié pour la clarté)
              signInButton.addEventListener('click', handleAuthClick);
              signOutButton.addEventListener('click', handleSignoutClick);
+             navButtons.forEach(button => { button.addEventListener('click', () => { initAudioContext(); loadWorkout(button.dataset.workout); }); });
+             navHistoryBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && !workoutFinished) { if (confirm("Arrêter l'entraînement en cours (progrès perdus) ?")) { resetCurrentWorkout(); setTimeout(() => showSection('history'), 50); } } else { showSection('history'); } });
+             startPauseBtn.addEventListener('click', () => { initAudioContext(); if (currentState === 'idle' && currentWorkoutPlan.length > 0) { const firstItem = currentWorkoutPlan[0]; if (firstItem.type === 'exercise') { setState('exercise'); } else { totalTime = firstItem.duration; timeLeft = firstItem.duration; setState('break'); } } else if (currentState === 'exercise') { handleItemCompletion(); } else if (currentState === 'break') { setState('paused'); } else if (currentState === 'paused') { setState('break'); } saveInProgressState(); });
+             skipBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && !workoutFinished) { showMessage("Passage étape suivante.", 2000); handleItemCompletion(false); } });
+             finishBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && !workoutFinished) { forceFinishWorkout(); } });
+             resetBtn.addEventListener('click', () => { initAudioContext(); if (currentWorkoutType || isWorkoutActive) { if (confirm("Réinitialiser ? Progression en cours perdue.")) { resetCurrentWorkout(); } } else { resetCurrentWorkout(); } });
+             themeToggleBtn.addEventListener('click', () => { initAudioContext(); const isDark = document.body.classList.contains('dark-theme'); applyTheme(isDark ? 'light' : 'dark'); });
+             historyFilterBtns.forEach(button => { button.addEventListener('click', () => { initAudioContext(); displayHistory(button.dataset.period); }); });
 
-             // Clics sur les boutons de sélection de workout
-             navButtons.forEach(button => {
-                 button.addEventListener('click', () => {
-                      // Essayer d'initialiser l'audio context sur interaction
-                      initAudioContext();
-                      loadWorkout(button.dataset.workout);
-                 });
-             });
-
-             // Clic sur le bouton Historique
-             navHistoryBtn.addEventListener('click', () => {
-                  initAudioContext(); // Tente init audio
-                  // Si un entraînement est en cours, demander confirmation avant de switcher
-                  if (isWorkoutActive && !workoutFinished) {
-                      if (confirm("Un entraînement est en cours. Voulez-vous l'arrêter (progression perdue) pour voir l'historique ?")) {
-                          resetCurrentWorkout(); // Arrête et réinitialise
-                          setTimeout(() => showSection('history'), 50); // Léger délai pour assurer la réinitialisation
-                      } else {
-                          return; // L'utilisateur annule
-                      }
-                  } else {
-                      showSection('history'); // Affiche directement l'historique
-                  }
-             });
-
-             // Clic sur le bouton Start/Pause/Reprendre/Fait
-             startPauseBtn.addEventListener('click', () => {
-                  initAudioContext(); // Tente init audio
-                  if (currentState === 'idle' && currentWorkoutPlan.length > 0) {
-                      // Démarrer le premier item (qui peut être exercice ou pause)
-                      const firstItem = currentWorkoutPlan[0];
-                      if (firstItem.type === 'exercise') {
-                          setState('exercise');
-                      } else { // Premier item est une pause (état initial 'paused')
-                           totalTime = firstItem.duration;
-                           timeLeft = firstItem.duration;
-                           setState('break'); // Passer directement à 'break' pour démarrer le timer
-                      }
-                  } else if (currentState === 'exercise') {
-                      handleItemCompletion(); // Marque l'exercice comme fait
-                  } else if (currentState === 'break') {
-                      setState('paused'); // Met en pause le timer de repos
-                  } else if (currentState === 'paused') {
-                      setState('break'); // Reprend le timer de repos
-                  }
-                  saveInProgressState(); // Sauvegarde l'état local après l'action
-             });
-
-             // Clic sur le bouton Suivant (Skip)
-             skipBtn.addEventListener('click', () => {
-                  initAudioContext(); // Tente init audio
-                  if (isWorkoutActive && !workoutFinished) {
-                      showMessage("Passage à l'étape suivante.", 2000);
-                      handleItemCompletion(false); // false = non naturel (skip)
-                  }
-             });
-
-             // Clic sur le bouton Terminer
-             finishBtn.addEventListener('click', () => {
-                   initAudioContext(); // Tente init audio
-                   if (isWorkoutActive && !workoutFinished) {
-                       forceFinishWorkout(); // Demande confirmation et termine
-                   }
-             });
-
-             // Clic sur le bouton Réinitialiser
-             resetBtn.addEventListener('click', () => {
-                  initAudioContext(); // Tente init audio
-                  // Demander confirmation si un workout est chargé ou actif
-                  if (currentWorkoutType || isWorkoutActive) {
-                       if (confirm("Réinitialiser l'entraînement ? La progression en cours (non sauvegardée) sera perdue.")) {
-                           resetCurrentWorkout();
-                       }
-                  } else {
-                       // Si rien n'est actif, on peut juste réinitialiser silencieusement
-                       resetCurrentWorkout();
-                  }
-             });
-
-             // Clic sur le bouton de Thème
-             themeToggleBtn.addEventListener('click', () => {
-                  initAudioContext(); // Tente init audio
-                 const isDark = document.body.classList.contains('dark-theme');
-                 applyTheme(isDark ? 'light' : 'dark');
-             });
-
-             // Clics sur les filtres de l'historique
-             historyFilterBtns.forEach(button => {
-                 button.addEventListener('click', () => {
-                      initAudioContext(); // Tente init audio
-                      displayHistory(button.dataset.period);
-                 });
-             });
-
-             // Pas de sauvegarde de l'état en cours avant de quitter, Drive est la source principale
-             // window.addEventListener('beforeunload', saveInProgressState); // Commenté/Supprimé
-
-             console.log("Application initialisée. En attente de la bibliothèque et de la connexion Google.");
-             // Le script GIS sera chargé et appellera gisLoadedCallback
+             console.log("App initialisée. Attente GIS et connexion Google.");
+             // GIS se charge et appelle gisLoadedCallback
         });
-
     </script>
 
-    <!-- Chargement du script Google Identity Services à la FIN du body -->
-    <!-- Il appellera gisLoadedCallback() une fois chargé -->
+    <!-- Chargement Google Identity Services -->
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoadedCallback()"></script>
 
 </body>
