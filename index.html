@@ -127,6 +127,12 @@
             --bg-color-dark-rgb: 13, 17, 23;
             --secondary-bg-color-dark-rgb: 22, 27, 34;
             --primary-text-color-dark-rgb: 201, 209, 217;
+            --color-exercise-rgb: 247, 120, 186;
+            --color-break-rgb: 250, 204, 21;
+            --color-prepare-rgb: 250, 204, 21;
+            --color-finished-rgb: 63, 185, 80;
+            --color-paused-rgb: 188, 140, 255;
+            --color-idle-rgb: 139, 148, 158;
         }
 
         body.light-theme {
@@ -262,14 +268,29 @@
         .timer-display { margin-bottom: 50px; position: relative; display: flex; justify-content: center; align-items: center; width: 320px; height: 320px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
         .timer-circle-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; pointer-events: none; }
         #total-progress-circle, .timer-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 12px solid transparent; background-clip: padding-box; background-origin: border-box; box-sizing: border-box; }
-        #total-progress-circle { border-color: var(--total-progress-bg); background-image: var(--total-progress-gradient); background-size: 100% 100%; box-shadow: 0 0 25px rgba(var(--neon-blue-rgb), 0.3), 0 0 35px rgba(var(--neon-pink-rgb), 0.2), inset 0 0 20px rgba(var(--bg-color-dark-rgb), 0.5); z-index: 1; transition: background 0.5s ease-out; background-repeat: no-repeat; background-position: center center; }
-        .timer-circle { width: calc(100% - 48px); height: calc(100% - 48px); top: 24px; left: 24px; border-color: var(--border-color); background-image: conic-gradient(var(--current-step-color) 0%, transparent 0%); background-size: 100% 100%; box-shadow: var(--current-step-glow), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); z-index: 3; transition: background-image 0.15s linear, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease; background-repeat: no-repeat; background-position: center center; }
+        #total-progress-circle {
+            border-color: var(--total-progress-bg);
+            /* Utilisation de la variable CSS mise à jour par JS */
+            background: var(--total-progress-gradient, var(--total-progress-bg));
+            box-shadow: 0 0 25px rgba(var(--neon-blue-rgb), 0.3), 0 0 35px rgba(var(--neon-pink-rgb), 0.2), inset 0 0 20px rgba(var(--bg-color-dark-rgb), 0.5);
+            z-index: 1; transition: background 0.3s linear; /* Transition plus rapide pour le progrès */
+        }
+        .timer-circle {
+            width: calc(100% - 48px); height: calc(100% - 48px); top: 24px; left: 24px;
+            border-color: var(--border-color);
+            /* Utilisation des variables CSS mises à jour par JS */
+            background-image: conic-gradient(var(--current-step-color, var(--color-idle)) 0%, transparent 0%);
+            box-shadow: var(--current-step-glow, var(--glow-idle)), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6);
+            z-index: 3; transition: background-image 0.15s linear, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            background-size: 100% 100%; background-repeat: no-repeat; background-position: center center;
+        }
         .timer-circle::before { content: ''; position: absolute; width: calc(100% - 24px); height: calc(100% - 24px); background-color: var(--bg-color); border-radius: 50%; z-index: 4; transition: background-color var(--transition-speed) ease; }
         .time-left { font-size: 5.5em; font-weight: 900; color: var(--primary-text-color); z-index: 5; transition: color var(--transition-speed) ease; font-variant-numeric: tabular-nums; position: relative; text-shadow: 0 0 10px rgba(var(--primary-text-color-dark-rgb), 0.3); }
 
         .timer-state {
             position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); font-size: 0.9em; letter-spacing: 0.08em;
-            color: var(--current-step-color); /* Utilise la couleur de l'état */
+            /* Utilisation de la variable CSS mise à jour par JS */
+            color: var(--current-step-color, var(--color-idle));
             font-weight: 500; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease, color var(--transition-speed) ease;
             background-color: transparent; padding: 0; box-shadow: none; z-index: 6;
             text-shadow: 0 0 8px rgba(var(--bg-color-dark-rgb), 0.7); /* Ombre pour lisibilité */
@@ -280,25 +301,30 @@
 
         /* --- Infos Exercice --- */
         .workout-info { margin-bottom: 40px; min-height: 100px; position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        #current-exercise-name-display { display: block; font-size: 1.4em; font-weight: 700; color: var(--primary-text-color); margin-bottom: 8px; padding: 0 10px; min-height: 1.5em; }
+        #current-exercise-name-display { display: block; font-size: 1.4em; font-weight: 700; color: var(--primary-text-color); margin-bottom: 8px; padding: 0 10px; min-height: 1.5em; transition: color 0.3s ease; }
+        /* Couleur du titre basée sur l'état */
+        body.state-exercise #current-exercise-name-display { color: var(--color-exercise); }
+        body.state-break #current-exercise-name-display { color: var(--color-break); }
+        body.state-paused #current-exercise-name-display { color: var(--color-paused); }
+        body.state-preparing #current-exercise-name-display { color: var(--color-prepare); }
+        body.state-finished #current-exercise-name-display { color: var(--color-finished); }
+
         #current-exercise-container { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 1.1em; color: var(--secondary-text-color); min-height: 3em; width: 100%; }
         #current-exercise-container .exercise-details,
-        #current-exercise-container .break-info {
+        #current-exercise-container .break-info,
+        #current-exercise-container .idle-message { /* Ajout classe pour idle */
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 20px;
             background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); padding: 10px 18px; border-radius: var(--border-radius-md);
             border: 1px solid var(--border-color); width: fit-content; max-width: 90%;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         #current-exercise-container .exercise-details span,
         #current-exercise-container .break-info span { display: flex; align-items: center; gap: 6px; font-weight: 500; }
-        #current-exercise-container .exercise-details span i { color: var(--color-exercise); } /* Couleur Exo */
-        #current-exercise-container .break-info i { color: var(--color-break); } /* Couleur Pause */
+        #current-exercise-container .exercise-details span i { color: var(--color-exercise); }
+        #current-exercise-container .break-info i { color: var(--color-break); }
         #current-exercise-container .exercise-details .details-text { font-size: 0.9em; opacity: 0.8; }
-        /* Logique d'affichage des détails */
-        body:not(.workout-active) #current-exercise-name-display,
-        body:not(.workout-active) #current-exercise-container .exercise-details,
-        body:not(.workout-active) #current-exercise-container .break-info { display: none; }
-        body.workout-active #current-exercise-container > p { display: none; }
-        body:not(.workout-active) #current-exercise-container > p { display: block; margin-top: 10px; } /* Affiche message idle */
+        #current-exercise-container .idle-message { border-style: dashed; opacity: 0.7; }
+
 
         /* --- Progress Tracker --- */
         .progress-tracker { font-size: 0.9em; color: var(--secondary-text-color); margin-top: 30px; opacity: 0.8; font-weight: 500; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px 15px; min-height: 1.2em; }
@@ -321,15 +347,18 @@
         .controls button:not(:disabled):hover i { transform: scale(1.1); }
         .controls button:not(:disabled):active { transform: scale(0.97); }
 
-        /* Styles spécifiques aux boutons */
-        #start-pause-btn { border-color: var(--button-start-color); color: var(--button-start-color); }
-        #start-pause-btn:not(:disabled):hover { box-shadow: var(--glow-blue), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-blue-rgb), 0.08); }
+        /* Styles spécifiques aux boutons basés sur la classe JS */
+        #start-pause-btn.start-btn { border-color: var(--button-start-color); color: var(--button-start-color); }
+        #start-pause-btn.start-btn:not(:disabled):hover { box-shadow: var(--glow-blue), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-blue-rgb), 0.08); }
         #start-pause-btn.pause-btn { border-color: var(--button-pause-color); color: var(--button-pause-color); }
         #start-pause-btn.pause-btn:not(:disabled):hover { box-shadow: var(--glow-paused), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-paused-rgb), 0.08); }
-         #start-pause-btn.resume-btn { border-color: var(--button-resume-color); color: var(--button-resume-color); } /* Peut être le même que pause */
+        #start-pause-btn.resume-btn { border-color: var(--button-resume-color); color: var(--button-resume-color); }
         #start-pause-btn.resume-btn:not(:disabled):hover { box-shadow: var(--glow-paused), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-paused-rgb), 0.08); }
-         #start-pause-btn.done-btn { border-color: var(--button-done-color); color: var(--button-done-color); }
+        #start-pause-btn.done-btn { border-color: var(--button-done-color); color: var(--button-done-color); }
         #start-pause-btn.done-btn:not(:disabled):hover { box-shadow: var(--glow-exercise), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-exercise-rgb), 0.08); }
+        #start-pause-btn.finished-btn { border-color: var(--color-finished); color: var(--color-finished); } /* Nouvelle classe pour état fini */
+        #start-pause-btn.finished-btn:not(:disabled):hover { box-shadow: var(--glow-finished), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-finished-rgb), 0.08); }
+
 
         #skip-btn { border-color: var(--button-next-color); color: var(--button-next-color); }
         #skip-btn:not(:disabled):hover { box-shadow: var(--glow-purple), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-purple-rgb), 0.08); }
@@ -349,23 +378,23 @@
         .history-actions i.fab.fa-google-drive { color: var(--neon-green); font-size: 1.1em; }
         #history-drive-status { font-size: 0.8em; padding: 3px 6px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); }
         .chart-container { height: 350px; margin-bottom: 30px; background-color: transparent; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; box-shadow: none; position: relative; }
-        #chart-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--secondary-text-color); font-style: italic; }
+        #chart-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--secondary-text-color); font-style: italic; text-align: center; padding: 0 10px;}
         .stats-display { margin-bottom: 30px; padding: 20px; background-color: transparent; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: none; }
         .stats-display h3 { color: var(--primary-text-color); margin-bottom: 15px; font-size: 1.15em;}
         .stats-display p { margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
         .stats-display p i { width: 16px; text-align: center; color: var(--neon-blue); opacity: 0.8;}
         .stats-display p strong { color: var(--primary-text-color); font-weight: 500; }
-        .stats-display p:last-child { margin-bottom: 0; }
+        .stats-display .content-wrapper p:last-child { margin-bottom: 0; } /* Target generated content */
         .stats-display .motivational-message { font-style: italic; font-weight: 500; margin-top: 15px !important; background: linear-gradient(90deg, var(--neon-green), var(--neon-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; }
         .history-list { list-style: none; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background-color: transparent; box-shadow: none; max-height: 400px; overflow-y: auto; }
-        .history-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease; gap: 15px; }
+        .history-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease; gap: 15px; flex-wrap: wrap; } /* Allow wrap on small screens */
         .history-list li:last-child { border-bottom: none; }
         .history-list li:nth-child(even) { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); }
         .history-list li:hover { background-color: rgba(var(--neon-blue-rgb), 0.08); }
         .history-item-date { color: var(--primary-text-color); font-size: 0.9em; flex-shrink: 0; }
         .history-item-date small { color: var(--secondary-text-color); font-size: 0.9em;}
-        .history-item-type { color: var(--neon-pink); background-color: rgba(var(--neon-pink-rgb), 0.1); border-radius: var(--border-radius-sm); padding: 3px 8px; font-size: 0.85em; font-weight: 500; text-align: center; min-width: 50px; flex-shrink: 0; }
-        .history-item-duration { color: var(--neon-blue); font-weight: 500; font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: auto; /* Pousse à droite */ }
+        .history-item-type { color: var(--neon-pink); background-color: rgba(var(--neon-pink-rgb), 0.1); border-radius: var(--border-radius-sm); padding: 3px 8px; font-size: 0.85em; font-weight: 500; text-align: center; min-width: 50px; flex-shrink: 0; margin: 5px 0; /* Add margin for wrap */ }
+        .history-item-duration { color: var(--neon-blue); font-weight: 500; font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: auto; /* Pousse à droite */ margin: 5px 0; }
         .history-list .no-history { color: var(--secondary-text-color); text-align: center; padding: 30px 15px; font-style: italic; border: none; background: none !important; }
 
         /* --- Résumé Post-Workout (MODAL) --- */
@@ -377,7 +406,7 @@
         .post-workout-summary.visible { opacity: 1; visibility: visible; pointer-events: auto; }
         .post-workout-summary-content {
             background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            width: 100%; max-width: 680px; /* Slightly wider */ max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease;
+            width: 100%; max-width: 680px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease;
         }
         .post-workout-summary.visible .post-workout-summary-content { transform: scale(1); }
         .post-workout-summary h2 { color: var(--primary-text-color); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; text-align: center; background-color: rgba(var(--bg-color-dark-rgb), 0.2); }
@@ -385,7 +414,7 @@
         .summary-item {
             border-bottom: 1px solid var(--border-color); padding: 18px 0; display: grid;
             grid-template-columns: auto 1fr auto; /* Icon | Label | Input/Controls */
-            gap: 10px 15px; align-items: center; /* Center align items vertically */
+            gap: 10px 15px; align-items: center;
         }
         .summary-item:last-child { border-bottom: none; }
         .summary-item h4 { grid-column: 1 / -1; color: var(--primary-text-color); font-size: 1.15em; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
@@ -393,24 +422,23 @@
         .summary-item.item-type-exercise h4 i { color: var(--color-exercise); }
         .summary-item.item-type-break h4 i { color: var(--color-break); }
         .summary-item label {
-            grid-column: 2 / 3; /* Colonne du milieu */ color: var(--secondary-text-color); font-size: 0.9em; font-weight: 500; white-space: nowrap; text-align: left; padding-left: 5px;
+            grid-column: 2 / 3; color: var(--secondary-text-color); font-size: 0.9em; font-weight: 500; white-space: nowrap; text-align: left; padding-left: 5px;
         }
-        /* Input container pour aligner boutons +/- */
-        .summary-item .input-container { grid-column: 3 / 4; /* Colonne de droite */ display: flex; align-items: center; gap: 8px; }
+        .summary-item .input-container { grid-column: 3 / 4; display: flex; align-items: center; gap: 8px; }
         .summary-item input[type="number"], .summary-item input[type="text"], .summary-item textarea {
             background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text-color);
             border-radius: var(--border-radius-sm); padding: 8px 12px; font-size: 1em; width: 100%;
             transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
-        .summary-item input[type="number"] { width: 70px; text-align: center; flex-shrink: 0; -moz-appearance: textfield; /* Cache les flèches natives */ }
+        .summary-item input[type="number"] { width: 70px; text-align: center; flex-shrink: 0; -moz-appearance: textfield; }
         .summary-item input[type="number"]::-webkit-outer-spin-button,
-        .summary-item input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } /* Cache les flèches natives */
+        .summary-item input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .summary-item input:focus, .summary-item textarea:focus { border-color: var(--neon-blue); background-color: var(--bg-color); outline: none; box-shadow: 0 0 0 3px rgba(var(--neon-blue-rgb), 0.3); }
-        .summary-item textarea { min-height: 45px; resize: vertical; width: 100%; /* Prend toute la largeur de la colonne */ }
-        .summary-item .details-container { grid-column: 1 / -1; /* Prend toute la largeur pour les détails */ margin-top: 5px; }
+        .summary-item textarea { min-height: 45px; resize: vertical; width: 100%; }
+        .summary-item .details-container { grid-column: 1 / -1; margin-top: 5px; }
+        .summary-item .details-container label { display: block; text-align: left; margin-bottom: 4px; font-size: 0.9em; color: var(--secondary-text-color); padding-left: 0; }
         .summary-item p { /* Pour affichage durée pause */ grid-column: 2 / -1; color: var(--primary-text-color); font-weight: 500; padding-left: 5px; }
 
-        /* Boutons +/- pour reps */
         .rep-adjust-btn {
             background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); color: var(--primary-text-color);
             border-radius: 50%; width: 28px; height: 28px; font-size: 1em; line-height: 26px; text-align: center;
@@ -419,38 +447,36 @@
         .rep-adjust-btn:hover { background-color: var(--accent-border-color); border-color: var(--neon-blue); color: var(--neon-blue); }
         .rep-adjust-btn:active { transform: scale(0.95); }
 
-        /* Boutons modale (revisités) */
         .summary-controls {
-            padding: 20px 25px; display: flex; justify-content: flex-end; /* Aligne à droite */ gap: 15px;
+            padding: 20px 25px; display: flex; justify-content: flex-end; gap: 15px;
             flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(var(--bg-color-dark-rgb), 0.2);
         }
-        .summary-controls button { /* Style de base commun */
+        .summary-controls button {
             border: none; color: white; min-width: 160px; padding: 10px 22px; border-radius: var(--border-radius-md);
             font-size: 1em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease;
             display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; background-color: var(--secondary-text-color) !important; }
         .summary-controls button:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25); transform: translateY(-1px); }
         .summary-controls button:not(:disabled):active { filter: brightness(0.95); transform: translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 
-        #confirm-summary-btn { background-color: var(--neon-green); } /* Vert pour confirmer/sauver */
-        #discard-summary-btn { background-color: var(--neon-red); } /* Rouge pour annuler/rejeter */
-        #close-summary-btn { background-color: var(--secondary-text-color); display: none; } /* Bouton neutre si pas de modif */
+        #confirm-summary-btn { background-color: var(--neon-green); }
+        #discard-summary-btn { background-color: var(--neon-red); }
+        #close-summary-btn { background-color: var(--secondary-text-color); display: none; }
 
 
         /* --- Animation Fin Workout --- */
-        /* Animation subtile sur le cercle principal */
         .timer-display.finished-animation .timer-circle {
             animation: finish-circle-glow 1.5s ease-out forwards;
         }
         @keyframes finish-circle-glow {
             0% { box-shadow: var(--current-step-glow), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); border-color: var(--border-color); }
             50% { box-shadow: 0 0 35px 15px rgba(var(--color-finished-rgb), 0.7), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.4); border-color: var(--color-finished); }
-            100% { box-shadow: var(--glow-finished), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); border-color: var(--color-finished); } /* Reste vert */
+            100% { box-shadow: var(--glow-finished), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); border-color: var(--color-finished); }
         }
 
         /* --- Zone de Messages Flottante --- */
-        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; /* Au dessus de tout sauf peut-être la modale */ opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
         .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
 
         /* --- Pied de Page --- */
@@ -498,10 +524,14 @@
             .timer-circle::before { width: calc(100% - 16px); height: calc(100% - 16px); }
             .time-left { font-size: 3.8em; }
             #total-progress-circle { border-width: 8px; }
-            .workout-info { min-height: 80px; }
+            .workout-info { min-height: 80px; margin-bottom: 30px; }
             #current-exercise-name-display { font-size: 1.2em; }
             #current-exercise-container { font-size: 1em; }
-            #current-exercise-container .exercise-details { padding: 8px 12px; gap: 8px 15px;}
+            #current-exercise-container .exercise-details,
+            #current-exercise-container .break-info,
+            #current-exercise-container .idle-message { padding: 8px 12px; gap: 8px 15px; max-width: 95%;}
+            #current-exercise-container .exercise-details span { flex-basis: 100%; justify-content: center;} /* Reps et Details sur lignes séparées */
+             #current-exercise-container .exercise-details .details-text { text-align: center; }
             .controls { gap: 10px; margin-top: 30px; flex-direction: column; align-items: stretch; }
             .controls button { width: 100%; min-width: 0; padding: 12px; font-size: 1em; }
             .progress-tracker { margin-top: 25px; font-size: 0.85em;}
@@ -510,12 +540,14 @@
             .history-filters button { font-size: 0.8em; padding: 5px 10px; }
             .chart-container { height: 280px; }
             .stats-display { padding: 12px; font-size: 0.9em;}
-            .history-list li { font-size: 0.9em;}
-            .history-item-type { font-size: 0.8em; padding: 2px 6px;}
+            .stats-display .content-wrapper p { gap: 6px;}
+            .history-list li { font-size: 0.9em; flex-direction: column; align-items: flex-start; gap: 5px; } /* Empilement sur mobile */
+             .history-item-duration { margin-left: 0; }
+            .history-item-type { align-self: flex-start; }
             .post-workout-summary-content { max-width: 100%; max-height: 90vh; border-radius: var(--border-radius-md); }
             .post-workout-summary h2 { font-size: 1.2em; padding: 12px 15px;}
             .summary-items-list { padding: 8px 15px; }
-            .summary-item { grid-template-columns: auto 1fr; gap: 5px 10px; padding: 12px 0; } /* Ajuste grille pour petit écran */
+            .summary-item { grid-template-columns: auto 1fr; gap: 5px 10px; padding: 12px 0; }
             .summary-item label { grid-column: 1 / 2; text-align: left; }
             .summary-item .input-container { grid-column: 2 / 3; justify-content: flex-start;}
              .summary-item .details-container { grid-column: 1 / -1; }
@@ -525,7 +557,7 @@
         }
     </style>
 </head>
-<body class="logged-out dark-theme"> <!-- Initialement logged-out et thème sombre -->
+<body class="logged-out dark-theme state-idle"> <!-- Classe d'état ajoutée ici -->
 
 <header>
     <div class="header-content">
@@ -544,7 +576,6 @@
                 <button id="signout-button"><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
             </div>
             <span id="drive-status"></span>
-            <!-- Bouton Export retiré -->
             <div class="theme-toggle">
                 <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button>
             </div>
@@ -568,13 +599,15 @@
             </div>
 
             <div class="workout-info" id="workout-info">
+                 <!-- Contenu généré par JS -->
                 <div id="current-exercise-name-display"></div>
                 <div id="current-exercise-container">
-                    <p>Initialisation...</p> <!-- Message par défaut -->
+                    <!-- Sera rempli par updateWorkoutInfo -->
                 </div>
             </div>
 
             <div class="controls">
+                 <!-- Classes ajoutées/retirées dynamiquement par setState -->
                 <button id="start-pause-btn" disabled><i class="fas fa-play"></i> Démarrer</button>
                 <button id="skip-btn" disabled><i class="fas fa-forward-step"></i> Suivant</button>
                 <button id="finish-btn" disabled><i class="fas fa-flag-checkered"></i> Finir</button>
@@ -600,18 +633,20 @@
                     <button data-period="year"><i class="fas fa-calendar-check"></i> Année</button>
                     <button data-period="all"><i class="fas fa-infinity"></i> Tout</button>
                 </div>
-                <div class="history-actions" style="display: none;"> <!-- Caché par défaut, affiché si loggué -->
+                <div class="history-actions" style="display: none;"> <!-- Caché par défaut -->
                     <i class="fab fa-google-drive"></i>
                     <span id="history-drive-status">Synchro Drive</span>
                 </div>
             </div>
             <div class="chart-container">
                 <canvas id="history-chart-canvas"></canvas>
-                <p id="chart-placeholder" style="display: none;"></p>
+                <p id="chart-placeholder" style="display: none;"></p> <!-- Placeholder ajouté -->
             </div>
             <div class="stats-display" id="stats-display">
                 <h3>Statistiques</h3>
-                <p>Connectez-vous.</p>
+                <div class="content-wrapper"> <!-- Wrapper ajouté pour cibler le contenu généré -->
+                     <p>Connectez-vous.</p>
+                </div>
                 <p class="motivational-message"></p>
             </div>
             <ul class="history-list" id="history-list">
@@ -630,14 +665,13 @@
 <div id="message-area" class="message-area"></div>
 
 <!-- Modal Résumé Post-Workout -->
-<div id="post-workout-summary" class="post-workout-summary">
+<div id="post-workout-summary" class="post-workout-summary"> <!-- Doit être hors de .container/main -->
     <div class="post-workout-summary-content">
         <h2 id="summary-title">Résumé de la Séance</h2>
         <ul id="summary-items-list" class="summary-items-list">
             <!-- Contenu généré par JS -->
         </ul>
         <div class="summary-controls">
-             <!-- Bouton unique, change de texte et d'état -->
             <button id="close-summary-btn"><i class="fas fa-times"></i> Fermer</button>
             <button id="discard-summary-btn"><i class="fas fa-trash-alt"></i> Rejeter Changements</button>
             <button id="confirm-summary-btn"><i class="fas fa-check"></i> Valider & Fermer</button>
@@ -658,7 +692,7 @@
     const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
 
     // --- DONNÉES PAR DÉFAUT ---
-    const defaultWorkouts = { /* ... (Identique à la version précédente) ... */
+    const defaultWorkouts = {
         Push: [ { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 13 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 13 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Band Standing Chest Press', details: 'Élastique 15kg à porte', reps: 14 }, { type: 'exercise', name: 'Band Bench Press', details: 'Élastique 25kg', reps: 15 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Overhead Press', details: 'Élastique 15kg', reps: 12 }, { type: 'exercise', name: 'Triceps Pushdown', details: 'Élastique 15kg', reps: 15 }, { type: 'break', duration: 60, name: 'Repos' }, { type: 'exercise', name: 'Overhead Press', details: 'Élastique 15kg', reps: 12 }, { type: 'exercise', name: 'Triceps Pushdown', details: 'Élastique 15kg', reps: 15 }, ],
         Pull: [ { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 12 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 14 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 12 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 14 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Band Bent-over Row', details: 'Élastique 25 kg', reps: 13 }, { type: 'exercise', name: 'Band Face Pull', details: 'Élastique 15 kg', reps: 15 }, { type: 'break', duration: 75, name: 'Repos' }, { type: 'exercise', name: 'Bicep Curls', details: 'Élastique 15 kg', reps: 12 }, { type: 'exercise', name: 'Lat Pulldown (Band)', details: 'Élastique 25 kg', reps: 12 }, { type: 'break', duration: 60, name: 'Repos' }, { type: 'exercise', name: 'Bicep Curls', details: 'Élastique 15 kg', reps: 12 }, { type: 'exercise', name: 'Lat Pulldown (Band)', details: 'Élastique 25 kg', reps: 12 }, ],
         Legs: [ { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 13 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 10 }, { type: 'break', duration: 90, name: 'Repos' }, { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 13 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 10 }, { type: 'break', duration: 90, name: 'Repos' }, { type: 'exercise', name: 'Front squat', details: 'Élastique 15+25 kg + Haltère 5kg', reps: 14 }, { type: 'exercise', name: 'Fentes Arrière', details: 'Élastique 25 kg', reps: 11 }, { type: 'break', duration: 90, name: 'Repos' }, { type: 'exercise', name: 'Romanian Deadlift (Band)', details: 'Élastique 25kg', reps: 15 }, { type: 'exercise', name: 'Calf Raises', details: 'Bodyweight or Band', reps: 20 }, { type: 'break', duration: 60, name: 'Repos' }, { type: 'exercise', name: 'Romanian Deadlift (Band)', details: 'Élastique 25kg', reps: 15 }, { type: 'exercise', name: 'Calf Raises', details: 'Bodyweight or Band', reps: 20 }, ]
@@ -668,10 +702,10 @@
     let timeLeftDisplay, timerCircle, timerStateDisplay, currentExerciseContainer,
         progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, navButtons,
         navHistoryBtn, themeToggleBtn, messageArea, workoutSection, historySection,
-        historyList, statsDisplay, historyFilterBtns, historyChartCanvas,
-        signInButton, signOutButton, driveStatusElement, /* exportProgramsBtn retiré */
-        postWorkoutSummary, summaryTitle, summaryItemsList, confirmSummaryBtn, // Remplacé save
-        discardSummaryBtn, closeSummaryBtn, // Nouveaux boutons modale
+        historyList, statsDisplay, statsContentWrapper, historyFilterBtns, historyChartCanvas,
+        signInButton, signOutButton, driveStatusElement,
+        postWorkoutSummary, summaryTitle, summaryItemsList, confirmSummaryBtn,
+        discardSummaryBtn, closeSummaryBtn,
         historyDriveStatus, totalProgressCircle,
         currentExerciseNameDisplay, driveConnectionStatusMain, driveConnectionText,
         timerDisplayElement, chartPlaceholder, progressTextArea, historyActionsContainer;
@@ -679,14 +713,14 @@
     // --- Variables d'État ---
     let currentWorkoutType = null;
     let currentWorkoutPlan = [];
-    let originalCompletedWorkoutPlan = [];
+    let originalCompletedWorkoutPlan = []; // Pour le résumé post-workout
     let currentItemIndex = 0;
     let timerInterval = null;
     let prepareCountdownInterval = null;
     let totalTime = 0; let timeLeft = 0; let prepareTimeLeft = 0;
     let totalWorkoutEstimatedSeconds = 0; let elapsedWorkoutEstimatedSeconds = 0;
     let isTimerRunning = false; let isWorkoutActive = false; let workoutFinished = false;
-    let currentState = 'idle';
+    let currentState = 'idle'; // idle, preparing, exercise, break, paused, finished
     let workoutStartTime = null;
     let workoutHistory = [];
     let currentHistoryPeriod = 'week';
@@ -696,55 +730,91 @@
     let programFileIds = { Push: null, Pull: null, Legs: null };
     let programsLoaded = false;
     let loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts));
-    let summaryChangesMade = false; // Flag pour modifs dans la modale
-    let isSavingDriveData = false; // Flag pour éviter sauvegardes concurrentes
+    let summaryChangesMade = false;
+    let isSavingDriveData = false;
     let currentTheme = 'dark';
     let messageTimeoutId = null;
+    let wasFinishedState = false; // Flag pour savoir si on vient de finir
 
     // --- Audio & Vibration ---
     let audioContext = null;
     let endSound = () => { console.log("Beep! (AudioContext non initialisé)"); };
-    function initAudioContext() { /* ... (Identique) ... */
+    function initAudioContext() {
         if (audioContext) return;
         if (window.AudioContext || window.webkitAudioContext) {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 console.log("AudioContext initialisé.");
-                const unlockAudio = () => { if (audioContext && audioContext.state === 'suspended') { audioContext.resume().then(() => { console.log("AudioContext resumed!"); document.removeEventListener('click', unlockAudio); document.removeEventListener('touchstart', unlockAudio); }); } else { document.removeEventListener('click', unlockAudio); document.removeEventListener('touchstart', unlockAudio); } };
-                document.addEventListener('click', unlockAudio); document.addEventListener('touchstart', unlockAudio);
-                endSound = () => { if (!audioContext) return; if (audioContext.state === 'suspended') { audioContext.resume().then(playActualSound).catch(e => console.error("Erreur reprise AudioContext", e)); } else { playActualSound(); } };
+                const unlockAudio = () => {
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log("AudioContext resumed!");
+                            document.removeEventListener('click', unlockAudio);
+                            document.removeEventListener('touchstart', unlockAudio);
+                        });
+                    } else {
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                    }
+                };
+                document.addEventListener('click', unlockAudio);
+                document.addEventListener('touchstart', unlockAudio);
+                endSound = () => {
+                    if (!audioContext) return;
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().then(playActualSound).catch(e => console.error("Erreur reprise AudioContext", e));
+                    } else {
+                        playActualSound();
+                    }
+                };
             } catch (e) { console.warn("Initialisation AudioContext échouée:", e); audioContext = null; endSound = () => console.log("Beep! (AudioContext indisponible)"); }
         } else { endSound = () => console.log("Beep! (AudioContext indisponible)"); }
     }
-    function playActualSound() { /* ... (Identique) ... */
-        if (!audioContext) return; try { const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain(); oscillator.connect(gainNode); gainNode.connect(audioContext.destination); oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime); gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5); oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.5); } catch(e) { console.error("Erreur lecture son:", e); }
+    function playActualSound() {
+        if (!audioContext) return;
+        try {
+            const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+            oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+            oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.5);
+        } catch(e) { console.error("Erreur lecture son:", e); }
     }
-    const vibrate = (pattern = [100, 50, 100]) => { /* ... (Identique) ... */
+    const vibrate = (pattern = [100, 50, 100]) => {
         if ('vibrate' in navigator) { try { navigator.vibrate(pattern); } catch (e) { console.warn("Vibration échouée:", e); } }
     };
 
     // --- Google Identity Services (GIS) & Drive API ---
-    function gisLoadedCallback() { /* ... (Identique, sauf suppression export btn) ... */
-        console.log("GIS Library Loaded Callback Executed"); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "VOTRE ID CLIENT ICI") { console.error("ERREUR CRITIQUE: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Config ID'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } updateAuthUI(false); return; } try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: (tokenResponse) => { console.log("GIS Callback: Réponse reçue, appel de tokenCallback..."); tokenCallback(tokenResponse); }, error_callback: (error) => { console.error("GIS Error Callback:", error); handleTokenError(error); }, prompt: '' }); console.log("Token Client initialisé avec succès."); } catch (error) { console.error("Erreur initialisation Token Client:", error); showMessage("Erreur initialisation services Google.", 5000); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } }
+    function gisLoadedCallback() {
+        console.log("GIS Library Loaded Callback Executed");
+        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "VOTRE ID CLIENT ICI") { console.error("ERREUR CRITIQUE: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Config ID'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } updateAuthUI(false); return; }
+        try {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES,
+                callback: (tokenResponse) => { console.log("GIS Callback: Réponse reçue, appel de tokenCallback..."); tokenCallback(tokenResponse); },
+                error_callback: (error) => { console.error("GIS Error Callback:", error); handleTokenError(error); },
+                prompt: ''
+            });
+            console.log("Token Client initialisé avec succès.");
+        } catch (error) { console.error("Erreur initialisation Token Client:", error); showMessage("Erreur initialisation services Google.", 5000); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } }
     }
-    function handleTokenError(error) { /* ... (Identique) ... */
+    function handleTokenError(error) {
         console.error("Erreur Token Client:", error); let message = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading','success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.type === 'popup_closed' || error.error === 'user_cancel' || error.error === 'popup_closed') { message = "Connexion Google annulée par l'utilisateur."; statusText = 'Annulé'; } else if (error.type === 'popup_failed_to_open' || error.error === 'popup_failed_to_open') { message = "La fenêtre pop-up Google a été bloquée. Vérifiez les paramètres de votre navigateur."; statusText = 'Popup Bloqué'; } else if (error.type === 'session_timed_out' || error.error === 'session_timed_out'){ message = "Session Google expirée. Veuillez vous reconnecter."; statusText = 'Expiré'; handleSignoutClick(false); } else if (error.type === 'unregistered_origin' || error.type === 'invalid_client' || error.type === 'redirect_uri_mismatch' || error.error === 'invalid_client') { message = "Erreur de configuration de l'application Google. Contactez le développeur."; statusText = 'Erreur Config App'; console.error("Détails erreur de configuration:", error); } else if (error.error === 'access_denied') { message = "Accès refusé. Vous devez autoriser l'accès à Google Drive."; statusText = 'Accès Refusé'; } else { console.error("Détails erreur d'authentification non gérée:", error); } showMessage(message, 7000); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false);
     }
-    async function tokenCallback(tokenResponse) { /* ... (Identique) ... */
-        console.log("Logique tokenCallback en cours avec réponse:", tokenResponse); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu avec succès."); googleAccessToken = tokenResponse.access_token; updateAuthUI(true); showMessage("Connecté. Chargement des données...", 3000); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { console.log("tokenCallback: Tentative de chargement parallèle historique & programmes..."); const historyResult = await loadHistoryFromDrive(); console.log(`tokenCallback: Historique chargé OK: ${historyResult}`); const programsResult = await loadProgramsFromDrive(); console.log(`tokenCallback: Programmes chargés OK: ${programsResult}`); if (programsResult) { console.log("Données Drive (programmes) chargées avec succès ou fallback."); showMessage("Historique et programmes chargés.", 2500); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('success'); } const resumed = loadInProgressState(); if (!resumed) { updateAuthUI(true); } } else { showMessage("Erreur critique lors du chargement des programmes depuis Drive. Programmes par défaut utilisés.", 6000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } updateAuthUI(true); } } catch (error) { console.error("tokenCallback: ERREUR CRITIQUE pendant le chargement des données:", error); console.error("Stack Trace:", error.stack); showMessage("Erreur majeure lors du chargement des données depuis Drive.", 7000); loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); workoutHistory = []; programsLoaded = false; updateAuthUI(true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } displayHistory(); updateAuthUI(true); } } else { console.error("Erreur dans la réponse Token ou access_token manquant:", tokenResponse); if (tokenResponse && tokenResponse.error) { handleTokenError(tokenResponse); } else { showMessage("Erreur: Jeton Google invalide reçu.", 5000); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Jeton'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } } }
+    async function tokenCallback(tokenResponse) {
+        console.log("Logique tokenCallback en cours avec réponse:", tokenResponse); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu avec succès."); googleAccessToken = tokenResponse.access_token; updateAuthUI(true); showMessage("Connecté. Chargement des données...", 3000); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { console.log("tokenCallback: Tentative de chargement parallèle historique & programmes..."); const historyResult = await loadHistoryFromDrive(); console.log(`tokenCallback: Historique chargé OK: ${historyResult}`); const programsResult = await loadProgramsFromDrive(); console.log(`tokenCallback: Programmes chargés OK: ${programsResult}`); if (programsResult) { console.log("Données Drive (programmes) chargées avec succès ou fallback."); showMessage("Historique et programmes chargés.", 2500); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('success'); } const resumed = loadInProgressState(); if (!resumed) { updateAuthUI(true); // Assure la mise à jour finale de l'UI } } else { showMessage("Erreur critique lors du chargement des programmes depuis Drive. Programmes par défaut utilisés.", 6000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } updateAuthUI(true); } } catch (error) { console.error("tokenCallback: ERREUR CRITIQUE pendant le chargement des données:", error); console.error("Stack Trace:", error.stack); showMessage("Erreur majeure lors du chargement des données depuis Drive.", 7000); loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); workoutHistory = []; programsLoaded = false; updateAuthUI(true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } displayHistory(); } } else { console.error("Erreur dans la réponse Token ou access_token manquant:", tokenResponse); if (tokenResponse && tokenResponse.error) { handleTokenError(tokenResponse); } else { showMessage("Erreur: Jeton Google invalide reçu.", 5000); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Jeton'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } } }
     }
-    function handleAuthClick() { /* ... (Identique) ... */
+    function handleAuthClick() {
         initAudioContext(); console.log("Clic sur 'Connecter Drive'"); if (!tokenClient) { showMessage("La bibliothèque Google n'est pas encore prête, veuillez patienter...", 3000); console.warn("Tentative de connexion avant l'initialisation complète du tokenClient."); if (driveStatusElement) { driveStatusElement.textContent = 'Non Prêt'; driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } return; } console.log("Demande manuelle d'Access Token..."); if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error','success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' });
     }
-    function handleSignoutClick(showMsg = true) { /* ... (Identique) ... */
+    function handleSignoutClick(showMsg = true) {
         console.log("Clic sur 'Déconnecter'"); const token = googleAccessToken; if (token) { if (showMsg && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error','success'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué.'); googleAccessToken = null; historyFileId = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; workoutHistory = []; loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); if (isWorkoutActive || currentState !== 'idle') { resetCurrentWorkout(); } else { updateAuthUI(false); } if (showMsg) { showMessage("Déconnecté de Google Drive.", 2500); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.classList.remove('loading', 'error','success'); driveStatusElement.style.display = 'none'; } }); } else { console.log("Pas de token à révoquer, mise à jour UI."); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } }
     }
-    function updateAuthUI(isLoggedIn) { updateAuthUIDetailed(isLoggedIn); }
-    function updateAuthUIDetailed(isLoggedIn) { /* ... (Légèrement modifié pour exportBtn retiré et nav history toujours actif) ... */
+    function updateAuthUI(isLoggedIn) {
         console.log(`Mise à jour UI - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}, WorkoutType: ${currentWorkoutType}, État Timer: ${currentState}`);
         const body = document.body;
         body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn);
-        body.classList.toggle('workout-selected', !!currentWorkoutType);
+        body.classList.toggle('workout-selected', !!currentWorkoutType && currentState !== 'finished'); // Utile?
 
         // Statut Drive Header
         if (driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) { driveStatusElement.textContent = ''; driveStatusElement.classList.remove('loading', 'error', 'success'); } }
@@ -758,41 +828,50 @@
         // Boutons Header
         themeToggleBtn.disabled = false;
         navHistoryBtn.disabled = false; // Toujours activé
-        navButtons.forEach(btn => btn.disabled = !(isLoggedIn && programsLoaded));
-        // exportProgramsBtn est retiré
+        navButtons.forEach(btn => btn.disabled = !(isLoggedIn && programsLoaded && currentState !== 'preparing' && currentState !== 'break' && currentState !== 'paused' && currentState !== 'exercise')); // Désactivé pdt workout
 
-        // Boutons de contrôle: Gérés principalement par setState.
-        // Ici, on s'assure de l'état IDLE/FINISHED.
-        if (currentState === 'idle' || currentState === 'finished') {
+        // --- Boutons de contrôle (gérés surtout par setState) ---
+        // Cas spécifique IDLE
+        if (currentState === 'idle') {
             const canStart = isLoggedIn && programsLoaded && !!currentWorkoutType;
             startPauseBtn.disabled = !canStart;
-            startPauseBtn.innerHTML = '<i class="fas fa-play"></i> Démarrer';
-            startPauseBtn.className = 'start-btn'; // Classe pour styling ? Ou juste style via ID
-
+            startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`;
+            startPauseBtn.className = 'start-btn'; // Retire autres classes
             skipBtn.disabled = true;
             finishBtn.disabled = true;
-            resetBtn.disabled = !(currentWorkoutType || currentState === 'finished'); // Actif si sélectionné ou fini
+            resetBtn.disabled = !currentWorkoutType; // Actif seulement si un workout est sélectionné
         }
+        // Cas spécifique FINISHED (juste après fin, avant fermeture modale)
+        else if (currentState === 'finished') {
+            startPauseBtn.disabled = true; // Bouton principal désactivé pdt résumé
+            startPauseBtn.innerHTML = `<i class="fas ${getIconForState('finished')}"></i> Terminé`;
+            startPauseBtn.className = 'finished-btn'; // Classe pour état fini
+            skipBtn.disabled = true;
+            finishBtn.disabled = true;
+            resetBtn.disabled = !isLoggedIn; // Reset actif si connecté, pour pouvoir relancer après fermeture
+        }
+        // Les autres états sont gérés dans setState
 
         // Mettre à jour l'affichage workout et historique
-        updateWorkoutInfo();
+        updateWorkoutInfo(); // Doit refléter l'état actuel
         displayHistory(currentHistoryPeriod); // Pour màj message connexion / données
     }
 
-    async function findOrCreateFile(filename, defaultCsvContent = "") { /* ... (Identique) ... */
+    async function findOrCreateFile(filename, defaultCsvContent = "") {
         console.log(`findOrCreateFile: Recherche ou création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile: Non connecté."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+mimeType='text/csv'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`Erreur d'authentification (${searchRes.status}) lors de la recherche de ${filename}. Tentative de déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou invalide. Reconnexion nécessaire.", 6000); return null; } throw new Error(`Erreur recherche fichier ${filename} (${searchRes.status} ${searchRes.statusText})`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Fichier ${filename} trouvé ID: ${searchData.files[0].id}`); return searchData.files[0].id; } else { console.log(`Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: 'text/csv' }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { if (createRes.status === 401 || createRes.status === 403) { console.warn(`Erreur auth (${createRes.status}) lors création ${filename}. Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou invalide. Reconnexion nécessaire.", 6000); return null; } throw new Error(`Erreur création fichier ${filename} (${createRes.status} ${createRes.statusText})`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Fichier ${filename} créé ID: ${newFileId}. Écriture contenu défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultCsvContent); if (writeSuccess) { console.log(`Contenu défaut écrit dans ${filename}.`); return newFileId; } else { console.error(`Échec écriture contenu défaut dans ${filename}.`); return null; } } } catch (error) { console.error(`findOrCreateFile: ERREUR pour ${filename}:`, error); showMessage(`Erreur Drive (${filename.substring(0,15)}...): ${error.message}`, 7000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Accès'; driveStatusElement.classList.add('error'); } return null; }
     }
-    async function readFileContent(fileId) { /* ... (Identique) ... */
+    async function readFileContent(fileId) {
         console.log(`readFileContent: Lecture ID ${fileId}`); if (!googleAccessToken || !fileId) { console.warn("readFileContent: Non connecté ou fileId manquant."); return null; } const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`Fichier ${fileId} non trouvé (404). Sera recréé si nécessaire.`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`Erreur auth (${response.status}) lecture ${fileId}. Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou accès refusé. Reconnexion nécessaire.", 6000); return null; } throw new Error(`Erreur lecture fichier ${fileId} (${response.status} ${response.statusText})`); } const content = await response.text(); console.log(`Lecture fichier ${fileId} réussie.`); return content; } catch (error) { console.error(`readFileContent: ERREUR pour ${fileId}:`, error); showMessage(`Erreur Drive Lecture: ${error.message}`, 6000); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Lecture'; driveStatusElement.classList.add('error'); } return null; }
     }
-    async function updateFileContent(fileId, content) { /* ... (Modifié pour gérer le flag isSavingDriveData) ... */
+    async function updateFileContent(fileId, content) {
         console.log(`updateFileContent: Mise à jour ID ${fileId}`);
         if (!googleAccessToken || !fileId) { console.warn("updateFileContent: Non connecté ou fileId manquant."); return false; }
-        if (isSavingDriveData) { console.warn(`updateFileContent: Sauvegarde Drive déjà en cours pour un autre fichier (${fileId} ignoré).`); return false; } // Empêche sauvegarde concurrente
+        if (isSavingDriveData) { console.warn(`updateFileContent: Sauvegarde Drive déjà en cours pour un autre fichier (${fileId} ignoré).`); showMessage("Sauvegarde Drive en cours, veuillez patienter...", 2000); return false; }
 
         isSavingDriveData = true; // Verrou
         const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
         let success = false;
+        console.log(`Écriture sur Drive (ID: ${fileId})...`);
         try {
             const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'text/csv' }, body: content });
             if (!response.ok) {
@@ -810,183 +889,197 @@
             success = false;
         } finally {
             isSavingDriveData = false; // Libère le verrou
+            console.log(`Fin écriture sur Drive (ID: ${fileId}). Succès: ${success}`);
         }
         return success;
     }
 
     // --- Fonctions Cœur du Timer ---
-    function formatTime(seconds) { /* ... (Identique) ... */
+    function formatTime(seconds) {
         const absSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(absSeconds / 60); const remainingSeconds = absSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
-    function formatTimeForChart(seconds) { /* ... (Identique) ... */
+    function formatTimeForChart(seconds) {
         return parseFloat((Math.max(0, seconds) / 60).toFixed(1));
     }
-    function calculateTotalEstimatedTime(plan) { /* ... (Identique) ... */
+    function calculateTotalEstimatedTime(plan) {
         let totalSeconds = 0; plan.forEach(item => { let estimatedDuration = 0; if (item.type === 'break') { estimatedDuration = item.duration || 0; } else if (item.type === 'exercise') { estimatedDuration = (item.reps || 0) * SECONDS_PER_REP; } item.estimatedDuration = estimatedDuration; totalSeconds += estimatedDuration; }); console.log(`Temps total estimé: ${totalSeconds.toFixed(1)}s (${formatTime(totalSeconds)})`); return totalSeconds;
     }
-    function updateTotalProgressCircle() { /* ... (Identique) ... */
-        if (!totalProgressCircle || totalWorkoutEstimatedSeconds <= 0) { if(totalProgressCircle) totalProgressCircle.style.background = `var(--total-progress-bg)`; return; } let currentTotalElapsed = 0; for (let i = 0; i < currentItemIndex; i++) { currentTotalElapsed += currentWorkoutPlan[i]?.estimatedDuration || 0; } if ((currentState === 'break' || currentState === 'paused') && currentWorkoutPlan[currentItemIndex]?.type === 'break' && totalTime > 0) { const progressInCurrentBreak = (totalTime - timeLeft); const estimatedBreakDuration = currentWorkoutPlan[currentItemIndex]?.estimatedDuration || totalTime; currentTotalElapsed += Math.min(progressInCurrentBreak, estimatedBreakDuration); } else if (currentState === 'finished') { currentTotalElapsed = totalWorkoutEstimatedSeconds; } currentTotalElapsed = Math.min(currentTotalElapsed, totalWorkoutEstimatedSeconds); const progressPercent = totalWorkoutEstimatedSeconds > 0 ? (currentTotalElapsed / totalWorkoutEstimatedSeconds) * 100 : 0; totalProgressCircle.style.background = `conic-gradient(from 180deg, var(--neon-blue) ${progressPercent}%, var(--neon-pink) ${progressPercent + 30}%, var(--total-progress-bg) ${progressPercent}%)`;
+    function updateTotalProgressCircle() {
+        if (!totalProgressCircle || totalWorkoutEstimatedSeconds <= 0) { if(totalProgressCircle) totalProgressCircle.style.setProperty('--total-progress-gradient', `var(--total-progress-bg)`); return; } let currentTotalElapsed = 0; for (let i = 0; i < currentItemIndex; i++) { currentTotalElapsed += currentWorkoutPlan[i]?.estimatedDuration || 0; } const currentItem = currentWorkoutPlan[currentItemIndex]; if ((currentState === 'break' || currentState === 'paused') && currentItem?.type === 'break' && totalTime > 0) { const progressInCurrentBreak = totalTime - timeLeft; const estimatedBreakDuration = currentItem?.estimatedDuration || totalTime; currentTotalElapsed += Math.min(progressInCurrentBreak, estimatedBreakDuration); } else if (currentState === 'finished') { currentTotalElapsed = totalWorkoutEstimatedSeconds; } currentTotalElapsed = Math.min(currentTotalElapsed, totalWorkoutEstimatedSeconds); const progressPercent = totalWorkoutEstimatedSeconds > 0 ? Math.min(100, (currentTotalElapsed / totalWorkoutEstimatedSeconds) * 100) : 0; // Plafonne à 100%
+         // Mise à jour de la variable CSS pour le dégradé
+         const gradientValue = `conic-gradient(from 180deg, var(--neon-blue) ${progressPercent}%, var(--neon-pink) ${Math.min(100, progressPercent + 30)}%, var(--total-progress-bg) ${progressPercent}%)`;
+         totalProgressCircle.style.setProperty('--total-progress-gradient', gradientValue);
+         // console.log(`Total Progress: ${progressPercent.toFixed(1)}%`); // Debug
     }
-    function updateTimerDisplay() { /* ... (Adapté aux nouvelles couleurs/états) ... */
+    function updateTimerDisplay() {
         if (!timeLeftDisplay || !timerCircle || !totalProgressCircle || !timerStateDisplay) return;
 
         let innerProgressPercent = 0; let displayTime = "00:00";
-        let stepColor = 'var(--color-idle)'; let stepGlow = 'var(--glow-idle)';
-        let stateText = ''; let stateIcon = '';
+        let stepColorVar = '--color-idle'; let stepGlowVar = '--glow-idle';
+        let stateText = '';
 
         switch(currentState) {
             case 'break':
                 if (totalTime > 0) innerProgressPercent = Math.max(0, Math.min(100, ((totalTime - timeLeft) / totalTime) * 100));
                 displayTime = formatTime(timeLeft);
-                stepColor = 'var(--color-break)'; stepGlow = 'var(--glow-break)';
-                stateText = 'Repos'; stateIcon = 'var(--icon-break)';
+                stepColorVar = '--color-break'; stepGlowVar = '--glow-break';
+                stateText = 'Repos';
                 break;
             case 'paused':
-                 // Afficher le temps restant de là où on s'est arrêté (probablement une pause)
-                if (currentWorkoutPlan[currentItemIndex]?.type === 'break' && totalTime > 0) {
+                const pausedItem = currentWorkoutPlan[currentItemIndex];
+                if (pausedItem?.type === 'break' && totalTime > 0) {
                      innerProgressPercent = Math.max(0, Math.min(100, ((totalTime - timeLeft) / totalTime) * 100));
                      displayTime = formatTime(timeLeft);
-                } else { // Si en pause pendant exo (ne devrait pas arriver) ou état inconnu
+                } else {
                      innerProgressPercent = 0; displayTime = "PAUSE";
                 }
-                stepColor = 'var(--color-paused)'; stepGlow = 'var(--glow-paused)';
-                stateText = 'En Pause'; stateIcon = 'var(--icon-paused)';
+                stepColorVar = '--color-paused'; stepGlowVar = '--glow-paused';
+                stateText = 'En Pause';
                 break;
             case 'preparing':
                 innerProgressPercent = Math.max(0, Math.min(100, ((PREPARE_DURATION - prepareTimeLeft) / PREPARE_DURATION) * 100));
                 displayTime = formatTime(prepareTimeLeft);
-                stepColor = 'var(--color-prepare)'; stepGlow = 'var(--glow-prepare)';
-                stateText = 'Préparation'; stateIcon = 'var(--icon-prepare)';
+                stepColorVar = '--color-prepare'; stepGlowVar = '--glow-prepare';
+                stateText = 'Préparation';
                 break;
             case 'finished':
                 innerProgressPercent = 100; displayTime = "FINI";
-                stepColor = 'var(--color-finished)'; stepGlow = 'var(--glow-finished)';
-                stateText = 'Terminé !'; stateIcon = 'var(--icon-finished)';
+                stepColorVar = '--color-finished'; stepGlowVar = '--glow-finished';
+                stateText = 'Terminé !';
                 break;
             case 'exercise':
-                innerProgressPercent = 0; displayTime = "GO!";
-                stepColor = 'var(--color-exercise)'; stepGlow = 'var(--glow-exercise)';
-                stateText = 'Exercice'; stateIcon = 'var(--icon-exercise)';
+                innerProgressPercent = 0; displayTime = "GO!"; // Ou afficher le nom/reps ici ?
+                stepColorVar = '--color-exercise'; stepGlowVar = '--glow-exercise';
+                stateText = 'Exercice';
                 break;
             default: // idle
                 innerProgressPercent = 0; displayTime = formatTime(0);
-                stepColor = 'var(--color-idle)'; stepGlow = 'var(--glow-idle)';
-                stateText = ''; stateIcon = 'var(--icon-idle)';
+                stepColorVar = '--color-idle'; stepGlowVar = '--glow-idle';
+                stateText = ''; // Pas de texte d'état en idle
                 break;
         }
 
         timeLeftDisplay.textContent = displayTime;
-        timerCircle.style.setProperty('--current-step-color', stepColor);
-        timerCircle.style.setProperty('--current-step-glow', stepGlow);
-        timerCircle.style.backgroundImage = `conic-gradient(${stepColor} ${innerProgressPercent}%, transparent ${innerProgressPercent}%)`;
+        // Mise à jour des variables CSS pour la couleur et le glow du cercle interne
+        timerCircle.style.setProperty('--current-step-color', `var(${stepColorVar})`);
+        timerCircle.style.setProperty('--current-step-glow', `var(${stepGlowVar})`);
+        timerCircle.style.backgroundImage = `conic-gradient(var(${stepColorVar}) ${innerProgressPercent}%, transparent ${innerProgressPercent}%)`;
 
-        // Mise à jour état texte sous le timer
         timerStateDisplay.textContent = stateText;
-        timerStateDisplay.style.color = stepColor; // Applique la couleur de l'état
-        // Optionnel: utiliser l'icône (nécessiterait un élément <i> ou ::before)
-        // timerStateDisplay.setAttribute('data-icon', stateIcon); // Si on utilise ::before { content: attr(data-icon); }
+        timerStateDisplay.style.color = `var(${stepColorVar})`;
 
         updateTotalProgressCircle();
     }
-    function updateWorkoutInfo() { /* ... (Adapté aux nouvelles couleurs/icônes) ... */
+    function updateWorkoutInfo() {
          if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea) return;
          const currentItem = currentWorkoutPlan[currentItemIndex];
          let infoHtml = ''; let nameDisplay = ''; let progressText = '';
+         const body = document.body;
 
+         // Gestion du message de progression global
          if (currentState === 'idle') {
              if (googleAccessToken) { progressText = programsLoaded ? (currentWorkoutType ? `Prêt: ${currentWorkoutType} (${currentWorkoutPlan.length} étapes)` : "Sélectionnez un entraînement.") : "Chargement programmes..."; }
              else { progressText = "Connectez-vous pour commencer."; }
-             infoHtml = `<p>${progressText}</p>`;
-         } else if (currentState === 'finished') {
+             nameDisplay = "ArmorWorkout"; // Titre par défaut
+             infoHtml = `<div class="idle-message"><i class="fas fa-info-circle"></i> ${progressText}</div>`;
+         } else if (isWorkoutActive || currentState === 'preparing' || currentState === 'finished') {
+              progressText = `Étape ${Math.min(currentItemIndex + 1, currentWorkoutPlan.length)} / ${currentWorkoutPlan.length}`;
+         }
+         progressTextArea.textContent = progressText;
+
+         // Gestion des détails de l'étape courante
+         if (currentState === 'finished') {
              const duration = workoutStartTime ? formatTime((Date.now() - workoutStartTime) / 1000) : 'N/A';
              nameDisplay = 'Terminé !';
-             infoHtml = `<h2><i class="fas ${getIconForState('finished')}" style="color: var(--color-finished)"></i> Bravo !</h2><p>Temps total: <strong>${duration}</strong></p>`;
-             progressText = `Terminé (${originalCompletedWorkoutPlan.length}/${originalCompletedWorkoutPlan.length})`;
+             infoHtml = `<div class="exercise-details"><h2><i class="fas ${getIconForState('finished')}"></i> Bravo !</h2><p>Temps total: <strong>${duration}</strong></p></div>`;
          } else if (currentState === 'preparing') {
              const nextItem = currentWorkoutPlan[0];
              nameDisplay = `Préparez : ${nextItem?.name || 'Étape Suivante'}`;
-             infoHtml = `<p style="color: var(--color-prepare); font-weight: 500;"><i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt dans ${prepareTimeLeft}s...</p>`;
-             progressText = `Préparation... (1/${currentWorkoutPlan.length})`;
+             infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"><i class="fas ${getIconForState('preparing')} fa-spin"></i><span> Prêt dans ${prepareTimeLeft}s...</span></div>`;
          } else if (currentItem) {
              nameDisplay = `${currentItem.name || (currentItem.type === 'break' ? 'Repos' : 'Étape')}`;
-             progressText = `Étape ${currentItemIndex + 1} / ${currentWorkoutPlan.length}`;
              if (currentItem.type === 'exercise') {
                  const reps = (currentItem.reps !== null && Number.isFinite(currentItem.reps)) ? `${currentItem.reps}` : '-';
                  const details = currentItem.details || 'Aucun détail';
-                 infoHtml = `<div class="exercise-details"><span><i class="fas ${getIconForType('exercise')}" style="color:var(--color-exercise)"></i> Reps: <strong>${reps}</strong></span><span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span></div>`;
+                 infoHtml = `<div class="exercise-details"><span><i class="fas ${getIconForType('exercise')}"></i> Reps: <strong>${reps}</strong></span><span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span></div>`;
              } else if (currentItem.type === 'break') {
-                 infoHtml = `<div class="break-info"><i class="fas ${getIconForType('break')}" style="color:var(--color-break)"></i><span>Pause: ${formatTime(currentItem.duration || 0)}</span></div>`;
+                 infoHtml = `<div class="break-info"><i class="fas ${getIconForType('break')}"></i><span>Pause: ${formatTime(currentItem.duration || 0)}</span></div>`;
              }
-         } else if (isWorkoutActive) { nameDisplay = 'Chargement...'; infoHtml = '<p>Patientez...</p>'; progressText = `Étape ? / ${currentWorkoutPlan.length}`; }
+         } else if (isWorkoutActive) { // Cas fallback si currentItem est null mais workout actif
+             nameDisplay = 'Chargement...'; infoHtml = '<p>Patientez...</p>';
+         }
 
          currentExerciseNameDisplay.textContent = nameDisplay;
          currentExerciseContainer.innerHTML = infoHtml;
-         progressTextArea.textContent = progressText;
+
+         // Mise à jour de la classe d'état sur le body pour le styling conditionnel
+         body.className = body.className.replace(/state-\w+/g, '').trim(); // Retire ancienne classe state-*
+         body.classList.add(`state-${currentState}`);
     }
-    // Helper pour icônes
     function getIconForState(state) {
         switch(state) {
-            case 'exercise': return 'fa-dumbbell'; // Ou fa-bolt
-            case 'break': return 'fa-hourglass-half'; // Ou fa-coffee
-            case 'preparing': return 'fa-spinner';
-            case 'paused': return 'fa-pause-circle';
-            case 'finished': return 'fa-check-circle';
-            case 'idle': return 'fa-play-circle';
-            default: return 'fa-question-circle';
+            case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'preparing': return 'fa-spinner'; case 'paused': return 'fa-pause-circle'; case 'finished': return 'fa-check-circle'; case 'idle': return 'fa-play-circle'; default: return 'fa-question-circle';
         }
     }
      function getIconForType(type) {
         switch(type) {
-            case 'exercise': return 'fa-dumbbell';
-            case 'break': return 'fa-hourglass-half';
-            default: return 'fa-question';
+            case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; default: return 'fa-question';
         }
     }
 
-    function setState(newState) { /* ... (Adapté pour gérer les nouveaux styles/classes de boutons) ... */
+    function setState(newState) {
         if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement) { console.error("setState: Elements DOM manquants."); return; }
         const previousState = currentState;
         currentState = newState;
         console.log(`Transition État: ${previousState} -> ${newState}`);
 
+        // Nettoyage Timers
         clearInterval(timerInterval); timerInterval = null; clearInterval(prepareCountdownInterval); prepareCountdownInterval = null;
 
-        timerStateDisplay.classList.remove('preparing'); // Retire animation spécifique prépa
-        timerStateDisplay.classList.add('visible'); // Presque toujours visible sauf idle
-        timerDisplayElement.classList.remove('finished-animation'); // Retire anim de fin par défaut
+        // Gestion Classes et Visibilité
+        timerStateDisplay.classList.remove('preparing');
+        timerStateDisplay.classList.toggle('visible', newState !== 'idle');
+        timerDisplayElement.classList.remove('finished-animation');
+        document.body.className = document.body.className.replace(/state-\w+/g, '').trim(); // Retire ancienne classe state-*
+        document.body.classList.add(`state-${currentState}`);
         document.body.classList.toggle('workout-active', newState !== 'idle' && newState !== 'finished');
 
         // Classes pour le bouton principal
-        startPauseBtn.classList.remove('start-btn', 'pause-btn', 'resume-btn', 'done-btn');
+        startPauseBtn.className = ''; // Nettoie toutes les classes spécifiques d'état
 
-        // Désactivation par défaut
+        // Désactivation par défaut (sera ajusté dans le switch)
         startPauseBtn.disabled = true; skipBtn.disabled = true; finishBtn.disabled = true; resetBtn.disabled = true;
+
+        // Activation des boutons de navigation (uniquement si état non actif)
+         navButtons.forEach(btn => btn.disabled = !(googleAccessToken && programsLoaded && ['idle', 'finished'].includes(newState)));
+         navHistoryBtn.disabled = ['preparing', 'exercise', 'break', 'paused'].includes(newState); // Désactivé pendant un workout
 
         switch (newState) {
             case 'idle':
                 isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0;
-                timerStateDisplay.classList.remove('visible'); // Cache texte état en idle
-                // La mise à jour des boutons est gérée par updateAuthUI appelé après reset ou chargement
-                updateAuthUI(!!googleAccessToken);
+                // L'état des boutons est mis à jour par updateAuthUI appelé après reset ou chargement
+                updateAuthUI(!!googleAccessToken); // Appelle explicitement pour màj boutons après être passé idle
                 break;
             case 'preparing':
                 isTimerRunning = false; isWorkoutActive = true; workoutFinished = false;
-                timerStateDisplay.classList.add('preparing'); // Ajoute anim spécifique
+                timerStateDisplay.classList.add('preparing');
                 prepareTimeLeft = PREPARE_DURATION;
+                startPauseBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Prêt...`; // Bouton principal inactif
+                 startPauseBtn.className = 'preparing-btn'; // Classe indicative
                 if (googleAccessToken && programsLoaded) { resetBtn.disabled = false; } // Seul Reset actif
                 startPrepareCountdown();
                 break;
             case 'exercise':
                 isTimerRunning = false; isWorkoutActive = true; workoutFinished = false; timeLeft = 0; totalTime = 0;
                 if (googleAccessToken && programsLoaded) {
-                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('exercise')}"></i> Fait`; startPauseBtn.classList.add('done-btn');
+                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForType('exercise')}"></i> Fait`; startPauseBtn.className = 'done-btn';
                     skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
                 }
                 break;
             case 'break':
                 isTimerRunning = true; isWorkoutActive = true; workoutFinished = false;
                  if (googleAccessToken && programsLoaded) {
-                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('paused')}"></i> Pause`; startPauseBtn.classList.add('pause-btn');
+                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('paused')}"></i> Pause`; startPauseBtn.className = 'pause-btn';
                     skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
                 }
                 startBreakTimer();
@@ -994,22 +1087,23 @@
             case 'paused':
                 isTimerRunning = false; isWorkoutActive = true; workoutFinished = false;
                 if (googleAccessToken && programsLoaded) {
-                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; startPauseBtn.classList.add('resume-btn');
+                    startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; startPauseBtn.className = 'resume-btn';
                     skipBtn.disabled = false; finishBtn.disabled = false; resetBtn.disabled = false;
                 }
                 break;
             case 'finished':
-                isTimerRunning = false; isWorkoutActive = false; workoutFinished = true; timeLeft = 0; totalTime = 0;
-                elapsedWorkoutEstimatedSeconds = totalWorkoutEstimatedSeconds;
-                if (googleAccessToken) { resetBtn.disabled = false; } // Reset actif si connecté
+                isTimerRunning = false; isWorkoutActive = false; workoutFinished = true; wasFinishedState = true; // Flag pour closeSummary
+                timeLeft = 0; totalTime = 0; elapsedWorkoutEstimatedSeconds = totalWorkoutEstimatedSeconds;
+                startPauseBtn.disabled = true; // Désactivé pdt résumé
                 startPauseBtn.innerHTML = `<i class="fas ${getIconForState('finished')}"></i> Terminé`;
-                // Logique de fin
+                startPauseBtn.className = 'finished-btn';
+                if (googleAccessToken) { resetBtn.disabled = false; } // Reset actif
                 showMessage('Entraînement terminé ! 💪', 4000); vibrate([200, 100, 200]); if (endSound) endSound();
                 originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan));
                 saveWorkoutToHistory(); // Sauvegarde historique auto
                 clearInProgressState();
-                timerDisplayElement.classList.add('finished-animation'); // Lancer l'animation cercle
-                setTimeout(populateAndShowSummary, 500); // Afficher résumé rapidement après anim
+                timerDisplayElement.classList.add('finished-animation');
+                setTimeout(populateAndShowSummary, 500);
                 break;
             default:
                 console.error("État inconnu demandé:", newState); currentState = 'idle'; updateAuthUI(!!googleAccessToken); break;
@@ -1017,39 +1111,41 @@
         updateTimerDisplay(); updateWorkoutInfo();
     }
 
-    function startPrepareCountdown() { /* ... (Identique) ... */
-        if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); updateTimerDisplay(); updateWorkoutInfo(); timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; updateTimerDisplay(); updateWorkoutInfo(); timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); prepareCountdownInterval = null; if (endSound) endSound(); vibrate([50]); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { console.error("Plan vide après prépa."); resetCurrentWorkout(); return; } if (firstItem.type === 'exercise') { setState('exercise'); } else { totalTime = firstItem.duration || 0; timeLeft = totalTime; setState('break'); } saveInProgressState(); } }, 1000);
+    function startPrepareCountdown() {
+        if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); updateTimerDisplay(); updateWorkoutInfo(); prepareTimeLeft = PREPARE_DURATION; timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; updateTimerDisplay(); updateWorkoutInfo(); timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); prepareCountdownInterval = null; if (endSound) endSound(); vibrate([50]); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { console.error("Plan vide après prépa."); resetCurrentWorkout(); return; } if (firstItem.type === 'exercise') { setState('exercise'); } else { totalTime = firstItem.duration || 0; timeLeft = totalTime; setState('break'); } saveInProgressState(); } }, 1000);
     }
-    function startBreakTimer() { /* ... (Identique) ... */
+    function startBreakTimer() {
         if (timerInterval) clearInterval(timerInterval); updateTimerDisplay(); timerInterval = setInterval(() => { if (timeLeft > 0) { timeLeft--; updateTimerDisplay(); saveInProgressState(); } else { clearInterval(timerInterval); timerInterval = null; handleItemCompletion(true); } }, 1000);
     }
-    function handleItemCompletion(naturalCompletion = false) { /* ... (Identique) ... */
+    function handleItemCompletion(naturalCompletion = false) {
         if (currentState === 'finished' || currentState === 'preparing') return; const completedItemIndex = currentItemIndex; const completedItem = currentWorkoutPlan[completedItemIndex]; if (completedItem && completedItem.estimatedDuration !== undefined) { elapsedWorkoutEstimatedSeconds += completedItem.estimatedDuration; elapsedWorkoutEstimatedSeconds = Math.min(elapsedWorkoutEstimatedSeconds, totalWorkoutEstimatedSeconds); console.log(`Item ${completedItemIndex} terminé. Estimé: ${elapsedWorkoutEstimatedSeconds.toFixed(1)}/${totalWorkoutEstimatedSeconds.toFixed(1)}`); } else { console.warn(`Durée estimée non trouvée pour item ${completedItemIndex}.`); } if (naturalCompletion && currentState === 'break') { if (endSound) endSound(); vibrate(); } currentItemIndex++; saveInProgressState(); if (currentItemIndex >= currentWorkoutPlan.length) { setState('finished'); } else { const nextItem = currentWorkoutPlan[currentItemIndex]; if (!nextItem) { console.error("Élément suivant invalide."); setState('finished'); return; } if (nextItem.type === 'exercise') { setState('exercise'); } else { totalTime = nextItem.duration || 0; timeLeft = totalTime; setState('break'); } }
     }
-    function forceFinishWorkout() { /* ... (Identique) ... */
+    function forceFinishWorkout() {
         if (!isWorkoutActive || workoutFinished || currentState === 'preparing') return; if (confirm("Terminer cet entraînement maintenant ?")) { clearInterval(timerInterval); clearInterval(prepareCountdownInterval); timerInterval = null; prepareCountdownInterval = null; setState('finished'); showMessage("Entraînement terminé manuellement.", 3000); }
     }
-    function loadWorkout(type) { /* ... (Légèrement adapté pour reset avant chargement si nécessaire) ... */
+    function loadWorkout(type) {
         if (!googleAccessToken) { showMessage("Connectez-vous pour charger un entraînement.", 4000); setActiveWorkoutNav(null); return; }
         if (!programsLoaded) { showMessage("Programmes en cours de chargement ou erreur. Patientez.", 4000); setActiveWorkoutNav(null); return; }
 
-        // Gérer le changement de workout en cours
         if (isWorkoutActive && !workoutFinished && currentWorkoutType !== type) {
             if (!confirm(`Entraînement "${currentWorkoutType || 'en cours'}" actif. Arrêter et charger "${type}" ?`)) {
                 setActiveWorkoutNav(currentWorkoutType); return;
             } else {
-                resetCurrentWorkout(); // Arrête et nettoie l'ancien *avant* de continuer
+                resetCurrentWorkout();
             }
         } else if (currentState === 'finished' && currentWorkoutType !== type) {
-             // Si on a fini un workout et on en sélectionne un autre, reset implicite
              resetCurrentWorkout();
-        } else if (currentWorkoutType === type && (isWorkoutActive || currentState === 'finished')) {
-            showMessage(`"${type}" déjà chargé/terminé. Cliquez sur Reset ou démarrez.`, 3000);
-            showSection('workout'); setActiveWorkoutNav(type);
+        } else if (currentWorkoutType === type && (isWorkoutActive || currentState === 'finished' || currentState === 'idle')) {
+            // Si déjà sélectionné et idle/finished, juste s'assurer qu'on est sur la bonne section
+            if(currentState === 'idle' && !isWorkoutActive){
+                 showMessage(`"${type}" déjà sélectionné. Cliquez sur Démarrer.`, 2500);
+            } else {
+                 showMessage(`"${type}" déjà actif ou terminé. Utilisez Reset pour recharger.`, 3000);
+            }
+            setActiveWorkoutNav(type); showSection('workout');
             return;
         }
 
-        // Chargement effectif
         if (!loadedWorkouts[type]) { console.error(`Programme '${type}' introuvable.`); showMessage(`Erreur: Programme ${type} non trouvé.`, 4000); setActiveWorkoutNav(null); return; }
         console.log(`Chargement: ${type}`);
         currentWorkoutType = type;
@@ -1062,134 +1158,144 @@
         elapsedWorkoutEstimatedSeconds = 0; currentItemIndex = 0; workoutStartTime = null;
         workoutFinished = false; isWorkoutActive = false; isTimerRunning = false;
 
-        setActiveWorkoutNav(type); showSection('workout'); closeSummary();
+        setActiveWorkoutNav(type); showSection('workout'); closeSummary(false); // Ferme résumé sans forcer reset
 
         clearInterval(timerInterval); timerInterval = null; clearInterval(prepareCountdownInterval); prepareCountdownInterval = null;
-        setState('idle'); // Met à idle, prêt à démarrer
+        setState('idle'); // Met à idle, prêt à démarrer (updateAuthUI est appelé dedans)
 
         showMessage(`Programme "${type}" (${currentWorkoutPlan.length} étapes) chargé. Prêt !`, 3500);
     }
-    function resetCurrentWorkout() { /* ... (Adapté pour gérer la fin de l'animation) ... */
+    function resetCurrentWorkout() {
         console.log("Réinitialisation...");
         clearInterval(timerInterval); timerInterval = null; clearInterval(prepareCountdownInterval); prepareCountdownInterval = null;
         const typeReset = currentWorkoutType;
 
         currentWorkoutType = null; currentWorkoutPlan = []; originalCompletedWorkoutPlan = [];
         currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false;
-        workoutFinished = false; timeLeft = 0; totalTime = 0; prepareTimeLeft = 0;
+        workoutFinished = false; wasFinishedState = false; // Reset flag de fin
+        timeLeft = 0; totalTime = 0; prepareTimeLeft = 0;
         totalWorkoutEstimatedSeconds = 0; elapsedWorkoutEstimatedSeconds = 0;
 
-        clearInProgressState(); closeSummary();
-        timerDisplayElement.classList.remove('finished-animation'); // Assure retrait anim cercle
+        clearInProgressState(); closeSummary(false); // Ferme résumé sans forcer reset (car on reset ici)
+        timerDisplayElement.classList.remove('finished-animation');
         setActiveWorkoutNav(null); showSection('workout');
-        setState('idle'); // Réinitialise l'état et met à jour l'UI (boutons, etc.)
+        setState('idle'); // Réinitialise l'état ET met à jour l'UI (y compris boutons nav/reset)
 
-        if (typeReset) { showMessage(`"${typeReset}" réinitialisé.`, 2500); }
+        if (typeReset) { showMessage(`"${typeReset}" réinitialisé. Sélectionnez un entraînement.`, 2500); }
         else { showMessage(`État réinitialisé.`, 2000); }
-         // updateAuthUI est appelé dans setState('idle')
     }
-    function showMessage(msg, duration = 3500) { /* ... (Identique) ... */
+    function showMessage(msg, duration = 3500) {
         if (!messageArea) return; messageArea.textContent = msg; messageArea.classList.add('visible'); if (messageTimeoutId) { clearTimeout(messageTimeoutId); } messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageTimeoutId = null; }, duration);
     }
 
     // --- Gestion du Thème ---
-    function applyTheme(theme) { /* ... (Identique) ... */
+    function applyTheme(theme) {
         const body = document.body; currentTheme = theme; const isDark = theme === 'dark'; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; } try { localStorage.setItem('theme', theme); } catch (e) { console.warn("Impossible de sauvegarder le thème:", e); } if (historyChart && historyChartCanvas && !historySection?.classList.contains('section-hidden')) { updateChartTheme(); } console.log(`Thème appliqué: ${theme}`);
     }
-    function updateChartTheme() { /* ... (Identique) ... */
+    function updateChartTheme() {
         if (!historyChart) return; const bodyStyles = getComputedStyle(document.documentElement); const gridColor = bodyStyles.getPropertyValue('--border-color').trim(); const textColor = bodyStyles.getPropertyValue('--primary-text-color').trim(); const tooltipBg = bodyStyles.getPropertyValue('--secondary-bg-color').trim(); const primaryColor = bodyStyles.getPropertyValue('--neon-blue').trim(); const accentColor = bodyStyles.getPropertyValue('--neon-pink').trim(); try { const scales = historyChart.options.scales; if (scales) { if (scales.x) { scales.x.grid.color = gridColor; scales.x.ticks.color = textColor; if (scales.x.title) scales.x.title.color = textColor; } if (scales.y) { scales.y.grid.color = gridColor; scales.y.ticks.color = textColor; if (scales.y.title) scales.y.title.color = textColor; } } const plugins = historyChart.options.plugins; if (plugins) { if (plugins.tooltip) { plugins.tooltip.backgroundColor = tooltipBg; plugins.tooltip.titleColor = textColor; plugins.tooltip.bodyColor = textColor; } if (plugins.legend && plugins.legend.labels) { plugins.legend.labels.color = textColor; } } if (historyChart.data.datasets && historyChart.data.datasets[0]) { historyChart.data.datasets[0].backgroundColor = primaryColor + '99'; historyChart.data.datasets[0].borderColor = primaryColor; historyChart.data.datasets[0].hoverBackgroundColor = accentColor + 'CC'; historyChart.data.datasets[0].hoverBorderColor = accentColor; } historyChart.update('none'); console.log("Thème du graphique mis à jour."); } catch (e) { console.error("Erreur mise à jour thème graphique:", e); }
     }
 
     // --- Gestion Affichage Sections ---
-    function showSection(sectionName) { /* ... (Adapté pour reset si nécessaire) ... */
+    function showSection(sectionName) {
         if (!workoutSection || !historySection || !navHistoryBtn || !navButtons) return;
-        // Si on quitte le workout pendant qu'il est actif (via clic historique)
+        // Gérer la tentative de quitter un workout actif
         if (sectionName === 'history' && isWorkoutActive && !workoutFinished && currentState !== 'preparing') {
              if (confirm("Entraînement en cours. Arrêter pour voir l'historique ?")) {
-                 resetCurrentWorkout(); // Arrête le workout
-                 // Attend un peu que le reset se fasse avant de changer
-                 setTimeout(() => showSectionActual(sectionName), 100);
-             } else {
-                 return; // Ne change pas de section si l'utilisateur annule
-             }
+                 resetCurrentWorkout(); // Arrête et nettoie l'ancien *avant* de changer
+                 setTimeout(() => showSectionActual(sectionName), 100); // Change après un court délai
+             } // Si l'utilisateur annule, ne rien faire
         } else {
              showSectionActual(sectionName); // Change directement si pas en cours ou pas vers historique
         }
     }
     function showSectionActual(sectionName) { // Fonction interne pour le changement réel
-         closeSummary(); // Toujours fermer le résumé
+         closeSummary(false); // Toujours fermer le résumé sans forcer le reset
         const isHistory = sectionName === 'history';
         workoutSection.classList.toggle('section-hidden', isHistory);
         historySection.classList.toggle('section-hidden', !isHistory);
         navHistoryBtn.classList.toggle('active', isHistory);
-        if (isHistory) { setActiveWorkoutNav(null); displayHistory(currentHistoryPeriod); }
-        else { setActiveWorkoutNav(currentWorkoutType); }
+
+        if (isHistory) {
+            setActiveWorkoutNav(null); // Désélectionne les boutons de workout
+            displayHistory(currentHistoryPeriod); // Met à jour l'historique
+        } else {
+            setActiveWorkoutNav(currentWorkoutType); // Réactive le bouton du workout courant (s'il y en a un)
+            // L'état des boutons sera géré par setState ou updateAuthUI
+        }
+        // Assurer la mise à jour de l'état des boutons nav après changement de section
+         setState(currentState); // Réapplique l'état courant pour màj les boutons nav/history
     }
 
-    function setActiveWorkoutNav(workoutType) { /* ... (Identique) ... */
+    function setActiveWorkoutNav(workoutType) {
         if (!navButtons) return; navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.workout === workoutType); }); document.body.classList.toggle('workout-selected', !!workoutType);
     }
 
     // --- Persistance Locale (État en Cours) ---
-    function saveInProgressState() { /* ... (Identique) ... */
-        if (!isWorkoutActive || workoutFinished || currentState === 'idle') { clearInProgressState(); return; } if (!['exercise', 'break', 'paused'].includes(currentState)) { console.log(`Pas de sauvegarde locale pour l'état: ${currentState}`); return; } const stateToSave = { type: currentWorkoutType, index: currentItemIndex, timeLeft: timeLeft, totalTime: totalTime, currentState: currentState, startTime: workoutStartTime, totalEstimated: totalWorkoutEstimatedSeconds, elapsedEstimated: elapsedWorkoutEstimatedSeconds }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); console.log("État local sauvegardé:", stateToSave); } catch (e) { console.error("Sauvegarde état local échouée:", e); showMessage("Erreur sauvegarde locale progression.", 5000); }
+    function saveInProgressState() {
+        if (!isWorkoutActive || workoutFinished || currentState === 'idle') { clearInProgressState(); return; } if (!['exercise', 'break', 'paused', 'preparing'].includes(currentState)) { console.log(`Pas de sauvegarde locale pour l'état: ${currentState}`); return; } const stateToSave = { type: currentWorkoutType, index: currentItemIndex, timeLeft: timeLeft, totalTime: totalTime, currentState: currentState, startTime: workoutStartTime, totalEstimated: totalWorkoutEstimatedSeconds, elapsedEstimated: elapsedWorkoutEstimatedSeconds }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); console.log("État local sauvegardé:", stateToSave); } catch (e) { console.error("Sauvegarde état local échouée:", e); showMessage("Erreur sauvegarde locale progression.", 5000); }
     }
-    function loadInProgressState() { /* ... (Identique) ... */
-        console.log(`loadInProgressState: Recherche: "${IN_PROGRESS_KEY}"`); const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) { console.log("loadInProgressState: Aucun état sauvegardé."); return false; } try { const savedState = JSON.parse(savedStateJSON); console.log("État local trouvé:", savedState); if ( !savedState || typeof savedState !== 'object' || !savedState.type || !PROGRAM_TYPES.includes(savedState.type) || typeof savedState.index !== 'number' || savedState.index < 0 || typeof savedState.currentState !== 'string' || !['exercise', 'break', 'paused'].includes(savedState.currentState) || typeof savedState.totalEstimated !== 'number' || typeof savedState.elapsedEstimated !== 'number' || !loadedWorkouts[savedState.type] || savedState.index >= (loadedWorkouts[savedState.type]?.length || 0) ) { console.warn("État local invalide/incomplet/obsolète. Suppression.", savedState); clearInProgressState(); return false; } if (googleAccessToken && programsLoaded) { const timeAgo = savedState.startTime ? ` (commencé ${new Date(savedState.startTime).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })})` : ''; if (confirm(`Entraînement "${savedState.type}" en cours${timeAgo}. Reprendre à l'étape ${savedState.index + 1} (${savedState.currentState}) ?`)) { console.log("Reprise état local acceptée."); currentWorkoutType = savedState.type; currentWorkoutPlan = JSON.parse(JSON.stringify(loadedWorkouts[currentWorkoutType])); totalWorkoutEstimatedSeconds = savedState.totalEstimated; elapsedWorkoutEstimatedSeconds = savedState.elapsedEstimated; originalCompletedWorkoutPlan = []; currentItemIndex = savedState.index; timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; workoutStartTime = savedState.startTime; workoutFinished = false; isWorkoutActive = true; setActiveWorkoutNav(currentWorkoutType); showSection('workout'); const stateToRestore = savedState.currentState; if (stateToRestore === 'exercise') { setState('exercise'); } else if (stateToRestore === 'break') { timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; setState('break'); } else if (stateToRestore === 'paused') { timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; setState('paused'); } console.log(`Reprise état: ${currentState}, Index: ${currentItemIndex}, Temps Restant: ${timeLeft}, Estimé: ${elapsedWorkoutEstimatedSeconds.toFixed(1)}/${totalWorkoutEstimatedSeconds.toFixed(1)}`); showMessage(`Progression "${currentWorkoutType}" restaurée.`, 3500); return true; } else { console.log("Reprise état local refusée."); clearInProgressState(); return false; } } else { console.log("État local trouvé, mais reprise impossible (non connecté ou programmes non chargés)."); return false; } } catch (e) { console.error("Erreur chargement/parsing état local:", e); clearInProgressState(); return false; }
+    function loadInProgressState() {
+        console.log(`loadInProgressState: Recherche: "${IN_PROGRESS_KEY}"`); const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) { console.log("loadInProgressState: Aucun état sauvegardé."); return false; } try { const savedState = JSON.parse(savedStateJSON); console.log("État local trouvé:", savedState); if ( !savedState || typeof savedState !== 'object' || !savedState.type || !PROGRAM_TYPES.includes(savedState.type) || typeof savedState.index !== 'number' || savedState.index < 0 || typeof savedState.currentState !== 'string' || !['exercise', 'break', 'paused', 'preparing'].includes(savedState.currentState) || typeof savedState.totalEstimated !== 'number' || typeof savedState.elapsedEstimated !== 'number' || !loadedWorkouts[savedState.type] || savedState.index >= (loadedWorkouts[savedState.type]?.length || 0) ) { console.warn("État local invalide/incomplet/obsolète. Suppression.", savedState); clearInProgressState(); return false; } if (googleAccessToken && programsLoaded) { const timeAgo = savedState.startTime ? ` (commencé ${new Date(savedState.startTime).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })})` : ''; if (confirm(`Entraînement "${savedState.type}" en cours${timeAgo}. Reprendre à l'étape ${savedState.index + 1} (${savedState.currentState}) ?`)) { console.log("Reprise état local acceptée."); currentWorkoutType = savedState.type; currentWorkoutPlan = JSON.parse(JSON.stringify(loadedWorkouts[currentWorkoutType])); totalWorkoutEstimatedSeconds = savedState.totalEstimated; elapsedWorkoutEstimatedSeconds = savedState.elapsedEstimated; originalCompletedWorkoutPlan = []; currentItemIndex = savedState.index; workoutStartTime = savedState.startTime; workoutFinished = false; isWorkoutActive = true; setActiveWorkoutNav(currentWorkoutType); showSection('workout'); const stateToRestore = savedState.currentState; timeLeft = savedState.timeLeft; totalTime = savedState.totalTime; prepareTimeLeft = (stateToRestore === 'preparing') ? savedState.timeLeft : 0; // Récupère aussi prepareTimeLeft
+                 setState(stateToRestore); // Applique l'état exact
+                 console.log(`Reprise état: ${currentState}, Index: ${currentItemIndex}, Temps Restant: ${timeLeft}, Prépa: ${prepareTimeLeft}, Estimé: ${elapsedWorkoutEstimatedSeconds.toFixed(1)}/${totalWorkoutEstimatedSeconds.toFixed(1)}`); showMessage(`Progression "${currentWorkoutType}" restaurée.`, 3500); return true; } else { console.log("Reprise état local refusée."); clearInProgressState(); return false; } } else { console.log("État local trouvé, mais reprise impossible (non connecté ou programmes non chargés)."); return false; } } catch (e) { console.error("Erreur chargement/parsing état local:", e); clearInProgressState(); return false; }
     }
-    function clearInProgressState() { /* ... (Identique) ... */
+    function clearInProgressState() {
         try { localStorage.removeItem(IN_PROGRESS_KEY); console.log("État local supprimé."); } catch (e) { console.error("Erreur suppression état local:", e); }
     }
 
     // --- Gestion de l'Historique ---
-    function saveWorkoutToHistory() { /* ... (Identique) ... */
+    function saveWorkoutToHistory() {
         const finalWorkoutType = currentWorkoutType; if (!finalWorkoutType || workoutStartTime === null) { console.warn("Sauvegarde historique annulée: type/heure début manquants."); return; } if (!googleAccessToken) { showMessage("Connectez-vous pour sauvegarder l'historique.", 4000); return; } const endTime = Date.now(); const durationSeconds = Math.round((endTime - workoutStartTime) / 1000); if (durationSeconds < 10) { console.log(`Entraînement trop court (${durationSeconds}s), non sauvegardé.`); return; } const newEntry = { id: endTime.toString(), date: new Date(endTime).toISOString(), type: finalWorkoutType, duration: durationSeconds }; console.log("Ajout historique local:", newEntry); workoutHistory.unshift(newEntry); if (historySection && !historySection.classList.contains('section-hidden')) { displayHistory(currentHistoryPeriod); } saveHistoryToDrive();
     }
-    async function saveHistoryToDrive() { /* ... (Identique) ... */
+    async function saveHistoryToDrive() {
         if (!googleAccessToken) { console.warn("Tentative sauvegarde Drive sans connexion."); return; } if (!historyFileId) { console.log("ID fichier historique inconnu. Recherche/création..."); const defaultHeader = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; historyFileId = await findOrCreateFile(HISTORY_FILENAME, defaultHeader); } if (!historyFileId) { showMessage("Impossible accéder/créer fichier historique Drive.", 5000); return; } let csvContent = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; const sortedHistory = [...workoutHistory].sort((a, b) => new Date(b.date) - new Date(a.date)); sortedHistory.forEach(entry => { const cleanType = (entry.type || '').replace(/,/g, ''); const date = entry.date || new Date().toISOString(); const duration = entry.duration || 0; const id = entry.id || Date.now().toString(); csvContent += `${date},${cleanType},${duration},${id}\n`; }); console.log(`Tentative maj historique Drive (${historyFileId}) avec ${sortedHistory.length} entrées.`); const success = await updateFileContent(historyFileId, csvContent); if (success) { console.log("Historique synchronisé avec Drive."); if (historyDriveStatus) historyDriveStatus.textContent = 'Synchro OK'; } else { console.error("Échec synchro historique Drive."); showMessage("Erreur sauvegarde historique Drive.", 4000); if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Sync'; }
     }
-    async function loadHistoryFromDrive() { /* ... (Identique) ... */
-        console.log("loadHistoryFromDrive: Démarrage..."); if (!googleAccessToken) { console.log("Non connecté, historique vidé."); workoutHistory = []; displayHistory(currentHistoryPeriod); return false; } console.log("Chargement historique Drive..."); if (historyDriveStatus) historyDriveStatus.textContent = 'Chargement Hist...'; if (driveStatusElement && driveStatusElement.classList.contains('success')) { driveStatusElement.textContent = 'Chargement Hist...'; driveStatusElement.classList.remove('success'); driveStatusElement.classList.add('loading'); } if (!historyFileId) { const defaultHeader = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; historyFileId = await findOrCreateFile(HISTORY_FILENAME, defaultHeader); } if (!historyFileId) { showMessage("Impossible accéder fichier historique Drive.", 5000); workoutHistory = []; displayHistory(currentHistoryPeriod); if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Accès Hist.'; if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Hist.'; driveStatusElement.classList.add('error'); driveStatusElement.classList.remove('loading'); } return false; } const csvContent = await readFileContent(historyFileId); if (csvContent === null) { workoutHistory = []; showMessage("Erreur lecture historique Drive.", 4000); if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Lecture Hist.'; if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Hist.'; driveStatusElement.classList.add('error'); driveStatusElement.classList.remove('loading');} displayHistory(currentHistoryPeriod); return false; } else if (csvContent.trim() === "" || csvContent.trim().toLowerCase() === "dateiso,workouttype,durationseconds,entryid") { workoutHistory = []; console.log("Fichier historique Drive vide ou header seul."); if (historyDriveStatus) historyDriveStatus.textContent = 'Hist. Vide'; } else { parseAndLoadHistoryCsvData(csvContent); console.log(`Historique chargé depuis Drive: ${workoutHistory.length} entrées.`); if (historyDriveStatus) historyDriveStatus.textContent = 'Synchro OK'; } displayHistory(currentHistoryPeriod); if (driveStatusElement && driveStatusElement.classList.contains('loading')) { /* Attend fin chargement progs */ } return true;
+    async function loadHistoryFromDrive() {
+        console.log("loadHistoryFromDrive: Démarrage..."); if (!googleAccessToken) { console.log("Non connecté, historique vidé."); workoutHistory = []; displayHistory(currentHistoryPeriod); return false; } console.log("Chargement historique Drive..."); if (historyDriveStatus) historyDriveStatus.textContent = 'Chargement Hist...'; if (driveStatusElement && driveStatusElement.classList.contains('success')) { driveStatusElement.textContent = 'Chargement Hist...'; driveStatusElement.classList.remove('success'); driveStatusElement.classList.add('loading'); } if (!historyFileId) { const defaultHeader = "DateISO,WorkoutType,DurationSeconds,EntryID\n"; historyFileId = await findOrCreateFile(HISTORY_FILENAME, defaultHeader); } if (!historyFileId) { showMessage("Impossible accéder fichier historique Drive.", 5000); workoutHistory = []; displayHistory(currentHistoryPeriod); if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Accès Hist.'; if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Hist.'; driveStatusElement.classList.add('error'); driveStatusElement.classList.remove('loading'); } return false; } const csvContent = await readFileContent(historyFileId); if (csvContent === null) { workoutHistory = []; showMessage("Erreur lecture historique Drive.", 4000); if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Lecture Hist.'; if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Hist.'; driveStatusElement.classList.add('error'); driveStatusElement.classList.remove('loading');} displayHistory(currentHistoryPeriod); return false; } else if (csvContent.trim() === "" || csvContent.trim().toLowerCase() === "dateiso,workouttype,durationseconds,entryid") { workoutHistory = []; console.log("Fichier historique Drive vide ou header seul."); if (historyDriveStatus) historyDriveStatus.textContent = 'Hist. Vide'; } else { parseAndLoadHistoryCsvData(csvContent); console.log(`Historique chargé depuis Drive: ${workoutHistory.length} entrées.`); if (historyDriveStatus) historyDriveStatus.textContent = 'Synchro OK'; } displayHistory(currentHistoryPeriod); // Toujours afficher, même si vide
+         // Ne change pas l'état de driveStatusElement ici, attend loadProgramsFromDrive
+         return true;
     }
-    function parseAndLoadHistoryCsvData(csvContent) { /* ... (Identique) ... */
-        try { const lines = csvContent.trim().split(/\r?\n/); const newHistory = []; const existingIDs = new Set(); if (lines.length <= 1) { console.log("CSV historique vide/header seul."); workoutHistory = []; return; } const headerLine = lines[0].trim().toLowerCase(); const hasHeader = headerLine.includes("dateiso") && headerLine.includes("workouttype") && headerLine.includes("durationseconds"); const startIndex = hasHeader ? 1 : 0; console.log(`Parsing CSV historique: ${lines.length - startIndex} lignes potentielles.`); for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = line.split(','); if (values.length < 3) { console.warn(`Ligne historique ignorée (< 3 champs): ${line}`); continue; } const dateStr = values[0]?.trim(); const typeStr = values[1]?.trim(); const durationStr = values[2]?.trim(); const idStr = (values.length > 3) ? values[3]?.trim() : null; const date = new Date(dateStr); const duration = parseInt(durationStr, 10); if (isNaN(date.getTime())) { console.warn(`Ligne historique ignorée (date invalide '${dateStr}'): ${line}`); continue; } if (!PROGRAM_TYPES.includes(typeStr)) { console.warn(`Ligne historique ignorée (type inconnu '${typeStr}'): ${line}`); continue; } if (isNaN(duration) || duration < 0) { console.warn(`Ligne historique ignorée (durée invalide '${durationStr}'): ${line}`); continue; } const entryId = idStr || `${date.getTime()}-${i}`; if (existingIDs.has(entryId)) { console.warn(`ID historique dupliqué ignoré: ${entryId} (ligne: ${line})`); continue; } newHistory.push({ id: entryId, date: date.toISOString(), type: typeStr, duration: duration }); existingIDs.add(entryId); } newHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); workoutHistory = newHistory; console.log(`Parsing CSV historique terminé. ${workoutHistory.length} entrées valides chargées.`); } catch (error) { console.error("Erreur parsing CSV historique:", error); showMessage(`Erreur parsing historique: ${error.message}`, 6000); workoutHistory = []; }
+    function parseAndLoadHistoryCsvData(csvContent) {
+        try { const lines = csvContent.trim().split(/\r?\n/); const newHistory = []; const existingIDs = new Set(); if (lines.length <= 1 && lines[0].trim().toLowerCase() === "dateiso,workouttype,durationseconds,entryid") { console.log("CSV historique header seul."); workoutHistory = []; return; } const headerLine = lines[0].trim().toLowerCase(); const hasHeader = headerLine.includes("dateiso") && headerLine.includes("workouttype") && headerLine.includes("durationseconds"); const startIndex = hasHeader ? 1 : 0; console.log(`Parsing CSV historique: ${lines.length - startIndex} lignes potentielles.`); for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = line.split(','); if (values.length < 3) { console.warn(`Ligne historique ignorée (< 3 champs): ${line}`); continue; } const dateStr = values[0]?.trim(); const typeStr = values[1]?.trim(); const durationStr = values[2]?.trim(); const idStr = (values.length > 3) ? values[3]?.trim() : null; const date = new Date(dateStr); const duration = parseInt(durationStr, 10); if (isNaN(date.getTime())) { console.warn(`Ligne historique ignorée (date invalide '${dateStr}'): ${line}`); continue; } if (!PROGRAM_TYPES.includes(typeStr)) { console.warn(`Ligne historique ignorée (type inconnu '${typeStr}'): ${line}`); continue; } if (isNaN(duration) || duration < 0) { console.warn(`Ligne historique ignorée (durée invalide '${durationStr}'): ${line}`); continue; } const entryId = idStr || `${date.getTime()}-${i}`; if (existingIDs.has(entryId)) { console.warn(`ID historique dupliqué ignoré: ${entryId} (ligne: ${line})`); continue; } newHistory.push({ id: entryId, date: date.toISOString(), type: typeStr, duration: duration }); existingIDs.add(entryId); } newHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); workoutHistory = newHistory; console.log(`Parsing CSV historique terminé. ${workoutHistory.length} entrées valides chargées.`); } catch (error) { console.error("Erreur parsing CSV historique:", error); showMessage(`Erreur parsing historique: ${error.message}`, 6000); workoutHistory = []; }
     }
-    function displayHistory(period = currentHistoryPeriod) { /* ... (Identique) ... */
-        if (!historyList || !statsDisplay || !historyFilterBtns || !historyChartCanvas || !chartPlaceholder) { console.warn("displayHistory: Éléments DOM manquants."); return; } currentHistoryPeriod = period; historyFilterBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === period); }); const isConnected = !!googleAccessToken; const historyToDisplay = isConnected ? workoutHistory : []; const filteredHistory = filterHistoryByPeriod(historyToDisplay, period); console.log(`Affichage historique '${period}'. ${filteredHistory.length} entrées filtrées sur ${historyToDisplay.length}. Connecté: ${isConnected}`); historyList.innerHTML = ''; if (!isConnected) { historyList.innerHTML = `<li class="no-history">Connectez-vous pour voir l'historique.</li>`; } else if (filteredHistory.length === 0) { historyList.innerHTML = `<li class="no-history">Aucun entraînement enregistré pour cette période.</li>`; } else { filteredHistory.forEach(entry => { const li = document.createElement('li'); const entryDate = new Date(entry.date); const dateFormatted = entryDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }); const timeFormatted = entryDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationFormatted = formatTime(entry.duration); li.innerHTML = `<span class="history-item-date">${dateFormatted} <small>(${timeFormatted})</small></span><span class="history-item-type">${entry.type}</span><span class="history-item-duration">${durationFormatted}</span>`; historyList.appendChild(li); }); } displayStatsAndMotivation(filteredHistory, period, isConnected); renderHistoryChart(filteredHistory, period, isConnected);
+    function displayHistory(period = currentHistoryPeriod) {
+        if (!historyList || !statsDisplay || !statsContentWrapper || !historyFilterBtns || !historyChartCanvas || !chartPlaceholder) { console.warn("displayHistory: Éléments DOM manquants."); return; } currentHistoryPeriod = period; historyFilterBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === period); }); const isConnected = !!googleAccessToken; const historyToDisplay = isConnected ? workoutHistory : []; const filteredHistory = filterHistoryByPeriod(historyToDisplay, period); console.log(`Affichage historique '${period}'. ${filteredHistory.length} entrées filtrées sur ${historyToDisplay.length}. Connecté: ${isConnected}`); historyList.innerHTML = ''; if (!isConnected) { historyList.innerHTML = `<li class="no-history">Connectez-vous pour voir l'historique.</li>`; } else if (filteredHistory.length === 0) { historyList.innerHTML = `<li class="no-history">Aucun entraînement enregistré pour cette période.</li>`; } else { filteredHistory.forEach(entry => { const li = document.createElement('li'); const entryDate = new Date(entry.date); const dateFormatted = entryDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }); const timeFormatted = entryDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationFormatted = formatTime(entry.duration); li.innerHTML = `<span class="history-item-date">${dateFormatted} <small>(${timeFormatted})</small></span><span class="history-item-type">${entry.type}</span><span class="history-item-duration">${durationFormatted}</span>`; historyList.appendChild(li); }); } displayStatsAndMotivation(filteredHistory, period, isConnected); renderHistoryChart(filteredHistory, period, isConnected);
     }
-    function filterHistoryByPeriod(history, period) { /* ... (Identique) ... */
-        const now = new Date(); const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); return history.filter(entry => { const entryDate = new Date(entry.date); if (isNaN(entryDate.getTime())) return false; const entryDateStart = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate()); switch (period) { case 'week': const dayOfWeek = todayStart.getDay(); const diffToMonday = todayStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday); startOfWeek.setHours(0, 0, 0, 0); return entryDate >= startOfWeek; case 'month': const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); return entryDate >= startOfMonth; case 'year': const startOfYear = new Date(now.getFullYear(), 0, 1); return entryDate >= startOfYear; case 'all': default: return true; } });
+    function filterHistoryByPeriod(history, period) {
+        const now = new Date(); const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); return history.filter(entry => { const entryDate = new Date(entry.date); if (isNaN(entryDate.getTime())) return false; switch (period) { case 'week': const dayOfWeek = todayStart.getDay(); const diffToMonday = todayStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday); startOfWeek.setHours(0, 0, 0, 0); return entryDate >= startOfWeek; case 'month': const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); return entryDate >= startOfMonth; case 'year': const startOfYear = new Date(now.getFullYear(), 0, 1); return entryDate >= startOfYear; case 'all': default: return true; } });
     }
-    function displayStatsAndMotivation(filteredHistory, period, isConnected) { /* ... (Identique) ... */
-        if (!statsDisplay) return; const stats = calculateStats(filteredHistory); let periodText = ''; switch (period) { case 'week': periodText = 'Semaine'; break; case 'month': periodText = 'Mois'; break; case 'year': periodText = 'Année'; break; case 'all': periodText = 'Total'; break; } const statsTitleElement = statsDisplay.querySelector('h3'); if (statsTitleElement) statsTitleElement.textContent = `Statistiques (${periodText})`; let statsHTML = ""; if (!isConnected) { statsHTML = "<p>Connectez-vous pour voir vos stats.</p>"; } else if (stats.count === 0) { statsHTML = "<p>Aucune donnée pour cette période.</p>"; } else { statsHTML = `<p><i class="fas fa-calendar-check"></i> Nb séances: <strong>${stats.count}</strong></p><p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p><p><i class="fas fa-hourglass-half"></i> Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p><p><i class="fas fa-star"></i> Type + fréquent: <strong>${stats.mostFrequentType || 'N/A'}</strong> (${stats.frequency[stats.mostFrequentType] || 0}x)</p>`; } const contentContainer = document.createElement('div'); contentContainer.innerHTML = statsHTML; while (statsDisplay.children.length > 1) { statsDisplay.removeChild(statsDisplay.lastChild); } statsDisplay.appendChild(contentContainer); let msgElem = statsDisplay.querySelector('.motivational-message'); if (!msgElem) { msgElem = document.createElement('p'); msgElem.className = 'motivational-message'; statsDisplay.appendChild(msgElem); } msgElem.textContent = isConnected ? generateMotivationalMessage(stats, period) : "";
+    function displayStatsAndMotivation(filteredHistory, period, isConnected) {
+        if (!statsDisplay || !statsContentWrapper) return; const stats = calculateStats(filteredHistory); let periodText = ''; switch (period) { case 'week': periodText = 'Semaine'; break; case 'month': periodText = 'Mois'; break; case 'year': periodText = 'Année'; break; case 'all': periodText = 'Total'; break; } const statsTitleElement = statsDisplay.querySelector('h3'); if (statsTitleElement) statsTitleElement.textContent = `Statistiques (${periodText})`; let statsHTML = ""; if (!isConnected) { statsHTML = "<p>Connectez-vous pour voir vos stats.</p>"; } else if (stats.count === 0) { statsHTML = "<p>Aucune donnée pour cette période.</p>"; } else { statsHTML = `<p><i class="fas fa-calendar-check"></i> Nb séances: <strong>${stats.count}</strong></p><p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(stats.totalDuration)}</strong></p><p><i class="fas fa-hourglass-half"></i> Durée moy./séance: <strong>${formatTime(stats.avgDuration)}</strong></p><p><i class="fas fa-star"></i> Type + fréquent: <strong>${stats.mostFrequentType || 'N/A'}</strong> (${stats.frequency[stats.mostFrequentType] || 0}x)</p>`; } statsContentWrapper.innerHTML = statsHTML; let msgElem = statsDisplay.querySelector('.motivational-message'); if (!msgElem) { msgElem = document.createElement('p'); msgElem.className = 'motivational-message'; statsDisplay.appendChild(msgElem); } msgElem.textContent = isConnected ? generateMotivationalMessage(stats, period) : "";
     }
-    function calculateStats(history) { /* ... (Identique) ... */
+    function calculateStats(history) {
         const count = history.length; let totalDuration = 0; const frequency = { Push: 0, Pull: 0, Legs: 0 }; history.forEach(entry => { const duration = Number(entry.duration); if (!isNaN(duration)) { totalDuration += duration; } if (frequency.hasOwnProperty(entry.type)) { frequency[entry.type]++; } }); const avgDuration = count > 0 ? Math.round(totalDuration / count) : 0; let mostFrequentType = null; let maxFrequency = -1; for (const type in frequency) { if (frequency[type] > maxFrequency) { maxFrequency = frequency[type]; mostFrequentType = type; } } if (maxFrequency <= 0) { mostFrequentType = null; } return { count, totalDuration, avgDuration, frequency, mostFrequentType };
     }
-    function generateMotivationalMessage(stats, period) { /* ... (Identique) ... */
+    function generateMotivationalMessage(stats, period) {
         const { count } = stats; if (!googleAccessToken) return ""; if (count === 0) { switch (period) { case 'week': return "Aucune séance cette semaine. Planifiez la prochaine ! 📅"; case 'month': return "Pas d'entraînement ce mois-ci. C'est le moment de s'y remettre ! 🚀"; case 'year': return "Première séance de l'année à venir ? 🤔"; case 'all': return "Commencez votre parcours fitness dès aujourd'hui ! 💪"; default: return "Prêt à transpirer ?"; } } switch (period) { case 'week': if (count >= 5) return `Incroyable, ${count} séances cette semaine ! Tu es en feu ! 🔥`; if (count >= 3) return `Super régularité (${count} séances hebdo) ! Continue comme ça ! 👍`; if (count >= 1) return `Bien joué (${count} séance${count > 1 ? 's' : ''}) cette semaine ! Chaque effort compte ! ✨`; break; case 'month': if (count >= 15) return `Quelle discipline ! ${count} séances ce mois ! 🚀 Machine !`; if (count >= 10) return `Solide performance (${count} entraînements) ! Les résultats arrivent ! 🎉`; if (count >= 5) return `Belle progression (${count} séances ce mois) ! 😊`; if (count >= 1) return `${count} séance${count > 1 ? 's' : ''} ce mois ! C'est un bon début ! 🌱`; break; case 'year': case 'all': if (count >= 100) return `Légendaire ! Plus de ${count} séances au compteur ! 🏆 Respect !`; if (count >= 50) return `Impressionnant ! ${count} séances ! La persévérance paie ! 🏋️‍♂️`; if (count >= 20) return `${count} séances, quel beau parcours ! Continue sur cette lancée ! 🌟`; if (count >= 1) return `Déjà ${count} entraînement${count > 1 ? 's' : ''} enregistré${count > 1 ? 's' : ''} ! Le premier pas est fait ! 🎯`; break; } return "Continue tes efforts, chaque goutte de sueur te rapproche de tes objectifs ! 💯";
     }
 
     // --- Gestion des Programmes (CSV <-> Objet) ---
-    function convertProgramToCsv(programArray) { /* ... (Identique) ... */
+    function convertProgramToCsv(programArray) {
         const header = "Type,Name,Details,Reps,Duration\n"; let csv = header; const escapeCsvField = (field) => { if (field === null || field === undefined) return ''; const stringField = String(field); if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) { return `"${stringField.replace(/"/g, '""')}"`; } return stringField; }; programArray.forEach(item => { if (item.type === 'exercise') { const name = escapeCsvField(item.name ?? ''); const details = escapeCsvField(item.details ?? ''); const reps = (item.reps !== null && Number.isFinite(item.reps)) ? item.reps : ''; csv += `${item.type},${name},${details},${reps},\n`; } else if (item.type === 'break') { const name = escapeCsvField(item.name ?? 'Repos'); const duration = (item.duration !== null && Number.isFinite(item.duration)) ? item.duration : ''; csv += `${item.type},${name},,,${duration}\n`; } }); return csv;
     }
-    function parseProgramCsvData(csvContent) { /* ... (Identique) ... */
-        const program = []; if (!csvContent || typeof csvContent !== 'string') return program; const lines = csvContent.trim().split(/\r?\n/); if (lines.length <= 1) return program; const headerLine = lines[0].trim().toLowerCase(); const hasHeader = headerLine.startsWith("type,name,details,reps,duration"); const startIndex = hasHeader ? 1 : 0; const parseCsvLine = (line) => { const values = []; let currentVal = ''; let inQuotes = false; for (let i = 0; i < line.length; i++) { const char = line[i]; if (char === '"' && inQuotes && i + 1 < line.length && line[i+1] === '"') { currentVal += '"'; i++; } else if (char === '"') { inQuotes = !inQuotes; } else if (char === ',' && !inQuotes) { values.push(currentVal); currentVal = ''; } else { currentVal += char; } } values.push(currentVal); return values.map(v => v.trim()); }; for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = parseCsvLine(line); if (values.length < 5) { console.warn(`Ligne programme ignorée (< 5 champs): ${line}`); continue; } const type = values[0]?.toLowerCase() || ''; const name = values[1] || ''; const details = values[2] || ''; const repsStr = values[3] || ''; const durationStr = values[4] || ''; if (type === 'exercise') { const reps = parseInt(repsStr, 10); if (!name) { console.warn(`Ligne exo ignorée (nom manquant): ${line}`); continue; } program.push({ type: 'exercise', name: name, details: details, reps: (!isNaN(reps) && repsStr !== '') ? reps : null }); } else if (type === 'break') { const duration = parseInt(durationStr, 10); if (isNaN(duration) || duration <= 0) { console.warn(`Ligne break ignorée (durée invalide '${durationStr}'): ${line}`); continue; } program.push({ type: 'break', duration: duration, name: name || 'Repos' }); } else { console.warn(`Ligne programme ignorée (type inconnu '${type}'): ${line}`); } } console.log(`Parsing programme CSV terminé. ${program.length} étapes chargées.`); return program;
+    function parseProgramCsvData(csvContent) {
+        const program = []; if (!csvContent || typeof csvContent !== 'string') return program; const lines = csvContent.trim().split(/\r?\n/); if (lines.length <= 1 && lines[0].trim().toLowerCase().startsWith("type,name")) return program; // Ignore si juste header
+        const headerLine = lines[0].trim().toLowerCase(); const hasHeader = headerLine.startsWith("type,name,details,reps,duration"); const startIndex = hasHeader ? 1 : 0; const parseCsvLine = (line) => { const values = []; let currentVal = ''; let inQuotes = false; for (let i = 0; i < line.length; i++) { const char = line[i]; if (char === '"' && inQuotes && i + 1 < line.length && line[i+1] === '"') { currentVal += '"'; i++; } else if (char === '"') { inQuotes = !inQuotes; } else if (char === ',' && !inQuotes) { values.push(currentVal); currentVal = ''; } else { currentVal += char; } } values.push(currentVal); return values.map(v => v.trim()); }; for (let i = startIndex; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const values = parseCsvLine(line); if (values.length < 5) { console.warn(`Ligne programme ignorée (< 5 champs): ${line}`); continue; } const type = values[0]?.toLowerCase() || ''; const name = values[1] || ''; const details = values[2] || ''; const repsStr = values[3] || ''; const durationStr = values[4] || ''; if (type === 'exercise') { const reps = parseInt(repsStr, 10); if (!name) { console.warn(`Ligne exo ignorée (nom manquant): ${line}`); continue; } program.push({ type: 'exercise', name: name, details: details, reps: (!isNaN(reps) && repsStr !== '') ? reps : null }); } else if (type === 'break') { const duration = parseInt(durationStr, 10); if (isNaN(duration) || duration <= 0) { console.warn(`Ligne break ignorée (durée invalide '${durationStr}'): ${line}`); continue; } program.push({ type: 'break', duration: duration, name: name || 'Repos' }); } else { console.warn(`Ligne programme ignorée (type inconnu '${type}'): ${line}`); } } console.log(`Parsing programme CSV terminé. ${program.length} étapes chargées.`); return program;
     }
-    async function loadProgramsFromDrive() { /* ... (Identique, sauf màj UI à la fin) ... */
-        console.log("loadProgramsFromDrive: Démarrage..."); if (!googleAccessToken) { console.warn("loadProgramsFromDrive: Non connecté. Utilisation défauts."); loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); programsLoaded = false; updateAuthUI(false); return false; } programsLoaded = false; let allLoadedSuccessfully = true; if (driveStatusElement) { driveStatusElement.textContent = 'Chargement Progs...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error','success'); driveStatusElement.style.display = 'inline-block'; } const loadPromises = PROGRAM_TYPES.map(async (type) => { const filename = PROGRAM_FILENAMES[type]; const defaultProgram = defaultWorkouts[type] || []; const defaultCsv = convertProgramToCsv(defaultProgram); console.log(`Chargement programme: ${type} (${filename})`); const fileId = await findOrCreateFile(filename, defaultCsv); programFileIds[type] = fileId; if (fileId) { const csvContent = await readFileContent(fileId); if (csvContent !== null) { try { const parsedProgram = parseProgramCsvData(csvContent); if (parsedProgram.length > 0) { loadedWorkouts[type] = parsedProgram; console.log(`Programme ${type} chargé depuis Drive (${parsedProgram.length} étapes).`); return true; } else { console.warn(`Programme ${type} lu depuis Drive mais parsing invalide/vide. Utilisation défaut.`); if (csvContent.trim() !== "" && !csvContent.trim().toLowerCase().startsWith("type,name")) { showMessage(`Format ${filename} invalide sur Drive. Défaut chargé.`, 5000); } loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return true; } } catch (parseError) { console.error(`Erreur parsing programme ${type} depuis Drive:`, parseError); showMessage(`Erreur parsing ${filename}. Défaut chargé.`, 5000); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; } } else { console.error(`Échec lecture ${filename} (ID: ${fileId}). Utilisation défaut.`); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; } } else { console.error(`Échec accès/création ${filename}. Utilisation défaut.`); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; } }); try { const results = await Promise.all(loadPromises); allLoadedSuccessfully = results.every(success => success === true); } catch (error) { console.error("Erreur inattendue pendant Promise.all loadPrograms:", error); allLoadedSuccessfully = false; PROGRAM_TYPES.forEach(type => { if (!loadedWorkouts[type] || loadedWorkouts[type].length === 0) { loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); } }); } programsLoaded = true; console.log(`Fin chargement programmes. 'programsLoaded': ${programsLoaded}. Succès Drive global: ${allLoadedSuccessfully}`); if (driveStatusElement) { driveStatusElement.classList.remove('loading'); if (!allLoadedSuccessfully) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.add('error'); showMessage("Certains programmes n'ont pu être chargés/lus correctement depuis Drive.", 5000); } else { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.add('success'); driveStatusElement.classList.remove('error'); console.log("Programmes chargés OK (Drive ou fallback)."); } } updateAuthUI(true); return programsLoaded;
+    async function loadProgramsFromDrive() {
+        console.log("loadProgramsFromDrive: Démarrage..."); if (!googleAccessToken) { console.warn("loadProgramsFromDrive: Non connecté. Utilisation défauts."); loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); programsLoaded = false; updateAuthUI(false); return false; } programsLoaded = false; let allLoadedSuccessfully = true; if (driveStatusElement) { driveStatusElement.textContent = 'Chargement Progs...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error','success'); driveStatusElement.style.display = 'inline-block'; } const loadPromises = PROGRAM_TYPES.map(async (type) => { const filename = PROGRAM_FILENAMES[type]; const defaultProgram = defaultWorkouts[type] || []; const defaultCsv = convertProgramToCsv(defaultProgram); console.log(`Chargement programme: ${type} (${filename})`); const fileId = await findOrCreateFile(filename, defaultCsv); programFileIds[type] = fileId; if (fileId) { const csvContent = await readFileContent(fileId); if (csvContent !== null) { try { const parsedProgram = parseProgramCsvData(csvContent); if (parsedProgram.length > 0) { loadedWorkouts[type] = parsedProgram; console.log(`Programme ${type} chargé depuis Drive (${parsedProgram.length} étapes).`); return true; } else { console.warn(`Programme ${type} lu depuis Drive mais parsing invalide/vide. Utilisation défaut.`); if (csvContent.trim() !== "" && !csvContent.trim().toLowerCase().startsWith("type,name")) { showMessage(`Format ${filename} invalide sur Drive. Défaut chargé.`, 5000); } loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return true; // Considéré comme chargé (même si défaut) } } catch (parseError) { console.error(`Erreur parsing programme ${type} depuis Drive:`, parseError); showMessage(`Erreur parsing ${filename}. Défaut chargé.`, 5000); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; // Erreur de parsing = échec } } else { console.error(`Échec lecture ${filename} (ID: ${fileId}). Utilisation défaut.`); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; // Erreur lecture = échec } } else { console.error(`Échec accès/création ${filename}. Utilisation défaut.`); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgram)); return false; // Erreur accès/création = échec } }); try { const results = await Promise.all(loadPromises); allLoadedSuccessfully = results.every(success => success === true); } catch (error) { console.error("Erreur inattendue pendant Promise.all loadPrograms:", error); allLoadedSuccessfully = false; PROGRAM_TYPES.forEach(type => { if (!loadedWorkouts[type] || loadedWorkouts[type].length === 0) { loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); } }); } programsLoaded = true; // On considère les programmes chargés même si fallback
+        console.log(`Fin chargement programmes. 'programsLoaded': ${programsLoaded}. Succès Drive global: ${allLoadedSuccessfully}`); if (driveStatusElement) { driveStatusElement.classList.remove('loading'); if (!allLoadedSuccessfully) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.add('error'); showMessage("Certains programmes n'ont pu être chargés correctement depuis Drive.", 5000); } else { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.add('success'); driveStatusElement.classList.remove('error'); console.log("Programmes chargés OK (Drive ou fallback)."); } } updateAuthUI(true); return programsLoaded; // Retourne true si on a au moins les défauts
     }
-    // Export function removed
 
     // --- Rendu du Graphique ---
-    function renderHistoryChart(filteredHistory, period, isConnected) { /* ... (Identique) ... */
+    function renderHistoryChart(filteredHistory, period, isConnected) {
         if (!historyChartCanvas || !chartPlaceholder) { console.warn("Canvas/Placeholder graphique introuvable."); return; } const ctx = historyChartCanvas.getContext('2d'); if (!ctx) { console.error("Impossible d'obtenir contexte 2D canvas."); return; } if (historyChart) { historyChart.destroy(); historyChart = null; } historyChartCanvas.style.display = 'block'; chartPlaceholder.style.display = 'none'; if (!isConnected) { historyChartCanvas.style.display = 'none'; chartPlaceholder.textContent = "Connectez-vous pour voir le graphique."; chartPlaceholder.style.display = 'block'; return; } const { labels, data } = aggregateChartData(filteredHistory, period); if (labels.length === 0 || data.every(d => d === 0)) { console.log("Aucune donnée graphique à afficher pour cette période."); historyChartCanvas.style.display = 'none'; chartPlaceholder.textContent = "Aucune donnée d'entraînement pour cette période."; chartPlaceholder.style.display = 'block'; return; } const bodyStyles = getComputedStyle(document.documentElement); const primaryColor = bodyStyles.getPropertyValue('--neon-blue').trim() || '#00aeff'; const accentColor = bodyStyles.getPropertyValue('--neon-pink').trim() || '#e54ac5'; const gridColor = bodyStyles.getPropertyValue('--border-color').trim() || 'rgba(139,148,158,0.2)'; const textColor = bodyStyles.getPropertyValue('--primary-text-color').trim() || '#c9d1d9'; const tooltipBg = bodyStyles.getPropertyValue('--secondary-bg-color').trim() || '#161B22'; try { historyChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Durée totale (min)', data: data.map(d => formatTimeForChart(d)), backgroundColor: primaryColor + '99', borderColor: primaryColor, borderWidth: 1, hoverBackgroundColor: accentColor + 'CC', hoverBorderColor: accentColor, borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Durée (minutes)', color: textColor, font: { size: 13, family: 'Inter' } }, grid: { color: gridColor }, ticks: { color: textColor, callback: function(value) { return value + ' min'; } } }, x: { title: { display: true, text: getChartXAxisTitle(period), color: textColor, font: { size: 13, family: 'Inter' } }, grid: { display: false }, ticks: { color: textColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: textColor, bodyColor: textColor, padding: 10, cornerRadius: 6, displayColors: false, callbacks: { label: function(context) { const originalDurationSeconds = data[context.dataIndex] || 0; const formattedTime = formatTime(originalDurationSeconds); return `Durée: ${formattedTime}`; } } } }, animation: { duration: 500, easing: 'easeOutCubic' } } }); console.log("Graphique historique rendu."); } catch (e) { console.error("Erreur création Chart.js:", e); showMessage("Erreur affichage graphique.", 4000); historyChartCanvas.style.display = 'none'; chartPlaceholder.textContent = "Erreur lors de la création du graphique."; chartPlaceholder.style.display = 'block'; }
     }
-    function aggregateChartData(history, period) { /* ... (Identique) ... */
-        const aggregated = new Map(); const initializeMap = (labels) => labels.forEach(label => aggregated.set(label, 0)); switch (period) { case 'week': const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; initializeMap(daysOfWeek); const nowW = new Date(); const todayStartW = new Date(nowW.getFullYear(), nowW.getMonth(), nowW.getDate()); const dayOfWeekNum = todayStartW.getDay(); const diffToMonday = todayStartW.getDate() - dayOfWeekNum + (dayOfWeekNum === 0 ? -6 : 1); const startOfWeek = new Date(nowW.getFullYear(), nowW.getMonth(), diffToMonday); startOfWeek.setHours(0,0,0,0); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate >= startOfWeek) { let dayIndex = entryDate.getDay(); dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; const dayName = daysOfWeek[dayIndex]; aggregated.set(dayName, (aggregated.get(dayName) || 0) + (entry.duration || 0)); } }); return { labels: daysOfWeek, data: daysOfWeek.map(day => aggregated.get(day)) }; case 'month': const weeksOfMonth = ['Sem 1-7', 'Sem 8-14', 'Sem 15-21', 'Sem 22-28', 'Sem 29+']; initializeMap(weeksOfMonth); const currentMonthNum = new Date().getMonth(); const currentYearNum = new Date().getFullYear(); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate.getMonth() === currentMonthNum && entryDate.getFullYear() === currentYearNum) { const dayOfMonth = entryDate.getDate(); let weekIndex = 0; if (dayOfMonth <= 7) weekIndex = 0; else if (dayOfMonth <= 14) weekIndex = 1; else if (dayOfMonth <= 21) weekIndex = 2; else if (dayOfMonth <= 28) weekIndex = 3; else weekIndex = 4; const weekName = weeksOfMonth[weekIndex]; aggregated.set(weekName, (aggregated.get(weekName) || 0) + (entry.duration || 0)); } }); return { labels: weeksOfMonth, data: weeksOfMonth.map(week => aggregated.get(week)) }; case 'year': const monthsOfYear = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; initializeMap(monthsOfYear); const currentYear = new Date().getFullYear(); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate.getFullYear() === currentYear) { const monthIndex = entryDate.getMonth(); const monthName = monthsOfYear[monthIndex]; aggregated.set(monthName, (aggregated.get(monthName) || 0) + (entry.duration || 0)); } }); return { labels: monthsOfYear, data: monthsOfYear.map(month => aggregated.get(month)) }; case 'all': default: const yearData = {}; history.forEach(entry => { const year = new Date(entry.date).getFullYear(); yearData[year] = (yearData[year] || 0) + (entry.duration || 0); }); const sortedYears = Object.keys(yearData).map(Number).sort((a, b) => a - b); return { labels: sortedYears.map(String), data: sortedYears.map(year => yearData[year]) }; }
+    function aggregateChartData(history, period) {
+        const aggregated = new Map(); const initializeMap = (labels) => labels.forEach(label => aggregated.set(label, 0)); switch (period) { case 'week': const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; initializeMap(daysOfWeek); const nowW = new Date(); const todayStartW = new Date(nowW.getFullYear(), nowW.getMonth(), nowW.getDate()); const dayOfWeekNum = todayStartW.getDay(); const diffToMonday = todayStartW.getDate() - dayOfWeekNum + (dayOfWeekNum === 0 ? -6 : 1); const startOfWeek = new Date(nowW.getFullYear(), nowW.getMonth(), diffToMonday); startOfWeek.setHours(0,0,0,0); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate >= startOfWeek) { let dayIndex = entryDate.getDay(); dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; const dayName = daysOfWeek[dayIndex]; aggregated.set(dayName, (aggregated.get(dayName) || 0) + (entry.duration || 0)); } }); return { labels: daysOfWeek, data: daysOfWeek.map(day => aggregated.get(day)) }; case 'month': const weeksOfMonth = ['Sem 1-7', 'Sem 8-14', 'Sem 15-21', 'Sem 22-28', 'Sem 29+']; initializeMap(weeksOfMonth); const currentMonthNum = new Date().getMonth(); const currentYearNumM = new Date().getFullYear(); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate.getMonth() === currentMonthNum && entryDate.getFullYear() === currentYearNumM) { const dayOfMonth = entryDate.getDate(); let weekIndex = 0; if (dayOfMonth <= 7) weekIndex = 0; else if (dayOfMonth <= 14) weekIndex = 1; else if (dayOfMonth <= 21) weekIndex = 2; else if (dayOfMonth <= 28) weekIndex = 3; else weekIndex = 4; const weekName = weeksOfMonth[weekIndex]; aggregated.set(weekName, (aggregated.get(weekName) || 0) + (entry.duration || 0)); } }); return { labels: weeksOfMonth, data: weeksOfMonth.map(week => aggregated.get(week)) }; case 'year': const monthsOfYear = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; initializeMap(monthsOfYear); const currentYearY = new Date().getFullYear(); history.forEach(entry => { const entryDate = new Date(entry.date); if (entryDate.getFullYear() === currentYearY) { const monthIndex = entryDate.getMonth(); const monthName = monthsOfYear[monthIndex]; aggregated.set(monthName, (aggregated.get(monthName) || 0) + (entry.duration || 0)); } }); return { labels: monthsOfYear, data: monthsOfYear.map(month => aggregated.get(month)) }; case 'all': default: const yearData = {}; history.forEach(entry => { const year = new Date(entry.date).getFullYear(); yearData[year] = (yearData[year] || 0) + (entry.duration || 0); }); const sortedYears = Object.keys(yearData).map(Number).sort((a, b) => a - b); return { labels: sortedYears.map(String), data: sortedYears.map(year => yearData[year]) }; }
     }
-    function getChartXAxisTitle(period) { /* ... (Identique) ... */
+    function getChartXAxisTitle(period) {
         switch (period) { case 'week': return 'Jour (Semaine Courante)'; case 'month': return 'Semaine (Mois Courant)'; case 'year': return 'Mois (Année Courante)'; case 'all': return 'Année'; default: return ''; }
     }
 
@@ -1197,7 +1303,7 @@
     function populateAndShowSummary() {
         if (!originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0 || !summaryTitle || !summaryItemsList || !postWorkoutSummary || !confirmSummaryBtn || !discardSummaryBtn || !closeSummaryBtn) {
             console.error("Impossible afficher résumé: DOM/données manquants.");
-            if (currentState === 'finished') { resetCurrentWorkout(); } return;
+            if (currentState === 'finished') { resetCurrentWorkout(); } return; // Si erreur, reset au moins l'état
         }
         const finalWorkoutType = currentWorkoutType;
         summaryTitle.textContent = `Résumé Séance - ${finalWorkoutType || 'Inconnu'}`;
@@ -1221,18 +1327,15 @@
                         <input type="number" id="summary-reps-${index}" value="${repsValue}" min="0" step="1" placeholder="N/A">
                         <button class="rep-adjust-btn plus" data-target="summary-reps-${index}">+</button>
                     </div>
-                    <div class="details-container" style="grid-column: 1 / -1; margin-top: 8px;"> <!-- Prend toute la largeur -->
-                         <label for="summary-details-${index}" style="display: block; text-align: left; margin-bottom: 4px; font-size: 0.9em; color: var(--secondary-text-color);">Détails:</label>
+                    <div class="details-container">
+                         <label for="summary-details-${index}">Détails:</label>
                          <textarea id="summary-details-${index}" rows="2" placeholder="Aucun détail">${detailsValue}</textarea>
                     </div>
                 `;
-                // Add listeners for changes on this item's inputs
                 const repsInput = li.querySelector(`#summary-reps-${index}`);
                 const detailsInput = li.querySelector(`#summary-details-${index}`);
-                if (repsInput) repsInput.addEventListener('input', () => markSummaryChanged());
-                if (detailsInput) detailsInput.addEventListener('input', () => markSummaryChanged());
-
-                // Add listeners for +/- buttons
+                if (repsInput) repsInput.addEventListener('input', markSummaryChanged);
+                if (detailsInput) detailsInput.addEventListener('input', markSummaryChanged);
                  li.querySelectorAll('.rep-adjust-btn').forEach(btn => {
                      btn.addEventListener('click', handleRepAdjust);
                  });
@@ -1246,10 +1349,9 @@
             summaryItemsList.appendChild(li);
         });
 
-        updateSummaryButtonsState(); // Met à jour l'état initial des boutons
+        updateSummaryButtonsState();
         postWorkoutSummary.classList.add('visible');
     }
-
     function markSummaryChanged() {
         if (!summaryChangesMade) {
              console.log("Modifications détectées dans le résumé.");
@@ -1257,25 +1359,22 @@
              updateSummaryButtonsState();
         }
     }
-
     function updateSummaryButtonsState() {
          if (!confirmSummaryBtn || !discardSummaryBtn || !closeSummaryBtn) return;
-
+         const canSave = googleAccessToken && !isSavingDriveData;
          if (summaryChangesMade) {
              confirmSummaryBtn.style.display = 'inline-flex';
+             confirmSummaryBtn.disabled = !canSave;
              discardSummaryBtn.style.display = 'inline-flex';
+             discardSummaryBtn.disabled = false;
              closeSummaryBtn.style.display = 'none';
          } else {
              confirmSummaryBtn.style.display = 'none';
              discardSummaryBtn.style.display = 'none';
              closeSummaryBtn.style.display = 'inline-flex';
+             closeSummaryBtn.disabled = false;
          }
-         // Enable/disable based on connection status
-         confirmSummaryBtn.disabled = !googleAccessToken;
-         discardSummaryBtn.disabled = false; // Toujours actif pour rejeter
-         closeSummaryBtn.disabled = false; // Toujours actif pour fermer
     }
-
      function handleRepAdjust(event) {
          const btn = event.currentTarget;
          const targetId = btn.dataset.target;
@@ -1288,58 +1387,47 @@
          if (btn.classList.contains('plus')) {
              input.value = currentValue + 1;
          } else if (btn.classList.contains('minus')) {
-             input.value = Math.max(0, currentValue - 1); // Ne descend pas sous 0
+             input.value = Math.max(0, currentValue - 1);
          }
-         markSummaryChanged(); // Marque comme modifié
-         // Déclenche l'événement 'input' pour compatibilité si d'autres logiques écoutent
+         markSummaryChanged();
          input.dispatchEvent(new Event('input', { bubbles: true }));
      }
-
-
-    function closeSummary(forceReset = true) { // Ajout paramètre pour savoir si on doit reset l'état principal
+    function closeSummary(shouldResetState = false) { // Paramètre pour contrôler le reset
         if (!postWorkoutSummary) return;
         postWorkoutSummary.classList.remove('visible');
-        summaryChangesMade = false; // Reset flag de modif à la fermeture
+        summaryChangesMade = false;
 
-        // Si on ferme la modale après un workout fini, on reset l'état global
-        if (currentState === 'finished' && forceReset) {
-            console.log("Fermeture résumé après workout terminé, passage 'finished' -> 'idle'.");
+        // Si on était dans l'état 'finished' ET qu'on demande un reset (typiquement après Valider/Rejeter/Close)
+        if (wasFinishedState && shouldResetState) {
+            console.log("Fermeture résumé après workout terminé -> reset vers idle.");
             resetCurrentWorkout(); // Réinitialise complètement
         } else {
-            // Si on ferme sans être en état 'finished' (ex: ouverture accidentelle ?)
-            // ou si forceReset est false (après une sauvegarde réussie par exemple),
-            // on ne reset pas l'état global.
-            console.log(`closeSummary appelé, état: ${currentState}, forceReset: ${forceReset}. Pas de reset global.`);
+            console.log(`closeSummary appelé (état: ${currentState}, wasFinished: ${wasFinishedState}, reset: ${shouldResetState}). Pas de reset global.`);
+            // Assure juste que l'animation de fin est retirée si elle était là
+            if (timerDisplayElement) timerDisplayElement.classList.remove('finished-animation');
+             // Réapplique l'état actuel pour assurer la cohérence de l'UI (boutons nav etc)
+             setState(currentState);
         }
-         timerDisplayElement.classList.remove('finished-animation'); // Retire l'effet visuel de fin
+        wasFinishedState = false; // Reset le flag après fermeture
     }
-
     async function handleConfirmSummary() {
         initAudioContext();
         if (!summaryChangesMade) {
              console.log("Confirmation fermeture résumé sans modifications.");
-             closeSummary(true); // Ferme et reset l'état si on était 'finished'
+             closeSummary(true); // Ferme et reset l'état
              return;
         }
 
-        // Sauvegarde nécessaire
-        if (!googleAccessToken || !currentWorkoutType || !programFileIds[currentWorkoutType]) {
-            showMessage("Erreur: Non connecté ou ID fichier programme Drive manquant pour la sauvegarde.", 5000);
-            confirmSummaryBtn.disabled = false; // Permet de réessayer
-            return;
-        }
-        if (isSavingDriveData) {
-             showMessage("Sauvegarde Drive déjà en cours, veuillez patienter...", 3000);
-             return;
-        }
+        if (!googleAccessToken || !currentWorkoutType || !programFileIds[currentWorkoutType]) { showMessage("Erreur: Non connecté ou ID fichier programme Drive manquant.", 5000); updateSummaryButtonsState(); return; }
+        if (isSavingDriveData) { showMessage("Sauvegarde Drive déjà en cours...", 3000); return; }
 
         console.log("Confirmation fermeture résumé AVEC modifications. Sauvegarde...");
-        confirmSummaryBtn.disabled = true; discardSummaryBtn.disabled = true; // Désactive pdt sauvegarde
+        confirmSummaryBtn.disabled = true; discardSummaryBtn.disabled = true;
         confirmSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
         showMessage("Sauvegarde des modifications du programme...", 4000);
 
         const workoutTypeToSave = currentWorkoutType;
-        const updatedProgram = JSON.parse(JSON.stringify(loadedWorkouts[workoutTypeToSave])); // Copie pour modif
+        const updatedProgram = JSON.parse(JSON.stringify(loadedWorkouts[workoutTypeToSave]));
         let changesApplied = 0;
 
         const summaryItems = summaryItemsList.querySelectorAll('.summary-item[data-index]');
@@ -1357,11 +1445,11 @@
                 const newReps = newRepsRaw === '' ? null : parseInt(newRepsRaw, 10);
                 const newDetails = detailsInput.value.trim();
 
-                if (newReps !== null && (isNaN(newReps) || newReps < 0)) {
-                    console.warn(`Reps invalides ('${newRepsRaw}') index ${index}. Ignoré.`);
-                } else {
-                     const repsChanged = programItemToUpdate.reps !== newReps && !(programItemToUpdate.reps === null && newReps === null);
-                     const detailsChanged = programItemToUpdate.details !== newDetails;
+                if (newReps !== null && (isNaN(newReps) || newReps < 0)) { console.warn(`Reps invalides ('${newRepsRaw}') index ${index}. Ignoré.`); }
+                else {
+                     const originalItem = originalCompletedWorkoutPlan[index] || {}; // Item tel qu'il était à la FIN du workout
+                     const repsChanged = (programItemToUpdate.reps ?? '') !== (newReps ?? '');
+                     const detailsChanged = (programItemToUpdate.details ?? '') !== newDetails;
                     if (repsChanged || detailsChanged) {
                         programItemToUpdate.reps = newReps;
                         programItemToUpdate.details = newDetails;
@@ -1373,15 +1461,14 @@
 
         if (changesApplied === 0) {
              console.warn("summaryChangesMade était true, mais aucune modif appliquée ?");
-             summaryChangesMade = false; // Corrige le flag
+             summaryChangesMade = false;
              confirmSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Valider & Fermer`;
-             confirmSummaryBtn.disabled = false; discardSummaryBtn.disabled = false;
+             updateSummaryButtonsState(); // Réactive les boutons corrects
              closeSummary(true); // Ferme quand même
              return;
         }
 
-        // Appliquer les changements localement ET sauvegarder sur Drive
-        loadedWorkouts[workoutTypeToSave] = updatedProgram;
+        loadedWorkouts[workoutTypeToSave] = updatedProgram; // Met à jour localement
         try {
             const newCsvContent = convertProgramToCsv(updatedProgram);
             const success = await updateFileContent(programFileIds[workoutTypeToSave], newCsvContent);
@@ -1391,29 +1478,26 @@
                 closeSummary(true); // Ferme et reset l'état après succès
             } else {
                 showMessage(`Échec sauvegarde ${workoutTypeToSave} sur Drive. Modifications non enregistrées sur Drive.`, 6000);
-                // Garde la modale ouverte pour que l'user voie l'erreur ?
                 confirmSummaryBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Échec Sauvegarde`;
-                // Laisse les boutons désactivés ou les réactive ? Pour l'instant, on laisse désactivé après échec.
-                // L'utilisateur devra fermer manuellement via discard s'il le souhaite.
-                 discardSummaryBtn.disabled = false; // Permet de rejeter après échec
+                discardSummaryBtn.disabled = false; // Permet de rejeter après échec
+                confirmSummaryBtn.disabled = false; // Permet de réessayer
             }
         } catch (error) {
             console.error(`Erreur sauvegarde résumé ${workoutTypeToSave}:`, error);
             showMessage(`Erreur sauvegarde ${workoutTypeToSave}: ${error.message}`, 6000);
              confirmSummaryBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Erreur`;
-             discardSummaryBtn.disabled = false;
+             discardSummaryBtn.disabled = false; confirmSummaryBtn.disabled = false;
         }
     }
-
     function handleDiscardSummary() {
-         initAudioContext();
-         console.log("Rejet des modifications du résumé.");
+         initAudioContext(); console.log("Rejet des modifications du résumé.");
+         // Recharger le programme original depuis `loadedWorkouts` au cas où ? Non, on ferme juste.
          showMessage("Modifications rejetées.", 2000);
-         closeSummary(true); // Ferme et reset l'état si on était 'finished'
+         closeSummary(true); // Ferme et reset l'état
     }
 
     // --- Clic sur le Timer ---
-     function handleTimerClick() { /* ... (Identique) ... */
+     function handleTimerClick() {
          initAudioContext(); console.log(`Clic sur le timer. État actuel: ${currentState}`); if (!isWorkoutActive || workoutFinished || !googleAccessToken || !programsLoaded) return; if (currentState === 'break') { console.log("Timer clic: Mise en pause pendant le repos."); clearInterval(timerInterval); timerInterval = null; setState('paused'); saveInProgressState(); } else if (currentState === 'paused') { const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem && currentItem.type === 'break') { console.log("Timer clic: Reprise du repos."); setState('break'); saveInProgressState(); } else { console.log("Timer clic: En pause mais pas pendant un repos, utiliser le bouton 'Reprendre'."); } } else if (currentState === 'exercise') { console.log("Timer clic: Pendant l'exercice. Action : Marquer comme 'Fait'."); handleItemCompletion(false); saveInProgressState(); } else { console.log(`Timer clic: État '${currentState}', aucune action définie pour le clic sur le cercle.`); }
      }
 
@@ -1422,44 +1506,42 @@
         console.log("DOM Chargé. Initialisation ArmorWorkout.");
 
         // Assignation DOM
-        timeLeftDisplay = document.getElementById('time-left'); timerCircle = document.getElementById('timer-circle'); totalProgressCircle = document.getElementById('total-progress-circle'); timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); navButtons = document.querySelectorAll('nav button[data-workout]'); navHistoryBtn = document.getElementById('nav-history'); themeToggleBtn = document.getElementById('theme-toggle-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); historyFilterBtns = document.querySelectorAll('.history-filters button'); historyChartCanvas = document.getElementById('history-chart-canvas'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); /* exportBtn retiré */ postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); confirmSummaryBtn = document.getElementById('confirm-summary-btn'); discardSummaryBtn = document.getElementById('discard-summary-btn'); closeSummaryBtn = document.getElementById('close-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.getElementById('timer-display-clickable'); chartPlaceholder = document.getElementById('chart-placeholder'); progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions');
+        timeLeftDisplay = document.getElementById('time-left'); timerCircle = document.getElementById('timer-circle'); totalProgressCircle = document.getElementById('total-progress-circle'); timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); navButtons = document.querySelectorAll('nav button[data-workout]'); navHistoryBtn = document.getElementById('nav-history'); themeToggleBtn = document.getElementById('theme-toggle-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay.querySelector('.content-wrapper'); if(!statsContentWrapper) { statsContentWrapper = document.createElement('div'); statsContentWrapper.className = 'content-wrapper'; statsDisplay.insertBefore(statsContentWrapper, statsDisplay.querySelector('.motivational-message')); } historyFilterBtns = document.querySelectorAll('.history-filters button'); historyChartCanvas = document.getElementById('history-chart-canvas'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); confirmSummaryBtn = document.getElementById('confirm-summary-btn'); discardSummaryBtn = document.getElementById('discard-summary-btn'); closeSummaryBtn = document.getElementById('close-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.getElementById('timer-display-clickable'); chartPlaceholder = document.getElementById('chart-placeholder'); progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions');
 
         // Vérifications éléments critiques
-        if (!timeLeftDisplay || !startPauseBtn || !navButtons || !signInButton || !signOutButton || !timerDisplayElement || !progressTextArea || !confirmSummaryBtn || !discardSummaryBtn || !closeSummaryBtn) { console.error("ERREUR CRITIQUE : Éléments DOM essentiels manquants ! Application inutilisable."); document.body.innerHTML = "<h1>Erreur critique lors de l'initialisation. Vérifiez la console.</h1>"; return; }
+        if (!timeLeftDisplay || !startPauseBtn || !navButtons || !signInButton || !signOutButton || !timerDisplayElement || !progressTextArea || !confirmSummaryBtn || !discardSummaryBtn || !closeSummaryBtn || !postWorkoutSummary || !currentExerciseNameDisplay || !currentExerciseContainer) { console.error("ERREUR CRITIQUE : Éléments DOM essentiels manquants ! Application inutilisable."); document.body.innerHTML = "<h1>Erreur critique lors de l'initialisation. Vérifiez la console.</h1>"; return; }
 
         // --- Init état & UI ---
         const savedTheme = localStorage.getItem('theme'); applyTheme((savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark');
         workoutHistory = []; loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); programsLoaded = false;
-        setState('idle'); updateAuthUI(false);
+        setState('idle'); // Appelle updateAuthUI à l'intérieur
 
         // --- Event Listeners ---
         signInButton.addEventListener('click', handleAuthClick);
         signOutButton.addEventListener('click', () => handleSignoutClick(true));
         navButtons.forEach(button => { button.addEventListener('click', () => { initAudioContext(); loadWorkout(button.dataset.workout); }); });
-        navHistoryBtn.addEventListener('click', () => { initAudioContext(); showSection('history'); }); // showSection gère la confirmation si actif
-        startPauseBtn.addEventListener('click', () => { /* ... (Identique) ... */
-            initAudioContext(); console.log(`Clic Start/Pause/Fait/Reprendre. État: ${currentState}`); if (currentState === 'idle' && currentWorkoutPlan.length > 0 && currentWorkoutType) { workoutStartTime = Date.now(); elapsedWorkoutEstimatedSeconds = 0; setState('preparing'); } else if (currentState === 'exercise') { handleItemCompletion(false); } else if (currentState === 'break') { clearInterval(timerInterval); timerInterval = null; setState('paused'); } else if (currentState === 'paused') { const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem && currentItem.type === 'break') { setState('break'); } else { console.warn("Tentative de reprise hors d'une pause de 'break'."); if(currentItem && currentItem.type === 'exercise') { setState('exercise'); } else { console.error("Impossible de déterminer l'état à reprendre depuis 'paused'."); } } } saveInProgressState();
+        navHistoryBtn.addEventListener('click', () => { initAudioContext(); showSection('history'); });
+        startPauseBtn.addEventListener('click', () => {
+            initAudioContext(); console.log(`Clic Start/Pause/Fait/Reprendre. État: ${currentState}`); if (currentState === 'idle' && currentWorkoutPlan.length > 0 && currentWorkoutType) { workoutStartTime = Date.now(); elapsedWorkoutEstimatedSeconds = 0; setState('preparing'); } else if (currentState === 'exercise') { handleItemCompletion(false); } else if (currentState === 'break') { clearInterval(timerInterval); timerInterval = null; setState('paused'); } else if (currentState === 'paused') { const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem && currentItem.type === 'break') { setState('break'); } else { console.warn("Tentative de reprise hors d'une pause de 'break'. Reprise exercice ?"); setState('exercise'); // Ou état précédent ? Simplifions : on reprend l'exo. } } saveInProgressState();
         });
-        skipBtn.addEventListener('click', () => { /* ... (Identique) ... */
+        skipBtn.addEventListener('click', () => {
             initAudioContext(); if (isWorkoutActive && !workoutFinished && currentState !== 'preparing') { showMessage("Passage à l'étape suivante.", 1500); handleItemCompletion(false); }
         });
-        finishBtn.addEventListener('click', () => { /* ... (Identique) ... */
+        finishBtn.addEventListener('click', () => {
             initAudioContext(); if (isWorkoutActive && !workoutFinished && currentState !== 'preparing') { forceFinishWorkout(); }
         });
-        resetBtn.addEventListener('click', () => { /* ... (Identique) ... */
+        resetBtn.addEventListener('click', () => {
             initAudioContext(); if (currentWorkoutType || isWorkoutActive || workoutFinished) { if (confirm("Réinitialiser l'état actuel et désélectionner l'entraînement ?")) { resetCurrentWorkout(); } } else { showMessage("Aucun entraînement à réinitialiser.", 2000); }
         });
         themeToggleBtn.addEventListener('click', () => { initAudioContext(); applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); });
         historyFilterBtns.forEach(button => { button.addEventListener('click', () => { initAudioContext(); displayHistory(button.dataset.period); }); });
-        // Listener Export retiré
         confirmSummaryBtn.addEventListener('click', handleConfirmSummary);
         discardSummaryBtn.addEventListener('click', handleDiscardSummary);
-        closeSummaryBtn.addEventListener('click', () => closeSummary(true)); // Ferme simple (si pas de modif)
-
+        closeSummaryBtn.addEventListener('click', () => closeSummary(true)); // Ferme simple (si pas de modif), reset l'état
         timerDisplayElement.addEventListener('click', handleTimerClick);
 
         console.log("Initialisation terminée. Attente Google Identity Services...");
-        // gisLoadedCallback sera appelée
+        // gisLoadedCallback sera appelée par le script Google
     });
 
 </script>
