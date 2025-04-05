@@ -394,6 +394,12 @@
     </footer>
 
     <script>
+        // Constants
+        const PROGRAM_TYPES = ['push', 'pull', 'legs'];
+        const HISTORY_FILENAME = 'armorworkout_history.csv';
+        const HISTORY_HEADER = 'type,date,duration,completedItems,totalItems\n';
+        const PROGRAM_HEADER = 'type,name,details,reps,duration\n';
+
         // DOM Elements
         const elements = {
             // Header elements
@@ -472,6 +478,8 @@
                 pull: [],
                 legs: []
             },
+            programFileIds: {}, // To store file IDs for each program type
+            historyFileId: null, // To store file ID for history
             chart: null,
             summaryChanged: false
         };
@@ -765,7 +773,7 @@
 
         // Workout functions
         function loadWorkout(type) {
-            if (!['push', 'pull', 'legs'].includes(type)) return;
+            if (!PROGRAM_TYPES.includes(type)) return;
             
             // Reset current workout
             if (state.timerInterval) clearInterval(state.timerInterval);
@@ -1332,21 +1340,41 @@
             setState('idle');
         }
 
-        function handleConfirmSummary() {
+        async function handleConfirmSummary() {
+            if (!state.isAuthenticated || !state.currentWorkoutType || !state.programFileIds[state.currentWorkoutType]) {
+                showMessage('Erreur de connexion à Google Drive', 'error');
+                closeSummary();
+                return;
+            }
+            
             if (state.summaryChanged) {
-                // Update workout with modified reps
-                let exerciseIndex = 0;
-                state.currentWorkout.forEach(item => {
-                    if (item.type === 'exercise') {
-                        const repValue = document.querySelectorAll('.rep-value')[exerciseIndex].textContent;
-                        item.reps = repValue;
-                        exerciseIndex++;
+                try {
+                    // Update workout with modified reps
+                    let exerciseIndex = 0;
+                    const updatedWorkout = [...state.currentWorkout];
+                    
+                    updatedWorkout.forEach(item => {
+                        if (item.type === 'exercise') {
+                            const repValue = document.querySelectorAll('.rep-value')[exerciseIndex].textContent;
+                            item.reps = repValue;
+                            exerciseIndex++;
+                        }
+                    });
+                    
+                    // Convert to CSV and save to Drive
+                    const csvContent = await convertProgramToCsv(updatedWorkout);
+                    const success = await updateFileContent(state.programFileIds[state.currentWorkoutType], csvContent);
+                    
+                    if (success) {
+                        // Update local copy
+                        state.loadedWorkouts[state.currentWorkoutType] = updatedWorkout.filter(item => item.type === 'exercise' || item.type === 'break');
+                        showMessage('Programme mis à jour sur Drive', 'success');
+                    } else {
+                        showMessage('Erreur lors de la mise à jour du programme', 'error');
                     }
-                });
-                
-                // Save modified workout to Drive if authenticated
-                if (state.isAuthenticated) {
-                    saveModifiedWorkout();
+                } catch (error) {
+                    console.error('Error saving modified workout:', error);
+                    showMessage('Erreur lors de la mise à jour du programme', 'error');
                 }
             }
             
@@ -1422,6 +1450,8 @@
             google.accounts.oauth2.revoke(state.googleAccessToken, () => {
                 state.isAuthenticated = false;
                 state.googleAccessToken = null;
+                state.programFileIds = {};
+                state.historyFileId = null;
                 updateAuthUI();
                 showMessage('Déconnecté de Google Drive', 'success');
             });
@@ -1469,20 +1499,23 @@
             if (!state.isAuthenticated) return;
             
             try {
-                // Try to load push program
-                const pushFile = await findOrCreateFile('armorworkout_push_program.csv', await convertProgramToCsv('push'));
-                const pushContent = await readFileContent(pushFile.id);
-                state.loadedWorkouts.push = parseProgramCsvData(pushContent) || state.loadedWorkouts.push;
-                
-                // Try to load pull program
-                const pullFile = await findOrCreateFile('armorworkout_pull_program.csv', await convertProgramToCsv('pull'));
-                const pullContent = await readFileContent(pullFile.id);
-                state.loadedWorkouts.pull = parseProgramCsvData(pullContent) || state.loadedWorkouts.pull;
-                
-                // Try to load legs program
-                const legsFile = await findOrCreateFile('armorworkout_legs_program.csv', await convertProgramToCsv('legs'));
-                const legsContent = await readFileContent(legsFile.id);
-                state.loadedWorkouts.legs = parseProgramCsvData(legsContent) || state.loadedWorkouts.legs;
+                for (const type of PROGRAM_TYPES) {
+                    const filename = `armorworkout_${type}_program.csv`;
+                    const defaultCsv = await convertProgramToCsv(DEFAULT_WORKOUTS[type]);
+                    
+                    // Find or create the file
+                    const file = await findOrCreateFile(filename, defaultCsv);
+                    state.programFileIds[type] = file.id;
+                    
+                    // Read and parse the content
+                    const csvContent = await readFileContent(file.id);
+                    const parsedProgram = parseProgramCsvData(csvContent);
+                    
+                    // Use parsed program if valid, otherwise keep default
+                    if (parsedProgram && parsedProgram.length > 0) {
+                        state.loadedWorkouts[type] = parsedProgram;
+                    }
+                }
                 
                 showMessage('Programmes chargés depuis Drive', 'success');
             } catch (error) {
@@ -1495,9 +1528,13 @@
             if (!state.isAuthenticated) return;
             
             try {
-                const historyFile = await findOrCreateFile('armorworkout_history.csv', 'type,date,duration,completedItems,totalItems\n');
-                const historyContent = await readFileContent(historyFile.id);
-                state.workoutHistory = parseAndLoadHistoryCsvData(historyContent) || [];
+                // Find or create history file
+                const historyFile = await findOrCreateFile(HISTORY_FILENAME, HISTORY_HEADER);
+                state.historyFileId = historyFile.id;
+                
+                // Read and parse the content
+                const csvContent = await readFileContent(historyFile.id);
+                state.workoutHistory = parseAndLoadHistoryCsvData(csvContent) || [];
                 
                 showMessage('Historique chargé depuis Drive', 'success');
                 
@@ -1512,36 +1549,25 @@
         }
 
         async function saveHistoryToDrive() {
-            if (!state.isAuthenticated || state.workoutHistory.length === 0) return;
+            if (!state.isAuthenticated || !state.historyFileId || state.workoutHistory.length === 0) return;
             
             try {
-                const historyFile = await findOrCreateFile('armorworkout_history.csv', 'type,date,duration,completedItems,totalItems\n');
+                // Convert history to CSV
                 const csvContent = state.workoutHistory.map(workout => 
                     `${workout.type},${workout.date},${workout.duration},${workout.completedItems},${workout.totalItems}`
                 ).join('\n');
                 
-                await updateFileContent(historyFile.id, 'type,date,duration,completedItems,totalItems\n' + csvContent);
-                showMessage('Historique sauvegardé sur Drive', 'success');
+                // Update file content
+                const success = await updateFileContent(state.historyFileId, HISTORY_HEADER + csvContent);
+                
+                if (success) {
+                    showMessage('Historique sauvegardé sur Drive', 'success');
+                } else {
+                    showMessage('Erreur lors de la sauvegarde de l\'historique', 'error');
+                }
             } catch (error) {
                 console.error('Error saving history:', error);
                 showMessage('Erreur lors de la sauvegarde de l\'historique', 'error');
-            }
-        }
-
-        async function saveModifiedWorkout() {
-            if (!state.isAuthenticated || !state.currentWorkoutType) return;
-            
-            try {
-                const filename = `armorworkout_${state.currentWorkoutType}_program.csv`;
-                const csvContent = await convertProgramToCsv(state.currentWorkoutType);
-                
-                const file = await findOrCreateFile(filename, csvContent);
-                await updateFileContent(file.id, csvContent);
-                
-                showMessage('Programme mis à jour sur Drive', 'success');
-            } catch (error) {
-                console.error('Error saving modified workout:', error);
-                showMessage('Erreur lors de la mise à jour du programme', 'error');
             }
         }
 
@@ -1553,17 +1579,17 @@
                     headers: {
                         'Authorization': `Bearer ${state.googleAccessToken}`,
                         'Content-Type': 'application/json'
-                    },
-                    params: {
-                        q: `name='${filename}' and trashed=false`,
-                        fields: 'files(id,name)'
                     }
                 });
                 
                 const data = await response.json();
                 
-                if (data.files && data.files.length > 0) {
-                    return data.files[0];
+                // Search for the file by name
+                const files = data.files || [];
+                const existingFile = files.find(file => file.name === filename);
+                
+                if (existingFile) {
+                    return existingFile;
                 }
                 
                 // If not found, create it
@@ -1600,6 +1626,10 @@
                     }
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 return await response.text();
             } catch (error) {
                 console.error('Error reading file content:', error);
@@ -1618,10 +1648,10 @@
                     body: content
                 });
                 
-                return await response.json();
+                return response.ok;
             } catch (error) {
                 console.error('Error updating file content:', error);
-                throw error;
+                return false;
             }
         }
 
@@ -1687,13 +1717,23 @@
             }
         }
 
-        async function convertProgramToCsv(type) {
-            const workouts = state.loadedWorkouts[type] || [];
-            let csv = 'type,name,details,reps,duration\n';
+        async function convertProgramToCsv(workoutData) {
+            let csv = PROGRAM_HEADER;
             
-            workouts.forEach(workout => {
-                csv += `${workout.type},${workout.name},${workout.details},${workout.reps},${workout.duration}\n`;
-            });
+            if (Array.isArray(workoutData)) {
+                workoutData.forEach(workout => {
+                    csv += `${workout.type},${workout.name},${workout.details},${workout.reps},${workout.duration}\n`;
+                });
+            } else if (typeof workoutData === 'object') {
+                // Handle default workouts object
+                for (const type in workoutData) {
+                    if (PROGRAM_TYPES.includes(type)) {
+                        workoutData[type].forEach(workout => {
+                            csv += `${workout.type},${workout.name},${workout.details},${workout.reps},${workout.duration}\n`;
+                        });
+                    }
+                }
+            }
             
             return csv;
         }
@@ -1778,5 +1818,6 @@
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', init);
     </script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoadedCallback()"></script>
 </body>
 </html>
