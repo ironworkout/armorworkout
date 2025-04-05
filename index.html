@@ -3,285 +3,591 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout</title>
+    <title>ArmorWorkout - Avancé</title>
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Google Identity Services (GIS) sera chargé plus bas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Styles (Thème Précédent Restauré) -->
     <style>
         /* --- Variables Globales & Thèmes --- */
         :root {
             /* Thème Sombre (Base) */
-            --bg-dark: #121212; --bg-light: #f8f9fa; --text-dark: #e0e0e0; --text-light: #333333;
-            --accent-blue: #00f0ff; --accent-pink: #ff00f0; --accent-green: #00ff8f; --accent-yellow: #fff000; --accent-red: #ff3d3d; --accent-purple: #b400ff;
-            --glow-blue: 0 0 10px rgba(0, 240, 255, 0.7); --glow-pink: 0 0 10px rgba(255, 0, 240, 0.7); --glow-green: 0 0 10px rgba(0, 255, 143, 0.7); --glow-yellow: 0 0 10px rgba(255, 240, 0, 0.7); --glow-red: 0 0 10px rgba(255, 61, 61, 0.7); --glow-purple: 0 0 10px rgba(180, 0, 255, 0.7);
-            --border-color-dark: #333; --border-color-light: #ddd;
-            --transition: all 0.3s ease;
-
-             /* Couleurs spécifiques aux états/types (using accent colors) */
-            --color-exercise: var(--accent-pink); --glow-exercise: var(--glow-pink);
-            --color-break: var(--accent-blue); --glow-break: var(--glow-blue);
-            --color-prepare: var(--accent-yellow); --glow-prepare: var(--glow-yellow);
-            --color-finished: var(--accent-green); --glow-finished: var(--glow-green);
-            --color-paused: var(--accent-purple); --glow-paused: var(--glow-purple);
-            --color-idle: var(--text-dark); --glow-idle: none;
-
-            /* Initialisation Thème Sombre */
-            --bg-color: var(--bg-dark); --text-color: var(--text-dark); --secondary-bg-color: #1e1e1e; --border-color: var(--border-color-dark);
+            --bg-color-dark: #0D1117; --secondary-bg-color-dark: #161B22; --primary-text-color-dark: #c9d1d9; --secondary-text-color-dark: #8b949e; --border-color-dark: #30363d; --accent-border-color-dark: #58a6ff33; --input-bg-dark: #0d1117;
+            /* Couleurs Néon (Thème Sombre) */
+            --neon-blue: #58a6ff; --neon-pink: #f778ba; --neon-red: #ff7b72; --neon-yellow: #facc15; --neon-green: #3fb950; --neon-purple: #bc8cff;
+            /* Glows (Thème Sombre) */
+            --glow-blue: 0 0 12px rgba(88, 166, 255, 0.6); --glow-pink: 0 0 12px rgba(247, 120, 186, 0.6); --glow-red: 0 0 10px rgba(255, 123, 114, 0.6); --glow-yellow: 0 0 10px rgba(250, 204, 21, 0.5); --glow-green: 0 0 10px rgba(63, 185, 80, 0.6); --glow-purple: 0 0 12px rgba(188, 140, 255, 0.6);
+            /* Couleurs spécifiques aux états/types */
+            --color-exercise: var(--neon-pink); --glow-exercise: var(--glow-pink); --color-exercise-rgb: 247, 120, 186; --icon-exercise: "\f44b";
+            --color-break: var(--neon-yellow); --glow-break: var(--glow-yellow); --color-break-rgb: 250, 204, 21; --icon-break: "\f252";
+            --color-prepare: var(--neon-yellow); --glow-prepare: var(--glow-yellow); --color-prepare-rgb: 250, 204, 21; --icon-prepare: "\f110";
+            --color-finished: var(--neon-green); --glow-finished: var(--glow-green); --color-finished-rgb: 63, 185, 80; --icon-finished: "\f058";
+            --color-paused: var(--neon-purple); --glow-paused: var(--glow-purple); --color-paused-rgb: 188, 140, 255; --icon-paused: "\f28b";
+            --color-idle: var(--secondary-text-color-dark); --glow-idle: none; --color-idle-rgb: 139, 148, 158; --icon-idle: "\f04b";
+            /* --- Autres Variables --- */
+            --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --border-radius-lg: 12px; --border-radius-md: 8px; --border-radius-sm: 6px; --transition-speed: 0.25s;
+            /* Initialisation Thème Sombre par Défaut */
+            --bg-color: var(--bg-color-dark); --secondary-bg-color: var(--secondary-bg-color-dark); --primary-text-color: var(--primary-text-color-dark); --secondary-text-color: var(--secondary-text-color-dark); --border-color: var(--border-color-dark); --accent-border-color: var(--accent-border-color-dark); --input-bg: var(--input-bg-dark);
+            /* Variables pour le timer */
             --current-step-color: var(--color-idle); --current-step-glow: var(--glow-idle);
-            --total-progress-gradient: conic-gradient(var(--accent-blue) 0%, var(--accent-pink) 100%);
-            --total-progress-bg: #333;
+            --total-progress-gradient: var(--total-progress-bg, #2a2f36);
+            --total-progress-bg: #2a2f36;
+            /* Boutons Contrôle Timer */
+            --button-reset-color: var(--neon-red); --button-reset-glow: var(--glow-red); --button-next-color: var(--neon-purple); --button-next-glow: var(--glow-purple); --button-end-color: var(--secondary-text-color-dark); --button-end-glow: none; --button-start-color: var(--neon-blue); --button-start-glow: var(--glow-blue); --button-pause-color: var(--color-paused); --button-pause-glow: var(--glow-paused); --button-resume-color: var(--color-paused); --button-resume-glow: var(--glow-paused); --button-done-color: var(--color-exercise); --button-done-glow: var(--glow-exercise);
+            /* Boutons Connexion */
+            --button-connect-color: var(--neon-green); --button-connect-glow: var(--glow-green); --button-disconnect-color: var(--neon-red); --button-disconnect-glow: var(--glow-red); --link-color: var(--neon-blue);
+             /* Variables RGBA */
+             --neon-blue-rgb: 88, 166, 255; --neon-red-rgb: 255, 123, 114; --neon-green-rgb: 63, 185, 80; --neon-purple-rgb: 188, 140, 255; --secondary-text-color-dark-rgb: 139, 148, 158; --bg-color-dark-rgb: 13, 17, 23; --secondary-bg-color-dark-rgb: 22, 27, 34; --primary-text-color-dark-rgb: 201, 209, 217; --color-exercise-rgb: 247, 120, 186; --color-break-rgb: 250, 204, 21; --color-prepare-rgb: 250, 204, 21; --color-finished-rgb: 63, 185, 80; --color-paused-rgb: 188, 140, 255; --color-idle-rgb: 139, 148, 158;
         }
+
         body.light-theme {
-            --bg-color: var(--bg-light); --text-color: var(--text-light); --secondary-bg-color: #fff; --border-color: var(--border-color-light);
-            --color-idle: var(--text-light);
-            --total-progress-bg: #e9ecef;
+            /* Thème Clair */
+            --bg-color: #ffffff; --secondary-bg-color: #f6f8fa; --primary-text-color: #24292f; --secondary-text-color: #57606a; --border-color: #d0d7de; --accent-border-color: #0969da33; --input-bg: #f6f8fa;
+            /* Couleurs Néon adaptées */
+            --neon-blue: #0969da; --neon-pink: #bf3989; --neon-red: #d73a49; --neon-yellow: #dbab09; --neon-green: #2da44e; --neon-purple: #8250df;
+            /* Glows (Subtils ou désactivés en clair) */
+            --glow-blue: 0 0 8px rgba(9, 105, 218, 0.3); --glow-pink: 0 0 8px rgba(191, 57, 137, 0.3); --glow-red: 0 0 8px rgba(215, 58, 73, 0.3); --glow-yellow: 0 0 8px rgba(219, 171, 9, 0.3); --glow-green: 0 0 8px rgba(45, 164, 78, 0.3); --glow-purple: 0 0 8px rgba(130, 80, 223, 0.3);
+            --total-progress-bg: #e1e4e8; --button-end-color: #57606a; --link-color: #0969da;
+             /* Adapter les variables RGBA */
+             --bg-color-dark-rgb: 255, 255, 255; --secondary-bg-color-dark-rgb: 246, 248, 250; --primary-text-color-dark-rgb: 36, 41, 47; --secondary-text-color-dark-rgb: 87, 96, 106; --color-exercise-rgb: 191, 57, 137; --color-break-rgb: 219, 171, 9; --color-prepare-rgb: 219, 171, 9; --color-finished-rgb: 45, 164, 78; --color-paused-rgb: 130, 80, 223; --color-idle-rgb: 87, 96, 106;
         }
 
-        /* --- Styles de Base --- */
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: var(--transition); min-height: 100vh; display: flex; flex-direction: column; }
-        .container { max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
-        button { transition: var(--transition); } button:disabled { opacity: 0.5; cursor: not-allowed; }
-        button:hover:not(:disabled) { filter: brightness(1.1); }
-        .hidden { display: none !important; }
-        .section-hidden { display: none !important; }
-
-        /* --- Header --- */
-        header { padding: 1rem 1.5rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); background-color: var(--secondary-bg-color); border-bottom: 1px solid var(--border-color); }
-        .header-container { display: flex; flex-direction: column; gap: 1rem; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .header-logo { display: flex; align-items: center; gap: 0.75rem; }
-        .header-logo i { font-size: 1.875rem; color: var(--accent-blue); }
-        .header-logo h1 { font-size: 1.5rem; font-weight: 700; }
-        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-        nav button, .header-actions button { padding: 0.5rem 1rem; border-radius: 0.5rem; background-color: #4a5568; color: white; font-weight: 500; }
-        nav button.active { box-shadow: var(--glow-blue); background-color: var(--accent-blue); color: var(--bg-dark); }
-        body.light-theme nav button, body.light-theme .header-actions button { background-color: #e2e8f0; color: var(--text-light); }
-        body.light-theme nav button.active { background-color: var(--accent-blue); color: var(--bg-dark); }
-        #history-btn { background-color: var(--accent-purple); } body.light-theme #history-btn { background-color: var(--accent-purple); color: white;}
-        .header-actions { display: flex; align-items: center; gap: 0.75rem; }
-        #auth-btn { background-color: var(--accent-blue); } body.light-theme #auth-btn { background-color: var(--accent-blue); color: var(--bg-dark); }
-        #signout-btn { background-color: var(--accent-red); } body.light-theme #signout-btn { background-color: var(--accent-red); color: white;}
-        #theme-toggle { padding: 0.5rem; border-radius: 9999px; background-color: #4a5568; color: white; } body.light-theme #theme-toggle { background-color: #e2e8f0; color: var(--text-light); }
-
-        /* --- Main Content --- */
-        main { flex-grow: 1; padding: 2rem 1rem; }
-        section { max-width: 80rem; margin-left: auto; margin-right: auto; } /* Increased max-width */
-
-        /* --- Timer --- */
-        .timer-circle { position: relative; width: 300px; height: 300px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 2rem auto; }
-        .timer-outer { position: absolute; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: var(--total-progress-gradient, var(--total-progress-bg)); box-shadow: var(--glow-purple); }
-        .timer-inner { position: absolute; width: 90%; height: 90%; border-radius: 50%; background-color: var(--secondary-bg-color); display: flex; justify-content: center; align-items: center; flex-direction: column; box-shadow: var(--current-step-glow, var(--glow-idle)); transition: box-shadow var(--transition); border: 1px solid var(--border-color);}
-        #time-left { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; }
-        #timer-state { font-size: 1.2rem; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 2px; color: var(--current-step-color, inherit); transition: color var(--transition); }
-
-        /* --- Workout Info --- */
-        .workout-info { text-align: center; margin-bottom: 2rem; min-height: 120px; background-color: var(--secondary-bg-color); padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); }
-        #workout-type-display { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        #progress-tracker { color: #a0aec0; margin-bottom: 1rem; } body.light-theme #progress-tracker { color: #718096; }
-        #current-exercise-name-display { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-        #current-exercise-container { color: #a0aec0; } body.light-theme #current-exercise-container { color: #718096; }
-
-        /* --- Controls --- */
-        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
-        .controls button { padding: 0.75rem 1.5rem; border-radius: 0.5rem; color: white; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
-        #start-pause-btn { background-color: var(--accent-green); } body.light-theme #start-pause-btn { background-color: var(--accent-green); }
-        #skip-btn { background-color: var(--accent-blue); } body.light-theme #skip-btn { background-color: var(--accent-blue); }
-        #finish-btn { background-color: var(--accent-purple); } body.light-theme #finish-btn { background-color: var(--accent-purple); }
-        #reset-btn { background-color: var(--accent-red); } body.light-theme #reset-btn { background-color: var(--accent-red); }
-
-        /* --- History Section --- */
-        #history-section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; }
-        .history-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .history-filters-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .history-filters-container button { padding: 0.5rem 1rem; border-radius: 0.5rem; background-color: #4a5568; color: white; font-weight: 500; }
-        body.light-theme .history-filters-container button { background-color: #e2e8f0; color: var(--text-light); }
-        .history-filters-container button.active-filter { background-color: var(--accent-blue); color: var(--bg-dark); box-shadow: var(--glow-blue); }
-        body.light-theme .history-filters-container button.active-filter { background-color: var(--accent-blue); color: var(--bg-dark); }
-        #back-to-workout-btn { background-color: var(--accent-blue); } body.light-theme #back-to-workout-btn { background-color: var(--accent-blue); color: var(--bg-dark); }
-        .history-grid { display: grid; gap: 2rem; }
-        .history-card { background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-color); }
-        .history-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
-        #stats-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
-        #stats-display .stat-item { background-color: #2d3748; padding: 0.75rem; border-radius: 0.5rem; text-align: center;} body.light-theme #stats-display .stat-item { background-color: #edf2f7; }
-        #stats-display .stat-label { font-size: 0.875rem; color: #a0aec0; margin-bottom: 0.25rem;} body.light-theme #stats-display .stat-label { color: #718096; }
-        #stats-display .stat-value { font-size: 1.5rem; font-weight: 700; }
-        #stats-display .motivation { grid-column: 1 / -1; margin-top: 1rem; font-style: italic; color: #a0aec0;} body.light-theme #stats-display .motivation { color: #718096; }
-        #history-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto; padding-right: 0.5rem;}
-        .history-item { background-color: #2d3748; padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; transition: var(--transition); } body.light-theme .history-item { background-color: #edf2f7; }
-        .history-item:hover { transform: translateX(5px); background-color: #4a5568;} body.light-theme .history-item:hover { background-color: #cbd5e0; }
-        .history-item .info h4 { font-weight: 600; }
-        .history-item .info p { font-size: 0.875rem; color: #a0aec0; } body.light-theme .history-item .info p { color: #718096; }
-        .history-item .details { text-align: right; }
-        .history-item .details p:first-child { font-weight: 500; }
-        .history-item .details p:last-child { font-size: 0.875rem; color: #a0aec0; } body.light-theme .history-item .details p:last-child { color: #718096; }
-
-        /* --- Modal --- */
-        .modal { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: var(--transition); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-        .modal.active { opacity: 1; pointer-events: all; }
-        .modal-content { background-color: var(--secondary-bg-color); padding: 2rem; border-radius: 1rem; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); transform: scale(0.95); transition: transform 0.3s ease; }
-        .modal.active .modal-content { transform: scale(1); }
-        .modal-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
-        .modal-content h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-        #summary-items-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
-        .summary-item { background-color: #2d3748; padding: 0.75rem; border-radius: 0.5rem; } body.light-theme .summary-item { background-color: #edf2f7; }
-        .summary-item .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .summary-item .item-header h4 { font-weight: 500; }
-        .summary-item .item-header span { font-size: 0.875rem; color: #a0aec0; } body.light-theme .summary-item .item-header span { color: #718096; }
-        .summary-item .item-controls { display: flex; justify-content: space-between; align-items: center; }
-        .rep-control { display: flex; align-items: center; gap: 0.5rem; }
-        .rep-control span:first-child { font-size: 0.875rem; color: #a0aec0; } body.light-theme .rep-control span:first-child { color: #718096; }
-        .rep-btn { width: 1.75rem; height: 1.75rem; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; user-select: none; background-color: #4a5568; color: white; } body.light-theme .rep-btn { background-color: #e2e8f0; color: var(--text-light); }
-        .rep-btn:hover { filter: brightness(1.2); }
-        .rep-value { min-width: 2rem; text-align: center; font-weight: 500; }
-        .modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem; }
-        .modal-actions button { padding: 0.5rem 1rem; border-radius: 0.5rem; color: white; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-grow: 1; }
-        #confirm-summary-btn { background-color: var(--accent-green); } body.light-theme #confirm-summary-btn { background-color: var(--accent-green); }
-        #discard-summary-btn { background-color: var(--accent-red); } body.light-theme #discard-summary-btn { background-color: var(--accent-red); }
-        #close-summary-btn { background-color: #4a5568; } body.light-theme #close-summary-btn { background-color: #a0aec0; }
-
-        /* --- Message Area --- */
-        .message { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); transform: translateY(150%); opacity: 0; transition: transform 0.4s ease, opacity 0.4s ease; z-index: 1001; }
-        .message.show { transform: translateY(0); opacity: 1; }
-        .message.success { background-color: var(--accent-green); color: var(--bg-dark); }
-        .message.error { background-color: var(--accent-red); }
-        .message.info { background-color: var(--accent-blue); color: var(--bg-dark); }
-
-        /* --- Footer --- */
-        footer { padding: 1rem 1.5rem; background-color: var(--secondary-bg-color); text-align: center; color: #a0aec0; border-top: 1px solid var(--border-color); margin-top: auto; } body.light-theme footer { color: #718096; }
-
-        /* --- Responsive Adjustments --- */
-        @media (min-width: 768px) {
-            .header-container { flex-direction: row; }
-            .history-grid { grid-template-columns: 1fr 1fr; }
-            .modal-actions button { flex-grow: 0; }
+        /* --- Styles de Base & Réinitialisation --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: var(--font-family); background-color: var(--bg-color); color: var(--primary-text-color);
+            line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            display: flex; flex-direction: column; min-height: 100vh;
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
         }
-        @media (max-width: 640px) {
-            .timer-circle { width: 250px; height: 250px; }
-            #time-left { font-size: 2.5rem; }
-            .modal-content { width: 95%; padding: 1rem; }
-            .controls button { padding: 0.5rem 1rem; font-size: 0.875rem; }
-            nav button, .header-actions button { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
-            .header-logo h1 { font-size: 1.25rem; }
-            .header-logo i { font-size: 1.5rem; }
-            .modal-actions { flex-direction: column; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 25px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
+
+        /* --- En-tête --- */
+        header {
+            padding: 15px 0; border-bottom: 1px solid var(--border-color);
+            transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+            position: sticky; top: 0; z-index: 1000;
+            background-color: rgba(var(--bg-color-dark-rgb), 0.8);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 25px; flex-wrap: wrap; gap: 15px 20px; }
+        header h1 { font-size: 1.5em; color: var(--primary-text-color); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        header h1 i { color: var(--neon-blue); animation: pulse 2s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+
+        /* --- Navigation Header --- */
+        nav ul { list-style: none; display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        nav button {
+            background: none; border: none; color: var(--secondary-text-color); font-size: 1em; font-weight: 500; padding: 5px 0;
+            cursor: pointer; transition: color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            position: relative; border-bottom: 2px solid transparent;
+        }
+        nav button:disabled { color: rgba(var(--secondary-text-color-dark-rgb), 0.5); cursor: not-allowed; border-bottom-color: transparent !important; box-shadow: none !important; opacity: 0.6; }
+        nav button:not(:disabled):hover { color: var(--primary-text-color); }
+        nav button.active { color: var(--neon-blue); font-weight: 700; border-bottom-color: var(--neon-blue); box-shadow: 0 5px 15px -5px rgba(var(--neon-blue-rgb), 0.4); }
+        #nav-history { color: var(--secondary-text-color); border-bottom-color: transparent; }
+        #nav-history:hover:not(:disabled) { color: var(--neon-pink); }
+        #nav-history.active { color: var(--neon-pink); border-bottom-color: var(--neon-pink); box-shadow: 0 5px 15px -5px rgba(var(--neon-pink-rgb), 0.4); }
+        #nav-history i { margin-right: 5px; }
+
+        /* --- Actions Header --- */
+        .header-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .auth-controls { display: flex; gap: 10px; align-items: center; }
+        .auth-controls button {
+            background: none; border: 1px solid var(--accent-border-color); color: var(--secondary-text-color); padding: 6px 14px;
+            border-radius: var(--border-radius-md); font-size: 0.85em; font-weight: 500; cursor: pointer;
+            transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .auth-controls button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        .auth-controls button:not(:disabled):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
+        #signin-button { border-color: var(--button-connect-color); color: var(--button-connect-color); }
+        #signin-button:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
+        #signout-button { border-color: var(--button-disconnect-color); color: var(--button-disconnect-color); }
+        #signout-button:not(:disabled):hover { background-color: rgba(var(--neon-red-rgb), 0.1); box-shadow: var(--glow-red); border-color: var(--neon-red); }
+
+        #drive-status {
+            font-size: 0.8em; color: var(--secondary-text-color); margin-left: 5px; transition: opacity 0.3s, color 0.3s, border-color 0.3s;
+            min-width: fit-content; text-align: right; font-style: normal; padding: 4px 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5);
+            border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none; /* Initialement caché */
+        }
+        #drive-status.loading { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+        #drive-status.error { color: var(--neon-red); border-color: var(--neon-red); }
+        #drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
+
+        .theme-toggle button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.2em; padding: 5px; cursor: pointer; transition: color var(--transition-speed) ease; }
+        .theme-toggle button:hover { color: var(--neon-yellow); }
+
+        /* Logique affichage connexion/déconnexion */
+        body.logged-out #signin-button { display: inline-flex; }
+        body.logged-out #signout-button { display: none; }
+        body.logged-out #drive-status { display: none; }
+        body.logged-out .history-actions { display: none !important; }
+        body.logged-out #drive-connection-status-main { display: none; }
+
+        body.logged-in #signin-button { display: none; }
+        body.logged-in #signout-button { display: inline-flex; }
+        body.logged-in #drive-status { display: inline-block; }
+        body.logged-in .history-actions { display: flex !important; }
+        body.logged-in #drive-connection-status-main { display: inline-flex; }
+
+        /* --- Contenu Principal --- */
+        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 50px; position: relative; }
+        .workout-section { background-color: transparent; padding: 0; border: none; box-shadow: none; width: 100%; max-width: 600px; text-align: center; transition: transform 0.5s ease, opacity 0.5s ease, max-height 0.5s ease; margin-bottom: 40px; }
+        .history-section { background-color: var(--secondary-bg-color); padding: 35px; border-radius: var(--border-radius-lg); box-shadow: none; border: 1px solid var(--border-color); width: 100%; max-width: 850px; text-align: left; margin-bottom: 40px; transition: transform 0.5s ease, opacity 0.5s ease, max-height 0.5s ease; }
+        .section-hidden { transform: scale(0.9) translateY(30px); opacity: 0; pointer-events: none; max-height: 0; padding-top: 0 !important; padding-bottom: 0 !important; margin-bottom: 0 !important; border: none !important; overflow: hidden; }
+
+        /* --- Affichage Timer --- */
+        .timer-display { margin-bottom: 50px; position: relative; display: flex; justify-content: center; align-items: center; width: 320px; height: 320px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .timer-circle-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+        #total-progress-circle, .timer-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 12px solid transparent; background-clip: padding-box; background-origin: border-box; box-sizing: border-box; }
+        #total-progress-circle {
+            border-color: var(--total-progress-bg);
+            background: var(--total-progress-gradient, var(--total-progress-bg));
+            box-shadow: 0 0 25px rgba(var(--neon-blue-rgb), 0.3), 0 0 35px rgba(var(--neon-pink-rgb), 0.2), inset 0 0 20px rgba(var(--bg-color-dark-rgb), 0.5);
+            z-index: 1; transition: background 0.3s linear;
+        }
+        .timer-circle {
+            width: calc(100% - 48px); height: calc(100% - 48px); top: 24px; left: 24px;
+            border-color: var(--border-color);
+            background-image: conic-gradient(var(--current-step-color, var(--color-idle)) 0%, transparent 0%);
+            box-shadow: var(--current-step-glow, var(--glow-idle)), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6);
+            z-index: 3; transition: background-image 0.15s linear, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            background-size: 100% 100%; background-repeat: no-repeat; background-position: center center;
+        }
+        .timer-circle::before { content: ''; position: absolute; width: calc(100% - 24px); height: calc(100% - 24px); background-color: var(--bg-color); border-radius: 50%; z-index: 4; transition: background-color var(--transition-speed) ease; }
+        .time-left { font-size: 5.5em; font-weight: 900; color: var(--primary-text-color); z-index: 5; transition: color var(--transition-speed) ease; font-variant-numeric: tabular-nums; position: relative; text-shadow: 0 0 10px rgba(var(--primary-text-color-dark-rgb), 0.3); }
+
+        .timer-state {
+            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); font-size: 0.9em; letter-spacing: 0.08em;
+            color: var(--current-step-color, var(--color-idle));
+            font-weight: 500; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease, color var(--transition-speed) ease;
+            background-color: transparent; padding: 0; box-shadow: none; z-index: 6;
+            text-shadow: 0 0 8px rgba(var(--bg-color-dark-rgb), 0.7);
+        }
+        .timer-state.visible { opacity: 0.9; }
+        .timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
+        @keyframes countdown-pulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; } 50% { transform: translateX(-50%) scale(1.05); opacity: 0.85; } }
+
+        /* --- Infos Exercice --- */
+        .workout-info { margin-bottom: 40px; min-height: 100px; position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        #current-exercise-name-display { display: block; font-size: 1.4em; font-weight: 700; color: var(--primary-text-color); margin-bottom: 8px; padding: 0 10px; min-height: 1.5em; transition: color 0.3s ease; }
+        body.state-exercise #current-exercise-name-display { color: var(--color-exercise); }
+        body.state-break #current-exercise-name-display { color: var(--color-break); }
+        body.state-paused #current-exercise-name-display { color: var(--color-paused); }
+        body.state-preparing #current-exercise-name-display { color: var(--color-prepare); }
+        body.state-finished #current-exercise-name-display { color: var(--color-finished); }
+
+        #current-exercise-container { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 1.1em; color: var(--secondary-text-color); min-height: 3em; width: 100%; }
+        #current-exercise-container .exercise-details,
+        #current-exercise-container .break-info,
+        #current-exercise-container .idle-message {
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 20px;
+            background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); padding: 10px 18px; border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color); width: fit-content; max-width: 90%;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        #current-exercise-container .exercise-details span,
+        #current-exercise-container .break-info span { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        #current-exercise-container .exercise-details span i { color: var(--color-exercise); }
+        #current-exercise-container .break-info i { color: var(--color-break); }
+        #current-exercise-container .exercise-details .details-text { font-size: 0.9em; opacity: 0.8; }
+        #current-exercise-container .idle-message { border-style: dashed; opacity: 0.7; }
+        .muscle-groups { font-size: 0.85em; color: var(--neon-purple); margin-top: 5px; font-style: italic; }
+
+
+        /* --- Progress Tracker --- */
+        .progress-tracker { font-size: 0.9em; color: var(--secondary-text-color); margin-top: 30px; opacity: 0.8; font-weight: 500; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px 15px; min-height: 1.2em; }
+        #drive-connection-status-main { align-items: center; gap: 6px; }
+        #drive-connection-status-main i.fa-google-drive { color: var(--neon-green); font-size: 1.1em; }
+        #drive-connection-status-main i.fa-google-drive.fa-spin { animation: fa-spin 2s linear infinite; }
+        @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #progress-text-area { font-weight: 500; }
+
+        /* --- Contrôles Timer --- */
+        .controls { display: flex; justify-content: center; gap: 15px; margin-top: 40px; flex-wrap: wrap; }
+        .controls button {
+            background: transparent; border: 2px solid var(--accent-border-color); color: var(--primary-text-color); min-width: 110px; padding: 10px 20px;
+            border-radius: var(--border-radius-lg); font-size: 1.05em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .controls button i { font-size: 0.9em; transition: transform 0.2s ease; }
+        .controls button:disabled { border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; opacity: 0.5; cursor: not-allowed; box-shadow: none !important; transform: none !important; background-color: transparent !important; pointer-events: none; }
+        .controls button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .controls button:not(:disabled):hover i { transform: scale(1.1); }
+        .controls button:not(:disabled):active { transform: scale(0.97); }
+
+        /* Styles spécifiques aux boutons basés sur la classe JS */
+        #start-pause-btn.start-btn { border-color: var(--button-start-color); color: var(--button-start-color); }
+        #start-pause-btn.start-btn:not(:disabled):hover { box-shadow: var(--glow-blue), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-blue-rgb), 0.08); }
+        #start-pause-btn.pause-btn { border-color: var(--button-pause-color); color: var(--button-pause-color); }
+        #start-pause-btn.pause-btn:not(:disabled):hover { box-shadow: var(--glow-paused), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-paused-rgb), 0.08); }
+        #start-pause-btn.resume-btn { border-color: var(--button-resume-color); color: var(--button-resume-color); }
+        #start-pause-btn.resume-btn:not(:disabled):hover { box-shadow: var(--glow-paused), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-paused-rgb), 0.08); }
+        #start-pause-btn.done-btn { border-color: var(--button-done-color); color: var(--button-done-color); }
+        #start-pause-btn.done-btn:not(:disabled):hover { box-shadow: var(--glow-exercise), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-exercise-rgb), 0.08); }
+        #start-pause-btn.finished-btn { border-color: var(--color-finished); color: var(--color-finished); }
+        #start-pause-btn.finished-btn:not(:disabled):hover { box-shadow: var(--glow-finished), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--color-finished-rgb), 0.08); }
+        #start-pause-btn.preparing-btn { border-color: var(--color-prepare); color: var(--color-prepare); opacity: 0.7; cursor: default; }
+
+        #skip-btn { border-color: var(--button-next-color); color: var(--button-next-color); }
+        #skip-btn:not(:disabled):hover { box-shadow: var(--glow-purple), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-purple-rgb), 0.08); }
+        #finish-btn { border-color: var(--button-end-color); color: var(--button-end-color); }
+        #finish-btn:not(:disabled):hover { background-color: rgba(var(--secondary-text-color-dark-rgb), 0.1); border-color: var(--primary-text-color); color: var(--primary-text-color); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #reset-btn { border-color: var(--button-reset-color); color: var(--button-reset-color); }
+        #reset-btn:not(:disabled):hover { box-shadow: var(--glow-red), 0 4px 8px rgba(0,0,0,0.1); background-color: rgba(var(--neon-red-rgb), 0.08); }
+
+        /* --- Section Historique --- */
+        .history-section h2 { color: var(--primary-text-color); margin-bottom: 25px; text-align: center; }
+        .history-controls { padding-bottom: 20px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .history-filters-container { display: flex; flex-wrap: wrap; gap: 10px; } /* Renamed class */
+        .history-filters-container button { background-color: transparent; border: 1px solid var(--accent-border-color); color: var(--secondary-text-color); opacity: 1; font-size: 0.85em; padding: 6px 12px; border-radius: var(--border-radius-md); cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 5px; }
+        .history-filters-container button:not(:disabled):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); background-color: rgba(var(--secondary-text-color-dark-rgb), 0.1); }
+        .history-filters-container button.active-filter { border-color: var(--neon-blue); color: var(--neon-blue); background-color: rgba(var(--neon-blue-rgb), 0.1); font-weight: 500; box-shadow: var(--glow-blue); }
+        .history-actions { display: flex; gap: 15px; align-items: center; color: var(--secondary-text-color); }
+        .history-actions i.fab.fa-google-drive { color: var(--neon-green); font-size: 1.1em; }
+        #history-drive-status { font-size: 0.8em; padding: 3px 6px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); }
+        .chart-container { height: 350px; margin-bottom: 30px; background-color: transparent; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; box-shadow: none; position: relative; }
+        #chart-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--secondary-text-color); font-style: italic; text-align: center; padding: 0 10px;}
+        .stats-display { margin-bottom: 30px; padding: 20px; background-color: transparent; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: none; }
+        .stats-display h3 { color: var(--primary-text-color); margin-bottom: 15px; font-size: 1.15em;}
+        .stats-display .content-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; } /* Grid for stats items */
+        .stats-display .stat-item { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); padding: 0.75rem; border-radius: 0.5rem; text-align: center; border: 1px solid var(--border-color); }
+        .stats-display .stat-label { font-size: 0.875rem; color: var(--secondary-text-color); margin-bottom: 0.25rem; }
+        .stats-display .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary-text-color); }
+        .stats-display .motivation { grid-column: 1 / -1; /* Span full width */ font-style: italic; font-weight: 500; margin-top: 15px !important; background: linear-gradient(90deg, var(--neon-green), var(--neon-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; text-align: center;}
+        .history-list { list-style: none; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background-color: transparent; box-shadow: none; max-height: 400px; overflow-y: auto; }
+        .history-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease; gap: 15px; flex-wrap: wrap; }
+        .history-list li:last-child { border-bottom: none; }
+        .history-list li:nth-child(even) { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); }
+        .history-list li:hover { background-color: rgba(var(--neon-blue-rgb), 0.08); }
+        .history-item-date { color: var(--primary-text-color); font-size: 0.9em; flex-shrink: 0; }
+        .history-item-date small { color: var(--secondary-text-color); font-size: 0.9em;}
+        .history-item-type { color: var(--neon-pink); background-color: rgba(var(--neon-pink-rgb), 0.1); border-radius: var(--border-radius-sm); padding: 3px 8px; font-size: 0.85em; font-weight: 500; text-align: center; min-width: 50px; flex-shrink: 0; margin: 5px 0; }
+        .history-item-duration { color: var(--neon-blue); font-weight: 500; font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: auto; margin: 5px 0; }
+        .history-list .no-history { color: var(--secondary-text-color); text-align: center; padding: 30px 15px; font-style: italic; border: none; background: none !important; }
+
+        /* --- Résumé Post-Workout (MODAL) --- */
+        .post-workout-summary {
+            position: fixed; inset: 0; background-color: rgba(var(--bg-color-dark-rgb), 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .post-workout-summary.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+        .post-workout-summary-content {
+            background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%; max-width: 680px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .post-workout-summary.visible .post-workout-summary-content { transform: scale(1); }
+        .post-workout-summary h2 { color: var(--primary-text-color); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; text-align: center; background-color: rgba(var(--bg-color-dark-rgb), 0.2); }
+        .summary-items-list { list-style: none; padding: 10px 25px; overflow-y: auto; flex-grow: 1; background: var(--bg-color); border-bottom: 1px solid var(--border-color); }
+        .summary-item {
+            border-bottom: 1px solid var(--border-color); padding: 18px 0; display: grid;
+            grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: center;
+        }
+        .summary-item:last-child { border-bottom: none; }
+        .summary-item h4 { grid-column: 1 / -1; color: var(--primary-text-color); font-size: 1.15em; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .summary-item h4 i { width: 20px; text-align: center; font-size: 1.1em; }
+        .summary-item.item-type-exercise h4 i { color: var(--color-exercise); }
+        .summary-item.item-type-break h4 i { color: var(--color-break); }
+        .summary-item label {
+            grid-column: 2 / 3; color: var(--secondary-text-color); font-size: 0.9em; font-weight: 500; white-space: nowrap; text-align: left; padding-left: 5px;
+        }
+        .summary-item .input-container { grid-column: 3 / 4; display: flex; align-items: center; gap: 8px; }
+        .summary-item input[type="number"], .summary-item input[type="text"], .summary-item textarea {
+            background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text-color);
+            border-radius: var(--border-radius-sm); padding: 8px 12px; font-size: 1em; width: 100%;
+            transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+        .summary-item input[type="number"] { width: 70px; text-align: center; flex-shrink: 0; -moz-appearance: textfield; }
+        .summary-item input[type="number"]::-webkit-outer-spin-button,
+        .summary-item input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .summary-item input:focus, .summary-item textarea:focus { border-color: var(--neon-blue); background-color: var(--bg-color); outline: none; box-shadow: 0 0 0 3px rgba(var(--neon-blue-rgb), 0.3); }
+        .summary-item textarea { min-height: 45px; resize: vertical; width: 100%; }
+        .summary-item .details-container { grid-column: 1 / -1; margin-top: 5px; }
+        .summary-item .details-container label { display: block; text-align: left; margin-bottom: 4px; font-size: 0.9em; color: var(--secondary-text-color); padding-left: 0; }
+        .summary-item p { grid-column: 2 / -1; color: var(--primary-text-color); font-weight: 500; padding-left: 5px; }
+
+        .rep-adjust-btn {
+            background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); color: var(--primary-text-color);
+            border-radius: 50%; width: 28px; height: 28px; font-size: 1em; line-height: 26px; text-align: center;
+            cursor: pointer; transition: all var(--transition-speed) ease; flex-shrink: 0;
+        }
+        .rep-adjust-btn:hover { background-color: var(--accent-border-color); border-color: var(--neon-blue); color: var(--neon-blue); }
+        .rep-adjust-btn:active { transform: scale(0.95); }
+
+        .summary-controls {
+            padding: 20px 25px; display: flex; justify-content: flex-end; gap: 15px;
+            flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(var(--bg-color-dark-rgb), 0.2);
+        }
+        .summary-controls button {
+            border: none; color: white; min-width: 160px; padding: 10px 22px; border-radius: var(--border-radius-md);
+            font-size: 1em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; background-color: var(--secondary-text-color) !important; }
+        .summary-controls button:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25); transform: translateY(-1px); }
+        .summary-controls button:not(:disabled):active { filter: brightness(0.95); transform: translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+        #confirm-summary-btn { background-color: var(--neon-green); } body.light-theme #confirm-summary-btn { background-color: var(--neon-green); }
+        #discard-summary-btn { background-color: var(--neon-red); } body.light-theme #discard-summary-btn { background-color: var(--neon-red); }
+        #close-summary-btn { background-color: var(--secondary-text-color); display: none; } body.light-theme #close-summary-btn { background-color: var(--secondary-text-color); }
+
+
+        /* --- Animation Fin Workout --- */
+        .timer-display.finished-animation .timer-circle {
+            animation: finish-circle-glow 1.5s ease-out forwards;
+        }
+        @keyframes finish-circle-glow {
+            0% { box-shadow: var(--current-step-glow), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); border-color: var(--border-color); }
+            50% { box-shadow: 0 0 35px 15px rgba(var(--color-finished-rgb), 0.7), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.4); border-color: var(--color-finished); }
+            100% { box-shadow: var(--glow-finished), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6); border-color: var(--color-finished); }
+        }
+
+        /* --- Zone de Messages Flottante --- */
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease, bottom 0.4s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
+        /* Specific message types */
+        .message-area.success { background-color: var(--neon-green); color: var(--bg-dark); border-color: var(--neon-green); }
+        .message-area.error { background-color: var(--neon-red); color: white; border-color: var(--neon-red); }
+        .message-area.info { background-color: var(--neon-blue); color: var(--bg-dark); border-color: var(--neon-blue); }
+
+
+        /* --- Pied de Page --- */
+        footer { color: var(--secondary-text-color); opacity: 0.7; border-top: 1px solid var(--border-color); margin-top: auto; /* Pushes footer down */ padding: 25px; text-align: center; }
+        footer a { color: var(--link-color); text-decoration: none; }
+        footer a:hover { color: var(--primary-text-color); text-decoration: underline; }
+        footer .fab.fa-google-drive { color: #4CAF50; }
+
+        /* --- Styles Responsives --- */
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.3em; }
+            nav ul { gap: 15px; }
+            .header-actions { gap: 15px; }
+            .timer-display { width: 280px; height: 280px; }
+            .timer-circle { width: calc(100% - 40px); height: calc(100% - 40px); top: 20px; left: 20px; border-width: 10px; }
+            .timer-circle::before { width: calc(100% - 20px); height: calc(100% - 20px); }
+            .time-left { font-size: 4.5em; }
+            #total-progress-circle { border-width: 10px; }
+            .controls { gap: 15px; }
+            .controls button { min-width: 100px; padding: 10px 18px; font-size: 1em; }
+            .history-controls { flex-direction: column; align-items: stretch; gap: 15px; }
+            .history-actions { justify-content: center; }
+            .chart-container { height: 320px; padding: 10px; }
+            .stats-display { padding: 15px; }
+            .history-list li { padding: 10px; gap: 10px; font-size: 0.95em;}
+            .post-workout-summary-content { padding: 0; max-width: 95%; max-height: 85vh; }
+            .post-workout-summary h2 { padding: 15px 20px; font-size: 1.3em; }
+            .summary-items-list { padding: 10px 20px; }
+            .summary-item { grid-template-columns: auto 1fr auto; gap: 8px 10px;}
+            .summary-item label { font-size: 0.85em; }
+            .summary-item input[type="number"] { width: 60px; padding: 6px 8px; }
+            .rep-adjust-btn { width: 24px; height: 24px; font-size: 0.9em; line-height: 22px; }
+            .summary-controls { padding: 15px 20px; justify-content: space-around; }
+            .summary-controls button { min-width: 130px; padding: 10px 18px; }
+        }
+        @media (max-width: 480px) {
+            header { padding: 15px 0;}
+            header h1 { font-size: 1.2em; }
+            nav ul { gap: 10px; justify-content: center;}
+            .header-content { justify-content: center; }
+            .header-actions { justify-content: center; }
+            .auth-controls { flex-wrap: wrap; justify-content: center; gap: 8px;}
+            .timer-display { width: 240px; height: 240px; margin-bottom: 40px; }
+            .timer-circle { width: calc(100% - 32px); height: calc(100% - 32px); top: 16px; left: 16px; border-width: 8px; }
+            .timer-circle::before { width: calc(100% - 16px); height: calc(100% - 16px); }
+            .time-left { font-size: 3.8em; }
+            #total-progress-circle { border-width: 8px; }
+            .workout-info { min-height: 80px; margin-bottom: 30px; }
+            #current-exercise-name-display { font-size: 1.2em; }
+            #current-exercise-container { font-size: 1em; }
+            #current-exercise-container .exercise-details,
+            #current-exercise-container .break-info,
+            #current-exercise-container .idle-message { padding: 8px 12px; gap: 8px 15px; max-width: 95%;}
+            #current-exercise-container .exercise-details span { flex-basis: 100%; justify-content: center;}
+             #current-exercise-container .exercise-details .details-text { text-align: center; }
+            .controls { gap: 10px; margin-top: 30px; flex-direction: column; align-items: stretch; }
+            .controls button { width: 100%; min-width: 0; padding: 12px; font-size: 1em; }
+            .progress-tracker { margin-top: 25px; font-size: 0.85em;}
+            .history-section { padding: 20px; }
+            .history-controls { padding-bottom: 15px; margin-bottom: 20px;}
+            .history-filters-container button { font-size: 0.8em; padding: 5px 10px; } /* Updated selector */
+            .chart-container { height: 280px; }
+            .stats-display { padding: 12px; font-size: 0.9em;}
+            .stats-display .content-wrapper { grid-template-columns: 1fr 1fr; } /* Adjust grid for smaller stats */
+            .stats-display .stat-value { font-size: 1.2rem; }
+            .history-list li { font-size: 0.9em; flex-direction: column; align-items: flex-start; gap: 5px; }
+             .history-item-duration { margin-left: 0; }
+            .history-item-type { align-self: flex-start; }
+            .post-workout-summary-content { max-width: 100%; max-height: 90vh; border-radius: var(--border-radius-md); }
+            .post-workout-summary h2 { font-size: 1.2em; padding: 12px 15px;}
+            .summary-items-list { padding: 8px 15px; }
+            .summary-item { grid-template-columns: auto 1fr; gap: 5px 10px; padding: 12px 0; }
+            .summary-item label { grid-column: 1 / 2; text-align: left; }
+            .summary-item .input-container { grid-column: 2 / 3; justify-content: flex-start;}
+             .summary-item .details-container { grid-column: 1 / -1; }
+             .summary-item p { grid-column: 1 / -1; text-align: left; padding-left: 0; }
+            .summary-controls { flex-direction: column; gap: 10px; }
+            .summary-controls button { width: 100%; }
         }
     </style>
 </head>
-<body class="dark-theme">
+<body class="dark-theme state-idle"> <!-- Classe d'état initiale -->
+
     <header>
-        <div class="container header-container">
-            <div class="header-logo">
-                <i class="fas fa-shield-halved"></i>
-                <h1>ArmorWorkout</h1>
-            </div>
+        <div class="container header-content">
+            <h1><i class="fas fa-shield-halved"></i> ArmorWorkout</h1>
             <nav>
-                <button id="push-btn" class="nav-btn" data-workout="push" disabled>Push</button>
-                <button id="pull-btn" class="nav-btn" data-workout="pull" disabled>Pull</button>
-                <button id="legs-btn" class="nav-btn" data-workout="legs" disabled>Legs</button>
-                <button id="history-btn">Historique</button>
+                <ul>
+                    <!-- Liens de navigation standard, pas de désactivation JS complexe ici -->
+                    <li><button id="nav-push" data-workout="Push" disabled>Push</button></li>
+                    <li><button id="nav-pull" data-workout="Pull" disabled>Pull</button></li>
+                    <li><button id="nav-legs" data-workout="Legs" disabled>Legs</button></li>
+                    <li><button id="nav-history"><i class="fas fa-history"></i> Historique</button></li>
+                </ul>
             </nav>
             <div class="header-actions">
-                <button id="auth-btn"><i class="fab fa-google"></i><span>Connecter Drive</span></button>
-                <button id="signout-btn" class="hidden"><i class="fas fa-sign-out-alt"></i><span>Déconnecter</span></button>
-                <button id="theme-toggle"><i class="fas fa-moon"></i></button>
+                <div class="auth-controls">
+                    <button id="signin-button"><i class="fab fa-google"></i> Connecter Drive</button>
+                    <button id="signout-button" class="hidden"><i class="fas fa-sign-out-alt"></i> Déconnecter</button> <!-- Caché initialement -->
+                </div>
+                <span id="drive-status"></span> <!-- Pour afficher état connexion -->
+                <div class="theme-toggle">
+                    <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button>
+                </div>
             </div>
         </div>
     </header>
 
-    <main>
-        <!-- Workout Section -->
+    <main class="container"> <!-- Applique container directement au main -->
+        <!-- Section Entraînement -->
         <section id="workout-section">
-            <div class="workout-info">
+             <!-- Workout Info (replacé en haut pour mobile) -->
+             <div class="workout-info">
                 <h2 id="workout-type-display">Sélectionnez un entraînement</h2>
                 <p id="progress-tracker">Connectez-vous à Drive</p>
                 <h3 id="current-exercise-name-display">Prêt</h3>
                 <div id="current-exercise-container">Appuyez sur Démarrer</div>
+                <div class="muscle-groups" id="muscle-groups-display"></div> <!-- Zone pour afficher les muscles -->
             </div>
-            <div id="timer-display-clickable" class="cursor-pointer">
-                <div class="timer-circle">
-                    <div id="timer-outer">
-                        <div id="timer-inner">
-                            <div id="time-left">00:00</div>
-                            <div id="timer-state">Prêt</div>
-                        </div>
+
+            <!-- Timer Display -->
+            <div id="timer-display-clickable" class="timer-display cursor-pointer">
+                <div class="timer-circle-container">
+                    <div id="total-progress-circle"></div>
+                    <div class="timer-circle" id="timer-circle">
+                        <span class="time-left" id="time-left">00:00</span>
                     </div>
                 </div>
+                <div class="timer-state" id="timer-state">Prêt</div>
             </div>
+
+            <!-- Controls -->
             <div class="controls">
                 <button id="start-pause-btn" disabled><i class="fas fa-play"></i><span>Démarrer</span></button>
                 <button id="skip-btn" disabled><i class="fas fa-forward"></i><span>Suivant</span></button>
                 <button id="finish-btn" disabled><i class="fas fa-flag-checkered"></i><span>Finir</span></button>
                 <button id="reset-btn" disabled><i class="fas fa-undo"></i><span>Reset</span></button>
             </div>
+
+             <!-- Drive Connection Status (replacé ici pour visibilité) -->
+             <div class="progress-tracker" id="progress-tracker-bottom">
+                <span id="progress-text-area"></span>
+                <span id="drive-connection-status-main" style="display: none;">
+                    <i class="fab fa-google-drive"></i>
+                    <span id="drive-connection-text">Connecté</span>
+                </span>
+            </div>
         </section>
 
-        <!-- History Section -->
+        <!-- Section Historique -->
         <section id="history-section" class="section-hidden">
-             <div class="history-controls">
+            <div class="history-controls">
                 <h2 class="text-2xl font-bold">Historique</h2>
-                <div class="history-filters-container">
+                 <div class="history-filters-container"> <!-- Container pour les filtres -->
                     <button data-period="week" class="active-filter">Semaine</button>
                     <button data-period="month">Mois</button>
                     <button data-period="year">Année</button>
                     <button data-period="all">Tous</button>
                 </div>
-                <button id="back-to-workout-btn"><i class="fas fa-arrow-left"></i><span>Retour</span></button>
+                <div class="history-actions" style="display: none;"> <!-- Caché par défaut -->
+                    <i class="fab fa-google-drive"></i>
+                    <span id="history-drive-status">Synchro Drive</span>
+                </div>
+                 <button id="back-to-workout-btn"><i class="fas fa-arrow-left"></i><span>Retour</span></button>
             </div>
+
             <div class="history-grid">
                 <div class="history-card">
                     <h3>Statistiques</h3>
                     <div id="stats-display">
-                        <p class="text-gray-400">Chargement...</p>
+                         <div class="content-wrapper"> <!-- Wrapper pour le contenu généré -->
+                             <p class="text-gray-400">Chargement...</p>
+                         </div>
+                         <p class="motivation"></p> <!-- Espace pour message motivationnel -->
                     </div>
                 </div>
                 <div class="history-card">
-                    <h3>Graphique</h3>
-                    <canvas id="history-chart"></canvas>
-                </div>
-                <div class="history-card" style="grid-column: 1 / -1;"> <!-- Prend toute la largeur -->
-                    <h3>Détails des Séances</h3>
-                    <div id="history-list">
-                        <p class="text-gray-400">Chargement...</p>
+                    <h3>Activité Récente</h3>
+                    <div class="chart-container">
+                        <canvas id="history-chart-canvas"></canvas>
+                        <p id="chart-placeholder" style="display: none;"></p>
                     </div>
                 </div>
+                 <div class="history-card" style="grid-column: 1 / -1;"> <!-- Prend toute la largeur -->
+                    <h3>Détails des Séances</h3>
+                    <ul id="history-list">
+                        <li class="no-history">Chargement...</li>
+                    </ul>
+                </div>
+                 <!-- Placeholder pour futures fonctionnalités -->
+                 <div class="history-card placeholder-card" style="grid-column: 1 / -1;">
+                     <h3>Fonctionnalités Futures</h3>
+                     <p class="text-gray-400">Ici pourraient apparaître : suivi de progression par exercice, stats par muscle, etc.</p>
+                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Post Workout Summary Modal -->
-    <div id="post-workout-summary" class="modal">
-        <div class="modal-content">
-            <h2 id="summary-title">Résumé de l'entraînement</h2>
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold mb-2">Exercices effectués</h3>
-                <ul id="summary-items-list" class="space-y-3"></ul>
-            </div>
-            <div class="modal-actions">
-                <button id="confirm-summary-btn"><i class="fas fa-check"></i><span>Valider & Fermer</span></button>
-                <button id="discard-summary-btn"><i class="fas fa-times"></i><span>Rejeter Changements</span></button>
-                <button id="close-summary-btn"><i class="fas fa-times"></i><span>Fermer</span></button>
+    <!-- Modal Résumé Post-Workout -->
+    <div id="post-workout-summary" class="post-workout-summary">
+        <div class="post-workout-summary-content">
+            <h2 id="summary-title">Résumé de la Séance</h2>
+            <ul id="summary-items-list" class="summary-items-list"></ul>
+            <div class="summary-controls">
+                <button id="close-summary-btn"><i class="fas fa-times"></i> Fermer</button>
+                 <!-- Discard retire seulement les modifs DANS la modale, ne change pas l'historique -->
+                <button id="discard-summary-btn"><i class="fas fa-trash-alt"></i> Annuler Modifs</button>
+                 <!-- Confirm enregistre les reps/détails DANS l'entrée historique de CETTE séance -->
+                <button id="confirm-summary-btn"><i class="fas fa-check"></i> Enregistrer & Fermer</button>
             </div>
         </div>
     </div>
 
-    <!-- Message Area -->
-    <div id="message-area" class="message"></div>
+    <!-- Zone de Message Flottante -->
+    <div id="message-area" class="message-area"></div>
 
-    <footer class="py-4 px-6 text-center">
-        <p>© <span id="current-year"></span> ArmorWorkout - Propulsé par la sueur et le code.</p>
+    <footer>
+        <p>© <span id="current-year"></span> ArmorWorkout. Intégré avec <i class="fab fa-google-drive"></i> Google Drive.</p>
+        <p><a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> Voir sur GitHub</a></p>
     </footer>
 
     <script>
         // --- Constants ---
-        const PROGRAM_TYPES = ['push', 'pull', 'legs'];
-        const HISTORY_FILENAME = 'armorworkout_history.csv';
-        const HISTORY_HEADER = 'type,date,duration,completedItems,totalItems\n'; // Inclut nom colonne pour clarté
-        const PROGRAM_HEADER = 'type,name,details,reps,duration\n';
+        const PROGRAM_TYPES = ['Push', 'Pull', 'Legs']; // Utiliser la casse correcte
+        // Format d'historique mis à jour pour inclure les performances réelles
+        const HISTORY_FILENAME = 'armorworkout_history_v2.csv'; // Nouveau nom si format change
+        const HISTORY_HEADER = 'SessionID,DateISO,WorkoutType,TotalDurationSeconds,ItemsCompleted,PerformanceJSON\n'; // Performance stockée en JSON
+        const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.csv", Pull: "armorworkout_pull_program.csv", Legs: "armorworkout_legs_program.csv" };
+        const PROGRAM_HEADER = 'Type,Name,Details,Reps,Duration\n'; // Format CSV des programmes
         const PREPARE_DURATION = 3; // Seconds
+        const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
 
         // --- DOM Elements (Minimal selection at start) ---
         const elements = {}; // Populated in init
@@ -293,95 +599,91 @@
             googleAccessToken: null,
             // !!! IMPORTANT: Remplacez par VOTRE ID CLIENT !!!
             GOOGLE_CLIENT_ID: "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com",
-            tokenClient: null, // Google Token Client
+            tokenClient: null,
             timerInterval: null,
             prepareInterval: null,
-            timeLeft: 0,
-            currentState: 'idle', // 'idle', 'preparing', 'exercise', 'break', 'paused', 'finished'
+            timeLeft: 0, // Temps restant pour l'étape en cours (break/prepare)
+            currentState: 'idle',
             currentWorkoutType: null,
-            currentWorkout: [],
+            currentWorkoutPlan: [], // Le plan chargé (Push/Pull/Legs)
+            sessionPerformance: [], // Stocke les perfs réelles de la séance en cours [{name, repsDone, detailsUsed}, ...]
+            originalCompletedWorkoutPlan: [], // Copie du plan au moment où 'finished' est atteint (pour la modale)
             currentItemIndex: 0,
-            workoutStartTime: null, // Track start time for duration
-            workoutHistory: [],
-            loadedWorkouts: {}, // Will be populated with defaults or from Drive
-            programFileIds: {},
+            workoutStartTime: null,
+            workoutHistory: [], // Stocke les objets d'historique chargés/créés
+            loadedWorkouts: {}, // Stocke les plans chargés depuis Drive/Defaut {Push: [...], Pull: [...], Legs: [...]}
+            programFileIds: { Push: null, Pull: null, Legs: null },
             historyFileId: null,
             chart: null,
-            summaryChanged: false,
-            isSavingDriveData: false, // Drive save lock
+            summaryChanged: false, // Flag pour savoir si modifs dans la modale
+            isSavingDriveData: false,
             audioContext: null,
+            wasFinishedState: false, // Pour gérer la fermeture de la modale
         };
 
-        // --- Default Workouts (Simplified Structure) ---
+        // --- Default Workouts (Structure standardisée) ---
         const DEFAULT_WORKOUTS = {
-             push: [{type:"exercise",name:"Développé Couché",details:"4x8-12",duration:0},{type:"break",duration:90},{type:"exercise",name:"Développé Incliné",details:"3x10-12",duration:0},{type:"break",duration:90},{type:"exercise",name:"Écarté Couché",details:"3x12-15",duration:0},{type:"break",duration:60},{type:"exercise",name:"Dips",details:"3xMax",duration:0},{type:"break",duration:60}],
-             pull: [{type:"exercise",name:"Tractions",details:"4xMax",duration:0},{type:"break",duration:90},{type:"exercise",name:"Rowing Barre",details:"3x8-12",duration:0},{type:"break",duration:90},{type:"exercise",name:"Face Pull",details:"3x12-15",duration:0},{type:"break",duration:60},{type:"exercise",name:"Curl Haltères",details:"3x10-12",duration:0},{type:"break",duration:60}],
-             legs: [{type:"exercise",name:"Squat",details:"4x6-10",duration:0},{type:"break",duration:120},{type:"exercise",name:"Presse",details:"3x8-12",duration:0},{type:"break",duration:90},{type:"exercise",name:"Fentes",details:"3x10/jambe",duration:0},{type:"break",duration:60},{type:"exercise",name:"Leg Curl",details:"3x12-15",duration:0},{type:"break",duration:60}]
+            Push: [{type:"exercise",name:"Band Standing Chest Press",details:"Élastique 15kg",reps:"13",duration:0},{type:"exercise",name:"Band Bench Press",details:"Élastique 25kg",reps:"15",duration:0},{type:"break",name:"Repos Pectoraux",duration:75},{type:"exercise",name:"Overhead Press",details:"Élastique 15kg",reps:"12",duration:0},{type:"exercise",name:"Triceps Pushdown",details:"Élastique 15kg",reps:"15",duration:0},{type:"break",name:"Repos Épaules/Triceps",duration:60}],
+            Pull: [{type:"exercise",name:"Band Bent-over Row",details:"Élastique 25 kg",reps:"12",duration:0},{type:"exercise",name:"Band Face Pull",details:"Élastique 15 kg",reps:"14",duration:0},{type:"break",name:"Repos Dos",duration:75},{type:"exercise",name:"Bicep Curls",details:"Élastique 15 kg",reps:"12",duration:0},{type:"exercise",name:"Lat Pulldown (Band)",details:"Élastique 25 kg",reps:"12",duration:0},{type:"break",name:"Repos Biceps/Dos",duration:60}],
+            Legs: [{type:"exercise",name:"Front squat",details:"Élastique 15+25kg",reps:"13",duration:0},{type:"exercise",name:"Fentes Arrière",details:"Élastique 25 kg",reps:"10",duration:0},{type:"break",name:"Repos Squat/Fentes",duration:90},{type:"exercise",name:"Romanian Deadlift (Band)",details:"Élastique 25kg",reps:"15",duration:0},{type:"exercise",name:"Calf Raises",details:"Bodyweight",reps:"20",duration:0},{type:"break",name:"Repos RDL/Mollets",duration:60}]
         };
+
+        // --- Mapping Exercices <-> Muscles (Simple Version) ---
+        const exerciseMuscleMap = {
+            "Band Standing Chest Press": ["Pectoraux", "Triceps", "Épaules Ant."],
+            "Band Bench Press": ["Pectoraux", "Triceps", "Épaules Ant."],
+            "Overhead Press": ["Épaules", "Triceps"],
+            "Triceps Pushdown": ["Triceps"],
+            "Band Bent-over Row": ["Dos", "Biceps", "Épaules Post."],
+            "Band Face Pull": ["Épaules Post.", "Trapèzes"],
+            "Bicep Curls": ["Biceps"],
+            "Lat Pulldown (Band)": ["Dos", "Biceps"],
+            "Front squat": ["Quadriceps", "Fessiers", "Adducteurs"],
+            "Fentes Arrière": ["Quadriceps", "Fessiers", "Ischios"],
+            "Romanian Deadlift (Band)": ["Ischios", "Fessiers", "Lombaires"],
+            "Calf Raises": ["Mollets"]
+            // Ajouter d'autres exercices ici
+        };
+
 
         // --- Initialization ---
         function init() {
-            // Populate DOM elements object
-            elements.themeToggle = document.getElementById('theme-toggle');
-            elements.pushBtn = document.getElementById('push-btn');
-            elements.pullBtn = document.getElementById('pull-btn');
-            elements.legsBtn = document.getElementById('legs-btn');
-            elements.historyBtn = document.getElementById('history-btn');
-            elements.backToWorkoutBtn = document.getElementById('back-to-workout-btn');
-            elements.authBtn = document.getElementById('auth-btn');
-            elements.signoutBtn = document.getElementById('signout-btn');
-            elements.timerDisplayClickable = document.getElementById('timer-display-clickable');
-            elements.timeLeft = document.getElementById('time-left');
-            elements.timerState = document.getElementById('timer-state');
-            elements.timerOuter = document.getElementById('timer-outer');
-            elements.timerInner = document.getElementById('timer-inner');
-            elements.workoutTypeDisplay = document.getElementById('workout-type-display');
-            elements.currentExerciseNameDisplay = document.getElementById('current-exercise-name-display');
-            elements.currentExerciseContainer = document.getElementById('current-exercise-container');
-            elements.progressTracker = document.getElementById('progress-tracker');
-            elements.startPauseBtn = document.getElementById('start-pause-btn');
-            elements.skipBtn = document.getElementById('skip-btn');
-            elements.finishBtn = document.getElementById('finish-btn');
-            elements.resetBtn = document.getElementById('reset-btn');
-            elements.workoutSection = document.getElementById('workout-section');
-            elements.historySection = document.getElementById('history-section');
-            elements.historyFilters = document.querySelectorAll('.history-filters-container button'); // Corrected selector
-            elements.statsDisplay = document.getElementById('stats-display');
-            elements.historyList = document.getElementById('history-list');
-            elements.historyChart = document.getElementById('history-chart');
-            elements.postWorkoutSummary = document.getElementById('post-workout-summary');
-            elements.summaryItemsList = document.getElementById('summary-items-list');
-            elements.confirmSummaryBtn = document.getElementById('confirm-summary-btn');
-            elements.discardSummaryBtn = document.getElementById('discard-summary-btn');
-            elements.closeSummaryBtn = document.getElementById('close-summary-btn');
-            elements.messageArea = document.getElementById('message-area');
-            elements.currentYear = document.getElementById('current-year');
+            console.log("Initializing ArmorWorkout...");
+            // Populate DOM elements
+            const ids = ["theme-toggle-btn", "nav-push", "nav-pull", "nav-legs", "nav-history", "back-to-workout-btn", "signin-button", "signout-button", "timer-display-clickable", "time-left", "timer-state", "total-progress-circle", "timer-circle", "workout-type-display", "current-exercise-name-display", "current-exercise-container", "muscle-groups-display", "progress-tracker-bottom", "drive-connection-status-main", "drive-connection-text", "progress-text-area", "start-pause-btn", "skip-btn", "finish-btn", "reset-btn", "workout-section", "history-section", "history-filters-container", "stats-display", "history-list", "history-chart-canvas", "chart-placeholder", "history-actions", "history-drive-status", "post-workout-summary", "summary-title", "summary-items-list", "confirm-summary-btn", "discard-summary-btn", "close-summary-btn", "message-area", "current-year", "drive-status"];
+            ids.forEach(id => { elements[id.replace(/-(\w)/g, (match, p1) => p1.toUpperCase())] = document.getElementById(id); }); // CamelCase conversion
+            elements.historyFilters = document.querySelectorAll('.history-filters-container button');
+            elements.navButtons = document.querySelectorAll('nav button[data-workout]'); // Re-add navButtons selector
+            elements.statsContentWrapper = elements.statsDisplay?.querySelector('.content-wrapper');
+            if (!elements.statsContentWrapper && elements.statsDisplay) { // Create wrapper if not exists
+                elements.statsContentWrapper = document.createElement('div');
+                elements.statsContentWrapper.className = 'content-wrapper';
+                elements.statsDisplay.insertBefore(elements.statsContentWrapper, elements.statsDisplay.querySelector('.motivation'));
+            }
 
-            // Basic check for essential elements
-            if (!elements.timeLeft || !elements.authBtn || !elements.startPauseBtn) {
-                console.error("Initialization failed: Essential DOM elements not found.");
-                document.body.innerHTML = "<h1>Erreur d'initialisation</h1>"; // Simplified error display
-                return;
+            // Check essential elements
+            if (!elements.timeLeft || !elements.signinButton || !elements.startPauseBtn || !elements.navButtons || !elements.navHistory) {
+                console.error("CRITICAL INIT FAILED: Missing essential DOM elements.");
+                document.body.innerHTML = "<h1>Erreur Init</h1>"; return;
             }
 
             elements.currentYear.textContent = new Date().getFullYear();
-            state.loadedWorkouts = JSON.parse(JSON.stringify(DEFAULT_WORKOUTS)); // Load defaults
+            state.loadedWorkouts = JSON.parse(JSON.stringify(DEFAULT_WORKOUTS));
             loadTheme();
             setupEventListeners();
-            setState('idle'); // Set initial state & UI
-            initAudioContext(); // Init audio on load
+            setState('idle'); // Init UI and state machine
+            initAudioContext(); // Init audio (requires user interaction later)
+            console.log("ArmorWorkout Initialized.");
         }
 
         // --- Event Listeners Setup ---
         function setupEventListeners() {
-            elements.themeToggle.addEventListener('click', toggleTheme);
-            elements.pushBtn.addEventListener('click', () => loadWorkout('push'));
-            elements.pullBtn.addEventListener('click', () => loadWorkout('pull'));
-            elements.legsBtn.addEventListener('click', () => loadWorkout('legs'));
-            elements.historyBtn.addEventListener('click', showHistorySection);
-            elements.backToWorkoutBtn.addEventListener('click', showWorkoutSection);
-            elements.authBtn.addEventListener('click', handleAuthClick);
-            elements.signoutBtn.addEventListener('click', () => handleSignoutClick(true)); // Pass true to show message
+            elements.themeToggleBtn.addEventListener('click', toggleTheme);
+            elements.navButtons.forEach(btn => btn.addEventListener('click', () => loadWorkout(btn.dataset.workout)));
+            elements.navHistory.addEventListener('click', showHistorySection);
+            // elements.backToWorkoutBtn?.addEventListener('click', showWorkoutSection); // backToWorkoutBtn ID might be different
+            elements.signinButton.addEventListener('click', handleAuthClick);
+            elements.signoutButton.addEventListener('click', () => handleSignoutClick(true));
             elements.startPauseBtn.addEventListener('click', toggleStartPause);
             elements.skipBtn.addEventListener('click', handleSkip);
             elements.finishBtn.addEventListener('click', handleFinish);
@@ -390,474 +692,350 @@
             elements.historyFilters.forEach(btn => btn.addEventListener('click', () => displayHistory(btn.dataset.period)));
             elements.confirmSummaryBtn.addEventListener('click', handleConfirmSummary);
             elements.discardSummaryBtn.addEventListener('click', handleDiscardSummary);
-            elements.closeSummaryBtn.addEventListener('click', () => closeSummary(true)); // Close and reset state
+            elements.closeSummaryBtn.addEventListener('click', () => closeSummary(true));
         }
 
         // --- Theme ---
         function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); saveThemePreference(); }
-        function applyTheme() { document.body.className = `${state.theme}-theme`; elements.themeToggle.innerHTML = `<i class="fas fa-${state.theme === 'dark' ? 'sun' : 'moon'}"></i>`; if (state.chart) updateChartTheme(); }
-        function loadTheme() { const saved = localStorage.getItem('armorworkout-theme'); if (saved === 'light' || saved === 'dark') state.theme = saved; applyTheme(); }
-        function saveThemePreference() { try { localStorage.setItem('armorworkout-theme', state.theme); } catch(e) {} }
+        function applyTheme() { document.body.className = `${state.theme}-theme state-${state.currentState}`; elements.themeToggleBtn.innerHTML = `<i class="fas fa-${state.theme === 'dark' ? 'sun' : 'moon'}"></i>`; if (state.chart) updateChartTheme(); }
+        function loadTheme() { const saved = localStorage.getItem('theme'); if (saved === 'light' || saved === 'dark') state.theme = saved; applyTheme(); }
+        function saveThemePreference() { try { localStorage.setItem('theme', state.theme); } catch(e) {console.warn("Cannot save theme", e)} }
+        function updateChartTheme() { /* Chart theme update logic - simplified */ if (!state.chart) return; const styles=getComputedStyle(document.documentElement); const grid=styles.getPropertyValue('--border-color').trim(); const text=styles.getPropertyValue('--primary-text-color').trim(); try { state.chart.options.scales.x.grid.color=grid; state.chart.options.scales.y.grid.color=grid; state.chart.options.scales.x.ticks.color=text; state.chart.options.scales.y.ticks.color=text; state.chart.update('none'); } catch(e){} }
 
-        // --- Timer & State ---
-        function formatTime(s) { s=Math.max(0, Math.round(s)); const m=Math.floor(s/60); const r=s%60; return `${m.toString().padStart(2,'0')}:${r.toString().padStart(2,'0')}`; }
-        function setState(newState) {
-            const oldState = state.currentState;
-            state.currentState = newState;
-            console.log(`State: ${oldState} -> ${newState}`);
+        // --- Audio & Vibration ---
+        function initAudioContext() { /* ... same logic ... */ if(!state.audioContext && (window.AudioContext || window.webkitAudioContext)) try { state.audioContext = new (window.AudioContext || window.webkitAudioContext)(); const unlock=()=>{if(state.audioContext.state==='suspended') state.audioContext.resume().then(()=>{document.removeEventListener('click',unlock); document.removeEventListener('touchend', unlock);}); else {document.removeEventListener('click',unlock); document.removeEventListener('touchend', unlock);}}; document.addEventListener('click', unlock); document.addEventListener('touchend', unlock); } catch(e){ console.warn("Audio Error", e); } }
+        function endSound() { /* ... same logic ... */ if (!state.audioContext || state.audioContext.state !== 'running') return; try { const o=state.audioContext.createOscillator(); const g=state.audioContext.createGain(); o.connect(g); g.connect(state.audioContext.destination); o.type='sine'; o.frequency.setValueAtTime(880, state.audioContext.currentTime); g.gain.setValueAtTime(0.15, state.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, state.audioContext.currentTime + 0.4); o.start(); o.stop(state.audioContext.currentTime + 0.4); } catch(e){} }
+        function vibrate(pattern=100){ if('vibrate' in navigator) try{navigator.vibrate(pattern);}catch(e){} }
 
-            // Clear intervals
-            clearInterval(state.timerInterval); state.timerInterval = null;
-            clearInterval(state.prepareInterval); state.prepareInterval = null;
-
-            // Update UI based on the new state
-            updateUIForState(newState);
-
-            // Save state if active
-            if (newState !== 'idle' && newState !== 'finished') {
-                saveInProgressState();
-            } else if (newState === 'finished' || newState === 'idle') {
-                clearInProgressState(); // Clear on finish or explicit idle
+        // --- GIS & Drive API ---
+        // !! IMPORTANT: Ensure 'gisLoadedCallback' is GLOBAL !!
+        async function gisLoadedCallback() {
+            console.log("GIS Loaded");
+            if (!state.GOOGLE_CLIENT_ID || state.GOOGLE_CLIENT_ID === "YOUR_CLIENT_ID.apps.googleusercontent.com" || state.GOOGLE_CLIENT_ID.length < 10) { // Basic check
+                console.error("CRITICAL: GOOGLE_CLIENT_ID manquant ou invalide !"); showMessage("ID Client Google invalide!", "error", 10000); updateAuthUI(false); return;
             }
+            try {
+                state.tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: state.GOOGLE_CLIENT_ID, scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: tokenCallback, error_callback: handleTokenError, prompt: ''
+                });
+                console.log("Token Client Init OK");
+            } catch (e) { console.error("Token Client Init Error:", e); showMessage("Erreur Init Google", "error"); updateAuthUI(false); }
         }
-        function updateUIForState(newState) {
-            // Update Timer Display (Color, Text)
-            let colorVar = '--color-idle', glowVar = '--glow-idle', stateText = 'Prêt';
-            switch (newState) {
-                case 'preparing': colorVar = '--color-prepare'; glowVar = '--glow-prepare'; stateText = `Prêt dans ${state.timeLeft}`; break;
-                case 'exercise': colorVar = '--color-exercise'; glowVar = '--glow-exercise'; stateText = 'Exercice'; break;
-                case 'break': colorVar = '--color-break'; glowVar = '--glow-break'; stateText = 'Repos'; break;
-                case 'paused': colorVar = '--color-paused'; glowVar = '--glow-paused'; stateText = 'Pause'; break;
-                case 'finished': colorVar = '--color-finished'; glowVar = '--glow-finished'; stateText = 'Terminé !'; break;
-            }
-            elements.timerInner.style.setProperty('--current-step-glow', `var(${glowVar})`);
-            elements.timerState.style.color = `var(${colorVar})`;
-            elements.timerState.textContent = stateText;
-            if (newState !== 'preparing') elements.timeLeft.textContent = formatTime(state.timeLeft); // Don't overwrite countdown
-
-            // Update Control Buttons
-            const isActive = !['idle', 'finished'].includes(newState);
-            elements.startPauseBtn.disabled = !state.currentWorkoutType || newState === 'preparing' || newState === 'finished';
-            if (newState === 'idle') elements.startPauseBtn.innerHTML = '<i class="fas fa-play"></i><span>Démarrer</span>';
-            else if (newState === 'paused') elements.startPauseBtn.innerHTML = '<i class="fas fa-play"></i><span>Reprendre</span>';
-            else if (isActive) elements.startPauseBtn.innerHTML = '<i class="fas fa-pause"></i><span>Pause</span>';
-            else elements.startPauseBtn.innerHTML = '<i class="fas fa-check"></i><span>Terminé</span>'; // Finished state
-
-            elements.skipBtn.disabled = !isActive || newState === 'preparing';
-            elements.finishBtn.disabled = !isActive || newState === 'preparing';
-            elements.resetBtn.disabled = newState === 'idle' && !state.currentWorkoutType;
-
-            // Update Workout Info Display
-            updateWorkoutInfo();
-
-            // Update Nav Buttons enable/disable
-            const navDisabled = isActive && newState !== 'paused'; // Disable nav during active timer states
-            [elements.pushBtn, elements.pullBtn, elements.legsBtn].forEach(btn => btn.disabled = navDisabled || !state.isAuthenticated);
-            elements.historyBtn.disabled = navDisabled;
-        }
-        function startTimer() {
-            if (state.timerInterval) clearInterval(state.timerInterval);
-            state.timerInterval = setInterval(() => {
-                if (state.timeLeft > 0) {
-                    state.timeLeft--;
-                    elements.timeLeft.textContent = formatTime(state.timeLeft);
-                    // Update progress only if needed (less frequent updates)
-                    if(state.currentState === 'break') updateTimerProgress();
-                } else {
-                    clearInterval(state.timerInterval); state.timerInterval = null;
-                    handleItemCompletion(true); // Natural completion
-                }
-            }, 1000);
-        }
-        function startPrepareTimer() {
-            if (state.prepareInterval) clearInterval(state.prepareInterval);
-            state.timeLeft = PREPARE_DURATION;
-            elements.timerState.textContent = `Prêt dans ${state.timeLeft}`; // Initial display
-            state.prepareInterval = setInterval(() => {
-                if (state.timeLeft > 0) {
-                    state.timeLeft--;
-                    elements.timerState.textContent = `Prêt dans ${state.timeLeft}`;
-                    updateTimerProgress(); // Update progress during prepare
-                } else {
-                    clearInterval(state.prepareInterval); state.prepareInterval = null;
-                    handleItemCompletion(true); // Preparation finished naturally
-                }
-            }, 1000);
-        }
-        function updateTimerProgress() {
-            // This function needs refinement based on how progress should be visualized
-            // For now, let's just update the total progress visualization
-            updateTotalProgressCircle();
-        }
-        function updateTotalProgressCircle() {
-            // Simplified: just update background color based on state for now
-             let colorVar = '--total-progress-bg'; // Default background
-             if (state.currentState === 'exercise') colorVar = '--color-exercise';
-             else if (state.currentState === 'break') colorVar = '--color-break';
-             else if (state.currentState === 'paused') colorVar = '--color-paused';
-             // A proper gradient update based on elapsed time vs total time is complex
-             // and depends on how `totalWorkoutEstimatedSeconds` etc. are managed.
-             // Keeping it simple for now.
-             elements.timerOuter.style.background = `var(${colorVar})`;
-        }
-
-        // --- Workout Flow ---
-        function loadWorkout(type) {
-            if (!state.isAuthenticated) { showMessage("Connectez-vous d'abord.", "info"); return; }
-            if (!PROGRAM_TYPES.includes(type) || !state.loadedWorkouts[type]) { showMessage("Type d'entraînement invalide.", "error"); return; }
-            if (state.currentState !== 'idle' && state.currentState !== 'finished') {
-                if (!confirm(`Arrêter l'entraînement "${state.currentWorkoutType}" en cours ?`)) return;
-            }
-            resetWorkoutState(); // Reset before loading new
-            state.currentWorkoutType = type;
-            state.currentWorkout = state.loadedWorkouts[type] ? [...state.loadedWorkouts[type]] : []; // Defensive copy
-            state.currentItemIndex = 0;
-            // state.totalDuration = calculateTotalEstimatedTime(); // Re-enable if needed
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`${type}-btn`).classList.add('active');
-            setState('idle'); // Set state AFTER loading
-            showMessage(`"${type.toUpperCase()}" chargé. Prêt !`, "success");
-        }
-        function updateWorkoutInfo() {
-            const item = state.currentWorkout[state.currentItemIndex];
-            if (state.currentState === 'idle') {
-                elements.workoutTypeDisplay.textContent = state.currentWorkoutType ? `Prêt: ${state.currentWorkoutType.toUpperCase()}` : "Sélectionnez un entraînement";
-                elements.currentExerciseNameDisplay.textContent = state.currentWorkoutType ? "Appuyez sur Démarrer" : "";
-                elements.currentExerciseContainer.innerHTML = state.currentWorkoutType ? `<i class="fas fa-info-circle"></i> ${state.currentWorkout.length} étapes` : "";
-            } else if (state.currentState === 'finished') {
-                elements.workoutTypeDisplay.textContent = `Terminé: ${state.currentWorkoutType.toUpperCase()}`;
-                elements.currentExerciseNameDisplay.textContent = "Excellent Travail !";
-                elements.currentExerciseContainer.innerHTML = `<i class="fas fa-trophy text-yellow-400 text-2xl"></i>`;
-            } else if (item) {
-                elements.workoutTypeDisplay.textContent = `${state.currentWorkoutType.toUpperCase()} - Étape ${state.currentItemIndex + 1}/${state.currentWorkout.length}`;
-                elements.currentExerciseNameDisplay.textContent = item.name || (item.type === 'break' ? 'Repos' : 'Action');
-                if (item.type === 'exercise') {
-                    elements.currentExerciseContainer.innerHTML = `<div>${item.details || ''}</div><div>Reps: ${item.reps || 'N/A'}</div>`;
-                } else { // Break or Preparing
-                    const nextExo = getNextExerciseName() || "Fin";
-                    elements.currentExerciseContainer.innerHTML = `<div>Prochain: ${nextExo}</div>`;
-                }
-            } else { // Fallback
-                 elements.workoutTypeDisplay.textContent = state.currentWorkoutType ? state.currentWorkoutType.toUpperCase() : "Erreur";
-                 elements.currentExerciseNameDisplay.textContent = "Erreur";
-                 elements.currentExerciseContainer.innerHTML = "";
-            }
-            // Update progress tracker based on auth status
-             elements.progressTracker.textContent = state.isAuthenticated ? `Connecté à Drive` : `Non connecté - Progression non sauvegardée`;
-        }
-        function getNextExerciseName() {
-             for (let i = state.currentItemIndex + 1; i < state.currentWorkout.length; i++) {
-                 if (state.currentWorkout[i]?.type === 'exercise') return state.currentWorkout[i].name;
-             }
-             return null; // No more exercises
-        }
-        function toggleStartPause() {
-            initAudioContext(); // Ensure context is active
-            if (state.currentState === 'idle') {
-                if (!state.currentWorkoutType || state.currentWorkout.length === 0) { showMessage("Sélectionnez un entraînement.", "info"); return; }
-                state.workoutStartTime = Date.now(); // Track start
-                setState('preparing');
-                startPrepareTimer(); // Start countdown
-            } else if (['exercise', 'break'].includes(state.currentState)) {
-                setState('paused');
-                clearInterval(state.timerInterval); state.timerInterval = null;
-            } else if (state.currentState === 'paused') {
-                const item = state.currentWorkout[state.currentItemIndex];
-                setState(item?.type === 'break' ? 'break' : 'exercise'); // Resume to correct state
-                startTimer(); // Resume timer
-            }
-        }
-        function handleItemCompletion(naturalEnd = false) {
-            const currentItem = state.currentWorkout[state.currentItemIndex];
-            if (naturalEnd && currentItem?.type === 'break') { vibrate(); endSound(); } // Signal end of break
-
-            state.currentItemIndex++;
-            if (state.currentItemIndex >= state.currentWorkout.length) {
-                completeWorkout();
-            } else {
-                startNextItem();
-            }
-        }
-        function startNextItem() {
-            const item = state.currentWorkout[state.currentItemIndex];
-            if (!item) { completeWorkout(); return; } // Should not happen
-
-            state.timeLeft = item.duration || 0; // Duration for break, 0 for exercise for now
-
-            if (item.type === 'exercise') {
-                setState('exercise');
-                // For exercises, maybe don't auto-start a timer? User confirms completion.
-                clearInterval(state.timerInterval); state.timerInterval = null;
-                elements.timeLeft.textContent = item.reps || "GO!"; // Display reps or GO!
-            } else { // Break
-                setState('break');
-                startTimer(); // Start break timer automatically
-            }
-        }
-        function handleSkip() {
-             if (!['exercise', 'break', 'paused', 'preparing'].includes(state.currentState)) return;
-             vibrate(50);
-             clearInterval(state.timerInterval); clearInterval(state.prepareInterval); // Stop any active timers
-             handleItemCompletion(false); // Move to next item (not natural end)
-        }
-        function handleFinish() {
-             if (!['exercise', 'break', 'paused', 'preparing'].includes(state.currentState)) return;
-             if (confirm("Terminer l'entraînement maintenant ?")) {
-                 clearInterval(state.timerInterval); clearInterval(state.prepareInterval);
-                 completeWorkout(true); // Pass flag for manual finish
+        function handleAuthClick() { initAudioContext(); if(state.tokenClient) { elements.driveStatus.textContent = 'Connexion...'; elements.driveStatus.className = 'loading'; elements.driveStatus.style.display = 'inline-block'; state.tokenClient.requestAccessToken({prompt: 'consent'}); } else showMessage("Google non prêt", "error"); }
+        function handleSignoutClick(showMsg = true) { if(state.googleAccessToken) google.accounts.oauth2.revoke(state.googleAccessToken, ()=>{ console.log('Token revoked'); if(showMsg) showMessage("Déconnecté", "info"); resetLocalDataAndUI(); }); else resetLocalDataAndUI(); }
+        function tokenCallback(resp) { if(resp.error){ handleTokenError(resp); return; } state.googleAccessToken=resp.access_token; state.isAuthenticated=true; elements.driveStatus.textContent = 'Chargement...'; elements.driveStatus.className = 'loading'; updateAuthUI(true); showMessage("Connecté", "success"); loadDriveData(); }
+        function handleTokenError(err) { console.error("Auth Error:", err); showMessage(`Erreur Auth: ${err.error || 'Inconnue'}`, "error"); elements.driveStatus.textContent = 'Erreur Auth'; elements.driveStatus.className = 'error'; resetLocalDataAndUI(); }
+        function resetLocalDataAndUI() { state.isAuthenticated=false; state.googleAccessToken=null; state.programFileIds={ Push: null, Pull: null, Legs: null }; state.historyFileId=null; state.workoutHistory=[]; state.loadedWorkouts=JSON.parse(JSON.stringify(DEFAULT_WORKOUTS)); state.programsLoaded=false; if(state.currentState !== 'idle') resetWorkoutState(); updateAuthUI(false); displayHistory(); } // Reset more completely
+        async function loadDriveData() {
+             elements.driveStatus.textContent = 'Chargement...'; elements.driveStatus.className = 'loading';
+             try {
+                 await Promise.all([loadHistoryFromDrive(), loadProgramsFromDrive()]);
+                 console.log("Drive data loaded (or defaults used).");
+                 state.programsLoaded = true; // Mark as loaded even if defaults are used
+                 if(elements.driveStatus.classList.contains('loading')) { // Only update if still loading
+                      elements.driveStatus.textContent = 'Connecté'; elements.driveStatus.className = 'success';
+                 }
+                 loadInProgressState(); // Try to resume after loading
+                 updateAuthUI(true); // Final UI update
+             } catch (error) {
+                 console.error("Error loading Drive data:", error);
+                 showMessage("Erreur chargement données Drive.", "error");
+                 elements.driveStatus.textContent = 'Erreur Données'; elements.driveStatus.className = 'error';
+                 state.programsLoaded = true; // Allow using defaults even if Drive fails
+                 updateAuthUI(true);
              }
         }
-        function handleReset() {
-             if (state.currentState === 'idle' && !state.currentWorkoutType) return;
-             if (confirm("Réinitialiser l'entraînement actuel ?")) {
-                 resetWorkoutState();
-                 setState('idle');
-                 showMessage("Réinitialisé.", "info");
-             }
+        // findOrCreateFile, readFileContent, updateFileContent - Implement full logic as before
+        async function findOrCreateFile(filename, defaultContent = "") {
+            console.log(`Drive: Find/Create ${filename}`); if (!state.googleAccessToken) return null;
+            const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+mimeType='text/csv'+and+trashed=false&spaces=drive&fields=files(id,name)`;
+            try {
+                const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${state.googleAccessToken}` } });
+                if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { handleSignoutClick(false); showMessage("Session Google expirée.", "error", 5000); return null; } throw new Error(`Search ${filename} (${searchRes.status})`); }
+                const searchData = await searchRes.json();
+                if (searchData.files && searchData.files.length > 0) { console.log(`Found ${filename}: ${searchData.files[0].id}`); return { id: searchData.files[0].id }; } // Return object with id
+                console.log(`Drive: Creating ${filename}...`);
+                const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: 'text/csv' };
+                const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${state.googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) });
+                if (!createRes.ok) throw new Error(`Create ${filename} (${createRes.status})`);
+                const createData = await createRes.json(); const newFileId = createData.id;
+                const writeSuccess = await updateFileContent(newFileId, defaultContent);
+                if (writeSuccess) { console.log(`Created ${filename}: ${newFileId}`); return { id: newFileId }; }
+                else { console.error(`Failed to write initial content for ${filename}`); return null; }
+            } catch (error) { console.error(`Drive Error (findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0,10)}): ${error.message}`, "error", 6000); elements.driveStatus.textContent = 'Erreur Accès'; elements.driveStatus.className = 'error'; return null; }
         }
-        function resetWorkoutState() {
-            clearInterval(state.timerInterval); clearInterval(state.prepareInterval);
-            state.timerInterval = null; state.prepareInterval = null;
-            state.currentWorkoutType = null;
-            state.currentWorkout = [];
-            state.currentItemIndex = 0;
-            state.timeLeft = 0;
-            state.workoutStartTime = null;
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-             // Don't change state here, let the caller do it
+        async function readFileContent(fileId) {
+            if (!state.googleAccessToken || !fileId) return null; console.log(`Drive: Reading ${fileId}`);
+            const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${state.googleAccessToken}` } });
+                if (!response.ok) { if (response.status === 404) { console.warn(`File ${fileId} not found (404).`); return ""; } if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session expirée.", "error", 5000); return null; } throw new Error(`Read ${fileId} (${response.status})`); }
+                return await response.text();
+            } catch (error) { console.error(`Drive Error (readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive: ${error.message}`, "error", 6000); elements.driveStatus.textContent = 'Erreur Lecture'; elements.driveStatus.className = 'error'; return null; }
         }
-        function completeWorkout(manualFinish = false) {
-            const duration = state.workoutStartTime ? Math.round((Date.now() - state.workoutStartTime) / 1000) : 0;
-            const completedItems = manualFinish ? state.currentItemIndex : state.currentWorkout.length; // Adjust if finished early
-            const workoutRecord = {
-                 type: state.currentWorkoutType,
-                 date: new Date().toISOString(),
-                 duration: duration,
-                 completedItems: completedItems,
-                 totalItems: state.currentWorkout.length
+        async function updateFileContent(fileId, content) {
+            if (!state.googleAccessToken || !fileId) return false; if (state.isSavingDriveData) { showMessage("Sauvegarde en cours...", "info", 1500); return false; }
+            console.log(`Drive: Writing ${fileId}...`); state.isSavingDriveData = true;
+            const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; let success = false;
+            try {
+                const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${state.googleAccessToken}`, 'Content-Type': 'text/csv' }, body: content });
+                if (!response.ok) { if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", "error", 6000); } else { throw new Error(`Write ${fileId} (${response.status})`); } }
+                else success = true;
+            } catch (error) { console.error(`Drive Error (updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, "error", 6000); elements.driveStatus.textContent = 'Erreur Écriture'; elements.driveStatus.className = 'error'; if(elements.historyDriveStatus) elements.historyDriveStatus.textContent = 'Erreur Sync'; success = false; }
+            finally { state.isSavingDriveData = false; console.log(`Drive: Write ${fileId} finished. Success: ${success}`); }
+            return success;
+        }
+
+        // --- Program & History Loading/Saving/Parsing ---
+        // (Implementations are crucial and complex - copy robust versions from previous working example)
+        // Placeholder implementations for structure:
+        async function loadProgramsFromDrive() {
+            console.log("Loading programs..."); let allOk = true;
+            for (const type of PROGRAM_TYPES) {
+                const filename = PROGRAM_FILENAMES[type];
+                const defaultProg = DEFAULT_WORKOUTS[type] || [];
+                const fileInfo = await findOrCreateFile(filename, convertProgramToCsv(defaultProg));
+                if (!fileInfo) { allOk = false; state.loadedWorkouts[type] = [...defaultProg]; continue; }
+                state.programFileIds[type] = fileInfo.id;
+                const csv = await readFileContent(fileInfo.id);
+                if (csv === null) { allOk = false; state.loadedWorkouts[type] = [...defaultProg]; continue; }
+                try {
+                    const parsed = parseProgramCsvData(csv);
+                    state.loadedWorkouts[type] = (parsed && parsed.length > 0) ? parsed : [...defaultProg];
+                    if (parsed.length === 0 && csv.trim() !== "" && !csv.trim().toLowerCase().startsWith("type,")) {
+                         showMessage(`Format ${filename} invalide, défaut chargé.`, "info");
+                    }
+                } catch (e) { console.error(`Error parsing ${type}`, e); allOk = false; state.loadedWorkouts[type] = [...defaultProg]; }
+            }
+            state.programsLoaded = true; // Mark as loaded even with defaults
+            console.log(`Programs loaded. Drive OK: ${allOk}`);
+            // updateAuthUI will be called by the calling function (loadDriveData)
+            return allOk;
+        }
+        async function loadHistoryFromDrive() {
+            console.log("Loading history...");
+            if (elements.historyDriveStatus) elements.historyDriveStatus.textContent = 'Chargement...';
+            const fileInfo = await findOrCreateFile(HISTORY_FILENAME, HISTORY_HEADER);
+            if (!fileInfo) { state.workoutHistory=[]; if(elements.historyDriveStatus) elements.historyDriveStatus.textContent='Erreur Accès'; displayHistory(); return false; }
+            state.historyFileId = fileInfo.id;
+            const csv = await readFileContent(fileInfo.id);
+            if (csv === null) { state.workoutHistory=[]; if(elements.historyDriveStatus) elements.historyDriveStatus.textContent='Erreur Lecture'; displayHistory(); return false; }
+            state.workoutHistory = parseAndLoadHistoryCsvData(csv);
+            console.log(`History loaded: ${state.workoutHistory.length} entries`);
+            if (elements.historyDriveStatus) elements.historyDriveStatus.textContent = state.workoutHistory.length > 0 ? 'Synchro OK' : 'Hist. Vide';
+            displayHistory(); // Update history display immediately
+            return true;
+        }
+        async function saveHistoryToDrive() {
+            if (!state.isAuthenticated || !state.historyFileId || state.workoutHistory.length === 0) return;
+            console.log("Saving history to Drive...");
+            // Sort history by date descending before saving
+            const sortedHistory = [...state.workoutHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let csvContent = HISTORY_HEADER;
+            sortedHistory.forEach(entry => {
+                 // Escape JSON performance data if needed
+                 const performanceJsonString = JSON.stringify(entry.performance || {}).replace(/"/g, '""'); // Double quotes for CSV
+                 csvContent += `${entry.id},${entry.date},${entry.type},${entry.duration},${entry.completedItems},"${performanceJsonString}"\n`;
+            });
+            const success = await updateFileContent(state.historyFileId, csvContent);
+            if (elements.historyDriveStatus) elements.historyDriveStatus.textContent = success ? 'Synchro OK' : 'Erreur Sync';
+            if (!success) showMessage("Erreur sauvegarde historique Drive.", "error");
+        }
+        // Updated parsing to handle JSON performance data
+        function parseAndLoadHistoryCsvData(csv) {
+            const history = []; if (!csv) return history;
+            const lines = csv.trim().split(/\r?\n/);
+            const headerIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith("sessionid,dateiso"));
+            const startIndex = headerIndex !== -1 ? headerIndex + 1 : (lines[0] && !lines[0].includes(',')) ? 0 : 1; // Basic header check
+
+            const parseCsvLineWithJson = (line) => {
+                // Very basic CSV parsing that handles quoted JSON for the last field
+                const parts = []; let currentPart = ''; let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"' && i === line.lastIndexOf('"')) { // End quote for JSON
+                        inQuotes = false; continue; // Skip last quote
+                    }
+                    if (char === '"' && !inQuotes && line.substring(i + 1).includes(',')) { // Start quote for JSON
+                        inQuotes = true; continue; // Skip first quote
+                    }
+                    if (char === ',' && !inQuotes) {
+                        parts.push(currentPart); currentPart = '';
+                    } else {
+                        currentPart += char;
+                    }
+                }
+                parts.push(currentPart); // Add the last part (JSON)
+                return parts.map(p => p.trim());
             };
-            state.workoutHistory.unshift(workoutRecord); // Add to local history
-            if (state.isAuthenticated) saveHistoryToDrive(); // Save to Drive if connected
 
-            setState('finished');
-            vibrate([150, 50, 150]); endSound();
-            showSummaryModal(); // Show summary
-        }
-        function handleTimerClick() {
-            if (state.currentState === 'break') {
-                handleItemCompletion(false); // Skip break on click
-            } else if (state.currentState === 'exercise') {
-                 handleItemCompletion(false); // Mark exercise done on click
-            } else if (state.currentState === 'paused') {
-                 toggleStartPause(); // Resume on click when paused
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim(); if (!line) continue;
+                 try {
+                    const values = parseCsvLineWithJson(line);
+                    if (values.length < 6) { console.warn(`Skipping history line (short): ${line}`); continue; }
+
+                    const id = values[0];
+                    const date = new Date(values[1]);
+                    const type = values[2];
+                    const duration = parseInt(values[3], 10);
+                    const completed = parseInt(values[4], 10);
+                    let performance = {};
+                     try {
+                         // Attempt to parse JSON, handle double quotes escaped within JSON
+                         const jsonString = values[5].replace(/""/g, '"');
+                         performance = JSON.parse(jsonString);
+                     } catch (jsonError) {
+                         console.warn(`Could not parse performance JSON for line ${i}: ${jsonError}. Line: ${line}`);
+                         performance = {}; // Default to empty object on parse error
+                     }
+
+
+                    if (isNaN(date.getTime()) || !PROGRAM_TYPES.includes(type) || isNaN(duration) || isNaN(completed)) {
+                        console.warn(`Skipping history line (invalid data): ${line}`); continue;
+                    }
+                    history.push({ id, date: date.toISOString(), type, duration, completedItems: completed, performance });
+                 } catch (parseError) {
+                     console.error(`Error processing history line ${i}: ${parseError}. Line: ${line}`);
+                 }
             }
+            return history.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
-
-        // --- Section Navigation ---
-        function showHistorySection() { elements.workoutSection.classList.add('section-hidden'); elements.historySection.classList.remove('section-hidden'); displayHistory('year'); }
-        function showWorkoutSection() { elements.historySection.classList.add('section-hidden'); elements.workoutSection.classList.remove('section-hidden'); }
-
-        // --- History & Stats ---
-        // Simplified history/stats functions - assuming core logic is okay, focus on integration
-        function displayHistory(period = 'year') {
-             if (!state.isAuthenticated) { elements.historyList.innerHTML = '<p>Connectez-vous.</p>'; elements.statsDisplay.innerHTML = '<p>Connectez-vous.</p>'; return; }
-             elements.historyFilters.forEach(btn => btn.classList.toggle('active-filter', btn.dataset.period === period));
-             const filtered = filterHistoryByPeriod(period);
-             displayStatsAndMotivation(filtered);
-             displayHistoryList(filtered);
-             renderHistoryChart(filtered, period);
+        function convertProgramToCsv(programArray) { /* ... same logic ... */
+            const h="Type,Name,Details,Reps,Duration\n"; return h + programArray.map(i => { const esc = (f) => { if(f==null) return ''; const s=String(f); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s; }; const type = i.type || 'exercise'; const name = esc(i.name || ''); const details = esc(i.details || ''); const reps = esc(i.reps || ''); const duration = i.duration || 0; return `${type},${name},${details},${reps},${duration}\n`; }).join('');
         }
-        function filterHistoryByPeriod(period) { /* ... same logic as before ... */
-            const now=new Date(); const today=new Date(now.getFullYear(), now.getMonth(), now.getDate()); return state.workoutHistory.filter(e => { const d=new Date(e.date); if(isNaN(d.getTime())) return false; switch(period){ case 'week': const day=today.getDay(); const diff=today.getDate()-day+(day===0?-6:1); const startW=new Date(now.getFullYear(),now.getMonth(),diff); startW.setHours(0,0,0,0); return d>=startW; case 'month': return d>=new Date(now.getFullYear(), now.getMonth(), 1); case 'year': return d>=new Date(now.getFullYear(), 0, 1); default: return true; }});
-        }
-        function displayStatsAndMotivation(history) { /* ... adapted for new structure ... */
-            if (!elements.statsDisplay) return;
-            if (history.length === 0) { elements.statsDisplay.innerHTML = `<p class="text-gray-400 col-span-full">Aucune donnée.</p><p class="motivation col-span-full">Commencez !</p>`; return; }
-            const stats = calculateStats(history); const motivation = generateMotivationalMessage(stats);
-            elements.statsDisplay.innerHTML = `
-                <div class="stat-item"><p class="stat-label">Séances</p><p class="stat-value">${stats.totalSessions}</p></div>
-                <div class="stat-item"><p class="stat-label">Durée Tot.</p><p class="stat-value">${formatTime(stats.totalDuration)}</p></div>
-                <div class="stat-item"><p class="stat-label">Durée Moy.</p><p class="stat-value">${formatTime(stats.avgDuration)}</p></div>
-                <div class="stat-item"><p class="stat-label">Type Fav.</p><p class="stat-value">${stats.mostFrequentType}</p></div>
-                <p class="motivation col-span-full">${motivation}</p>`;
-        }
-         function calculateStats(history) { /* ... same logic ... */
-             if (history.length === 0) return { totalSessions: 0, totalDuration: 0, avgDuration: 0, mostFrequentType: 'N/A' };
-             const totalSessions = history.length; const totalDuration = history.reduce((sum, w) => sum + (w.duration || 0), 0); const avgDuration = Math.round(totalDuration / totalSessions); const typeCounts = {}; history.forEach(w => { typeCounts[w.type] = (typeCounts[w.type] || 0) + 1; }); let mostFrequentType = 'N/A'; let maxCount = 0; for (const type in typeCounts) { if (typeCounts[type] > maxCount) { maxCount = typeCounts[type]; mostFrequentType = type; } }
-             return { totalSessions, totalDuration, avgDuration, mostFrequentType: mostFrequentType !== 'N/A' ? mostFrequentType.charAt(0).toUpperCase() + mostFrequentType.slice(1) : 'N/A' };
-         }
-         function generateMotivationalMessage(stats) { /* ... same logic ... */
-             if (stats.totalSessions === 0) return "Commencez votre premier entraînement aujourd'hui!"; const messages=["Continuez comme ça!","Excellent travail!","Impressionnant!","Ne lâchez rien!","Discipline inspirante."]; return messages[Math.floor(Math.random()*messages.length)];
-         }
-         function displayHistoryList(history) { /* ... adapted for new structure ... */
-             if (!elements.historyList) return;
-             if (history.length === 0) { elements.historyList.innerHTML = '<p class="text-gray-400">Aucun historique.</p>'; return; }
-             elements.historyList.innerHTML = history.map(w => `
-                 <div class="history-item">
-                     <div class="info"><h4>${w.type.charAt(0).toUpperCase()+w.type.slice(1)}</h4><p>${new Date(w.date).toLocaleDateString('fr-FR')}</p></div>
-                     <div class="details"><p>${formatTime(w.duration)}</p><p>${w.completedItems}/${w.totalItems} étapes</p></div>
-                 </div>`).join('');
-         }
-        function renderHistoryChart(history, period) { /* ... same logic, ensure ctx exists ... */
-             if (!elements.historyChart) return; const ctx = elements.historyChart.getContext('2d'); if (!ctx) return; if (state.chart) state.chart.destroy(); if (history.length === 0) { ctx.clearRect(0,0,elements.historyChart.width,elements.historyChart.height); ctx.font = '16px Inter'; ctx.fillStyle=state.theme==='dark'?'#aaa':'#555'; ctx.textAlign='center'; ctx.fillText('Aucune donnée', elements.historyChart.width/2, 50); return; } const grouped=groupHistoryData(history, period); const labels=Object.keys(grouped); const data=Object.values(grouped).map(g=>({duration: g.reduce((s,w)=>s+w.duration,0), count: g.length})); const textColor=state.theme==='dark'?'#e0e0e0':'#333'; const gridColor=state.theme==='dark'?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)'; state.chart=new Chart(ctx, {type:'bar', data:{labels, datasets:[{label:'Durée (min)', data:data.map(i=>Math.round(i.duration/60)), backgroundColor: 'rgba(180, 0, 255, 0.7)', borderColor: 'rgba(180, 0, 255, 1)', yAxisID:'y'}, {label:'Séances', data:data.map(i=>i.count), backgroundColor: 'rgba(0, 240, 255, 0.7)', borderColor: 'rgba(0, 240, 255, 1)', type:'line', yAxisID:'y1'}]}, options:{responsive:true, scales:{x:{ticks:{color:textColor}, grid:{color:gridColor}}, y:{type:'linear', position:'left', title:{display:true, text:'Minutes', color:textColor}, ticks:{color:textColor}, grid:{color:gridColor}}, y1:{type:'linear', position:'right', title:{display:true, text:'Séances', color:textColor}, ticks:{color:textColor}, grid:{drawOnChartArea:false}}}}}}); }
-        function groupHistoryData(history, period) { /* ... same logic ... */
-             const grouped = {}; history.forEach(w => { const date = new Date(w.date); let key; switch(period){ case 'week': key = date.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric'}); break; case 'month': const d = date.getDate(); key = d <= 7 ? 'Sem 1' : d <= 14 ? 'Sem 2' : d <= 21 ? 'Sem 3' : d <= 28 ? 'Sem 4' : 'Sem 5+'; break; case 'year': key = date.toLocaleDateString('fr-FR', {month:'short'}); break; default: key = date.toLocaleDateString('fr-FR'); } if (!grouped[key]) grouped[key] = []; grouped[key].push(w); }); return grouped;
+        function parseProgramCsvData(csv) { /* ... same logic ... */
+            const prog=[]; if(!csv || typeof csv !== 'string') return prog; const lines=csv.trim().split(/\r?\n/); const start=(lines[0]||'').toLowerCase().startsWith("type,name") ? 1 : 0; const parseLine=(l)=>{ const v=[]; let cur=''; let q=false; for(let i=0; i<l.length; i++){ const c=l[i]; if(c==='"' && q && l[i+1]==='"'){cur+='"';i++;} else if(c==='"'){q=!q;} else if(c===','&&!q){v.push(cur);cur='';} else cur+=c; } v.push(cur); return v.map(s=>s.trim()); }; for(let i=start; i<lines.length; i++){ const line=lines[i].trim(); if(!line) continue; const vals=parseLine(line); if(vals.length<5) continue; const type=vals[0]?.toLowerCase(); const name=vals[1]; const details=vals[2]; const repsStr=vals[3]; const durStr=vals[4]; if(type==='exercise'){ if(name) prog.push({type:'exercise',name,details,reps:repsStr||null,duration:0}); } else if(type==='break'){ const d=parseInt(durStr,10); if(!isNaN(d)&&d>0) prog.push({type:'break',duration:d,name:name||'Repos'}); } } return prog;
         }
 
         // --- Summary Modal ---
-        // Global rep change function needed because of inline `onclick`
-         window.changeRep = function(button, change) {
-             const repContainer = button.closest('.rep-control');
-             if (!repContainer) return;
-             const repValueSpan = repContainer.querySelector('.rep-value');
-             if (!repValueSpan) return;
-             let currentText = repValueSpan.textContent.trim();
-             let newValue;
-             if (currentText.includes('-')) { // Handle range "8-12"
-                 let [min, max] = currentText.split('-').map(Number);
-                 min = Math.max(1, (min || 0) + change); // Ensure min is at least 1
-                 max = Math.max(min, (max || 0) + change); // Ensure max is >= min
-                 newValue = `${min}-${max}`;
-             } else if (currentText.toLowerCase() === 'max') {
-                 newValue = 'Max'; // Keep as Max, but still mark changed
-             } else { // Handle single number
-                 let num = parseInt(currentText) || 0;
-                 num = Math.max(0, num + change); // Allow 0 reps? Or Math.max(1, ...)
-                 newValue = num.toString();
-             }
-             repValueSpan.textContent = newValue;
-             markSummaryChanged();
-         }
-         function showSummaryModal() { /* ... same logic ... */
-             state.summaryChanged = false; if (!elements.summaryItemsList) return;
-             const exercises = state.currentWorkout.filter(item => item.type === 'exercise');
-             elements.summaryItemsList.innerHTML = exercises.map((item, index) => `
-                 <li class="summary-item">
-                     <div class="item-header"><h4>${item.name}</h4><span>${index + 1}/${exercises.length}</span></div>
+        // Global scope needed for inline onclick
+        window.changeRep = function(button, change) {
+            const repContainer = button.closest('.rep-control'); if (!repContainer) return;
+            const repValueSpan = repContainer.querySelector('.rep-value'); if (!repValueSpan) return;
+            let currentText = repValueSpan.textContent.trim(); let newValue;
+            if (currentText.includes('-')) { let [min, max]=currentText.split('-').map(Number); min=Math.max(1,(min||0)+change); max=Math.max(min,(max||0)+change); newValue=`${min}-${max}`; }
+            else if (currentText.toLowerCase()==='max') newValue='Max';
+            else { let num=parseInt(currentText)||0; num=Math.max(0,num+change); newValue=num.toString(); }
+            repValueSpan.textContent = newValue; markSummaryChanged();
+        }
+        function populateAndShowSummary() {
+            if (!elements.summaryItemsList || !state.originalCompletedWorkoutPlan) return;
+            const type = state.currentWorkoutType; elements.summaryTitle.textContent = `Résumé - ${type||'?'}`;
+            state.summaryChanged=false; state.sessionPerformance = []; // Reset performance capture
+
+             // Filter only exercises from the *original plan* for the summary
+            const exercisesToShow = state.originalCompletedWorkoutPlan.filter(item => item.type === 'exercise');
+
+            elements.summaryItemsList.innerHTML = exercisesToShow.map((item, index) => {
+                 // Find original index if breaks were present
+                 const originalIndex = state.originalCompletedWorkoutPlan.findIndex(origItem => origItem === item);
+                 const reps = item.reps ?? 'N/A'; const details = item.details || '';
+                 // Initialize performance entry
+                 state.sessionPerformance[originalIndex] = { name: item.name, repsDone: reps, detailsUsed: details };
+
+                 return `<li class="summary-item" data-original-index="${originalIndex}"> <!-- Store original index -->
+                     <div class="item-header"><h4>${item.name}</h4><span>${index + 1}/${exercisesToShow.length}</span></div>
                      <div class="item-controls">
                          <div class="rep-control">
                              <span>Reps:</span>
-                             <button class="rep-btn" onclick="changeRep(this, -1)">-</button>
-                             <span class="rep-value">${item.reps || 'N/A'}</span>
-                             <button class="rep-btn" onclick="changeRep(this, 1)">+</button>
+                             <button class="rep-btn" onclick="updateSessionPerformance(${originalIndex}, this, -1)">-</button>
+                             <span class="rep-value">${reps}</span>
+                             <button class="rep-btn" onclick="updateSessionPerformance(${originalIndex}, this, 1)">+</button>
                          </div>
-                         <span class="text-sm text-gray-400">${item.details || ''}</span>
+                         <textarea class="summary-details-input" rows="1" placeholder="Détails/Notes séance..." oninput="updateSessionPerformance(${originalIndex}, this)">${details}</textarea>
                      </div>
-                 </li>`).join('');
-             updateSummaryButtonsState(); elements.postWorkoutSummary.classList.add('active');
+                 </li>`;
+             }).join('');
+            updateSummaryButtonsState(); elements.postWorkoutSummary.classList.add('visible');
+        }
+         // New function to update sessionPerformance directly
+         window.updateSessionPerformance = function(originalIndex, element, repChange = null) {
+            if (!state.sessionPerformance[originalIndex]) return; // Safety check
+            markSummaryChanged(); // Mark changed on any interaction
+
+            if (repChange !== null) { // Rep button clicked
+                const repValueSpan = element.closest('.rep-control').querySelector('.rep-value');
+                if (!repValueSpan) return;
+                let currentText = repValueSpan.textContent.trim(); let newValue;
+                if (currentText.includes('-')) { let [min,max]=currentText.split('-').map(Number); min=Math.max(1,(min||0)+repChange); max=Math.max(min,(max||0)+repChange); newValue=`${min}-${max}`; }
+                else if (currentText.toLowerCase()==='max') newValue='Max';
+                else { let num=parseInt(currentText)||0; num=Math.max(0,num+repChange); newValue=num.toString(); }
+                repValueSpan.textContent = newValue;
+                state.sessionPerformance[originalIndex].repsDone = newValue;
+            } else { // Textarea changed
+                 state.sessionPerformance[originalIndex].detailsUsed = element.value;
+            }
+             console.log("Updated session performance:", state.sessionPerformance[originalIndex]);
          }
-         function closeSummary(reset = false) { /* ... same logic ... */
-             if (!elements.postWorkoutSummary) return;
-             elements.postWorkoutSummary.classList.remove('active');
-             state.summaryChanged = false;
-             if (wasFinishedState && reset) resetWorkoutState(); // Reset FULL state only if requested after finish
-             wasFinishedState=false; // Clear flag
-             setState(state.currentState); // Re-apply current state to fix buttons etc.
-         }
-         function markSummaryChanged() { /* ... same logic ... */
-            if (!state.summaryChanged) { state.summaryChanged = true; updateSummaryButtonsState(); }
-         }
-         function updateSummaryButtonsState() { /* ... same logic ... */
-             if (!elements.confirmSummaryBtn || !elements.discardSummaryBtn || !elements.closeSummaryBtn) return;
-             const canSave = state.isAuthenticated && !state.isSavingDriveData;
-             if (state.summaryChanged) {
-                 elements.confirmSummaryBtn.style.display='inline-flex'; elements.confirmSummaryBtn.disabled=!canSave;
-                 elements.discardSummaryBtn.style.display='inline-flex'; elements.discardSummaryBtn.disabled=false;
-                 elements.closeSummaryBtn.style.display='none';
+        function closeSummary(reset = false) { /* ... same logic ... */ if (!elements.postWorkoutSummary) return; elements.postWorkoutSummary.classList.remove('visible'); state.summaryChanged = false; if (state.wasFinishedState && reset) resetWorkoutState(); state.wasFinishedState = false; setState(state.currentState); }
+        function markSummaryChanged() { /* ... same logic ... */ if (!state.summaryChanged) { state.summaryChanged = true; updateSummaryButtonsState(); } }
+        function updateSummaryButtonsState() { /* ... same logic ... */ if (!elements.confirmSummaryBtn || !elements.discardSummaryBtn || !elements.closeSummaryBtn) return; const canSave = state.isAuthenticated && !state.isSavingDriveData; if(state.summaryChanged){ elements.confirmSummaryBtn.style.display='inline-flex'; elements.confirmSummaryBtn.disabled=!canSave; elements.discardSummaryBtn.style.display='inline-flex'; elements.discardSummaryBtn.disabled=false; elements.closeSummaryBtn.style.display='none'; } else { elements.confirmSummaryBtn.style.display='none'; elements.discardSummaryBtn.style.display='none'; elements.closeSummaryBtn.style.display='inline-flex'; elements.closeSummaryBtn.disabled=false; } }
+        // CONFIRM summary NOW saves the recorded performance to history, NOT the program file
+        async function handleConfirmSummary() {
+             initAudioContext();
+             console.log("Confirming summary. Changes made:", state.summaryChanged);
+             // Find the LATEST history entry for this workout session (should be the first one)
+             const latestHistoryEntry = state.workoutHistory[0];
+             if (!latestHistoryEntry || latestHistoryEntry.id !== state.workoutStartTime.toString()) {
+                 console.error("Cannot find the corresponding history entry to update performance.");
+                 showMessage("Erreur: Historique non trouvé pour cette séance.", "error");
+                 closeSummary(true); // Close and reset anyway
+                 return;
+             }
+
+             // Filter sessionPerformance to remove entries for non-exercises or potential nulls
+             const validPerformance = state.sessionPerformance.filter(p => p && p.name);
+
+             // Update the history entry with the recorded performance
+             latestHistoryEntry.performance = validPerformance; // Add the performance array
+             console.log("Performance recorded in history entry:", latestHistoryEntry);
+
+             // Re-save the history to Drive with the updated performance data
+             if (state.isAuthenticated) {
+                 showMessage("Sauvegarde performance...", "info");
+                 await saveHistoryToDrive(); // Save history with performance included
              } else {
-                 elements.confirmSummaryBtn.style.display='none';
-                 elements.discardSummaryBtn.style.display='none';
-                 elements.closeSummaryBtn.style.display='inline-flex'; elements.closeSummaryBtn.disabled=false;
+                 showMessage("Performance enregistrée localement (connectez-vous pour Drive).", "info");
              }
+
+             closeSummary(true); // Close and reset state
          }
-         async function handleConfirmSummary() { /* ... adapted to only save if changed ... */
-             initAudioContext(); if (!state.summaryChanged) { closeSummary(true); return; }
-             if (!state.isAuthenticated || !state.currentWorkoutType || !state.programFileIds[state.currentWorkoutType]) { showMessage("Erreur Drive.", "error"); updateSummaryButtonsState(); return; }
-             if (state.isSavingDriveData) { showMessage("Sauvegarde...", "info"); return; }
-             console.log("Saving summary changes..."); elements.confirmSummaryBtn.disabled=true; elements.discardSummaryBtn.disabled=true; elements.confirmSummaryBtn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
-             const type=state.currentWorkoutType; const updated = JSON.parse(JSON.stringify(state.loadedWorkouts[type] || [])); let exerciseIdx = 0; let changes = 0;
-             // Update reps based on modal values
-             elements.summaryItemsList.querySelectorAll('.summary-item').forEach(li => {
-                 const repValueSpan = li.querySelector('.rep-value');
-                 if (repValueSpan && exerciseIdx < updated.length) {
-                      // Find the corresponding exercise in the *original* workout plan copy
-                      let originalExerciseCounter = -1;
-                      let targetOriginalIndex = -1;
-                      for(let i = 0; i < updated.length; i++) {
-                           if(updated[i].type === 'exercise') {
-                                originalExerciseCounter++;
-                                if(originalExerciseCounter === exerciseIdx) {
-                                     targetOriginalIndex = i;
-                                     break;
-                                }
-                           }
-                      }
+        function handleDiscardSummary() { /* ... same logic ... */ initAudioContext(); showMessage("Modifications du résumé annulées.", "info"); closeSummary(true); }
 
-                      if(targetOriginalIndex !== -1) {
-                         const newReps = repValueSpan.textContent.trim();
-                         if (updated[targetOriginalIndex].reps !== newReps) {
-                             updated[targetOriginalIndex].reps = newReps;
-                             changes++;
-                         }
-                      }
-                     exerciseIdx++;
-                 }
-             });
+        // --- Persistance Locale ---
+        function saveInProgressState() { /* ... same logic ... */ if(!state.currentWorkoutType || state.currentState === 'idle' || state.currentState === 'finished') { clearInProgressState(); return; } const data = { workoutType: state.currentWorkoutType, itemIndex: state.currentItemIndex, timeLeft: state.timeLeft, currentState: state.currentState, startTime: state.workoutStartTime, timestamp: Date.now()}; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(data)); } catch(e){} }
+        function loadInProgressState() { /* ... same logic ... */ const json = localStorage.getItem(IN_PROGRESS_KEY); if(!json) return; try { const data=JSON.parse(json); const elapsed = Date.now() - (data.timestamp || 0); if (elapsed > 24*60*60*1000) { clearInProgressState(); return; } if(confirm(`Reprendre "${data.workoutType}" (${data.currentState}) ?`)) { state.currentWorkoutType = data.workoutType; state.currentWorkout = state.loadedWorkouts[data.workoutType] ? [...state.loadedWorkouts[data.workoutType]] : []; state.currentItemIndex = data.itemIndex; state.timeLeft = data.timeLeft; state.workoutStartTime = data.startTime; setState(data.currentState); if (!['paused', 'idle', 'preparing'].includes(data.currentState)) startTimer(); showMessage("Reprise.", "info"); } else clearInProgressState(); } catch(e){ clearInProgressState(); } }
+        function clearInProgressState() { try { localStorage.removeItem(IN_PROGRESS_KEY); } catch(e){} }
 
-             if (changes === 0) { closeSummary(true); return; } // No actual changes detected
-             state.loadedWorkouts[type] = updated; // Update local version
-             try { const csv=convertProgramToCsv(updated); const ok=await updateFileContent(state.programFileIds[type], csv); if(ok){ showMessage(`Programme "${type}" màj!`, "success"); closeSummary(true); } else { showMessage(`Échec sauvegarde Drive ${type}.`, "error"); updateSummaryButtonsState(); } } catch(e){ showMessage(`Erreur sauvegarde ${type}: ${e.message}`, "error"); updateSummaryButtonsState(); }
-         }
-         function handleDiscardSummary() { initAudioContext(); showMessage("Modifications rejetées.", "info"); closeSummary(true); }
-
-         // --- Google Drive (Simplified Stubs - Implement fully as before) ---
-         async function gisLoadedCallback() { // Needs to be global
-             console.log("GIS Loaded");
-             if (!state.GOOGLE_CLIENT_ID || state.GOOGLE_CLIENT_ID === "YOUR_CLIENT_ID.apps.googleusercontent.com") {
-                 console.error("CLIENT ID MISSING/INCORRECT"); showMessage("ID Client Google manquant!", "error"); return;
-             }
-             try {
-                 state.tokenClient = google.accounts.oauth2.initTokenClient({
-                     client_id: state.GOOGLE_CLIENT_ID, scope: 'https://www.googleapis.com/auth/drive.file',
-                     callback: tokenCallback, error_callback: handleTokenError, prompt: ''
-                 });
-                 console.log("Token Client Init OK");
-             } catch (e) { console.error("Token Client Init Error:", e); showMessage("Erreur Init Google", "error"); }
-         }
-         function handleAuthClick() { if(state.tokenClient) state.tokenClient.requestAccessToken({prompt: 'consent'}); else showMessage("Google non prêt", "error"); }
-         function handleSignoutClick() { if(state.googleAccessToken) google.accounts.oauth2.revoke(state.googleAccessToken, ()=>{ state.isAuthenticated=false; state.googleAccessToken=null; resetDriveData(); updateAuthUI(); showMessage("Déconnecté", "info"); }); else resetDriveData(); updateAuthUI();}
-         function tokenCallback(resp) { if(resp.error){ handleTokenError(resp); return; } state.googleAccessToken=resp.access_token; state.isAuthenticated=true; updateAuthUI(); showMessage("Connecté", "success"); loadDriveData(); }
-         function handleTokenError(err) { console.error("Auth Error:", err); showMessage(`Erreur Auth: ${err.error || 'Inconnue'}`, "error"); state.isAuthenticated=false; state.googleAccessToken=null; resetDriveData(); updateAuthUI(); }
-         function resetDriveData() { state.programFileIds={}; state.historyFileId=null; state.workoutHistory=[]; state.loadedWorkouts=JSON.parse(JSON.stringify(DEFAULT_WORKOUTS)); programsLoaded=false; displayHistory(); } // Reset local data on signout/error
-         async function loadDriveData() { await loadHistoryFromDrive(); await loadProgramsFromDrive(); }
-         // findOrCreateFile, readFileContent, updateFileContent, loadProgramsFromDrive, loadHistoryFromDrive, saveHistoryToDrive - Implement as before (ensure async/await is correct)
-         // Simplified stubs for brevity - copy the full implementations from the previous correct version.
-          async function findOrCreateFile(filename, initialContent) { console.warn(`Drive API stub: findOrCreateFile(${filename})`); return { id: `fake-${filename}`}; }
-          async function readFileContent(fileId) { console.warn(`Drive API stub: readFileContent(${fileId})`); return initialContent || ""; } // Return initial content for stub
-          async function updateFileContent(fileId, content) { console.warn(`Drive API stub: updateFileContent(${fileId})`); return true; } // Assume success for stub
-          async function loadProgramsFromDrive() { console.log("Loading programs (stub)..."); state.loadedWorkouts = JSON.parse(JSON.stringify(DEFAULT_WORKOUTS)); state.programFileIds = {push:"fake-push", pull:"fake-pull", legs:"fake-legs"}; programsLoaded = true; updateAuthUI(); console.log("Programs loaded (stub)"); return true;}
-          async function loadHistoryFromDrive() { console.log("Loading history (stub)..."); state.workoutHistory = []; state.historyFileId = "fake-history"; displayHistory(); console.log("History loaded (stub)"); return true;}
-          async function saveHistoryToDrive() { console.log("Saving history (stub)..."); const ok = await updateFileContent(state.historyFileId, "stub content"); if(elements.historyDriveStatus) elements.historyDriveStatus.textContent = ok ? 'Synchro OK' : 'Erreur Sync'; }
-
-
-         // --- Persistance Locale ---
-         function saveInProgressState() { if(!state.currentWorkoutType || state.currentState === 'idle' || state.currentState === 'finished') { clearInProgressState(); return; } const data = { workoutType: state.currentWorkoutType, itemIndex: state.currentItemIndex, timeLeft: state.timeLeft, currentState: state.currentState, startTime: state.workoutStartTime, timestamp: Date.now()}; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(data)); } catch(e){} }
-         function loadInProgressState() { const json = localStorage.getItem(IN_PROGRESS_KEY); if(!json) return; try { const data=JSON.parse(json); const elapsed = Date.now() - (data.timestamp || 0); if (elapsed > 24*60*60*1000) { clearInProgressState(); return; } if(confirm(`Reprendre "${data.workoutType}" (${data.currentState}) ?`)) { state.currentWorkoutType = data.workoutType; state.currentWorkout = state.loadedWorkouts[data.workoutType] ? [...state.loadedWorkouts[data.workoutType]] : []; state.currentItemIndex = data.itemIndex; state.timeLeft = data.timeLeft; state.workoutStartTime = data.startTime; // state.totalDuration = calculateTotalEstimatedTime(); // If needed setState(data.currentState); if (!['paused', 'idle'].includes(data.currentState)) startTimer(); // Resume timer if needed showMessage("Reprise.", "info"); } else clearInProgressState(); } catch(e){ clearInProgressState(); } }
-         function clearInProgressState() { try { localStorage.removeItem(IN_PROGRESS_KEY); } catch(e){} }
-
-         // --- Utilities ---
-         function showMessage(text, type='info') { if(!elements.messageArea) return; elements.messageArea.textContent = text; elements.messageArea.className = `message ${type} show`; setTimeout(() => elements.messageArea.classList.remove('show'), 3000); }
-         function vibrate(pattern=100){ if('vibrate' in navigator) try{navigator.vibrate(pattern);}catch(e){} }
-         function initAudioContext() { if(!state.audioContext && (window.AudioContext || window.webkitAudioContext)) try { state.audioContext = new (window.AudioContext || window.webkitAudioContext)(); const unlock=()=>{if(state.audioContext.state==='suspended') state.audioContext.resume().then(()=>{document.removeEventListener('click',unlock); document.removeEventListener('touchend', unlock);}); else {document.removeEventListener('click',unlock); document.removeEventListener('touchend', unlock);}}; document.addEventListener('click', unlock); document.addEventListener('touchend', unlock); } catch(e){ console.warn("Audio Error", e); } }
-         function endSound() { if (!state.audioContext || state.audioContext.state !== 'running') return; try { const o=state.audioContext.createOscillator(); const g=state.audioContext.createGain(); o.connect(g); g.connect(state.audioContext.destination); o.type='sine'; o.frequency.setValueAtTime(880, state.audioContext.currentTime); g.gain.setValueAtTime(0.15, state.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, state.audioContext.currentTime + 0.4); o.start(); o.stop(state.audioContext.currentTime + 0.4); } catch(e){} }
+        // --- Utilities ---
+        function showMessage(text, type='info', duration = 3000) {
+             if(!elements.messageArea) return;
+             elements.messageArea.textContent = text;
+             // Remove previous type classes
+             elements.messageArea.classList.remove('success', 'error', 'info');
+             // Add current type class
+             elements.messageArea.classList.add(type);
+             elements.messageArea.classList.add('visible'); // Make it visible
+             // Clear previous timeout if any
+             if(state.messageTimeoutId) clearTimeout(state.messageTimeoutId);
+             // Set new timeout
+             state.messageTimeoutId = setTimeout(() => {
+                 elements.messageArea.classList.remove('visible');
+                 state.messageTimeoutId = null;
+             }, duration);
+        }
 
 
         // --- DOM Ready ---
         document.addEventListener('DOMContentLoaded', init);
 
     </script>
-    <!-- Google Identity Services Script - Loaded Async -->
-    <!-- 'gisLoadedCallback' MUST be globally defined BEFORE this script loads -->
-    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoadedCallback()"></script>
+     <!-- GIS script MUST be loaded AFTER its callback is defined -->
+     <!-- Ensure gisLoadedCallback is GLOBAL by defining it outside DOMContentLoaded -->
+     <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoadedCallback()"></script>
+
 </body>
 </html>
