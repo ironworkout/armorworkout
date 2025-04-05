@@ -6,15 +6,14 @@
     <title>ArmorWorkout - Timer d'Entraînement Avancé</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Chart.js (déjà chargé dans le JS via CDN, mais peut être gardé ici si préféré) -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script> -->
+    <!-- Chart.js (chargé via CDN dans le JS) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <!-- Lien vers le fichier CSS externe -->
     <link rel="stylesheet" href="style.css">
-    <!-- Google Identity Services (GIS) - chargé à la fin du body via script tag -->
 </head>
 <body class="logged-out dark-theme state-idle"> <!-- Classe d'état initiale -->
 
@@ -57,8 +56,17 @@
             </div>
             <div class="workout-info" id="workout-info">
                 <div id="current-exercise-name-display">ArmorWorkout</div> <!-- Titre initial -->
+                 <!-- Emplacement pour les performances précédentes (rempli par JS) -->
+                 <div id="previous-performance-display" style="font-size: 0.9em; color: var(--secondary-text-color); margin-bottom: 10px; display: none;">
+                    <!-- Sera rempli: "Dernière fois: X reps @ Y kg" -->
+                </div>
                 <div id="current-exercise-container">
                     <div class="idle-message"><i class="fas fa-info-circle"></i> Connectez-vous pour commencer.</div>
+                    <!-- Contenu généré par JS (détails exo ou message idle) -->
+                </div>
+                 <!-- Conteneur pour l'ajustement des reps (rempli par JS pendant la pause) -->
+                 <div id="in-workout-rep-adjust-container" style="display: none; margin-top: 15px;">
+                    <!-- Contenu généré par script.js -->
                 </div>
             </div>
             <div class="controls">
@@ -89,11 +97,10 @@
                 <div class="history-actions" style="display: none;">
                     <i class="fab fa-google-drive"></i>
                     <span id="history-drive-status">Synchro Drive</span>
+                    <button id="export-all-data-btn" class="history-export-btn"><i class="fas fa-file-download"></i> Exporter Tout</button>
                 </div>
             </div>
             <div class="chart-container">
-                <!-- Chart.js est chargé via CDN dans le JS -->
-                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
                 <canvas id="history-chart-canvas"></canvas>
                 <p id="chart-placeholder" style="display: none;"></p>
             </div>
@@ -103,6 +110,7 @@
                      <p>Connectez-vous.</p>
                 </div>
                 <p class="motivational-message"></p>
+                 <!-- Note: Volume Load historique n'est pas affiché ici car données non stockées -->
             </div>
             <ul class="history-list" id="history-list">
                 <li class="no-history">Connectez-vous.</li>
@@ -124,6 +132,8 @@
     <div class="post-workout-summary-content">
         <h2 id="summary-title">Résumé de la Séance</h2>
         <ul id="summary-items-list" class="summary-items-list"></ul>
+         <!-- Ajout pour afficher le Volume Load total de la séance -->
+        <div id="summary-volume-load" style="padding: 10px 25px; text-align: center; font-weight: 500; color: var(--primary-text-color); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-top: 1px solid var(--border-color); display: none;"></div>
         <div class="summary-controls">
             <button id="close-summary-btn"><i class="fas fa-times"></i> Fermer</button>
             <button id="discard-summary-btn"><i class="fas fa-trash-alt"></i> Rejeter Changements</button>
@@ -135,8 +145,7 @@
 <!-- Lien vers le fichier JavaScript externe -->
 <script src="script.js"></script>
 
-<!-- GIS script DOIT RESTER ICI et être chargé APRES votre script.js si gisLoadedCallback est dedans -->
-<!-- Ou il doit être garanti que gisLoadedCallback est global AVANT que ce script ne s'exécute -->
+<!-- GIS script -->
 <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoadedCallback()"></script>
 
 </body>
