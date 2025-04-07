@@ -668,7 +668,7 @@
                 </div>
             </div>
             <div class="chart-container">
-                <canvas id="history-chart-canvas" role="img" aria-label="Graphique du volume d'entraînement"></canvas>
+                <canvas id="history-chart-canvas" role="img" aria-label="Graphique de la durée d'entraînement"></canvas>
                 <p id="history-chart-placeholder" class="chart-placeholder" style="display: none;"></p> <!-- ID HTML Correct -->
             </div>
             <div class="stats-display" id="stats-display">
@@ -886,22 +886,21 @@
         if (tokenResponse && tokenResponse.access_token) {
             console.log("Access Token reçu avec succès.");
             googleAccessToken = tokenResponse.access_token;
-            updateAuthUI(true); // Mettre à jour l'UI pour refléter l'état connecté
+            // Ne pas appeler updateAuthUI ici immédiatement
             showMessage("Connecté ! Chargement des données...", 2500);
             if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); }
 
             let historyLoaded = false;
-            let programsSuccess = false;
+            let programsSuccess = false; // Utiliser une variable pour suivre succès des programmes
             try {
-                // Charger séquentiellement
                 console.log("Début chargement historique...");
                 await loadHistoryFromDrive();
-                historyLoaded = true;
+                historyLoaded = true; // Marquer comme succès si pas d'erreur levée
                 console.log("Historique chargé. Début chargement programmes...");
-                programsSuccess = await loadProgramsFromDrive();
+                programsSuccess = await loadProgramsFromDrive(); // Attend la fin et récupère le succès
 
-                // **Correction : Définir programsLoaded APRÈS le chargement et en fonction du succès**
-                programsLoaded = programsSuccess;
+                // **Correction: Définir programsLoaded APRÈS le chargement et en fonction du succès**
+                programsLoaded = programsSuccess; // Mettre à jour la variable globale
                 console.log(`Fin chargement données dans tokenCallback. programsSuccess: ${programsSuccess}, programsLoaded: ${programsLoaded}`);
 
 
@@ -910,10 +909,9 @@
                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                 } else {
                      // Ce cas ne devrait plus arriver si on force programsLoaded = true même en cas d'erreur partielle
-                     // Mais on le garde par sécurité
                     showMessage("Erreur chargement programmes. Utilisation des défauts.", 5000, true);
                      if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
-                     programsLoaded = true; // Forcer pour permettre usage hors-ligne
+                     programsLoaded = true; // **Forcer pour permettre usage avec défauts**
                      console.warn("Utilisation des programmes par défaut suite à une erreur de chargement.");
                 }
 
@@ -923,7 +921,7 @@
                 if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                 programsLoaded = false; // Erreur majeure = pas de programmes chargés
             } finally {
-                // **Appeler updateAuthUI une seule fois à la fin**
+                // **Appeler updateAuthUI une seule fois à la fin, APRES avoir défini programsLoaded**
                 console.log("Fin du bloc try/catch/finally de tokenCallback. Mise à jour UI finale...");
                 updateAuthUI(true); // Mettre à jour l'UI avec l'état final de programsLoaded
                 if (programsLoaded) { // Seulement si les programmes sont considérés comme chargés
@@ -933,7 +931,6 @@
                      displayVolumeLoad();
                      loadInProgressState(); // Essayer de reprendre un état sauvegardé
                 } else {
-                    // Peut-être afficher un message spécifique si programsLoaded est false ?
                     console.warn("Les programmes n'ont pas pu être chargés, certaines fonctionnalités seront limitées.");
                 }
             }
@@ -967,7 +964,7 @@
         if (currentState !== 'idle') {
             if(startPauseBtn) startPauseBtn.disabled = true;
         } else {
-             // Appel explicite pour gérer le cas idle
+             // Appel explicite pour gérer le cas idle avec les dernières valeurs
              setState('idle');
         }
 
@@ -990,14 +987,14 @@
     function getIconForType(type){ return type === 'exercise' ? 'fa-dumbbell' : 'fa-hourglass-half'; }
     function setState(newState) { if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement) { console.error("setState: Éléments DOM critiques manquants."); return; } const previousState = currentState; if (previousState === newState && newState !== 'idle') { // Permet de forcer la mise à jour UI pour idle
             console.log(`State: Déjà en état '${newState}'.`);
-            return;
+            // return; // Commenté pour forcer la mise à jour du bouton démarrer
         } currentState = newState; console.log(`Changement d'état: ${previousState} -> ${newState}`); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } if(timerDisplayElement) timerDisplayElement.classList.remove('finished-animation'); const stateClassPrefix = 'state-'; document.body.className = Array.from(document.body.classList) .filter(cls => !cls.startsWith(stateClassPrefix)) .join(' ') + ` ${stateClassPrefix}${currentState}`; document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState)); if(startPauseBtn) startPauseBtn.className = ''; if(startPauseBtn) startPauseBtn.disabled = true; if(skipBtn) skipBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(newState); navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !googleAccessToken || isTimerActive; hideRepAdjustmentOverlay(); switch (newState) { case 'idle': isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; timeLeft=0; totalTime=0;
-             // **Log détaillé pour bouton Démarrer**
-             const isLoggedIn = !!googleAccessToken; // Assurer que c'est un booléen
+             // **Log et condition d'activation du bouton Démarrer**
+             const isLoggedIn = !!googleAccessToken;
              const hasWorkoutType = !!currentWorkoutType;
              const planIsValid = !!currentWorkoutPlan && Array.isArray(currentWorkoutPlan) && currentWorkoutPlan.length > 0;
              const canStart = isLoggedIn && programsLoaded && hasWorkoutType && planIsValid;
-             console.log(`setState('idle'): Checking start conditions -> isLoggedIn: ${isLoggedIn}, programsLoaded: ${programsLoaded}, hasWorkoutType: ${hasWorkoutType}, planIsValid: ${planIsValid}, Result(canStart): ${canStart}`);
+             console.log(`setState('idle'): Check start -> isLoggedIn: ${isLoggedIn}, programsLoaded: ${programsLoaded}, hasWorkoutType: ${hasWorkoutType}, planIsValid: ${planIsValid}, Result(canStart): ${canStart}`);
              if(startPauseBtn) startPauseBtn.disabled = !canStart; // Activer si toutes conditions OK
              if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`; startPauseBtn.className = 'start-btn'; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); break; case 'preparing': isWorkoutActive=true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.className = 'preparing-btn'; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); break; case 'exercise': isWorkoutActive=true; isTimerRunning = false; timeLeft=0; totalTime=0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForType('exercise')}"></i> Fait`; startPauseBtn.className='done-btn'; } if(skipBtn) skipBtn.disabled=false; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } findNextExerciseForAdjustment(); break; case 'break': isWorkoutActive=true; isTimerRunning = true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('paused')}"></i> Pause`; startPauseBtn.className='pause-btn'; } if(skipBtn) skipBtn.disabled=false; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } startBreakTimer(); findNextExerciseForAdjustment(); break; case 'paused': isWorkoutActive=true; isTimerRunning = false; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas fa-play"></i> Reprendre`; startPauseBtn.className='resume-btn'; } if(skipBtn) skipBtn.disabled=false; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } break; case 'finished': isWorkoutActive=false; isTimerRunning = false; workoutFinished=true; wasFinishedState=true; timeLeft=0; totalTime=0; elapsedWorkoutEstimatedSeconds=totalWorkoutEstimatedSeconds; if(startPauseBtn) { startPauseBtn.disabled=true; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('finished')}"></i> Terminé`; startPauseBtn.className='finished-btn'; } if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); endSound(); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); if(timerDisplayElement) timerDisplayElement.classList.add('finished-animation'); setTimeout(populateAndShowSummary, 500); break; default: console.error("État inconnu rencontré:", newState); currentState = 'idle'; updateAuthUI(!!googleAccessToken); break; } updateTimerDisplay(); updateWorkoutInfo(); }
     function startPrepareCountdown() { if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); prepareTimeLeft = PREPARE_DURATION; updateTimerDisplay(); updateWorkoutInfo(); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; updateTimerDisplay(); updateWorkoutInfo(); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); endSound(); vibrate(); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { resetCurrentWorkout(); return; } const nextState = firstItem.type === 'exercise' ? 'exercise' : 'break'; setState(nextState); if (nextState === 'break') { totalTime = firstItem.duration || 0; timeLeft = totalTime; } saveInProgressState(); } }, 1000); }
@@ -1009,17 +1006,19 @@
         if (!googleAccessToken) { showMessage("Connectez-vous pour charger un entraînement.", 3000, true); return; }
         if (!programsLoaded) { showMessage("Programmes non disponibles. Attente du chargement...", 3000, true); return; }
 
-        console.log(`Vérification loadedWorkouts['${type}'] :`, loadedWorkouts[type]); // Log avant vérification
+        console.log(`Vérification loadedWorkouts['${type}'] :`, loadedWorkouts[type]);
 
-        // Vérification robuste du programme chargé
+        // Vérification renforcée du programme chargé
         if (!loadedWorkouts[type] || !Array.isArray(loadedWorkouts[type])) {
-            showMessage(`Erreur: Programme "${type}" invalide ou non trouvé.`, 4000, true);
+            showMessage(`Erreur: Programme "${type}" invalide (non trouvé ou pas un tableau).`, 4000, true);
             console.error(`Programme invalide pour "${type}". Données:`, loadedWorkouts[type]);
             currentWorkoutType = null; setActiveWorkoutNav(null); setState('idle'); return;
         }
+        // **Correction: Vérifier si le programme est vide**
         if (loadedWorkouts[type].length === 0) {
             showMessage(`Attention: Le programme "${type}" est vide. Impossible de démarrer.`, 4000, true);
-            currentWorkoutType = type; setActiveWorkoutNav(type);
+            currentWorkoutType = type; // Sélectionne mais ne pourra pas démarrer
+            setActiveWorkoutNav(type);
             currentWorkoutPlan = []; // Assurer plan vide
             setState('idle'); return; // Bouton démarrer restera désactivé
         }
@@ -1032,14 +1031,14 @@
         console.log(`Chargement du programme: ${type}`);
         currentWorkoutType = type;
         currentWorkoutPlan = JSON.parse(JSON.stringify(loadedWorkouts[type]));
-        console.log("currentWorkoutPlan après copie (longueur):", currentWorkoutPlan?.length); // Vérifier longueur
+        console.log("currentWorkoutPlan après copie (longueur):", currentWorkoutPlan?.length); // Vérifier la longueur
 
         totalWorkoutEstimatedSeconds = calculateTotalEstimatedTime(currentWorkoutPlan);
         elapsedWorkoutEstimatedSeconds = 0; currentItemIndex = 0; workoutStartTime = null;
         isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; currentRepAdjustment = 0;
 
         setActiveWorkoutNav(type); showSection('workout-section'); closeSummary(false);
-        setState('idle'); // *** DÉCLENCHE LA MISE À JOUR FINALE DE L'UI POUR IDLE ***
+        setState('idle'); // **CRUCIAL: Déclenche la mise à jour de l'UI pour l'état idle**
         showMessage(`Programme "${type}" chargé. Prêt à démarrer !`, 2500);
     }
     function resetCurrentWorkout() { console.log("Réinitialisation de l'entraînement..."); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); const typeReset = currentWorkoutType; currentWorkoutType=null; currentWorkoutPlan=[]; originalCompletedWorkoutPlan=[]; currentItemIndex=0; workoutStartTime=null; isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; wasFinishedState=false; timeLeft=0; totalTime=0; prepareTimeLeft=0; totalWorkoutEstimatedSeconds=0; elapsedWorkoutEstimatedSeconds=0; currentRepAdjustment=0; clearInProgressState(); closeSummary(false); if(timerDisplayElement) timerDisplayElement.classList.remove('finished-animation'); setActiveWorkoutNav(null); showSection('workout-section'); setState('idle'); if (typeReset) { showMessage(`Entraînement "${typeReset}" réinitialisé.`, 2000); } }
@@ -1059,8 +1058,215 @@
     function filterHistoryByPeriod(history, period) { const now = new Date(); let startDate = new Date(); switch (period) { case 'week': startDate.setDate(now.getDate() - 7); break; case 'month': startDate.setMonth(now.getMonth() - 1); break; case 'year': startDate.setFullYear(now.getFullYear() - 1); break; case 'all': return history; default: startDate.setDate(now.getDate() - 7); } startDate.setHours(0, 0, 0, 0); return history.filter(entry => new Date(entry.date) >= startDate); }
     function renderHistoryList(filteredHistory) { if (!historyList) return; if (filteredHistory.length === 0) { historyList.innerHTML = '<li class="no-history">Aucun entraînement enregistré pour cette période.</li>'; return; } historyList.innerHTML = filteredHistory .sort((a, b) => new Date(b.date) - new Date(a.date)) .map(entry => { const date = new Date(entry.date); const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' }); const formattedTime = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationSeconds = entry.durationSeconds || 0; const formattedDuration = durationSeconds > 0 ? formatTime(durationSeconds) : 'N/A'; const type = entry.type || 'Inconnu'; let totalVolume = 0; if (entry.exercises && Array.isArray(entry.exercises)) { totalVolume = entry.exercises.reduce((sum, ex) => { const reps = ex.actualReps ?? ex.reps ?? 0; const weight = ex.actualWeight ?? ex.weight ?? 0; return sum + (reps * weight); }, 0); } return ` <li> <span class="history-item-date"> ${formattedDate} <small>(${formattedTime})</small> </span> <span class="history-item-type">${type}</span> ${totalVolume > 0 ? `<span class="history-item-volume" style="color: var(--neon-green); font-size:0.9em;">${totalVolume.toFixed(0)} kg vol.</span>` : ''} <span class="history-item-duration">${formattedDuration}</span> </li> `; }).join(''); }
     function calculateAndDisplayStats(filteredHistory) { if (!statsContentWrapper || !statsDisplay) return; const numWorkouts = filteredHistory.length; let totalDuration = 0; let workoutTypes = {}; let totalVolume = 0; filteredHistory.forEach(entry => { totalDuration += entry.durationSeconds || 0; const type = entry.type || 'Inconnu'; workoutTypes[type] = (workoutTypes[type] || 0) + 1; if (entry.exercises && Array.isArray(entry.exercises)) { totalVolume += entry.exercises.reduce((sum, ex) => { const reps = ex.actualReps ?? ex.reps ?? 0; const weight = ex.actualWeight ?? ex.weight ?? 0; return sum + (reps * weight); }, 0); } }); const avgDuration = numWorkouts > 0 ? totalDuration / numWorkouts : 0; const formattedAvgDuration = formatTime(avgDuration); let statsHtml = `<p><i class="fas fa-calendar-check"></i> Séances: <strong>${numWorkouts}</strong></p>`; if (numWorkouts > 0) { statsHtml += `<p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(totalDuration)}</strong></p>`; statsHtml += `<p><i class="fas fa-clock"></i> Durée moyenne: <strong>${formattedAvgDuration}</strong></p>`; statsHtml += `<p><i class="fas fa-weight-hanging"></i> Volume total: <strong>${totalVolume.toFixed(0)} kg</strong></p>`; statsHtml += `<p><i class="fas fa-tags"></i> Répartition:</p><ul>`; for (const type in workoutTypes) { statsHtml += `<li style="margin-left: 25px; font-size: 0.95em;">- ${type}: ${workoutTypes[type]}</li>`; } statsHtml += `</ul>`; } else { statsHtml += '<p>Aucune donnée pour calculer les statistiques.</p>'; } statsContentWrapper.innerHTML = statsHtml; const motivationalMessage = statsDisplay.querySelector('.motivational-message'); if (motivationalMessage) { if (numWorkouts > 5) motivationalMessage.textContent = "Super régularité ! Continuez comme ça ! 💪"; else if (numWorkouts > 0) motivationalMessage.textContent = "Chaque séance compte ! Bien joué !"; else motivationalMessage.textContent = "Prêt à commencer votre première séance ?"; } }
-    function renderHistoryChart(filteredHistory) { if (!historyChartCanvasEl) { console.warn("Canvas historique introuvable pour renderHistoryChart"); return; } const ctx = historyChartCanvasEl.getContext('2d'); if (filteredHistory.length === 0) { setChartPlaceholder('history-chart-canvas', "Aucune donnée pour afficher le graphique."); if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; } return; } else { setChartPlaceholder('history-chart-canvas', "", false); } const dataByDate = {}; filteredHistory.forEach(entry => { const date = new Date(entry.date).toISOString().split('T')[0]; let dailyVolume = 0; if (entry.exercises && Array.isArray(entry.exercises)) { dailyVolume = entry.exercises.reduce((sum, ex) => { const reps = ex.actualReps ?? ex.reps ?? 0; const weight = ex.actualWeight ?? ex.weight ?? 0; return sum + (reps * weight); }, 0); } dataByDate[date] = (dataByDate[date] || 0) + dailyVolume; }); const labels = Object.keys(dataByDate).sort(); const data = labels.map(date => dataByDate[date]); const chartData = { labels: labels, datasets: [{ label: 'Volume Total (kg)', data: data, backgroundColor: 'rgba(var(--neon-blue-rgb), 0.5)', borderColor: `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--neon-blue-rgb')})`, borderWidth: 2, tension: 0.3, fill: true }] }; const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Volume (kg)' }, ticks: { color: `var(--secondary-text-color)` }, grid: { color: `var(--accent-border-color)` } }, x: { title: { display: true, text: 'Date' }, ticks: { color: `var(--secondary-text-color)` }, grid: { display: false } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: `rgba(var(--bg-color-dark-rgb), 0.8)`, titleColor: `var(--primary-text-color)`, bodyColor: `var(--primary-text-color)`, callbacks: { label: function(context) { return ` Volume: ${context.parsed.y.toFixed(0)} kg`; } } } } }; if (historyChartInstance) { historyChartInstance.data = chartData; historyChartInstance.options = chartOptions; historyChartInstance.update(); } else { historyChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: chartOptions }); } }
-    function updateChartColors() { const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color'); const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-border-color'); const primaryColor = `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--neon-blue-rgb')})`; const secondaryColor = `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--neon-pink-rgb')})`; const bgColorTooltip = `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--bg-color-dark-rgb')}, 0.8)`; const textColorTooltip = getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color'); [historyChartInstance, exercisePerfChartInstance, volumeLoadChartInstance].forEach(chartInstance => { if (chartInstance) { chartInstance.options.scales.x.ticks.color = textColor; chartInstance.options.scales.x.grid.color = borderColor; chartInstance.options.scales.y.ticks.color = textColor; chartInstance.options.scales.y.grid.color = borderColor; if(chartInstance.options.scales.yMetric) { chartInstance.options.scales.yMetric.ticks.color = textColor; chartInstance.options.scales.yMetric.grid.color = borderColor; } chartInstance.options.plugins.tooltip.backgroundColor = bgColorTooltip; chartInstance.options.plugins.tooltip.titleColor = textColorTooltip; chartInstance.options.plugins.tooltip.bodyColor = textColorTooltip; if (chartInstance.data.datasets[0]) { chartInstance.data.datasets[0].borderColor = primaryColor; chartInstance.data.datasets[0].backgroundColor = primaryColor.replace(')', ', 0.5)').replace('rgb', 'rgba'); } if (chartInstance.data.datasets[1]) { chartInstance.data.datasets[1].borderColor = secondaryColor; chartInstance.data.datasets[1].backgroundColor = secondaryColor.replace(')', ', 0.5)').replace('rgb', 'rgba'); } chartInstance.update('none'); } }); }
+    // --- Fonctions Graphiques (MAJ) ---
+    function aggregateChartData(hist, period) {
+        const agg = new Map();
+        // Initialisation des labels selon la période
+        const init = (labels) => labels.forEach(l => agg.set(l, 0));
+        let labels = [];
+
+        switch (period) {
+            case 'week':
+                labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+                init(labels);
+                const nowW = new Date();
+                const todayW = new Date(nowW.getFullYear(), nowW.getMonth(), nowW.getDate());
+                const wd = todayW.getDay(); // 0=Dim, 1=Lun, ..., 6=Sam
+                const diff = todayW.getDate() - wd + (wd === 0 ? -6 : 1); // Premier jour de la semaine (Lundi)
+                const startW = new Date(nowW.getFullYear(), nowW.getMonth(), diff);
+                startW.setHours(0, 0, 0, 0);
+                hist.forEach(e => {
+                    const d = new Date(e.date);
+                    if (d >= startW) {
+                        let dayIndex = d.getDay(); // 0=Dim, 1=Lun
+                        dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Ajuster pour Lun=0, Dim=6
+                        agg.set(labels[dayIndex], (agg.get(labels[dayIndex]) || 0) + (e.durationSeconds || 0));
+                    }
+                });
+                break;
+            case 'month':
+                 labels = ['S1-7', 'S8-14', 'S15-21', 'S22-28', 'S29+'];
+                 init(labels);
+                 const curM = new Date().getMonth();
+                 const curY = new Date().getFullYear();
+                 hist.forEach(e => {
+                     const d = new Date(e.date);
+                     if (d.getMonth() === curM && d.getFullYear() === curY) {
+                         const dayOfMonth = d.getDate();
+                         let weekIndex = 0;
+                         if (dayOfMonth <= 7) weekIndex = 0;
+                         else if (dayOfMonth <= 14) weekIndex = 1;
+                         else if (dayOfMonth <= 21) weekIndex = 2;
+                         else if (dayOfMonth <= 28) weekIndex = 3;
+                         else weekIndex = 4;
+                         agg.set(labels[weekIndex], (agg.get(labels[weekIndex]) || 0) + (e.durationSeconds || 0));
+                     }
+                 });
+                 break;
+            case 'year':
+                 labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+                 init(labels);
+                 const curY2 = new Date().getFullYear();
+                 hist.forEach(e => {
+                     const d = new Date(e.date);
+                     if (d.getFullYear() === curY2) {
+                         const monthIndex = d.getMonth(); // 0=Jan, 11=Dec
+                         agg.set(labels[monthIndex], (agg.get(labels[monthIndex]) || 0) + (e.durationSeconds || 0));
+                     }
+                 });
+                 break;
+            default: // 'all'
+                 const yearData = {};
+                 hist.forEach(e => {
+                     const y = new Date(e.date).getFullYear();
+                     if (!isNaN(y)) {
+                         yearData[y] = (yearData[y] || 0) + (e.durationSeconds || 0);
+                     }
+                 });
+                 labels = Object.keys(yearData).map(Number).sort((a, b) => a - b).map(String);
+                 labels.forEach(y => agg.set(y, yearData[y]));
+                 break;
+        }
+        return { labels, data: labels.map(l => agg.get(l) || 0) };
+    }
+    function getChartXAxisTitle(period){ switch(period){ case 'week': return 'Jour (Sem. Courante)'; case 'month': return 'Semaine (Mois Courant)'; case 'year': return 'Mois (Année Courante)'; default: return 'Année'; }}
+    function renderHistoryChart(filteredHistory) {
+        if (!historyChartCanvasEl) { console.warn("Canvas historique introuvable"); return; }
+        const ctx = historyChartCanvasEl.getContext('2d');
+        if (!ctx) return;
+
+        const { labels, data } = aggregateChartData(filteredHistory, currentHistoryPeriod);
+
+        if (labels.length === 0 || data.every(d => d === 0)) {
+            setChartPlaceholder('history-chart-canvas', "Aucune donnée d'entraînement pour cette période.");
+            if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; }
+            return;
+        } else {
+            setChartPlaceholder('history-chart-canvas', "", false);
+        }
+
+        const styles = getComputedStyle(document.documentElement);
+        const primColor = styles.getPropertyValue('--neon-blue').trim();
+        const gridColor = styles.getPropertyValue('--accent-border-color').trim();
+        const textColor = styles.getPropertyValue('--secondary-text-color').trim();
+        const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb')}, 0.8)`;
+        const tooltipText = styles.getPropertyValue('--primary-text-color').trim();
+
+        const chartData = {
+            labels,
+            datasets: [{
+                label: 'Durée (min)',
+                data: data.map(d => Math.round(d / 60)), // Convertir en minutes
+                backgroundColor: `rgba(${styles.getPropertyValue('--neon-blue-rgb')}, 0.6)`,
+                borderColor: primColor,
+                borderWidth: 1,
+                borderRadius: 3, // Coins arrondis pour les barres
+                hoverBackgroundColor: `rgba(${styles.getPropertyValue('--neon-blue-rgb')}, 0.8)`,
+                hoverBorderColor: primColor
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Minutes', color: textColor },
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, callback: v => v + 'm' }
+                },
+                x: {
+                    title: { display: true, text: getChartXAxisTitle(currentHistoryPeriod), color: textColor },
+                    grid: { display: false },
+                    ticks: { color: textColor }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText,
+                    bodyColor: tooltipText,
+                    padding: 10,
+                    cornerRadius: 4,
+                    displayColors: false,
+                    callbacks: {
+                        label: ctx => `Durée: ${formatTime(data[ctx.dataIndex] || 0)}` // Afficher MM:SS
+                    }
+                }
+            }
+        };
+
+        if (historyChartInstance) {
+            historyChartInstance.data = chartData;
+            historyChartInstance.options = chartOptions; // Réappliquer pour le thème
+            historyChartInstance.update();
+        } else {
+            historyChartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions });
+        }
+    }
+    function updateChartColors() {
+        // Applique les couleurs du thème actuel à tous les graphiques
+        const styles = getComputedStyle(document.documentElement);
+        const textColor = styles.getPropertyValue('--secondary-text-color').trim();
+        const gridColor = styles.getPropertyValue('--accent-border-color').trim();
+        const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb')}, 0.8)`;
+        const tooltipText = styles.getPropertyValue('--primary-text-color').trim();
+        const primColor = styles.getPropertyValue('--neon-blue').trim();
+        const secColor = styles.getPropertyValue('--neon-green').trim(); // Pour le volume
+        const terColor = styles.getPropertyValue('--neon-pink').trim(); // Potentiel pour 2ème axe exo
+
+        [historyChartInstance, exercisePerfChartInstance, volumeLoadChartInstance].forEach((chartInstance, index) => {
+            if (chartInstance) {
+                try {
+                    // Options générales
+                    chartInstance.options.scales.x.ticks.color = textColor;
+                    chartInstance.options.scales.x.grid.color = gridColor;
+                     if (chartInstance.options.scales.x.title) chartInstance.options.scales.x.title.color = textColor;
+                    chartInstance.options.scales.y.ticks.color = textColor;
+                    chartInstance.options.scales.y.grid.color = gridColor;
+                     if (chartInstance.options.scales.y.title) chartInstance.options.scales.y.title.color = textColor;
+                     // Spécifique à l'axe Y secondaire (si existe)
+                    if(chartInstance.options.scales.yMetric) { // Axe principal progression
+                         chartInstance.options.scales.yMetric.ticks.color = textColor;
+                         chartInstance.options.scales.yMetric.grid.color = gridColor;
+                         if (chartInstance.options.scales.yMetric.title) chartInstance.options.scales.yMetric.title.color = textColor;
+                    }
+                     if(chartInstance.options.scales.yReps) { // Axe secondaire (si activé plus tard)
+                         chartInstance.options.scales.yReps.ticks.color = textColor;
+                         if (chartInstance.options.scales.yReps.title) chartInstance.options.scales.yReps.title.color = textColor;
+                    }
+                    chartInstance.options.plugins.tooltip.backgroundColor = tooltipBg;
+                    chartInstance.options.plugins.tooltip.titleColor = tooltipText;
+                    chartInstance.options.plugins.tooltip.bodyColor = textColorTooltip;
+
+                    // Options spécifiques aux datasets
+                    chartInstance.data.datasets.forEach((dataset, i) => {
+                        let mainColor = primColor; // Bleu par défaut
+                         let mainColorRgb = styles.getPropertyValue('--neon-blue-rgb');
+                        if (chartInstance === volumeLoadChartInstance) { // Graphique Volume
+                            mainColor = secColor;
+                             mainColorRgb = styles.getPropertyValue('--neon-green-rgb');
+                        } else if (chartInstance === exercisePerfChartInstance && i === 1) { // 2eme dataset exo
+                            mainColor = terColor;
+                             mainColorRgb = styles.getPropertyValue('--neon-pink-rgb');
+                        }
+                        dataset.borderColor = mainColor;
+                        dataset.backgroundColor = `rgba(${mainColorRgb}, ${chartInstance.config.type === 'bar' || dataset.fill ? 0.6 : 0.2})`; // Remplissage pour barre/aire
+                        dataset.pointBackgroundColor = mainColor;
+                        dataset.pointBorderColor = mainColor;
+                        // dataset.hoverBackgroundColor = mainColor.replace(')', ', 0.8)').replace('rgb', 'rgba');
+                        // dataset.hoverBorderColor = mainColor;
+                    });
+
+                    chartInstance.update('none');
+                } catch(e) {
+                    console.error("Erreur pendant updateChartColors:", e, "sur chart:", chartInstance);
+                }
+            }
+        });
+    }
     function clearCharts() { [historyChartInstance, exercisePerfChartInstance, volumeLoadChartInstance].forEach((chartInstance, index) => { if (chartInstance) { chartInstance.destroy(); } }); historyChartInstance = null; exercisePerfChartInstance = null; volumeLoadChartInstance = null; setChartPlaceholder('history-chart-canvas', ''); setChartPlaceholder('exercise-progress-chart', ''); setChartPlaceholder('volume-chart', ''); }
     function setChartPlaceholder(canvasId, message, show = true) {
         const placeholderId = canvasId.replace('-canvas', '-placeholder');
@@ -1078,11 +1284,162 @@
         }
     }
 
-
     // --- Gestion Progression ---
     function populateExerciseSelect() { if (!exerciseSelect || !workoutHistory) return; const uniqueExercises = new Set(); workoutHistory.forEach(entry => { entry.exercises?.forEach(ex => uniqueExercises.add(ex.name)); }); const sortedExercises = Array.from(uniqueExercises).sort(); exerciseSelect.innerHTML = '<option value="all">Tous les exercices</option>'; sortedExercises.forEach(exName => { const option = document.createElement('option'); option.value = exName; option.textContent = exName; exerciseSelect.appendChild(option); }); displayExerciseProgress(); displayVolumeLoad(); }
-    function displayExerciseProgress() { if (!exerciseProgressChartCanvasEl) { console.warn("Canvas progression exercice introuvable"); return; } if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const selectedExercise = exerciseSelect.value; const selectedMetric = metricSelect.value; const selectedPeriod = periodSelect.value; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); if (selectedExercise === 'all') { setChartPlaceholder('exercise-progress-chart', "Sélectionnez un exercice spécifique."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { exerciseData.push({ date: new Date(entry.date), reps: ex.actualReps ?? ex.reps ?? 0, weight: ex.actualWeight ?? ex.weight ?? 0, volume: (ex.actualReps ?? ex.reps ?? 0) * (ex.actualWeight ?? ex.weight ?? 0) }); } }); }); exerciseData.sort((a, b) => a.date - b.date); if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour cet exercice/période."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const labels = exerciseData.map(d => d.date.toLocaleDateString('fr-CA')); let datasets = []; if (selectedMetric === 'weight' || selectedMetric === 'reps' || selectedMetric === 'volume') { datasets.push({ label: selectedMetric === 'weight' ? 'Poids (kg)' : (selectedMetric === 'reps' ? 'Répétitions' : 'Volume (kg)'), data: exerciseData.map(d => d[selectedMetric]), borderColor: `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--neon-blue-rgb')})`, backgroundColor: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--neon-blue-rgb')}, 0.5)`, tension: 0.1, fill: false, yAxisID: 'yMetric' }); } const chartData = { labels, datasets }; const chartOptions = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { x: { ticks: { color: `var(--secondary-text-color)` }, grid: { display: false } }, yMetric: { type: 'linear', display: true, position: 'left', title: { display: true, text: selectedMetric === 'weight' ? 'Poids (kg)' : (selectedMetric === 'reps' ? 'Répétitions' : 'Volume (kg)') }, ticks: { color: `var(--secondary-text-color)` }, grid: { color: `var(--accent-border-color)` } } }, plugins: { legend: { display: datasets.length > 1 }, tooltip: { backgroundColor: `rgba(var(--bg-color-dark-rgb), 0.8)`, titleColor: `var(--primary-text-color)`, bodyColor: `var(--primary-text-color)` } } }; const ctx = exerciseProgressChartCanvasEl.getContext('2d'); if (exercisePerfChartInstance) { exercisePerfChartInstance.data = chartData; exercisePerfChartInstance.options = chartOptions; exercisePerfChartInstance.update(); } else { exercisePerfChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: chartOptions }); } }
-    function displayVolumeLoad() { if (!volumeChartCanvasEl) { console.warn("Canvas volume introuvable"); return; } if (!googleAccessToken) { setChartPlaceholder('volume-chart', "Connectez-vous pour voir le volume."); if (volumeLoadChartInstance) { volumeLoadChartInstance.destroy(); volumeLoadChartInstance = null; } return; } const selectedPeriod = periodSelect.value; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); if (filteredHistory.length === 0) { setChartPlaceholder('volume-chart', "Aucune donnée pour afficher le volume."); if (volumeLoadChartInstance) { volumeLoadChartInstance.destroy(); volumeLoadChartInstance = null; } return; } else { setChartPlaceholder('volume-chart', "", false); } const volumeByDate = {}; filteredHistory.forEach(entry => { const date = new Date(entry.date).toISOString().split('T')[0]; let dailyVolume = 0; entry.exercises?.forEach(ex => { dailyVolume += (ex.actualReps ?? ex.reps ?? 0) * (ex.actualWeight ?? ex.weight ?? 0); }); volumeByDate[date] = (volumeByDate[date] || 0) + dailyVolume; }); const labels = Object.keys(volumeByDate).sort(); const data = labels.map(date => volumeByDate[date]); const chartData = { labels: labels, datasets: [{ label: 'Volume Total Quotidien (kg)', data: data, backgroundColor: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--neon-green-rgb')}, 0.6)`, borderColor: `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--neon-green-rgb')})`, borderWidth: 1, barPercentage: 0.8, categoryPercentage: 0.7 }] }; const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Volume (kg)' }, ticks: { color: `var(--secondary-text-color)` }, grid: { color: `var(--accent-border-color)` } }, x: { title: { display: true, text: 'Date' }, ticks: { color: `var(--secondary-text-color)` }, grid: { display: false } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: `rgba(var(--bg-color-dark-rgb), 0.8)`, titleColor: `var(--primary-text-color)`, bodyColor: `var(--primary-text-color)` } } }; const ctx = volumeChartCanvasEl.getContext('2d'); if (volumeLoadChartInstance) { volumeLoadChartInstance.data = chartData; volumeLoadChartInstance.options = chartOptions; volumeLoadChartInstance.update(); } else { volumeLoadChartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions }); } }
+    function displayExerciseProgress() {
+        if (!exerciseProgressChartCanvasEl) { console.warn("Canvas progression exercice introuvable"); return; }
+        const ctx = exerciseProgressChartCanvasEl.getContext('2d');
+        if (!ctx) return;
+
+        if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; }
+
+        const selectedExercise = exerciseSelect.value;
+        const selectedMetric = metricSelect.value;
+        const selectedPeriod = periodSelect.value;
+        const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod);
+
+        if (selectedExercise === 'all') { setChartPlaceholder('exercise-progress-chart', "Sélectionnez un exercice spécifique."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; }
+
+        const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { exerciseData.push({ date: new Date(entry.date), reps: ex.actualReps ?? ex.reps ?? 0, weight: ex.actualWeight ?? ex.weight ?? 0, volume: (ex.actualReps ?? ex.reps ?? 0) * (ex.actualWeight ?? ex.weight ?? 0) }); } }); });
+        exerciseData.sort((a, b) => a.date - b.date);
+
+        if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour cet exercice/période."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; }
+        else { setChartPlaceholder('exercise-progress-chart', "", false); }
+
+        const labels = exerciseData.map(d => d.date.toLocaleDateString('fr-CA')); // Format YYYY-MM-DD
+        let datasets = [];
+        const styles = getComputedStyle(document.documentElement);
+        const primColor = styles.getPropertyValue('--neon-blue').trim();
+        const primColorRgb = styles.getPropertyValue('--neon-blue-rgb');
+
+        if (selectedMetric === 'weight' || selectedMetric === 'reps' || selectedMetric === 'volume') {
+            datasets.push({
+                label: selectedMetric === 'weight' ? 'Poids (kg)' : (selectedMetric === 'reps' ? 'Répétitions' : 'Volume (kg)'),
+                data: exerciseData.map(d => d[selectedMetric]),
+                borderColor: primColor,
+                backgroundColor: `rgba(${primColorRgb}, 0.2)`, // Légère couleur de fond si fill=true
+                tension: 0.3, // Lissage
+                fill: false, // Garder en ligne simple pour tendance claire
+                pointRadius: 3,
+                pointBackgroundColor: primColor,
+                pointBorderColor: primColor,
+                pointHoverRadius: 5,
+                yAxisID: 'yMetric'
+            });
+        }
+
+        const chartData = { labels, datasets };
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { ticks: { color: `var(--secondary-text-color)` }, grid: { display: false }, title: {display: true, text: 'Date', color: `var(--secondary-text-color)`} },
+                yMetric: {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: selectedMetric === 'weight' ? 'Poids (kg)' : (selectedMetric === 'reps' ? 'Répétitions' : 'Volume (kg)'), color: `var(--secondary-text-color)` },
+                    ticks: { color: `var(--secondary-text-color)` },
+                    grid: { color: `var(--accent-border-color)` }
+                }
+            },
+            plugins: {
+                 legend: { display: datasets.length > 1, labels: { color: `var(--primary-text-color)` } },
+                 tooltip: {
+                     backgroundColor: `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb')}, 0.8)`,
+                     titleColor: styles.getPropertyValue('--primary-text-color').trim(),
+                     bodyColor: styles.getPropertyValue('--primary-text-color').trim(),
+                     padding: 10, cornerRadius: 4, displayColors: false,
+                     callbacks: {
+                         title: (tooltipItems) => tooltipItems[0] ? new Date(tooltipItems[0].label).toLocaleDateString('fr-FR') : '',
+                         label: (context) => `${context.dataset.label}: ${context.parsed.y}`
+                     }
+                 }
+            }
+        };
+
+        if (exercisePerfChartInstance) {
+            exercisePerfChartInstance.data = chartData;
+            exercisePerfChartInstance.options = chartOptions;
+            exercisePerfChartInstance.update();
+        } else {
+            exercisePerfChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: chartOptions });
+        }
+    }
+
+    function displayVolumeLoad() {
+        if (!volumeChartCanvasEl) { console.warn("Canvas volume introuvable"); return; }
+        const ctx = volumeChartCanvasEl.getContext('2d');
+        if (!ctx) return;
+
+        if (!googleAccessToken) { setChartPlaceholder('volume-chart', "Connectez-vous pour voir le volume."); if (volumeLoadChartInstance) { volumeLoadChartInstance.destroy(); volumeLoadChartInstance = null; } return; }
+
+        const selectedPeriod = periodSelect.value;
+        const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod);
+
+        const { labels, data } = aggregateChartData(filteredHistory, selectedPeriod, 'volume'); // Agréger par volume
+
+        if (labels.length === 0 || data.every(d => d === 0)) {
+             setChartPlaceholder('volume-chart', "Aucune donnée de volume pour cette période.");
+             if (volumeLoadChartInstance) { volumeLoadChartInstance.destroy(); volumeLoadChartInstance = null; }
+             return;
+        } else {
+            setChartPlaceholder('volume-chart', "", false);
+        }
+
+        const styles = getComputedStyle(document.documentElement);
+        const primColor = styles.getPropertyValue('--neon-green').trim();
+        const primColorRgb = styles.getPropertyValue('--neon-green-rgb');
+        const gridColor = styles.getPropertyValue('--accent-border-color').trim();
+        const textColor = styles.getPropertyValue('--secondary-text-color').trim();
+        const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb')}, 0.8)`;
+        const tooltipText = styles.getPropertyValue('--primary-text-color').trim();
+
+        const chartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Volume Total (kg)',
+                data: data,
+                fill: true, // Remplir pour Area chart
+                backgroundColor: `rgba(${primColorRgb}, 0.5)`,
+                borderColor: primColor,
+                borderWidth: 2,
+                tension: 0.3, // Lissage
+                pointRadius: 3,
+                pointBackgroundColor: primColor,
+                pointBorderColor: primColor,
+                pointHoverRadius: 5,
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Volume (kg)', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+                x: { title: { display: true, text: getChartXAxisTitle(selectedPeriod), color: textColor }, ticks: { color: textColor }, grid: { display: false } }
+            },
+            plugins: {
+                 legend: { display: false },
+                 tooltip: {
+                     backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText,
+                     padding: 10, cornerRadius: 4, displayColors: false,
+                     callbacks: {
+                         title: (tooltipItems) => tooltipItems[0]?.label || '',
+                         label: ctx => `Volume: ${ctx.parsed.y.toFixed(0)} kg`
+                     }
+                 }
+            }
+        };
+
+        if (volumeLoadChartInstance) {
+            volumeLoadChartInstance.data = chartData;
+            volumeLoadChartInstance.options = chartOptions;
+            volumeLoadChartInstance.update();
+        } else {
+            volumeLoadChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: chartOptions }); // type: 'line' avec fill: true = Area chart
+        }
+    }
+
 
     // --- Résumé Post-Workout (Modal) ---
     function populateAndShowSummary() { if (!postWorkoutSummary || !summaryItemsList || !confirmSummaryBtn || !discardSummaryBtn || !closeSummaryBtn) { console.error("Éléments du modal de résumé manquants."); return; } const planToSummarize = originalCompletedWorkoutPlan; if(summaryTitle) summaryTitle.textContent = `Résumé: ${currentWorkoutType || 'Séance'} (${planToSummarize.length} étapes)`; if(summaryItemsList) summaryItemsList.innerHTML = ''; summaryChangesMade = false; planToSummarize.forEach((item, index) => { const li = document.createElement('li'); li.classList.add('summary-item', `item-type-${item.type}`); li.dataset.index = index; let contentHtml = `<h4><i class="fas ${getIconForType(item.type)}"></i> ${item.name || 'Étape'}</h4>`; if (item.type === 'exercise') { const initialReps = item.reps ?? 0; const actualReps = item.actualReps ?? initialReps; const initialWeight = item.weight ?? 0; const actualWeight = item.actualWeight ?? initialWeight; contentHtml += ` <label for="reps-${index}">Reps Effectuées:</label> <div class="input-container"> <button class="rep-adjust-btn" data-action="decrease" data-target="reps-${index}" aria-label="Diminuer répétitions">-</button> <input type="number" id="reps-${index}" value="${actualReps}" min="0" step="1" data-initial="${initialReps}"> <button class="rep-adjust-btn" data-action="increase" data-target="reps-${index}" aria-label="Augmenter répétitions">+</button> </div> <label for="weight-${index}">Poids (kg):</label> <div class="input-container"> <button class="rep-adjust-btn" data-action="decrease" data-target="weight-${index}" data-step="2.5" aria-label="Diminuer poids">-</button> <input type="number" id="weight-${index}" value="${actualWeight}" min="0" step="2.5" data-initial="${initialWeight}"> <button class="rep-adjust-btn" data-action="increase" data-target="weight-${index}" data-step="2.5" aria-label="Augmenter poids">+</button> </div> <div class="details-container"> <label for="notes-${index}">Notes:</label> <textarea id="notes-${index}" placeholder="Ajouter des notes sur cet exercice..." rows="1">${item.notes || ''}</textarea> </div> `; } else if (item.type === 'break') { contentHtml += `<p><i class="fas fa-clock"></i> Durée: ${formatTime(item.duration || 0)}</p>`; contentHtml += ` <div class="details-container"> <label for="notes-${index}">Notes (Pause):</label> <textarea id="notes-${index}" placeholder="Notes sur la pause..." rows="1">${item.notes || ''}</textarea> </div>`; } li.innerHTML = contentHtml; if(summaryItemsList) summaryItemsList.appendChild(li); }); if(summaryItemsList){ summaryItemsList.querySelectorAll('input[type="number"], textarea').forEach(input => { input.addEventListener('change', handleSummaryInputChange); input.addEventListener('input', handleSummaryInputChange); }); summaryItemsList.querySelectorAll('.rep-adjust-btn').forEach(button => { button.addEventListener('click', handleSummaryAdjustClick); }); } updateConfirmDiscardButtons(); if(postWorkoutSummary) postWorkoutSummary.classList.add('visible'); }
@@ -1103,14 +1460,14 @@
         let allLoadedSuccessfully = true;
         loadedWorkouts = {};
         for (const type of PROGRAM_TYPES) {
-            console.log(`Chargement du programme: ${type}...`); // Log début
+            console.log(`Chargement du programme: ${type}...`);
             programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], JSON.stringify(defaultWorkouts[type] || [], null, 2));
             if (programFileIds[type]) {
                 const content = await readFileContent(programFileIds[type]);
                 if (content !== null) {
                     try {
                         loadedWorkouts[type] = JSON.parse(content || '[]');
-                        console.log(`Programme ${type} parsé avec succès (${loadedWorkouts[type].length} étapes).`); // Log succès
+                        console.log(`Programme ${type} parsé avec succès (${loadedWorkouts[type].length} étapes).`);
                     } catch (e) {
                         console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content);
                         showMessage(`Erreur format programme ${type}. Utilisation du défaut.`, 4000, true);
@@ -1127,7 +1484,7 @@
                 loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || []));
                 allLoadedSuccessfully = false;
             }
-             console.log(`Fin du traitement pour ${type}. Success partiel: ${allLoadedSuccessfully}`); // Log fin type
+             console.log(`Fin du traitement pour ${type}. Success partiel: ${allLoadedSuccessfully}`);
         }
         console.log("Fin de la boucle de chargement des programmes (loadProgramsFromDrive). Résultat global:", allLoadedSuccessfully, "Données:", loadedWorkouts);
         return allLoadedSuccessfully; // Retourne le succès global du chargement
@@ -1296,7 +1653,7 @@
             addEventListeners();
             loadSavedTheme();
             setState('idle');
-            updateAuthUI(!!googleAccessToken);
+            updateAuthUI(!!googleAccessToken); // Met à jour l'UI initiale (déconnecté)
 
             // Lancer la vérification de l'API Google après le chargement du DOM
             checkAndInitGis();
