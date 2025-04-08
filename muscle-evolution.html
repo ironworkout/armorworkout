@@ -323,7 +323,6 @@
         'Élastique 15+25kg': 200,
         'Élastique 15+25kg + 1 haltère 5kg': 225, // Front Squat Combo
         'Élastique 15+25kg + 2x5kg haltères': 250 // Calf Raise Combo
-        // Ajouter d'autres combinaisons si nécessaire
     };
     const REPS_FACTORS = { // Clés = seuil supérieur de la plage
         12: 1.0, // 8-12
@@ -331,27 +330,12 @@
         25: 1.3, // 19-25
         Infinity: 1.4 // 26+
     };
-    // Objectifs ELO par groupe musculaire (Ajuster si nécessaire)
     const TARGET_ELO_LEVELS = {
-        'L1_MaxReps': { // Objectif atteignable principalement via reps++
-            name: "Solide via Reps 💪", targetELO: 950, // Moyenne visée
-            groups: { Pecs: 900, Back: 920, Shoulders: 865, Biceps: 940, Triceps: 865, Core: 880 }
-        },
-        'L2_TomHolland': { // Objectif nécessitant application des progressions
-            name: "Athlétique Avancé / Tom Holland Style 🕷️", targetELO: 1150, // Moyenne visée
-            groups: { Pecs: 1150, Back: 1150, Shoulders: 1150, Biceps: 1100, Triceps: 1100, Core: 950 }
-        }
-        // Ajouter L3 si besoin
+        'L1_MaxReps': { name: "Solide via Reps 💪", targetELO: 950, groups: { Pecs: 900, Back: 920, Shoulders: 865, Biceps: 940, Triceps: 865, Core: 880 } },
+        'L2_TomHolland': { name: "Athlétique Avancé / Tom Holland Style 🕷️", targetELO: 1150, groups: { Pecs: 1150, Back: 1150, Shoulders: 1150, Biceps: 1100, Triceps: 1100, Core: 950 } }
     };
     const MUSCLE_GROUPS_ORDER = ['Pecs', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Core']; // Ordre d'affichage
-    const MUSCLE_GROUP_ICONS = { // Icônes pour les cartes
-        Pecs: 'fa-user', // fa-chest n'existe pas, utiliser user ou autre
-        Back: 'fa-child-reaching', // fa-back n'existe pas
-        Shoulders: 'fa-person-burst', // fa-shoulders n'existe pas
-        Biceps: 'fa-dumbbell',
-        Triceps: 'fa-gear', // Utiliser une icône générique ou autre
-        Core: 'fa-fire'
-    };
+    const MUSCLE_GROUP_ICONS = { Pecs: 'fa-user', Back: 'fa-child-reaching', Shoulders: 'fa-person-burst', Biceps: 'fa-dumbbell', Triceps: 'fa-gear', Core: 'fa-fire' };
 
 
     // --- Éléments DOM ---
@@ -363,133 +347,156 @@
     // --- Variables d'État ---
     let googleAccessToken = null;
     let tokenClient = null;
-    let programFileIds = { Push: null, Pull: null, Legs: null }; // IDs Drive
-    let loadedPrograms = { Push: [], Pull: [], Legs: [] }; // Contenu JSON
+    let programFileIds = { Push: null, Pull: null, Legs: null };
+    let loadedPrograms = { Push: [], Pull: [], Legs: [] };
     let programsLoaded = false;
-    let currentELOValues = {}; // { Pecs: 900, Back: 910, ... }
+    let currentELOValues = {};
     let overallAvgELO = 0;
-    let currentGoalLevel = 'L1_MaxReps'; // Le niveau actuel visé
+    let currentGoalLevel = 'L1_MaxReps';
     let currentTheme = 'dark';
     let messageTimeoutId = null;
     let gisCheckRetries = 0;
 
     // --- Audio (Minime ici) ---
     let audioContext = null;
-    function initAudioContext() { /* ... (Code identique) ... */ }
+    function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
 
     // --- Google Identity Services (GIS) & Drive API (Identiques Editor) ---
-    async function gisInitInternal() { /* ... (Code identique) ... */ console.log(">>> gisInitInternal appelée (Evolution)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Evolution)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Evolution)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Evolution)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Evolution):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Evolution) - Fin d'exécution"); }
-    function checkAndInitGis() { /* ... (Code identique) ... */ console.log(`Vérification GIS (Evolution - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Evolution)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Evolution) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
-    function handleTokenError(error) { /* ... (Code identique) ... */ console.error("Erreur Google Token Client (Evolution):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } /* ... (gestion erreurs spécifiques identique) ... */ showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
-    async function tokenCallback(tokenResponse) { // Adapté pour l'évolution
-        if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; }
-        if (tokenResponse.error) { handleTokenError(tokenResponse); return; }
-        if (tokenResponse && tokenResponse.access_token) {
-            console.log("Access Token reçu (Evolution).");
-            googleAccessToken = tokenResponse.access_token;
-            showMessage("Connecté ! Analyse des programmes...", 2500);
-            if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); }
-            if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Analyse des programmes en cours...</p>'; // Message pendant chargement
+    async function gisInitInternal() { console.log(">>> gisInitInternal appelée (Evolution)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Evolution)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Evolution)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Evolution)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Evolution):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Evolution) - Fin d'exécution"); }
+    function checkAndInitGis() { console.log(`Vérification GIS (Evolution - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Evolution)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Evolution) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function handleTokenError(error) { console.error("Erreur Google Token Client (Evolution):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu (Evolution)."); googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Analyse des programmes...", 2500); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Analyse des programmes en cours...</p>'; try { programsLoaded = await loadProgramsFromDrive(); if (programsLoaded) { showMessage("Programmes analysés. Affichage de l'évolution...", 3000); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } calculateAndDisplayEvolution(); } else { showMessage("Erreur chargement programmes. Impossible d'analyser l'évolution.", 5000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Impossible de charger les programmes depuis Drive.</p>'; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement/analyse des programmes (Evolution):", error); showMessage("Erreur majeure lors de l'analyse des programmes.", 6000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Analyse'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Erreur lors de l\'analyse des programmes.</p>'; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Evolution)." }); } }
+    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Evolution)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
+    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Evolution)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Evolution).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentELOValues = {}; overallAvgELO = 0; currentGoalLevel = 'L1_MaxReps'; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; updateAuthUI(false); }); }
+    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { console.log(`Drive (Evolution): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Evolution): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Evolution): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Evolution): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Evolution): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Evolution): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Evolution): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); // Note: updateFileContent n'est pas défini ici, mais la logique serait d'écrire le defaultContent
+        // Pour cette page read-only, on peut juste retourner l'ID créé
+        // const writeSuccess = await updateFileContent(newFileId, defaultContent); // Supposons qu'elle existe et fonctionne
+        // if (writeSuccess) { console.log(`Drive (Evolution): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Evolution): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; }
+        console.log(`Drive (Evolution): Fichier ${filename} créé (ID: ${newFileId}). Contenu par défaut PAS écrit (page read-only).`); return newFileId; // Retourne l'ID même si écriture échoue ici
+         } catch (error) { console.error(`Erreur Drive (Evolution - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
+    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) { console.warn("readFileContent (Evolution): Pas de token ou d'ID."); return null; } console.log(`Drive (Evolution): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Evolution): Fichier non trouvé (404).`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Evolution): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Evolution): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Evolution - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
 
-            try {
-                programsLoaded = await loadProgramsFromDrive(); // Charge les 3 programmes
-                if (programsLoaded) {
-                     showMessage("Programmes analysés. Affichage de l'évolution...", 3000);
-                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
-                     // Calculer et afficher l'évolution
-                     calculateAndDisplayEvolution();
-                } else {
-                    showMessage("Erreur chargement programmes. Impossible d'analyser l'évolution.", 5000, true);
-                     if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
-                     if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Impossible de charger les programmes depuis Drive.</p>';
-                }
-            } catch (error) {
-                console.error("Erreur CRITIQUE pendant le chargement/analyse des programmes (Evolution):", error);
-                showMessage("Erreur majeure lors de l'analyse des programmes.", 6000, true);
-                if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Analyse'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
-                programsLoaded = false;
-                if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Erreur lors de l\'analyse des programmes.</p>';
-            } finally {
-                updateAuthUI(true); // Mettre à jour l'UI à la fin
-            }
-        } else {
-            handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Evolution)." });
-        }
-    }
-    function handleAuthClick() { /* ... (Code identique) ... */ initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Evolution)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { /* ... (Code identique Editor) ... */ const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Evolution)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Evolution).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentELOValues = {}; overallAvgELO = 0; currentGoalLevel = 'L1_MaxReps'; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; // Vider l'affichage if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; updateAuthUI(false); }); }
-    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { /* ... (Code identique) ... */ console.log(`Drive (Evolution): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Evolution): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Evolution): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Evolution): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Evolution): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Evolution): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Evolution): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultContent); if (writeSuccess) { console.log(`Drive (Evolution): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Evolution): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; } } catch (error) { console.error(`Erreur Drive (Evolution - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
-    async function readFileContent(fileId) { /* ... (Code identique) ... */ if (!googleAccessToken || !fileId) { console.warn("readFileContent (Evolution): Pas de token ou d'ID."); return null; } console.log(`Drive (Evolution): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Evolution): Fichier non trouvé (404).`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Evolution): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Evolution): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Evolution - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
-    // updateFileContent n'est pas nécessaire sur cette page (lecture seule)
+    // --- Chargement des Programmes ---
+    async function loadProgramsFromDrive() {
+        if (!googleAccessToken) return false;
+        console.log("Chargement des programmes depuis Drive (Evolution)...");
+        let allLoadedSuccessfully = true;
+        const tempLoadedPrograms = {};
+        for (const type of PROGRAM_TYPES) { // Boucle commence
+            console.log(`Chargement programme: ${type}...`);
+            const defaultJsonString = JSON.stringify([], null, 2); // Défaut si échec
+            programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString);
 
-    // --- Chargement des Programmes (Identique Editor) ---
-    async function loadProgramsFromDrive() { /* ... (Code identique Editor) ... */ if (!googleAccessToken) return false; console.log("Chargement des programmes depuis Drive (Evolution)..."); let allLoadedSuccessfully = true; const tempLoadedPrograms = {}; for (const type of PROGRAM_TYPES) { console.log(`Chargement programme: ${type}...`); const defaultJsonString = JSON.stringify([], null, 2); // Un programme vide par défaut si création échoue programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString); if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const parsedContent = JSON.parse(content || '[]'); // Essayer de parser, sinon tableau vide tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : []; if (tempLoadedPrograms[type].length === 0) console.warn(`Programme ${type} chargé mais vide ou invalide.`); else console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`); } catch (e) { console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content); showMessage(`Erreur format programme ${type}. Analyse impossible.`, 4000, true); tempLoadedPrograms[type] = []; // Tableau vide en cas d'erreur allLoadedSuccessfully = false; } } else { console.warn(`Lecture programme ${type} échouée. Utilisation d'un programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } else { console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation d'un programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } loadedPrograms = tempLoadedPrograms; console.log("Fin chargement programmes (Evolution). Global success:", allLoadedSuccessfully); return allLoadedSuccessfully; }
+            if (programFileIds[type]) { // Si on a un ID de fichier
+                const content = await readFileContent(programFileIds[type]);
+                if (content !== null) { // Si la lecture a réussi
+                    try { // Tentative de parsing
+                        const parsedContent = JSON.parse(content || '[]'); // Parser, ou tableau vide si contenu vide
+                        tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : []; // Assurer que c'est un tableau
+                        if (tempLoadedPrograms[type].length === 0) console.warn(`Programme ${type} chargé mais vide ou invalide.`);
+                        else console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`);
+                    } // <<< CORRECTION: Accolade fermante ajoutée pour le bloc TRY
+                    catch (e) { // Gestion de l'erreur de parsing
+                        console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content);
+                        showMessage(`Erreur format programme ${type}. Analyse impossible.`, 4000, true);
+                        tempLoadedPrograms[type] = []; // Tableau vide en cas d'erreur
+                        allLoadedSuccessfully = false;
+                    } // Fin du catch
+                } else { // Si la lecture a échoué (content === null)
+                    console.warn(`Lecture programme ${type} échouée. Utilisation d'un programme vide.`);
+                    tempLoadedPrograms[type] = [];
+                    allLoadedSuccessfully = false;
+                } // Fin du if (content !== null)
+            } else { // Si on n'a pas obtenu d'ID de fichier
+                console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation d'un programme vide.`);
+                tempLoadedPrograms[type] = [];
+                allLoadedSuccessfully = false;
+            } // Fin du if (programFileIds[type])
+        } // Fin de la boucle FOR
+
+        loadedPrograms = tempLoadedPrograms; // Assigner à la variable globale
+        console.log("Fin chargement programmes (Evolution). Global success:", allLoadedSuccessfully);
+        return allLoadedSuccessfully;
+    } // Fin de la fonction loadProgramsFromDrive
+
 
     // --- Logique de Calcul et Affichage ELO ---
 
     function getRepsFactor(reps) {
-        if (!reps || reps < 8) return 0.8;
-        for (const threshold in REPS_FACTORS) {
-            if (reps <= threshold) {
-                return REPS_FACTORS[threshold];
-            }
+        if (reps === null || reps === undefined || reps < 8) return 0.8; // Si null/undefined ou < 8
+        // Recherche du premier seuil supérieur ou égal
+        const thresholds = Object.keys(REPS_FACTORS).map(Number).sort((a, b) => a - b);
+        for (const threshold of thresholds) {
+             if (reps <= threshold) {
+                 return REPS_FACTORS[threshold];
+             }
         }
-        return 1.4; // Default for very high reps
+        return 1.4; // Pour les valeurs > dernier seuil (Infinity)
     }
 
     function calculateExerciseELO(step) {
-        if (step.type !== 'exercise') return 0; // Seuls les exercices ont un ELO
+        if (step.type !== 'exercise') return 0;
 
         const base = ELO_BASE;
         let bonusResistance = 0;
         let bonusReps = 0;
 
-        // Trouver le Bonus Résistance basé sur 'equipment' ou 'weight'
         const equipmentString = step.equipment || '';
-        let foundBonus = false;
+        let matchedKey = null;
+        let maxBonus = 0;
+        // Trouver la correspondance la plus spécifique/élevée pour la résistance
         for (const key in RESISTANCE_BONUS) {
-            // Cherche la clé la plus spécifique qui correspond
-            if (equipmentString.includes(key)) {
-                 bonusResistance = Math.max(bonusResistance, RESISTANCE_BONUS[key]); // Prend le bonus le plus élevé si plusieurs clés correspondent (ex: "Elastique 15+25kg" contient "Elastique 15kg")
-                 foundBonus = true;
-            }
+             if (equipmentString.includes(key) && RESISTANCE_BONUS[key] > maxBonus) {
+                 maxBonus = RESISTANCE_BONUS[key];
+                 matchedKey = key; // Retenir la clé correspondante
+             }
         }
-         // Fallback si non trouvé via equipment, essayer weight (moins fiable)
-         if (!foundBonus && step.weight !== null && step.weight !== undefined) {
+        bonusResistance = maxBonus; // Assigner le meilleur bonus trouvé
+
+        // Fallback si rien trouvé via equipment (moins précis)
+        if (bonusResistance === 0 && step.weight !== null && step.weight !== undefined) {
+             console.warn(`ELO Calc (${step.name}): Résistance non trouvée via 'equipment' ("${equipmentString}"). Utilisation de 'weight' (${step.weight}) comme fallback.`);
              if (step.weight === 0) bonusResistance = RESISTANCE_BONUS['Bodyweight'] || 75;
              else if (step.weight === 10) bonusResistance = RESISTANCE_BONUS['Haltères 5kg'] || 50;
              else if (step.weight === 15) bonusResistance = RESISTANCE_BONUS['Élastique 15kg'] || 50;
              else if (step.weight === 25) bonusResistance = RESISTANCE_BONUS['Élastique 25kg'] || 125;
              else if (step.weight === 40) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg'] || 200;
-              // Ajouter d'autres poids si nécessaire
-         }
-
+             else if (step.weight === 45) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 1 haltère 5kg'] || 225;
+             else if (step.weight === 50) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 2x5kg haltères'] || 250;
+             else bonusResistance = step.weight * 2; // Estimation très grossière
+        }
 
         // Calculer Bonus Répétitions
         if (bonusResistance > 0 && step.reps !== null && step.reps !== undefined) {
             const reps = step.reps;
             const repsFactor = getRepsFactor(reps);
-            bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0); // Assurer >= 0
+            bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0);
         }
 
         const elo = Math.round(base + bonusResistance + bonusReps);
-        // console.log(`ELO Calc: ${step.name} (Reps: ${step.reps}, Equip: ${equipmentString}, BR: ${bonusResistance}, FR: ${getRepsFactor(step.reps)}, BRp: ${bonusReps.toFixed(1)}) -> ELO: ${elo}`);
+        // console.log(`ELO Calc: ${step.name} (Reps: ${step.reps}, Equip: ${equipmentString}, Key: ${matchedKey}, BR: ${bonusResistance}, FR: ${getRepsFactor(step.reps)}, BRp: ${bonusReps.toFixed(1)}) -> ELO: ${elo}`);
         return elo;
     }
 
     function mapExerciseToMuscleGroup(exerciseName) {
-        const name = exerciseName.toLowerCase();
-        // TODO: Améliorer cette logique de mapping, la rendre plus robuste
-        if (name.includes('press') || name.includes('pecs') || name.includes('pompe')) return ['Pecs', 'Shoulders', 'Triceps'];
-        if (name.includes('row') || name.includes('pulldown')) return ['Back', 'Biceps'];
-        if (name.includes('face pull')) return ['Back', 'Shoulders'];
-        if (name.includes('curl') || name.includes('bicep')) return ['Biceps'];
-        if (name.includes('tricep') || name.includes('extension')) return ['Triceps'];
-        if (name.includes('lateral raise') || name.includes('ohp') || name.includes('overhead press')) return ['Shoulders'];
-        if (name.includes('squat') || name.includes('fente') || name.includes('calf')) return ['Legs']; // Exclu du haut du corps
-        if (name.includes('sit-up') || name.includes('hollow') || name.includes('leg raise') || name.includes('planche') || name.includes('core') || name.includes('abdo')) return ['Core'];
-        return []; // Groupe inconnu ou non ciblé
+        const name = (exerciseName || '').toLowerCase(); // Gérer nom undefined/null
+        if (!name) return [];
+
+        // Logique de mapping plus précise
+        if (name.includes('press') || name.includes('pecs') || name.includes('pompe')) return ['Pecs']; // Focus Pecs
+        if (name.includes('row') || name.includes('pulldown')) return ['Back']; // Focus Dos
+        if (name.includes('face pull')) return ['Back', 'Shoulders']; // Cible les deux
+        if (name.includes('curl') || name.includes('bicep')) return ['Biceps']; // Focus Biceps
+        if (name.includes('tricep') || name.includes('extension')) return ['Triceps']; // Focus Triceps
+        if (name.includes('lateral raise')) return ['Shoulders']; // Focus Epaules (lat)
+        if (name.includes('ohp') || name.includes('overhead press')) return ['Shoulders', 'Triceps']; // Cible les deux
+        if (name.includes('squat') || name.includes('fente') || name.includes('calf')) return ['Legs']; // Jambes
+        if (name.includes('sit-up') || name.includes('hollow') || name.includes('leg raise') || name.includes('planche') || name.includes('core') || name.includes('abdo')) return ['Core']; // Core
+
+        console.warn(`Groupe musculaire non mappé pour : "${exerciseName}"`);
+        return [];
     }
+
 
     function analyzeProgramsAndCalculateELO() {
         console.log("Analyse des programmes et calcul ELO...");
@@ -497,50 +504,33 @@
         currentELOValues = { Pecs: ELO_BASE, Back: ELO_BASE, Shoulders: ELO_BASE, Biceps: ELO_BASE, Triceps: ELO_BASE, Core: ELO_BASE }; // Reset avec base
         overallAvgELO = ELO_BASE;
 
-        if (!programsLoaded) {
-            console.warn("Programmes non chargés, analyse annulée.");
-            return;
-        }
+        if (!programsLoaded) { console.warn("Programmes non chargés, analyse annulée."); return; }
 
         PROGRAM_TYPES.forEach(type => {
-            if (!loadedPrograms[type] || loadedPrograms[type].length === 0) {
-                 console.warn(`Programme ${type} est vide ou non chargé, ignoré.`);
-                 return; // Passer au suivant si programme vide
-            }
+            if (!loadedPrograms[type] || loadedPrograms[type].length === 0) { console.warn(`Programme ${type} est vide ou non chargé, ignoré.`); return; }
             loadedPrograms[type].forEach(step => {
                 if (step.type === 'exercise') {
                     const elo = calculateExerciseELO(step);
                     if (elo > 0) {
                         const groups = mapExerciseToMuscleGroup(step.name);
                         groups.forEach(group => {
-                            if (eloDataByGroup[group]) {
-                                eloDataByGroup[group].push(elo);
-                            }
+                            if (eloDataByGroup[group]) { eloDataByGroup[group].push(elo); }
                         });
                     }
                 }
             });
         });
 
-        // Calculer les moyennes
-        let totalEloSum = 0;
-        let groupCount = 0;
+        let totalEloSum = 0; let groupCount = 0;
         MUSCLE_GROUPS_ORDER.forEach(group => {
             const elos = eloDataByGroup[group];
             if (elos && elos.length > 0) {
                 const avg = elos.reduce((sum, val) => sum + val, 0) / elos.length;
                 currentELOValues[group] = Math.round(avg);
-                // Inclure dans la moyenne globale uniquement les groupes du haut du corps
-                if (group !== 'Legs') { // Exclure Legs de la moyenne globale
-                     totalEloSum += avg;
-                     groupCount++;
-                }
+                if (group !== 'Legs') { totalEloSum += avg; groupCount++; }
             } else {
-                currentELOValues[group] = ELO_BASE; // Garder base si aucun exo trouvé
-                 if (group !== 'Legs') {
-                     totalEloSum += ELO_BASE;
-                     groupCount++;
-                 }
+                currentELOValues[group] = ELO_BASE;
+                 if (group !== 'Legs') { totalEloSum += ELO_BASE; groupCount++; }
             }
         });
 
@@ -550,43 +540,46 @@
     }
 
     function determineCurrentGoalLevel() {
-         // Simple: si l'ELO moyen dépasse le L1, on vise L2. Sinon on vise L1.
+         // Si l'ELO moyen dépasse ou égale la cible L1, on vise L2.
          if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps.targetELO || 950)) {
-             return 'L2_TomHolland';
+             // Vérifier si L2 existe avant de le définir comme cible
+             if (TARGET_ELO_LEVELS.L2_TomHolland) {
+                 return 'L2_TomHolland';
+             }
          }
-         return 'L1_MaxReps';
+         return 'L1_MaxReps'; // Sinon (ou si L2 n'existe pas), on vise L1
     }
 
     function calculateAndDisplayEvolution() {
         if (!evolutionTrackerArea || !overallEloDisplay || !goalInfo || !muscleGroupsContainer) return;
 
-        analyzeProgramsAndCalculateELO(); // Recalculer les ELOs actuels
+        analyzeProgramsAndCalculateELO();
 
         currentGoalLevel = determineCurrentGoalLevel();
         const currentGoal = TARGET_ELO_LEVELS[currentGoalLevel];
-        const previousGoal = (currentGoalLevel === 'L2_TomHolland') ? TARGET_ELO_LEVELS['L1_MaxReps'] : { targetELO: ELO_BASE, groups: {} }; // Si L1, le point de départ est ELO_BASE
+        // Définir le point de départ pour le % : si L1, c'est ELO_BASE, si L2, c'est la cible L1
+        const previousGoalLevelKey = currentGoalLevel === 'L1_MaxReps' ? null : 'L1_MaxReps';
+        const previousGoal = previousGoalLevelKey ? TARGET_ELO_LEVELS[previousGoalLevelKey] : { targetELO: ELO_BASE, groups: {} };
 
-        // Afficher ELO Global et Objectif
+
         overallEloDisplay.innerHTML = `${overallAvgELO} <span>ELO Moyen (Haut du Corps)</span>`;
         goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal.name}</span> (ELO Cible Moyen <span class="target-elo-value">${currentGoal.targetELO}</span>)`;
 
-        // Afficher les cartes par groupe
-        muscleGroupsContainer.innerHTML = ''; // Vider
+        muscleGroupsContainer.innerHTML = '';
         MUSCLE_GROUPS_ORDER.forEach(group => {
-             if (group === 'Legs') return; // On ignore les jambes pour l'affichage haut du corps
+             if (group === 'Legs') return; // Ignorer les jambes
 
              const currentAvgELO = currentELOValues[group] || ELO_BASE;
-             const targetELO = currentGoal.groups[group] || currentGoal.targetELO; // ELO cible pour ce groupe dans ce niveau
-             // Déterminer le point de départ pour le calcul du %
+             const targetELO = currentGoal.groups[group] || currentGoal.targetELO;
              const stageStartELO = previousGoal.groups[group] || previousGoal.targetELO || ELO_BASE;
 
              let progressPercent = 0;
              if (targetELO > stageStartELO) {
                  progressPercent = ((currentAvgELO - stageStartELO) / (targetELO - stageStartELO)) * 100;
              } else if (currentAvgELO >= targetELO) {
-                 progressPercent = 100; // Si cible atteinte ou dépassée (ou si cible <= départ)
+                 progressPercent = 100;
              }
-             progressPercent = Math.max(0, Math.min(100, Math.round(progressPercent))); // Borner entre 0 et 100
+             progressPercent = Math.max(0, Math.min(100, Math.round(progressPercent)));
 
              const card = renderMuscleGroupCard(group, currentAvgELO, targetELO, progressPercent);
              muscleGroupsContainer.appendChild(card);
@@ -596,7 +589,6 @@
     function renderMuscleGroupCard(groupName, currentElo, targetElo, progressPercent) {
         const card = document.createElement('div');
         card.className = 'muscle-group-card';
-
         const iconClass = MUSCLE_GROUP_ICONS[groupName] || 'fa-question-circle';
 
         card.innerHTML = `
@@ -608,12 +600,18 @@
                 <span class="current-elo">${currentElo}</span>
                 <span class="target-elo">Objectif: <strong>${targetElo}</strong></span>
             </div>
-            <div class="progress-bar-container" title="${progressPercent}% vers l'objectif">
+            <div class="progress-bar-container" title="${progressPercent}% vers l'objectif ELO ${targetElo}">
                 <div class="progress-bar" style="width: ${progressPercent}%;">
                      <span class="progress-percentage">${progressPercent}%</span>
                 </div>
             </div>
         `;
+        // Déclencher la transition après un court délai pour l'animation initiale
+         setTimeout(() => {
+             const progressBar = card.querySelector('.progress-bar');
+             if (progressBar) progressBar.style.width = `${progressPercent}%`;
+         }, 100);
+
         return card;
     }
 
@@ -625,6 +623,7 @@
         body.classList.toggle('logged-out', !isLoggedIn);
 
         if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block';
+         // Afficher la zone principale seulement si loggué ET programmes chargés
         if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none';
 
         if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient;
@@ -637,7 +636,6 @@
              if (!isLoggedIn) driveStatusElement.textContent = '';
         }
 
-        // Si déconnecté, réinitialiser l'affichage
         if (!isLoggedIn) {
              if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '';
              if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>';
@@ -646,12 +644,12 @@
     }
 
     // --- Gestion Thème (Identique) ---
-    function applyTheme(theme) { /* ... (Code identique) ... */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution):", e); } }
-    function toggleTheme() { /* ... (Code identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
-    function loadSavedTheme() { /* ... (Code identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution):", e); } applyTheme(savedTheme); }
+    function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution):", e); } }
+    function toggleTheme() { const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
+    function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution):", e); } applyTheme(savedTheme); }
 
     // --- Message Area (Identique) ---
-    function showMessage(msg, duration = 3000, isError = false) { /* ... (Code identique) ... */ if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
+    function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
 
 
     // --- Initialisation ---
@@ -677,7 +675,6 @@
          if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
          if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick);
          if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
-         // Pas d'autres listeners spécifiques à cette page pour l'instant
          console.log("Event Listeners ajoutés (Evolution).");
     }
 
@@ -702,7 +699,7 @@
                 body.prepend(errorDiv);
              }
         }
-    });
+    }); // Fin du DOMContentLoaded listener
 
 </script>
 
