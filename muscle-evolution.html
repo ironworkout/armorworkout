@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArmorWorkout - Suivi Évolution Musculaire</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Google Identity Services (GIS) -->
+    <style>
+        /* --- Variables Globales & Thèmes (Identiques aux autres pages) --- */
+        :root {
+            /* Thème Sombre */
+            --bg-color-dark: #0D1117; --secondary-bg-color-dark: #161B22; --primary-text-color-dark: #c9d1d9; --secondary-text-color-dark: #8b949e; --border-color-dark: #30363d; --accent-border-color-dark: #58a6ff33; --input-bg-dark: #0d1117;
+            /* Couleurs Néon */
+            --neon-blue: #58a6ff; --neon-pink: #f778ba; --neon-red: #ff7b72; --neon-yellow: #facc15; --neon-green: #3fb950; --neon-purple: #bc8cff; --neon-orange: #f9a825;
+            /* Glows */
+            --glow-blue: 0 0 12px rgba(88, 166, 255, 0.6); --glow-pink: 0 0 12px rgba(247, 120, 186, 0.6); --glow-red: 0 0 10px rgba(255, 123, 114, 0.6); --glow-yellow: 0 0 10px rgba(250, 204, 21, 0.5); --glow-green: 0 0 10px rgba(63, 185, 80, 0.6); --glow-purple: 0 0 12px rgba(188, 140, 255, 0.6); --glow-orange: 0 0 10px rgba(249, 168, 37, 0.6);
+            /* Autres */
+            --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --border-radius-lg: 12px; --border-radius-md: 8px; --border-radius-sm: 6px; --transition-speed: 0.25s;
+            /* Défaut Sombre */
+            --bg-color: var(--bg-color-dark); --secondary-bg-color: var(--secondary-bg-color-dark); --primary-text-color: var(--primary-text-color-dark); --secondary-text-color: var(--secondary-text-color-dark); --border-color: var(--border-color-dark); --accent-border-color: var(--accent-border-color-dark); --input-bg: var(--input-bg-dark);
+             /* RGBA */
+             --neon-blue-rgb: 88, 166, 255; --neon-pink-rgb: 247, 120, 186; --neon-red-rgb: 255, 123, 114; --neon-yellow-rgb: 250, 204, 21; --neon-green-rgb: 63, 185, 80; --neon-purple-rgb: 188, 140, 255; --neon-orange-rgb: 249, 168, 37;
+            --secondary-text-color-dark-rgb: 139, 148, 158; --bg-color-dark-rgb: 13, 17, 23; --secondary-bg-color-dark-rgb: 22, 27, 34; --primary-text-color-dark-rgb: 201, 209, 217;
+             --link-color: var(--neon-blue);
+             --button-connect-color: var(--neon-green); --button-connect-glow: var(--glow-green); --button-disconnect-color: var(--neon-red); --button-disconnect-glow: var(--glow-red);
+             /* Couleurs Progression */
+             --progress-bar-bg: rgba(var(--primary-text-color-dark-rgb), 0.1);
+             --progress-bar-fill: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+        }
+        body.light-theme {
+            /* Thème Clair */
+            --bg-color: #ffffff; --secondary-bg-color: #f6f8fa; --primary-text-color: #24292f; --secondary-text-color: #57606a; --border-color: #d0d7de; --accent-border-color: #0969da33; --input-bg: #f6f8fa;
+            --neon-blue: #0969da; --neon-pink: #bf3989; --neon-red: #d73a49; --neon-yellow: #dbab09; --neon-green: #2da44e; --neon-purple: #8250df; --neon-orange: #f66a0a;
+            --glow-blue: 0 0 8px rgba(9, 105, 218, 0.3); --glow-pink: 0 0 8px rgba(191, 57, 137, 0.3); --glow-red: 0 0 8px rgba(215, 58, 73, 0.3); --glow-yellow: 0 0 8px rgba(219, 171, 9, 0.3); --glow-green: 0 0 8px rgba(45, 164, 78, 0.3); --glow-purple: 0 0 8px rgba(130, 80, 223, 0.3); --glow-orange: 0 0 8px rgba(246, 106, 10, 0.3);
+             --link-color: #0969da;
+            --bg-color-dark-rgb: 255, 255, 255; --secondary-bg-color-dark-rgb: 246, 248, 250; --primary-text-color-dark-rgb: 36, 41, 47; --secondary-text-color-dark-rgb: 87, 96, 106;
+             --neon-orange-rgb: 246, 106, 10;
+             --progress-bar-bg: #e1e4e8;
+        }
+
+        /* --- Styles de Base & Réinitialisation (Identiques) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--primary-text-color); line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; display: flex; flex-direction: column; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+        .container { max-width: 950px; margin: 0 auto; padding: 30px 20px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
+
+        /* --- En-tête (Identique Editor) --- */
+        header { padding: 15px 0; border-bottom: 1px solid var(--border-color); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; position: sticky; top: 0; z-index: 1000; background-color: rgba(var(--bg-color-dark-rgb), 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 25px; flex-wrap: wrap; gap: 15px 20px; }
+        header h1 { font-size: 1.5em; color: var(--primary-text-color); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        header h1 i { color: var(--neon-blue); animation: pulse 2s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .header-link { color: var(--secondary-text-color); font-size: 0.9em; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: color var(--transition-speed) ease; }
+        .header-link:hover { color: var(--link-color); }
+        .header-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .auth-controls { display: flex; gap: 10px; align-items: center; }
+        .auth-controls button { background: none; border: 1px solid var(--accent-border-color); color: var(--secondary-text-color); padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 0.85em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px; }
+        .auth-controls button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; background-color: transparent !important; }
+        .auth-controls button:not(:disabled):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
+        #signin-button { border-color: var(--button-connect-color); color: var(--button-connect-color); }
+        #signin-button:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
+        #signout-button { border-color: var(--button-disconnect-color); color: var(--button-disconnect-color); }
+        #signout-button:not(:disabled):hover { background-color: rgba(var(--neon-red-rgb), 0.1); box-shadow: var(--glow-red); border-color: var(--neon-red); }
+        #drive-status { font-size: 0.8em; color: var(--secondary-text-color); margin-left: 5px; transition: opacity 0.3s, color 0.3s, border-color 0.3s; min-width: fit-content; text-align: right; font-style: normal; padding: 4px 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none; }
+        #drive-status.loading { color: var(--neon-yellow); border-color: var(--neon-yellow); animation: blink-border 1.5s infinite ease-in-out; }
+        #drive-status.error { color: var(--neon-red); border-color: var(--neon-red); }
+        #drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
+        @keyframes blink-border { 50% { border-color: rgba(var(--neon-yellow-rgb), 0.4); } }
+        .theme-toggle button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.2em; padding: 5px; cursor: pointer; transition: color var(--transition-speed) ease; }
+        .theme-toggle button:hover { color: var(--neon-yellow); }
+        body.logged-out #signin-button { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-out #drive-status { display: none; }
+        body.logged-in #signin-button { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-in #drive-status { display: inline-block; }
+
+        /* --- Contenu Principal --- */
+        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
+        main h2 { font-size: 1.6em; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--primary-text-color); display: flex; align-items: center; gap: 10px; justify-content: center;}
+        main h2 i { color: var(--neon-purple); } /* Violet pour Evolution */
+
+        /* Message si non connecté (Identique Editor) */
+        #connection-prompt { text-align: center; padding: 40px 20px; background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); border: 1px dashed var(--border-color); margin: 20px auto; max-width: 600px; }
+        #connection-prompt p { margin-bottom: 15px; color: var(--secondary-text-color); }
+        #connection-prompt button { border-color: var(--button-connect-color); color: var(--button-connect-color); background: transparent; padding: 8px 18px; border: 1px solid; border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px; }
+        #connection-prompt button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; background-color: transparent !important; }
+        #connection-prompt button:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
+
+        /* Zone de l'éditeur (cachée si non connecté) */
+        #evolution-tracker-area {
+            width: 100%;
+            background-color: var(--secondary-bg-color);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 30px 25px;
+            display: none; /* Caché par défaut */
+            flex-direction: column;
+            gap: 35px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        body.logged-in #evolution-tracker-area { display: flex; }
+
+        /* Affichage ELO Global et Objectif */
+        .global-stats {
+            text-align: center; margin-bottom: 20px; padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #overall-elo-display { font-size: 2.2em; font-weight: 900; color: var(--neon-purple); margin-bottom: 5px; line-height: 1.1;}
+        #overall-elo-display span { font-size: 0.5em; font-weight: 500; color: var(--secondary-text-color); display: block; }
+        #goal-info { font-size: 1.1em; color: var(--primary-text-color); font-weight: 500; }
+        #goal-info .target-level { color: var(--neon-green); font-weight: 700; }
+        #goal-info .target-elo-value { font-weight: 700; }
+
+        /* Conteneur des cartes de groupes musculaires */
+        #muscle-groups-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+            gap: 25px;
+        }
+
+        /* Carte pour un groupe musculaire */
+        .muscle-group-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all var(--transition-speed) ease;
+        }
+        .muscle-group-card:hover {
+            border-color: var(--accent-border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .muscle-group-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 5px;
+        }
+        .muscle-group-header i {
+            font-size: 1.4em;
+            width: 25px; text-align: center;
+            color: var(--neon-orange); /* Couleur pour les icônes de groupe */
+        }
+        .muscle-group-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primary-text-color);
+        }
+        .elo-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.9em;
+            color: var(--secondary-text-color);
+        }
+        .current-elo { font-weight: 700; font-size: 1.1em; color: var(--neon-blue); }
+        .target-elo { font-weight: 500; }
+        .target-elo strong { color: var(--neon-green); }
+
+        /* Barre de progression */
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: var(--progress-bar-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid var(--border-color); /* Légère bordure */
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Modifié par JS */
+            background: var(--progress-bar-fill);
+            border-radius: 6px;
+            transition: width 0.5s ease-out;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+        .progress-bar::after { /* Effet de brillance subtil */
+             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+             background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+             opacity: 0.5;
+        }
+        .progress-percentage {
+            font-size: 0.8em;
+            font-weight: 700;
+            color: white;
+            margin-right: 8px;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+            z-index: 1;
+            line-height: 12px; /* Aligner verticalement */
+            opacity: 0; /* Caché si barre vide */
+            transition: opacity 0.3s ease;
+        }
+         .progress-bar:not([style*="width: 0%"]) .progress-percentage {
+             opacity: 1;
+         }
+
+
+        /* --- Zone de Messages Flottante (Identique) --- */
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
+
+        /* --- Pied de Page (Identique) --- */
+        footer { color: var(--secondary-text-color); opacity: 0.7; border-top: 1px solid var(--border-color); margin-top: 60px; padding: 25px; text-align: center; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; }
+        footer a { color: var(--link-color); text-decoration: none; transition: color var(--transition-speed) ease; }
+        footer a:hover { color: var(--primary-text-color); text-decoration: underline; }
+        footer .fab.fa-google-drive { color: #4CAF50; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+             .container { padding: 20px 15px; }
+             main h2 { font-size: 1.4em; }
+             .global-stats { margin-bottom: 15px; padding-bottom: 15px; }
+             #overall-elo-display { font-size: 1.8em; }
+             #goal-info { font-size: 1em; }
+             #muscle-groups-container { grid-template-columns: 1fr; gap: 20px; } /* Une colonne sur mobile */
+             .muscle-group-card { padding: 15px; }
+             .muscle-group-title { font-size: 1.1em; }
+        }
+         @media (max-width: 480px) {
+             .header-content { padding: 0 15px; }
+             .header-actions { gap: 10px; }
+             .auth-controls button { padding: 5px 10px; font-size: 0.8em; }
+             main h2 { font-size: 1.3em; }
+             #overall-elo-display { font-size: 1.6em; }
+             #goal-info { font-size: 0.95em; }
+         }
+    </style>
+</head>
+<body class="logged-out dark-theme"> <!-- Initialement logged-out -->
+
+<header>
+    <div class="header-content">
+         <!-- Liens possibles vers Timer et Editeur -->
+         <div>
+             <a href="timer.html" class="header-link" style="margin-right: 15px;"><i class="fas fa-stopwatch"></i> Timer</a>
+             <a href="program-editor.html" class="header-link"><i class="fas fa-edit"></i> Éditeur</a>
+         </div>
+        <h1><i class="fas fa-shield-halved"></i> ArmorWorkout</h1>
+        <div class="header-actions">
+            <div class="auth-controls">
+                <button id="signin-button" disabled><i class="fab fa-google"></i> Connecter Drive</button>
+                <button id="signout-button" disabled><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
+            </div>
+            <span id="drive-status"></span>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <main>
+        <h2><i class="fas fa-chart-line"></i> Suivi d'Évolution</h2>
+
+        <div id="connection-prompt">
+            <p>Connectez-vous à Google Drive pour analyser vos programmes et suivre votre évolution.</p>
+            <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Connecter Drive</button>
+        </div>
+
+        <div id="evolution-tracker-area">
+            <div class="global-stats">
+                <div id="overall-elo-display">
+                    -- <span>ELO Moyen (Haut du Corps)</span>
+                </div>
+                <div id="goal-info">
+                    Objectif Actuel : <span class="target-level">Chargement...</span> (ELO <span class="target-elo-value">--</span>)
+                </div>
+            </div>
+
+            <div id="muscle-groups-container">
+                <!-- Les cartes de groupes musculaires seront générées ici -->
+                 <p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Chargement des données...</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer>
+    <p>© 2024 ArmorWorkout Evolution Tracker. Analyse basée sur vos programmes Drive.</p>
+     <p><a href="timer.html">Timer</a> | <a href="program-editor.html">Éditeur</a> | <a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> GitHub</a></p>
+</footer>
+
+<!-- Zone de Message Flottante -->
+<div id="message-area" class="message-area" role="status" aria-live="polite"></div>
+
+<!-- Google Identity Services Script -->
+<script async defer src="https://accounts.google.com/gsi/client"></script>
+
+<script>
+    // --- CONFIGURATION & CONSTANTES ---
+    const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; // **UTILISER LE MÊME CLIENT ID**
+    const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" };
+    const PROGRAM_TYPES = ['Push', 'Pull', 'Legs'];
+    const GIS_CHECK_INTERVAL = 100;
+    const GIS_MAX_RETRIES = 50;
+
+    // --- ELO PARAMETERS & TARGETS ---
+    const ELO_BASE = 800;
+    const RESISTANCE_BONUS = {
+        'Bodyweight': 75, // Pompes / Core avancé
+        'Haltères 5kg': 50, // Pour OHP/Lat raises (total 10kg)
+        'Élastique 15kg': 50,
+        'Élastique 15kg doublé': 100, // Estimation
+        'Élastique 25kg': 125,
+        'Élastique 15+25kg': 200,
+        'Élastique 15+25kg + 1 haltère 5kg': 225, // Front Squat Combo
+        'Élastique 15+25kg + 2x5kg haltères': 250 // Calf Raise Combo
+        // Ajouter d'autres combinaisons si nécessaire
+    };
+    const REPS_FACTORS = { // Clés = seuil supérieur de la plage
+        12: 1.0, // 8-12
+        18: 1.2, // 13-18
+        25: 1.3, // 19-25
+        Infinity: 1.4 // 26+
+    };
+    // Objectifs ELO par groupe musculaire (Ajuster si nécessaire)
+    const TARGET_ELO_LEVELS = {
+        'L1_MaxReps': { // Objectif atteignable principalement via reps++
+            name: "Solide via Reps 💪", targetELO: 950, // Moyenne visée
+            groups: { Pecs: 900, Back: 920, Shoulders: 865, Biceps: 940, Triceps: 865, Core: 880 }
+        },
+        'L2_TomHolland': { // Objectif nécessitant application des progressions
+            name: "Athlétique Avancé / Tom Holland Style 🕷️", targetELO: 1150, // Moyenne visée
+            groups: { Pecs: 1150, Back: 1150, Shoulders: 1150, Biceps: 1100, Triceps: 1100, Core: 950 }
+        }
+        // Ajouter L3 si besoin
+    };
+    const MUSCLE_GROUPS_ORDER = ['Pecs', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Core']; // Ordre d'affichage
+    const MUSCLE_GROUP_ICONS = { // Icônes pour les cartes
+        Pecs: 'fa-user', // fa-chest n'existe pas, utiliser user ou autre
+        Back: 'fa-child-reaching', // fa-back n'existe pas
+        Shoulders: 'fa-person-burst', // fa-shoulders n'existe pas
+        Biceps: 'fa-dumbbell',
+        Triceps: 'fa-gear', // Utiliser une icône générique ou autre
+        Core: 'fa-fire'
+    };
+
+
+    // --- Éléments DOM ---
+    let signInButton, signOutButton, driveStatusElement, themeToggleBtn,
+        signInButtonPrompt, connectionPrompt, evolutionTrackerArea,
+        overallEloDisplay, goalInfo, muscleGroupsContainer,
+        messageArea;
+
+    // --- Variables d'État ---
+    let googleAccessToken = null;
+    let tokenClient = null;
+    let programFileIds = { Push: null, Pull: null, Legs: null }; // IDs Drive
+    let loadedPrograms = { Push: [], Pull: [], Legs: [] }; // Contenu JSON
+    let programsLoaded = false;
+    let currentELOValues = {}; // { Pecs: 900, Back: 910, ... }
+    let overallAvgELO = 0;
+    let currentGoalLevel = 'L1_MaxReps'; // Le niveau actuel visé
+    let currentTheme = 'dark';
+    let messageTimeoutId = null;
+    let gisCheckRetries = 0;
+
+    // --- Audio (Minime ici) ---
+    let audioContext = null;
+    function initAudioContext() { /* ... (Code identique) ... */ }
+
+    // --- Google Identity Services (GIS) & Drive API (Identiques Editor) ---
+    async function gisInitInternal() { /* ... (Code identique) ... */ console.log(">>> gisInitInternal appelée (Evolution)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Evolution)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Evolution)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Evolution)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Evolution):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Evolution) - Fin d'exécution"); }
+    function checkAndInitGis() { /* ... (Code identique) ... */ console.log(`Vérification GIS (Evolution - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Evolution)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Evolution) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function handleTokenError(error) { /* ... (Code identique) ... */ console.error("Erreur Google Token Client (Evolution):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } /* ... (gestion erreurs spécifiques identique) ... */ showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    async function tokenCallback(tokenResponse) { // Adapté pour l'évolution
+        if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; }
+        if (tokenResponse.error) { handleTokenError(tokenResponse); return; }
+        if (tokenResponse && tokenResponse.access_token) {
+            console.log("Access Token reçu (Evolution).");
+            googleAccessToken = tokenResponse.access_token;
+            showMessage("Connecté ! Analyse des programmes...", 2500);
+            if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); }
+            if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Analyse des programmes en cours...</p>'; // Message pendant chargement
+
+            try {
+                programsLoaded = await loadProgramsFromDrive(); // Charge les 3 programmes
+                if (programsLoaded) {
+                     showMessage("Programmes analysés. Affichage de l'évolution...", 3000);
+                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
+                     // Calculer et afficher l'évolution
+                     calculateAndDisplayEvolution();
+                } else {
+                    showMessage("Erreur chargement programmes. Impossible d'analyser l'évolution.", 5000, true);
+                     if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
+                     if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Impossible de charger les programmes depuis Drive.</p>';
+                }
+            } catch (error) {
+                console.error("Erreur CRITIQUE pendant le chargement/analyse des programmes (Evolution):", error);
+                showMessage("Erreur majeure lors de l'analyse des programmes.", 6000, true);
+                if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Analyse'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
+                programsLoaded = false;
+                if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Erreur lors de l\'analyse des programmes.</p>';
+            } finally {
+                updateAuthUI(true); // Mettre à jour l'UI à la fin
+            }
+        } else {
+            handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Evolution)." });
+        }
+    }
+    function handleAuthClick() { /* ... (Code identique) ... */ initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Evolution)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
+    function handleSignoutClick(showMessages = true) { /* ... (Code identique Editor) ... */ const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Evolution)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Evolution).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentELOValues = {}; overallAvgELO = 0; currentGoalLevel = 'L1_MaxReps'; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; // Vider l'affichage if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; updateAuthUI(false); }); }
+    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { /* ... (Code identique) ... */ console.log(`Drive (Evolution): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Evolution): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Evolution): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Evolution): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Evolution): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Evolution): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Evolution): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultContent); if (writeSuccess) { console.log(`Drive (Evolution): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Evolution): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; } } catch (error) { console.error(`Erreur Drive (Evolution - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
+    async function readFileContent(fileId) { /* ... (Code identique) ... */ if (!googleAccessToken || !fileId) { console.warn("readFileContent (Evolution): Pas de token ou d'ID."); return null; } console.log(`Drive (Evolution): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Evolution): Fichier non trouvé (404).`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Evolution): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Evolution): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Evolution - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
+    // updateFileContent n'est pas nécessaire sur cette page (lecture seule)
+
+    // --- Chargement des Programmes (Identique Editor) ---
+    async function loadProgramsFromDrive() { /* ... (Code identique Editor) ... */ if (!googleAccessToken) return false; console.log("Chargement des programmes depuis Drive (Evolution)..."); let allLoadedSuccessfully = true; const tempLoadedPrograms = {}; for (const type of PROGRAM_TYPES) { console.log(`Chargement programme: ${type}...`); const defaultJsonString = JSON.stringify([], null, 2); // Un programme vide par défaut si création échoue programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString); if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const parsedContent = JSON.parse(content || '[]'); // Essayer de parser, sinon tableau vide tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : []; if (tempLoadedPrograms[type].length === 0) console.warn(`Programme ${type} chargé mais vide ou invalide.`); else console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`); } catch (e) { console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content); showMessage(`Erreur format programme ${type}. Analyse impossible.`, 4000, true); tempLoadedPrograms[type] = []; // Tableau vide en cas d'erreur allLoadedSuccessfully = false; } } else { console.warn(`Lecture programme ${type} échouée. Utilisation d'un programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } else { console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation d'un programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } loadedPrograms = tempLoadedPrograms; console.log("Fin chargement programmes (Evolution). Global success:", allLoadedSuccessfully); return allLoadedSuccessfully; }
+
+    // --- Logique de Calcul et Affichage ELO ---
+
+    function getRepsFactor(reps) {
+        if (!reps || reps < 8) return 0.8;
+        for (const threshold in REPS_FACTORS) {
+            if (reps <= threshold) {
+                return REPS_FACTORS[threshold];
+            }
+        }
+        return 1.4; // Default for very high reps
+    }
+
+    function calculateExerciseELO(step) {
+        if (step.type !== 'exercise') return 0; // Seuls les exercices ont un ELO
+
+        const base = ELO_BASE;
+        let bonusResistance = 0;
+        let bonusReps = 0;
+
+        // Trouver le Bonus Résistance basé sur 'equipment' ou 'weight'
+        const equipmentString = step.equipment || '';
+        let foundBonus = false;
+        for (const key in RESISTANCE_BONUS) {
+            // Cherche la clé la plus spécifique qui correspond
+            if (equipmentString.includes(key)) {
+                 bonusResistance = Math.max(bonusResistance, RESISTANCE_BONUS[key]); // Prend le bonus le plus élevé si plusieurs clés correspondent (ex: "Elastique 15+25kg" contient "Elastique 15kg")
+                 foundBonus = true;
+            }
+        }
+         // Fallback si non trouvé via equipment, essayer weight (moins fiable)
+         if (!foundBonus && step.weight !== null && step.weight !== undefined) {
+             if (step.weight === 0) bonusResistance = RESISTANCE_BONUS['Bodyweight'] || 75;
+             else if (step.weight === 10) bonusResistance = RESISTANCE_BONUS['Haltères 5kg'] || 50;
+             else if (step.weight === 15) bonusResistance = RESISTANCE_BONUS['Élastique 15kg'] || 50;
+             else if (step.weight === 25) bonusResistance = RESISTANCE_BONUS['Élastique 25kg'] || 125;
+             else if (step.weight === 40) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg'] || 200;
+              // Ajouter d'autres poids si nécessaire
+         }
+
+
+        // Calculer Bonus Répétitions
+        if (bonusResistance > 0 && step.reps !== null && step.reps !== undefined) {
+            const reps = step.reps;
+            const repsFactor = getRepsFactor(reps);
+            bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0); // Assurer >= 0
+        }
+
+        const elo = Math.round(base + bonusResistance + bonusReps);
+        // console.log(`ELO Calc: ${step.name} (Reps: ${step.reps}, Equip: ${equipmentString}, BR: ${bonusResistance}, FR: ${getRepsFactor(step.reps)}, BRp: ${bonusReps.toFixed(1)}) -> ELO: ${elo}`);
+        return elo;
+    }
+
+    function mapExerciseToMuscleGroup(exerciseName) {
+        const name = exerciseName.toLowerCase();
+        // TODO: Améliorer cette logique de mapping, la rendre plus robuste
+        if (name.includes('press') || name.includes('pecs') || name.includes('pompe')) return ['Pecs', 'Shoulders', 'Triceps'];
+        if (name.includes('row') || name.includes('pulldown')) return ['Back', 'Biceps'];
+        if (name.includes('face pull')) return ['Back', 'Shoulders'];
+        if (name.includes('curl') || name.includes('bicep')) return ['Biceps'];
+        if (name.includes('tricep') || name.includes('extension')) return ['Triceps'];
+        if (name.includes('lateral raise') || name.includes('ohp') || name.includes('overhead press')) return ['Shoulders'];
+        if (name.includes('squat') || name.includes('fente') || name.includes('calf')) return ['Legs']; // Exclu du haut du corps
+        if (name.includes('sit-up') || name.includes('hollow') || name.includes('leg raise') || name.includes('planche') || name.includes('core') || name.includes('abdo')) return ['Core'];
+        return []; // Groupe inconnu ou non ciblé
+    }
+
+    function analyzeProgramsAndCalculateELO() {
+        console.log("Analyse des programmes et calcul ELO...");
+        const eloDataByGroup = { Pecs: [], Back: [], Shoulders: [], Biceps: [], Triceps: [], Core: [] };
+        currentELOValues = { Pecs: ELO_BASE, Back: ELO_BASE, Shoulders: ELO_BASE, Biceps: ELO_BASE, Triceps: ELO_BASE, Core: ELO_BASE }; // Reset avec base
+        overallAvgELO = ELO_BASE;
+
+        if (!programsLoaded) {
+            console.warn("Programmes non chargés, analyse annulée.");
+            return;
+        }
+
+        PROGRAM_TYPES.forEach(type => {
+            if (!loadedPrograms[type] || loadedPrograms[type].length === 0) {
+                 console.warn(`Programme ${type} est vide ou non chargé, ignoré.`);
+                 return; // Passer au suivant si programme vide
+            }
+            loadedPrograms[type].forEach(step => {
+                if (step.type === 'exercise') {
+                    const elo = calculateExerciseELO(step);
+                    if (elo > 0) {
+                        const groups = mapExerciseToMuscleGroup(step.name);
+                        groups.forEach(group => {
+                            if (eloDataByGroup[group]) {
+                                eloDataByGroup[group].push(elo);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        // Calculer les moyennes
+        let totalEloSum = 0;
+        let groupCount = 0;
+        MUSCLE_GROUPS_ORDER.forEach(group => {
+            const elos = eloDataByGroup[group];
+            if (elos && elos.length > 0) {
+                const avg = elos.reduce((sum, val) => sum + val, 0) / elos.length;
+                currentELOValues[group] = Math.round(avg);
+                // Inclure dans la moyenne globale uniquement les groupes du haut du corps
+                if (group !== 'Legs') { // Exclure Legs de la moyenne globale
+                     totalEloSum += avg;
+                     groupCount++;
+                }
+            } else {
+                currentELOValues[group] = ELO_BASE; // Garder base si aucun exo trouvé
+                 if (group !== 'Legs') {
+                     totalEloSum += ELO_BASE;
+                     groupCount++;
+                 }
+            }
+        });
+
+        overallAvgELO = groupCount > 0 ? Math.round(totalEloSum / groupCount) : ELO_BASE;
+        console.log("ELO Moyen Global (Haut Corps):", overallAvgELO);
+        console.log("ELO Moyen par Groupe:", currentELOValues);
+    }
+
+    function determineCurrentGoalLevel() {
+         // Simple: si l'ELO moyen dépasse le L1, on vise L2. Sinon on vise L1.
+         if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps.targetELO || 950)) {
+             return 'L2_TomHolland';
+         }
+         return 'L1_MaxReps';
+    }
+
+    function calculateAndDisplayEvolution() {
+        if (!evolutionTrackerArea || !overallEloDisplay || !goalInfo || !muscleGroupsContainer) return;
+
+        analyzeProgramsAndCalculateELO(); // Recalculer les ELOs actuels
+
+        currentGoalLevel = determineCurrentGoalLevel();
+        const currentGoal = TARGET_ELO_LEVELS[currentGoalLevel];
+        const previousGoal = (currentGoalLevel === 'L2_TomHolland') ? TARGET_ELO_LEVELS['L1_MaxReps'] : { targetELO: ELO_BASE, groups: {} }; // Si L1, le point de départ est ELO_BASE
+
+        // Afficher ELO Global et Objectif
+        overallEloDisplay.innerHTML = `${overallAvgELO} <span>ELO Moyen (Haut du Corps)</span>`;
+        goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal.name}</span> (ELO Cible Moyen <span class="target-elo-value">${currentGoal.targetELO}</span>)`;
+
+        // Afficher les cartes par groupe
+        muscleGroupsContainer.innerHTML = ''; // Vider
+        MUSCLE_GROUPS_ORDER.forEach(group => {
+             if (group === 'Legs') return; // On ignore les jambes pour l'affichage haut du corps
+
+             const currentAvgELO = currentELOValues[group] || ELO_BASE;
+             const targetELO = currentGoal.groups[group] || currentGoal.targetELO; // ELO cible pour ce groupe dans ce niveau
+             // Déterminer le point de départ pour le calcul du %
+             const stageStartELO = previousGoal.groups[group] || previousGoal.targetELO || ELO_BASE;
+
+             let progressPercent = 0;
+             if (targetELO > stageStartELO) {
+                 progressPercent = ((currentAvgELO - stageStartELO) / (targetELO - stageStartELO)) * 100;
+             } else if (currentAvgELO >= targetELO) {
+                 progressPercent = 100; // Si cible atteinte ou dépassée (ou si cible <= départ)
+             }
+             progressPercent = Math.max(0, Math.min(100, Math.round(progressPercent))); // Borner entre 0 et 100
+
+             const card = renderMuscleGroupCard(group, currentAvgELO, targetELO, progressPercent);
+             muscleGroupsContainer.appendChild(card);
+        });
+    }
+
+    function renderMuscleGroupCard(groupName, currentElo, targetElo, progressPercent) {
+        const card = document.createElement('div');
+        card.className = 'muscle-group-card';
+
+        const iconClass = MUSCLE_GROUP_ICONS[groupName] || 'fa-question-circle';
+
+        card.innerHTML = `
+            <div class="muscle-group-header">
+                <i class="fas ${iconClass}" aria-hidden="true"></i>
+                <h3 class="muscle-group-title">${groupName}</h3>
+            </div>
+            <div class="elo-info">
+                <span class="current-elo">${currentElo}</span>
+                <span class="target-elo">Objectif: <strong>${targetElo}</strong></span>
+            </div>
+            <div class="progress-bar-container" title="${progressPercent}% vers l'objectif">
+                <div class="progress-bar" style="width: ${progressPercent}%;">
+                     <span class="progress-percentage">${progressPercent}%</span>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    // --- UI Update (Adapté pour Evolution) ---
+    function updateAuthUI(isLoggedIn) {
+        console.log(`Update UI (Evolution) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`);
+        const body = document.body;
+        body.classList.toggle('logged-in', isLoggedIn);
+        body.classList.toggle('logged-out', !isLoggedIn);
+
+        if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block';
+        if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none';
+
+        if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient;
+        if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient;
+        if(signOutButton) signOutButton.disabled = !isLoggedIn;
+        if(themeToggleBtn) themeToggleBtn.disabled = false;
+
+        if(driveStatusElement) {
+            driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none';
+             if (!isLoggedIn) driveStatusElement.textContent = '';
+        }
+
+        // Si déconnecté, réinitialiser l'affichage
+        if (!isLoggedIn) {
+             if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '';
+             if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>';
+             if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)';
+        }
+    }
+
+    // --- Gestion Thème (Identique) ---
+    function applyTheme(theme) { /* ... (Code identique) ... */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution):", e); } }
+    function toggleTheme() { /* ... (Code identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
+    function loadSavedTheme() { /* ... (Code identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution):", e); } applyTheme(savedTheme); }
+
+    // --- Message Area (Identique) ---
+    function showMessage(msg, duration = 3000, isError = false) { /* ... (Code identique) ... */ if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
+
+
+    // --- Initialisation ---
+    function initializeDOMReferences() {
+        console.log("Init DOM Refs (Evolution)...");
+        signInButton = document.getElementById('signin-button');
+        signOutButton = document.getElementById('signout-button');
+        driveStatusElement = document.getElementById('drive-status');
+        themeToggleBtn = document.getElementById('theme-toggle-btn');
+        signInButtonPrompt = document.getElementById('signin-button-prompt');
+        connectionPrompt = document.getElementById('connection-prompt');
+        evolutionTrackerArea = document.getElementById('evolution-tracker-area');
+        overallEloDisplay = document.getElementById('overall-elo-display');
+        goalInfo = document.getElementById('goal-info');
+        muscleGroupsContainer = document.getElementById('muscle-groups-container');
+        messageArea = document.getElementById('message-area');
+        console.log("DOM Refs initialisées (Evolution).");
+    }
+
+    function addEventListeners() {
+         console.log("Ajout Event Listeners (Evolution)...");
+         if(signInButton) signInButton.addEventListener('click', handleAuthClick);
+         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
+         if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick);
+         if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+         // Pas d'autres listeners spécifiques à cette page pour l'instant
+         console.log("Event Listeners ajoutés (Evolution).");
+    }
+
+    // --- Point d'entrée ---
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM Chargé (Evolution). Initialisation...");
+        try {
+            initializeDOMReferences();
+            addEventListeners();
+            loadSavedTheme();
+            updateAuthUI(false); // État initial déconnecté
+            checkAndInitGis(); // Lancer la vérification/initialisation GIS
+            console.log("Initialisation Evolution terminée. Attente API Google...");
+        } catch (error) {
+            console.error("Erreur majeure lors de l'initialisation DOMContentLoaded (Evolution):", error);
+             showMessage("Erreur critique au chargement du suivi d'évolution.", 10000, true);
+             const body = document.querySelector('body');
+             if(body) {
+                const errorDiv = document.createElement('div');
+                errorDiv.textContent = "Erreur chargement suivi: " + error.message;
+                errorDiv.style.color='red'; errorDiv.style.padding='10px';
+                body.prepend(errorDiv);
+             }
+        }
+    });
+
+</script>
+
+</body>
+</html>
