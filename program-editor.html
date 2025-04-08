@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- SortableJS (pour Drag & Drop) -->
+    <!-- SortableJS (pour Drag & Drop) - HASH CORRIGÉ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-Eezs+g9Lq4TCCq0wae01s97utZtkr9UDGtuZEGNeQpVzAKDUt/dgT9GEXtAPostKfFGzA5HaLGTlwMFepPnp1Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Google Identity Services (GIS) - chargé à la fin du body -->
     <style>
@@ -112,7 +112,7 @@
         }
         #connection-prompt p { margin-bottom: 15px; color: var(--secondary-text-color); }
         #connection-prompt button { /* Style du bouton connecter DANS le prompt */
-            border-color: var(--button-connect-color); color: var(--button-connect-color); background: transparent; padding: 8px 18px;
+            border-color: var(--button-connect-color); color: var(--button-connect-color); background: transparent; padding: 8px 18px; border: 1px solid; /* Ajout border */
             border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer;
             transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px;
         }
@@ -223,17 +223,17 @@
         .add-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .editor-actions button {
             padding: 9px 20px; font-size: 0.95em; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer;
-            transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 8px;
+            transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; /* Base border */
         }
         .editor-actions button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
-        #add-exercise-btn { border: 1px solid var(--color-exercise); color: var(--color-exercise); background: transparent; }
+        #add-exercise-btn { border-color: var(--color-exercise); color: var(--color-exercise); background: transparent; }
         #add-exercise-btn:not(:disabled):hover { background-color: rgba(var(--color-exercise-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--color-exercise-rgb), 0.5); }
-        #add-break-btn { border: 1px solid var(--color-break); color: var(--color-break); background: transparent; }
+        #add-break-btn { border-color: var(--color-break); color: var(--color-break); background: transparent; }
         #add-break-btn:not(:disabled):hover { background-color: rgba(var(--color-break-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--color-break-rgb), 0.5); }
         #save-program-btn { border: none; background-color: var(--neon-green); color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #save-program-btn:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
-        #save-program-btn:disabled { background-color: var(--secondary-text-color); color: rgba(255,255,255,0.7); box-shadow: none; }
+        #save-program-btn:disabled { background-color: var(--secondary-text-color); color: rgba(255,255,255,0.7); box-shadow: none; border-color: var(--secondary-text-color); }
 
 
         /* --- Zone de Messages Flottante (Identique) --- */
@@ -373,9 +373,9 @@
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
 
     // --- Google Identity Services (GIS) & Drive API (Identiques au Timer) ---
-    async function gisInitInternal() { /* ... (Code identique à la page Timer) ... */ console.log(">>> gisInitInternal appelée (Éditeur)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Éditeur)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Éditeur)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Éditeur) - Fin d'exécution"); }
-    function checkAndInitGis() { /* ... (Code identique à la page Timer) ... */ console.log(`Vérification GIS (Éditeur - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Éditeur)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
-    function handleTokenError(error) { /* ... (Code identique à la page Timer) ... */ console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    async function gisInitInternal() { console.log(">>> gisInitInternal appelée (Éditeur)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Éditeur)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Éditeur)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Éditeur) - Fin d'exécution"); }
+    function checkAndInitGis() { console.log(`Vérification GIS (Éditeur - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Éditeur)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
     async function tokenCallback(tokenResponse) { // Adapté pour l'éditeur
         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; }
         if (tokenResponse.error) { handleTokenError(tokenResponse); return; }
@@ -410,12 +410,58 @@
             handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Éditeur)." });
         }
     }
-    function handleAuthClick() { /* ... (Code identique à la page Timer) ... */ initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Éditeur)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { /* ... (Code quasi identique, pas de reset de workout) ... */ const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Éditeur)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Éditeur).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentEditingType = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; // Vider l'éditeur updateAuthUI(false); // Mettre à jour l'UI }); }
-    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { /* ... (Code identique à la page Timer) ... */ console.log(`Drive (Éditeur): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Éditeur): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Éditeur): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Éditeur): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Éditeur): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Éditeur): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultContent); if (writeSuccess) { console.log(`Drive (Éditeur): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Éditeur): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; } } catch (error) { console.error(`Erreur Drive (Éditeur - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
-    async function readFileContent(fileId) { /* ... (Code identique à la page Timer) ... */ if (!googleAccessToken || !fileId) { console.warn("readFileContent (Éditeur): Pas de token ou d'ID."); return null; } console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404). Retourne chaîne vide pour création.`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Éditeur): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
-    async function updateFileContent(fileId, content) { /* ... (Code identique, sans historyDriveStatus) ... */ if (!googleAccessToken || !fileId) { console.warn("updateFileContent (Éditeur): Pas de token ou d'ID."); return false; } console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`); /* isSavingDriveData retiré pour simplicité ici, gérer via disable bouton save */ if(saveProgramBtn) saveProgramBtn.disabled = true; // Désactiver pendant sauvegarde
-        const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { console.warn(`updateFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", 6000, true); } else { throw new Error(`Écriture échouée (${response.status}) (Éditeur): ${await response.text()}`); } } else { console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`); success = true; } } catch (error) { console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, true); success = false; } finally { if(saveProgramBtn) saveProgramBtn.disabled = !isDirty; // Réactiver seulement si encore des modifs non sauvées console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
+    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Éditeur)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
+    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Éditeur)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Éditeur).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentEditingType = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; // Vider l'éditeur updateAuthUI(false); // Mettre à jour l'UI }); }
+    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { console.log(`Drive (Éditeur): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Éditeur): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Éditeur): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Éditeur): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Éditeur): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Éditeur): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultContent); if (writeSuccess) { console.log(`Drive (Éditeur): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Éditeur): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; } } catch (error) { console.error(`Erreur Drive (Éditeur - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
+    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) { console.warn("readFileContent (Éditeur): Pas de token ou d'ID."); return null; } console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404). Retourne chaîne vide pour création.`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Éditeur): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
+    async function updateFileContent(fileId, content) {
+        if (!googleAccessToken || !fileId) {
+            console.warn("updateFileContent (Éditeur): Pas de token ou d'ID.");
+            return false;
+        }
+        console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`);
+        if(saveProgramBtn) saveProgramBtn.disabled = true; // Désactiver pendant sauvegarde
+
+        const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+        const isJson = typeof content === 'object';
+        // Utiliser JSON.stringify SANS indentation pour économiser de l'espace/bande passante Drive
+        const contentToSend = isJson ? JSON.stringify(content) : content;
+        const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8';
+        let success = false;
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${googleAccessToken}`,
+                    'Content-Type': contentType
+                },
+                body: contentToSend
+            });
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    console.warn(`updateFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`);
+                    handleSignoutClick(false);
+                    showMessage("Session expirée. Sauvegarde échouée.", 6000, true);
+                } else {
+                    throw new Error(`Écriture échouée (${response.status}) (Éditeur): ${await response.text()}`);
+                }
+            } else {
+                console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`);
+                success = true;
+            }
+        } catch (error) {
+            console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error);
+            showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, true);
+            success = false;
+        } finally {
+            // Réactiver le bouton seulement si la sauvegarde a échoué ET qu'il y a toujours des modifs
+            // Ou simplement le laisser désactivé après succès car isDirty sera false
+            if(saveProgramBtn) saveProgramBtn.disabled = !success && isDirty;
+            console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`);
+        }
+        return success;
+    } // <--- !!!!!!! CORRECTION: Ajout de l'accolade fermante manquante !!!!!!!
+
 
     // --- Chargement des Programmes ---
     async function loadProgramsFromDrive() {
@@ -426,33 +472,31 @@
 
         for (const type of PROGRAM_TYPES) {
             console.log(`Chargement programme: ${type}...`);
-            // Assurer la création avec le contenu par défaut JSON si inexistant
-            const defaultJsonString = JSON.stringify(defaultWorkouts[type] || [], null, 2);
+            const defaultJsonString = JSON.stringify(defaultWorkouts[type] || [], null, 2); // Utilisation de l'indentation pour la version par défaut lisible si nécessaire
             programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString);
 
             if (programFileIds[type]) {
                 const content = await readFileContent(programFileIds[type]);
                 if (content !== null) {
                     try {
-                         // Si le contenu est vide (cas fichier trouvé mais jamais écrit), utiliser défaut
-                         const parsedContent = JSON.parse(content || defaultJsonString);
-                         // Assurer que c'est un array
-                         tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : JSON.parse(defaultJsonString);
-                         console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`);
+                        // Essayer de parser, si vide ou invalide, utiliser le défaut
+                        const parsedContent = JSON.parse(content || defaultJsonString);
+                        tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : JSON.parse(defaultJsonString);
+                        console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`);
                     } catch (e) {
                         console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content);
                         showMessage(`Erreur format programme ${type}. Utilisation défaut.`, 4000, true);
-                        tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || []));
+                        tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); // Deep copy du défaut
                         allLoadedSuccessfully = false;
                     }
                 } else {
-                    console.warn(`Lecture programme ${type} échouée. Utilisation défaut.`);
-                    tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || []));
-                    allLoadedSuccessfully = false;
+                     console.warn(`Lecture programme ${type} échouée. Utilisation défaut.`);
+                     tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); // Deep copy du défaut
+                     allLoadedSuccessfully = false;
                 }
             } else {
                 console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation défaut.`);
-                tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || []));
+                tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); // Deep copy du défaut
                 allLoadedSuccessfully = false;
             }
         }
@@ -472,29 +516,34 @@
         // Activer/Désactiver les onglets
         programTabsContainer.querySelectorAll('button').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === type);
-            btn.disabled = !programsLoaded; // Désactiver si programmes pas chargés
-             // Mettre à jour l'indicateur isDirty pour cet onglet (sera géré par markAsDirty)
+            btn.disabled = !programsLoaded;
+            // L'indicateur 'is-dirty' est géré par markAsDirty
         });
 
         // Rendre chaque étape
-        loadedPrograms[type].forEach((step, index) => {
-            const stepElement = renderStep(step, index);
-            programDisplay.appendChild(stepElement);
-        });
+        if (loadedPrograms[type].length > 0) {
+            loadedPrograms[type].forEach((step, index) => {
+                const stepElement = renderStep(step, index);
+                programDisplay.appendChild(stepElement);
+            });
+        } else {
+             // Le message :empty s'affichera via CSS
+        }
 
-        // Activer les boutons d'ajout et sauvegarde (initialement désactivé)
-        updateEditorActionButtonsState();
+
+        // Activer les boutons d'ajout et sauvegarde (initialement désactivé car pas dirty)
         markAsDirty(false); // Reset le flag dirty lors du changement d'onglet
+        updateEditorActionButtonsState();
 
-         // Initialiser SortableJS sur la nouvelle liste
+         // Initialiser SortableJS sur la liste
          if (sortableInstance) { sortableInstance.destroy(); }
          if(programDisplay) {
               sortableInstance = new Sortable(programDisplay, {
                    animation: 150,
-                   ghostClass: 'sortable-ghost', // Classe pour l'élément fantôme
-                   chosenClass: 'sortable-chosen', // Classe pour l'élément sélectionné
-                   handle: '.program-step', // On peut attraper toute la carte
-                   onEnd: handleDragEnd // Fonction appelée après le drag
+                   ghostClass: 'sortable-ghost',
+                   chosenClass: 'sortable-chosen',
+                   handle: '.program-step', // Permet de saisir toute la carte pour le drag
+                   onEnd: handleDragEnd
               });
          }
     }
@@ -502,52 +551,52 @@
      function renderStep(step, index) {
          const li = document.createElement('li');
          li.classList.add('program-step', `${step.type}-step`);
-         li.dataset.index = index; // Stocker l'index pour référence future
+         li.dataset.index = index; // Stocker l'index original pour référence lors des edits/deletes
 
          const isExercise = step.type === 'exercise';
          const iconClass = isExercise ? 'fa-dumbbell' : 'fa-hourglass-half';
 
-         // Simplification des champs affichés pour clarté
+         // Utilisation de ?? '' pour éviter "null" ou "undefined" dans les champs value
          const fieldsHtml = `
              <div class="step-field">
                  <label for="name-${index}">Nom</label>
-                 <input type="text" id="name-${index}" data-field="name" value="${step.name || ''}" ${!isExercise && step.name === 'Repos' ? 'readonly' : ''}>
+                 <input type="text" id="name-${index}" data-field="name" value="${step.name ?? ''}" ${!isExercise && step.name === 'Repos' ? 'readonly' : ''}>
              </div>
              ${isExercise ? `
                  <div class="step-field">
                      <label for="reps-${index}">Reps Actuel</label>
-                     <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1">
+                     <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12">
                  </div>
                  <div class="step-field">
-                     <label for="reps_start-${index}">Reps Début (Fourch.)</label>
-                     <input type="number" id="reps_start-${index}" data-field="reps_start" value="${step.reps_start ?? ''}" min="0" step="1">
+                     <label for="reps_start-${index}">Reps Début</label>
+                     <input type="number" id="reps_start-${index}" data-field="reps_start" value="${step.reps_start ?? ''}" min="0" step="1" placeholder="Ex: 8">
                  </div>
                  <div class="step-field">
-                     <label for="reps_target_max-${index}">Reps Max (Fourch.)</label>
-                     <input type="number" id="reps_target_max-${index}" data-field="reps_target_max" value="${step.reps_target_max ?? ''}" min="0" step="1">
+                     <label for="reps_target_max-${index}">Reps Max</label>
+                     <input type="number" id="reps_target_max-${index}" data-field="reps_target_max" value="${step.reps_target_max ?? ''}" min="0" step="1" placeholder="Ex: 15">
                  </div>
                  <div class="step-field">
                      <label for="weight-${index}">Poids/Res.</label>
-                     <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5">
+                     <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5" placeholder="Ex: 25">
                  </div>
                  <div class="step-field">
                      <label for="equipment-${index}">Équipement</label>
-                     <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}">
+                     <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}" placeholder="Élastique 25kg">
                  </div>
              ` : `
                  <div class="step-field">
                      <label for="duration-${index}">Durée (secs)</label>
-                     <input type="number" id="duration-${index}" data-field="duration" value="${step.duration || ''}" min="1" step="1">
+                     <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75">
                  </div>
              `}
              <div class="step-field" style="grid-column: 1 / -1;"> <!-- Prend toute la largeur -->
                  <label for="details-${index}">Détails</label>
-                 <textarea id="details-${index}" data-field="details">${step.details || ''}</textarea>
+                 <textarea id="details-${index}" data-field="details" placeholder="Infos supplémentaires...">${step.details || ''}</textarea>
              </div>
              ${isExercise ? `
                  <div class="step-field" style="grid-column: 1 / -1;">
                      <label for="progression_note-${index}">Note de Progression</label>
-                     <textarea id="progression_note-${index}" data-field="progression_note">${step.progression_note || ''}</textarea>
+                     <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment augmenter la difficulté...">${step.progression_note || ''}</textarea>
                  </div>
              ` : ''}
          `;
@@ -559,17 +608,16 @@
              </div>
              <div class="step-actions">
                  <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button>
-                 <!-- Boutons Move retirés, remplacés par Drag & Drop -->
              </div>
          `;
 
-         // Ajouter les écouteurs pour la suppression et la modification
+         // Ajouter les écouteurs
          li.querySelector('.delete-step-btn').addEventListener('click', () => handleDeleteStep(index));
          li.querySelectorAll('input, textarea').forEach(input => {
-            input.addEventListener('change', (event) => handleEditStep(index, event.target.dataset.field, event.target.value));
-             input.addEventListener('input', () => markAsDirty(true)); // Marquer comme modifié pendant la saisie
+             // 'input' se déclenche à chaque frappe, 'change' après perte de focus/Enter
+             input.addEventListener('input', () => markAsDirty(true));
+             input.addEventListener('change', (event) => handleEditStep(parseInt(li.dataset.index, 10), event.target.dataset.field, event.target.value)); // Utiliser data-index à jour
          });
-
 
          return li;
      }
@@ -577,11 +625,10 @@
     function handleTabClick(type) {
         initAudioContext();
         if (!programsLoaded) return;
-        if (type === currentEditingType) return; // Ne rien faire si clic sur l'onglet actif
+        if (type === currentEditingType) return;
 
         if (isDirty) {
             if (!confirm(`Vous avez des modifications non sauvegardées pour le programme "${currentEditingType}". Voulez-vous continuer sans sauvegarder ?`)) {
-                // Remettre l'onglet actif visuellement si l'utilisateur annule
                 programTabsContainer.querySelectorAll('button').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.type === currentEditingType);
                 });
@@ -597,21 +644,17 @@
 
          let newStep = {};
          if (stepType === 'exercise') {
-             newStep = {
-                 type: "exercise", name: "Nouvel Exercice", reps: 10, weight: 0,
-                 details: "", equipment: "", reps_start: 10, reps_target_max: 15,
-                 progression_note: "Définir la progression"
-             };
+             newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, details: "", equipment: "", reps_start: 8, reps_target_max: 12, progression_note: "" };
          } else { // break
              newStep = { type: "break", duration: 60, name: "Repos" };
          }
 
          loadedPrograms[currentEditingType].push(newStep);
-         const newIndex = loadedPrograms[currentEditingType].length - 1;
-         const stepElement = renderStep(newStep, newIndex);
-         programDisplay.appendChild(stepElement);
-         stepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // Scroll vers le nouvel élément
+         // Re-rendre pour que les index soient corrects
+         displayProgram(currentEditingType);
          markAsDirty(true);
+         // Faire défiler vers le bas
+          programDisplay.scrollTop = programDisplay.scrollHeight;
          showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500);
     }
 
@@ -620,9 +663,10 @@
           if (!currentEditingType || !loadedPrograms[currentEditingType] || index < 0 || index >= loadedPrograms[currentEditingType].length) return;
 
           const stepToDelete = loadedPrograms[currentEditingType][index];
+          // Confirmation
           if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) {
               loadedPrograms[currentEditingType].splice(index, 1);
-              // Re-rendre tout le programme pour mettre à jour les index
+              // Re-rendre pour màj index et affichage
               displayProgram(currentEditingType);
               markAsDirty(true);
               showMessage("Étape supprimée.", 1500);
@@ -633,41 +677,41 @@
         if (!currentEditingType || !loadedPrograms[currentEditingType] || index < 0 || index >= loadedPrograms[currentEditingType].length) return;
 
         const step = loadedPrograms[currentEditingType][index];
-        // Convertir en nombre si nécessaire (pour reps, weight, duration)
         const numericFields = ['reps', 'reps_start', 'reps_target_max', 'weight', 'duration'];
         let processedValue = value;
+
         if (numericFields.includes(field)) {
-             // Garder null si vide, sinon convertir en nombre ou laisser tel quel si invalide
-             processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value));
+            // Conserver null si vide, sinon convertir en nombre (ou garder la string si invalide pour debug)
+            processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value));
         }
 
-        // Gérer le cas spécial du nom de la pause
+        // Gérer nom de pause vide
         if(step.type === 'break' && field === 'name' && value.trim() === '') {
-             processedValue = "Repos"; // Remettre "Repos" si vidé
-             // Mettre à jour l'input visuellement aussi
-             const inputElement = programDisplay.querySelector(`#name-${index}`);
+             processedValue = "Repos";
+             const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`);
              if (inputElement) inputElement.value = "Repos";
         }
 
         step[field] = processedValue;
-        console.log(`Modification: Programme ${currentEditingType}, Index ${index}, Champ ${field}, Nouvelle valeur:`, processedValue);
-        markAsDirty(true);
+        // Pas besoin de re-render, juste marquer comme modifié
+        // console.log(`Edit: ${currentEditingType}[${index}].${field} =`, processedValue);
+        markAsDirty(true); // Marquer comme modifié (sera déjà fait par 'input' listener)
     }
 
      function handleDragEnd(event) {
          if (!currentEditingType || !loadedPrograms[currentEditingType]) return;
-         console.log('Drag ended:', event);
-
          const { oldIndex, newIndex } = event;
-         if (oldIndex === newIndex) return; // Pas de changement
+         if (oldIndex === newIndex) return;
 
-         // Mettre à jour l'ordre dans le tableau de données
-         const item = loadedPrograms[currentEditingType].splice(oldIndex, 1)[0];
-         loadedPrograms[currentEditingType].splice(newIndex, 0, item);
+         console.log(`Drag&Drop: ${currentEditingType} de ${oldIndex} vers ${newIndex}`);
 
-         // Re-rendre pour mettre à jour les data-index et l'affichage
+         // Mettre à jour le tableau de données
+         const itemToMove = loadedPrograms[currentEditingType].splice(oldIndex, 1)[0];
+         loadedPrograms[currentEditingType].splice(newIndex, 0, itemToMove);
+
+         // Re-rendre complètement pour mettre à jour les indices et les listeners
          displayProgram(currentEditingType);
-         markAsDirty(true);
+         markAsDirty(true); // Marquer comme modifié car l'ordre a changé
      }
 
     async function handleSaveProgram() {
@@ -693,8 +737,7 @@
 
         if(saveProgramBtn) {
             saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder ${currentEditingType}`;
-            // Ne réactiver que si la sauvegarde échoue ET qu'il y a encore des modifs (?)
-            // Ou simplement désactiver après succès
+            // Le bouton sera réactivé/désactivé par markAsDirty(false) si succès
         }
 
         if (success) {
@@ -702,7 +745,7 @@
             showMessage(`Programme "${currentEditingType}" sauvegardé sur Drive !`, 3000);
         } else {
             showMessage(`Échec de la sauvegarde de "${currentEditingType}". Veuillez réessayer.`, 5000, true);
-            if(saveProgramBtn) saveProgramBtn.disabled = false; // Laisser la possibilité de réessayer
+            if(saveProgramBtn) saveProgramBtn.disabled = false; // Laisser la possibilité de réessayer car échec
         }
     }
 
@@ -710,7 +753,7 @@
          isDirty = dirtyState;
          updateSaveButtonState();
 
-         // Mettre à jour l'indicateur visuel sur l'onglet
+         // Mettre à jour l'indicateur visuel sur l'onglet ACTIF
          const currentTab = programTabsContainer.querySelector(`button[data-type="${currentEditingType}"]`);
          if (currentTab) {
              currentTab.classList.toggle('is-dirty', dirtyState);
@@ -728,10 +771,10 @@
     }
 
     function updateEditorActionButtonsState() {
-         const enable = googleAccessToken && programsLoaded && currentEditingType;
+         const enable = googleAccessToken && programsLoaded && !!currentEditingType;
          if(addExerciseBtn) addExerciseBtn.disabled = !enable;
          if(addBreakBtn) addBreakBtn.disabled = !enable;
-         updateSaveButtonState(); // Gère aussi le bouton Save
+         updateSaveButtonState();
     }
 
     // --- UI Update (Simplifié pour l'éditeur) ---
@@ -752,29 +795,27 @@
         if(driveStatusElement) {
             driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none';
              if (!isLoggedIn) driveStatusElement.textContent = '';
-             // Le texte (Loading, Error, Success) est géré dans tokenCallback et handleTokenError
         }
 
-         // Activer/désactiver les onglets et boutons d'action
-         programTabsContainer.querySelectorAll('button').forEach(btn => {
+         programTabsContainer?.querySelectorAll('button').forEach(btn => {
              btn.disabled = !isLoggedIn || !programsLoaded;
+             btn.classList.remove('is-dirty'); // Nettoyer indicateur au changement d'état auth
          });
-         updateEditorActionButtonsState(); // Met à jour les boutons Ajouter/Sauvegarder
-
-         if (!isLoggedIn && programDisplay) {
-             programDisplay.innerHTML = ''; // Vider l'éditeur si déconnecté
+         if (!isLoggedIn) {
+             if(programDisplay) programDisplay.innerHTML = ''; // Vider éditeur
              currentEditingType = null;
              isDirty = false;
          }
+         updateEditorActionButtonsState();
     }
 
     // --- Gestion Thème (Identique) ---
-    function applyTheme(theme) { /* ... (Code identique) ... */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Éditeur): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Éditeur):", e); } }
-    function toggleTheme() { /* ... (Code identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
-    function loadSavedTheme() { /* ... (Code identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Éditeur):", e); } applyTheme(savedTheme); }
+    function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Éditeur): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Éditeur):", e); } }
+    function toggleTheme() { const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
+    function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Éditeur):", e); } applyTheme(savedTheme); }
 
     // --- Message Area (Identique) ---
-    function showMessage(msg, duration = 3000, isError = false) { /* ... (Code identique) ... */ if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
+    function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
 
 
     // --- Initialisation ---
@@ -799,7 +840,7 @@
     function addEventListeners() {
          console.log("Ajout Event Listeners (Éditeur)...");
          if(signInButton) signInButton.addEventListener('click', handleAuthClick);
-         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); // Aussi sur le bouton du prompt
+         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
          if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick);
          if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
 
@@ -811,7 +852,14 @@
          if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break'));
          if(saveProgramBtn) saveProgramBtn.addEventListener('click', handleSaveProgram);
 
-         // Les listeners pour edit/delete/drag sont ajoutés dynamiquement dans renderStep et displayProgram
+         // Listener pour avertir si on quitte la page avec des modifs non sauvegardées
+         window.addEventListener('beforeunload', (event) => {
+             if (isDirty) {
+                 event.preventDefault(); // Requis par certains navigateurs
+                 event.returnValue = ''; // Requis par certains navigateurs
+             }
+         });
+
          console.log("Event Listeners ajoutés (Éditeur).");
     }
 
@@ -828,6 +876,14 @@
         } catch (error) {
             console.error("Erreur majeure lors de l'initialisation DOMContentLoaded (Éditeur):", error);
              showMessage("Erreur critique au chargement de l'éditeur.", 10000, true);
+             // Afficher l'erreur dans la page si possible
+             const body = document.querySelector('body');
+             if(body) {
+                const errorDiv = document.createElement('div');
+                errorDiv.textContent = "Erreur chargement éditeur: " + error.message;
+                errorDiv.style.color='red'; errorDiv.style.padding='10px';
+                body.prepend(errorDiv);
+             }
         }
     });
 
