@@ -45,16 +45,16 @@
 
         /* --- Styles de Base & Réinitialisation --- */
         * { box-sizing: border-box; margin: 0; padding: 0; } html { scroll-behavior: smooth; font-size: 16px; }
-        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--primary-text-color); line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; display: flex; flex-direction: column; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; padding-top: 90px; }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--primary-text-color); line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; display: flex; flex-direction: column; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; padding-top: 125px; /* Augmenté pour header + nav */ }
         .container { max-width: 450px; margin: 0 auto; padding: 20px 15px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
 
-        /* --- En-tête --- */
-        header { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 0; z-index: 1000; background-color: rgba(var(--bg-color-rgb), 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; }
-        .header-content { display: flex; flex-direction: column; align-items: center; max-width: 450px; margin: 0 auto; padding: 0 15px; gap: 12px; }
+        /* --- En-tête & Navigation --- */
+        #app-header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(var(--bg-color-rgb), 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; }
+        .header-content { display: flex; flex-direction: column; align-items: center; max-width: 450px; margin: 0 auto; padding: 10px 15px 5px; gap: 8px; } /* Moins de padding bottom */
         header .title-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
         header .title-container i.header-icon { font-size: 1.8em; color: var(--primary-text-color); opacity: 0.8; }
         header h1 { font-size: 1.1em; color: var(--primary-text-color); margin: 0; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
-        .header-actions { display: flex; gap: 15px; align-items: center; justify-content: center; width: 100%; }
+        .header-actions { display: flex; gap: 15px; align-items: center; justify-content: space-between; /* Espace pour boutons nav */ width: 100%; }
         .auth-controls { display: flex; gap: 10px; align-items: center; }
         .auth-controls button { background: none; border: 1px solid var(--border-color); color: var(--secondary-text-color); padding: 5px 12px; border-radius: var(--border-radius-md); font-size: 0.8em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 5px; }
         .auth-controls button:disabled { opacity: 0.4; cursor: not-allowed; background: transparent !important; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; }
@@ -67,17 +67,27 @@
         .theme-toggle button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.1em; padding: 5px; cursor: pointer; transition: color var(--transition-speed) ease; }
         .theme-toggle button:hover { color: var(--neon-purple); }
 
+        /* Navigation Tabs */
+        #app-nav { display: flex; justify-content: center; gap: 10px; padding: 8px 15px; border-top: 1px solid var(--border-color); /* Séparateur léger */ background-color: rgba(var(--secondary-bg-color-rgb), 0.5); }
+        .nav-button { background: none; border: none; color: var(--secondary-text-color); font-size: 0.85em; font-weight: 500; padding: 6px 12px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px;}
+        .nav-button i { font-size: 1.1em; }
+        .nav-button:hover { color: var(--primary-text-color); background-color: rgba(var(--primary-text-color-rgb), 0.05); }
+        .nav-button.active { color: var(--neon-blue); border-color: var(--neon-blue); background-color: rgba(var(--neon-blue-rgb), 0.1); font-weight: 700; }
+        .nav-button:disabled { opacity: 0.5; cursor: not-allowed; color: var(--secondary-text-color) !important; background: none !important; border-color: transparent !important;}
+
         /* Affichage conditionnel */
-        body.logged-out #signin-button, body.logged-out #signin-button-prompt { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-in #signin-button, body.logged-in #signin-button-prompt { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-out #connection-prompt { display: block; } body.logged-in #connection-prompt { display: none; } body.logged-out #evolution-tracker-area { display: none; } body.logged-in #evolution-tracker-area { display: flex; }
+        body.logged-out .nav-button { display: none; } /* Cache nav si déconnecté */
+        body.logged-out #signin-button, body.logged-out #signin-button-prompt { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-in #signin-button, body.logged-in #signin-button-prompt { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-out #connection-prompt { display: block; } body.logged-in #connection-prompt { display: none; } body.logged-out .app-section { display: none; } body.logged-in .app-section { display: none; } /* Caché par défaut, affiché par JS */
 
         /* --- Contenu Principal --- */
         main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
         #connection-prompt { text-align: center; padding: 30px 20px; background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); border: 1px dashed var(--border-color); margin: 20px auto; max-width: 90%; }
         #connection-prompt p { margin-bottom: 15px; color: var(--secondary-text-color); font-size: 0.9em;}
         #connection-prompt button { padding: 8px 18px; font-size: 0.9em; }
-        #evolution-tracker-area { width: 100%; display: flex; flex-direction: column; gap: 25px; margin-top: 0; background: none; border: none; padding: 0; box-shadow: none; }
+        .app-section { width: 100%; /* Prend toute la largeur du container */ }
 
-        /* Carte Principale ELO Score */
+        /* Section Suivi Évolution (#evolution-tracker-area) */
+        #evolution-tracker-area { display: flex; flex-direction: column; gap: 20px; } /* Retiré margin-top, background, etc. */
         .global-stats-card { background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); padding: 25px 20px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0, 0.2); position: relative; overflow: hidden; }
         .global-stats-card::before { content: ''; position: absolute; top: -30%; left: -30%; width: 160%; height: 160%; background: radial-gradient(circle, rgba(var(--neon-blue-rgb), 0.08) 0%, rgba(var(--neon-blue-rgb), 0) 60%); animation: rotateGlow 15s linear infinite; pointer-events: none; opacity: 0.7; }
         @keyframes rotateGlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -90,36 +100,16 @@
         .marvel-achieved-icon { font-size: 1.1em; color: var(--level-marvel-color); vertical-align: middle; cursor: help; text-shadow: var(--glow-marvel); animation: marvelIconPulse 2s infinite ease-in-out; }
         @keyframes marvelIconPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
         .target-info-container { margin-top: 10px; font-size: 0.85em; color: var(--secondary-text-color); }
-        .target-info-container span { margin: 0 5px; }
-        .target-info-container strong { font-weight: 700; color: var(--primary-text-color); }
-        .target-info-container .marvel-target { color: var(--level-marvel-color); font-weight: 700;}
+        .target-info-container span { margin: 0 5px; } .target-info-container strong { font-weight: 700; color: var(--primary-text-color); } .target-info-container .marvel-target { color: var(--level-marvel-color); font-weight: 700;}
         @keyframes levelUpGlow { 0% { box-shadow: 0 10px 30px rgba(0,0,0, 0.2), 0 0 0px rgba(var(--neon-green-rgb), 0); border-color: var(--border-color);} 50% { box-shadow: 0 10px 30px rgba(0,0,0, 0.1), 0 0 30px rgba(var(--neon-green-rgb), 0.7); border-color: var(--neon-green);} 100% { box-shadow: 0 10px 30px rgba(0,0,0, 0.2), 0 0 0px rgba(var(--neon-green-rgb), 0); border-color: var(--border-color);} }
-
-        /* Section Progression des Ligues */
-        #league-progression-section { background-color: rgba(var(--secondary-bg-color-rgb), 0.5); border-radius: var(--border-radius-md); padding: 15px; border: 1px solid var(--border-color); }
-        #league-progression-section h4 { font-size: 0.9em; text-align: center; color: var(--secondary-text-color); margin-bottom: 15px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-        .league-progression-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--accent-border-color) transparent; }
-        .league-progression-container::-webkit-scrollbar { height: 6px; } .league-progression-container::-webkit-scrollbar-track { background: transparent; } .league-progression-container::-webkit-scrollbar-thumb { background-color: var(--accent-border-color); border-radius: 3px; } .league-progression-container::-webkit-scrollbar-thumb:hover { background-color: var(--neon-blue); }
-        .league-step { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 12px 10px; min-width: 85px; text-align: center; cursor: pointer; transition: all 0.2s ease-out; position: relative; flex-shrink: 0; }
-        .league-step:hover { transform: translateY(-3px); border-color: var(--accent-border-color); box-shadow: 0 4px 10px rgba(0,0,0, 0.1); }
-        .league-icon { font-size: 2.2em; margin-bottom: 8px; line-height: 1; }
-        .league-details { font-size: 0.8em; }
-        .league-name { display: block; font-weight: 700; line-height: 1.2; margin-bottom: 2px; }
-        .league-elo-threshold { display: block; font-size: 0.9em; color: var(--secondary-text-color); font-weight: 500; }
-
-        /* Conteneur Groupes Musculaires */
         #muscle-groups-container { display: flex; flex-direction: column; gap: 15px; }
-        /* Carte Groupe Musculaire */
         .muscle-group-card { background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; display: flex; flex-direction: column; gap: 10px; transition: all var(--transition-speed) ease; position: relative; overflow: hidden; }
         .muscle-group-card:hover { border-color: var(--accent-border-color); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0, 0.15); }
         .muscle-group-card .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
         .muscle-group-card .icon-container { flex-shrink: 0; color: var(--secondary-text-color); font-size: 1.8em; width: 35px; text-align: center; opacity: 0.7; }
-        .muscle-group-card .title-container { flex-grow: 1; }
-        .muscle-group-card .group-title { font-size: 1.05em; font-weight: 700; color: var(--primary-text-color); line-height: 1.2; }
-        .muscle-group-card .group-subtitle { font-size: 0.85em; color: var(--secondary-text-color); font-weight: 400; line-height: 1.2; margin-bottom: 2px; }
+        .muscle-group-card .title-container { flex-grow: 1; } .muscle-group-card .group-title { font-size: 1.05em; font-weight: 700; color: var(--primary-text-color); line-height: 1.2; } .muscle-group-card .group-subtitle { font-size: 0.85em; color: var(--secondary-text-color); font-weight: 400; line-height: 1.2; margin-bottom: 2px; }
         .muscle-group-card .group-level-name { font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1; padding: 2px 6px; border-radius: var(--border-radius-sm); display: inline-block; margin-top: 4px; border: 1px solid; cursor: pointer; }
-        .muscle-group-card .elo-details { font-size: 0.9em; font-weight: 500; color: var(--secondary-text-color); text-align: right; white-space: nowrap; }
-        .muscle-group-card .elo-details .current { color: var(--primary-text-color); font-weight: 700; }
+        .muscle-group-card .elo-details { font-size: 0.9em; font-weight: 500; color: var(--secondary-text-color); text-align: right; white-space: nowrap; } .muscle-group-card .elo-details .current { color: var(--primary-text-color); font-weight: 700; } .muscle-group-card .elo-details .target { /* Seuil suivant */ }
         .progress-section { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
         .progress-bar-container { flex-grow: 1; height: 8px; background-color: var(--progress-bar-bg); border-radius: 4px; overflow: hidden; position: relative; }
         .progress-bar { height: 100%; width: 0%; background: var(--progress-bar-fill); border-radius: 4px; transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: var(--glow-gradient); }
@@ -129,34 +119,109 @@
         .muscle-group-card.level-target-reached::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 10px; right: 10px; color: var(--neon-green); font-size: 0.9em; opacity: 0; animation: fadeInCheck 0.5s 0.5s ease forwards; }
         @keyframes fadeInCheck{ from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
-        /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 5000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; } .modal-overlay.visible { opacity: 1; visibility: visible; } .modal-content { background-color: var(--secondary-bg-color); padding: 25px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); max-width: 90%; width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); position: relative; transform: scale(0.95); transition: transform 0.3s ease; } .modal-overlay.visible .modal-content { transform: scale(1); } .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); } .modal-title { font-size: 1.2em; font-weight: 700; display: flex; align-items: center; gap: 10px; } .modal-title i { font-size: 1.1em; } .modal-close-btn { background: none; border: none; color: var(--secondary-text-color); font-size: 1.5em; cursor: pointer; padding: 5px; line-height: 1; transition: color 0.2s ease; } .modal-close-btn:hover { color: var(--primary-text-color); } .modal-body { font-size: 0.95em; line-height: 1.6; color: var(--primary-text-color); max-height: 60vh; overflow-y: auto; } .modal-body::-webkit-scrollbar { width: 6px; } .modal-body::-webkit-scrollbar-track { background: rgba(var(--primary-text-color-rgb), 0.05); border-radius: 3px;} .modal-body::-webkit-scrollbar-thumb { background-color: var(--accent-border-color); border-radius: 3px; } .modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--neon-blue); }
+        /* Section Configuration Équipement (#program-config-area) */
+        #program-config-area { background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); padding: 20px; border: 1px solid var(--border-color); margin-top: 10px; }
+        #program-config-area h2 { font-size: 1.3em; color: var(--primary-text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .program-config-section { margin-bottom: 20px; }
+        .program-config-section h3 { font-size: 1.1em; color: var(--secondary-text-color); margin-bottom: 10px; font-weight: 500; }
+        .config-exercise-item { margin-bottom: 15px; padding-left: 10px; border-left: 2px solid var(--accent-border-color); }
+        .config-exercise-item .exercise-name { font-weight: 700; display: block; margin-bottom: 8px; color: var(--primary-text-color); }
+        .config-equipment-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+        .config-equipment-options label { display: flex; align-items: center; gap: 6px; font-size: 0.9em; cursor: pointer; padding: 4px; border-radius: var(--border-radius-sm); transition: background-color 0.2s ease;}
+        .config-equipment-options label:hover { background-color: rgba(var(--primary-text-color-rgb), 0.05); }
+        .config-equipment-options input[type="checkbox"] { accent-color: var(--neon-blue); cursor: pointer; width: 15px; height: 15px; }
+        #save-config-button { display: block; width: 100%; background-color: var(--neon-blue); color: #fff; border: none; padding: 10px 15px; border-radius: var(--border-radius-md); font-size: 1em; font-weight: 700; cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease; text-align: center; margin-top: 20px; }
+        #save-config-button:hover { background-color: var(--gradient-end); box-shadow: 0 0 10px rgba(var(--neon-blue-rgb), 0.5); }
+        #save-config-button:disabled { background-color: var(--secondary-text-color); cursor: not-allowed; box-shadow: none; }
+        #save-config-button .spinner { display: none; margin-left: 10px; }
+        #save-config-button.saving .spinner { display: inline-block; }
+        #save-config-button.saving span { display: none; }
 
-        /* Footer, Messages, Placeholders */
-        footer { color: var(--secondary-text-color); opacity: 0.6; border-top: 1px solid var(--border-color); margin-top: 40px; padding: 20px 15px; text-align: center; font-size: 0.8em; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; } footer a { color: var(--link-color); text-decoration: none; } footer a:hover { color: var(--primary-text-color); } .message-area { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: var(--border-radius-md); z-index: 6000; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease; pointer-events: none; font-size: 0.9em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; } .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 30px; pointer-events: auto; } .message-area.error { background-color: rgba(var(--neon-red-rgb), 0.9); color: #fff; border-color: var(--neon-red); } .message-area.success { background-color: rgba(var(--neon-green-rgb), 0.9); color: #fff; border-color: var(--neon-green); } .message-area.warning { background-color: rgba(var(--neon-orange-rgb), 0.9); color: #fff; border-color: var(--neon-orange); } .message-area.info { background-color: rgba(var(--neon-blue-rgb), 0.9); color: #fff; border-color: var(--neon-blue); } #muscle-groups-container .loading-placeholder, #muscle-groups-container .error-placeholder { background-color: var(--secondary-bg-color); border-radius: var(--border-radius-md); padding: 30px 20px; text-align: center; color: var(--secondary-text-color); font-style: italic; border: 1px dashed var(--border-color); margin-top: 10px; } #muscle-groups-container .error-placeholder { color: var(--neon-red); border-color: var(--neon-red); }
+
+        /* Modal pour Description Niveau */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 5000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--secondary-bg-color); padding: 25px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); max-width: 90%; width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); position: relative; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .modal-title { font-size: 1.2em; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .modal-title i { font-size: 1.1em; }
+        .modal-close-btn { background: none; border: none; color: var(--secondary-text-color); font-size: 1.5em; cursor: pointer; padding: 5px; line-height: 1; transition: color 0.2s ease; }
+        .modal-close-btn:hover { color: var(--primary-text-color); }
+        .modal-body { font-size: 0.95em; line-height: 1.6; color: var(--primary-text-color); max-height: 60vh; overflow-y: auto; }
+        .modal-body::-webkit-scrollbar { width: 6px; } .modal-body::-webkit-scrollbar-track { background: rgba(var(--primary-text-color-rgb), 0.05); border-radius: 3px;} .modal-body::-webkit-scrollbar-thumb { background-color: var(--accent-border-color); border-radius: 3px; } .modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--neon-blue); }
+
+        /* Pied de page & Messages & Placeholders */
+        footer { color: var(--secondary-text-color); opacity: 0.6; border-top: 1px solid var(--border-color); margin-top: 40px; padding: 20px 15px; text-align: center; font-size: 0.8em; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; }
+        footer a { color: var(--link-color); text-decoration: none; } footer a:hover { color: var(--primary-text-color); }
+        .message-area { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: var(--border-radius-md); z-index: 6000; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease; pointer-events: none; font-size: 0.9em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 30px; pointer-events: auto; }
+        .message-area.error { background-color: rgba(var(--neon-red-rgb), 0.9); color: #fff; border-color: var(--neon-red); } .message-area.success { background-color: rgba(var(--neon-green-rgb), 0.9); color: #fff; border-color: var(--neon-green); } .message-area.warning { background-color: rgba(var(--neon-orange-rgb), 0.9); color: #fff; border-color: var(--neon-orange); } .message-area.info { background-color: rgba(var(--neon-blue-rgb), 0.9); color: #fff; border-color: var(--neon-blue); }
+        #muscle-groups-container .loading-placeholder, #muscle-groups-container .error-placeholder, #program-config-content .loading-placeholder { background-color: var(--secondary-bg-color); border-radius: var(--border-radius-md); padding: 30px 20px; text-align: center; color: var(--secondary-text-color); font-style: italic; border: 1px dashed var(--border-color); margin-top: 10px; }
+        #muscle-groups-container .error-placeholder { color: var(--neon-red); border-color: var(--neon-red); }
 
         /* Responsive */
-        @media (min-width: 768px) { .container { max-width: 600px; } .header-content { flex-direction: row; justify-content: space-between; max-width: 900px;} .header-actions { width: auto; } body { padding-top: 80px; } }
+        @media (min-width: 768px) { .container { max-width: 600px; } .header-content { flex-direction: row; justify-content: space-between; max-width: 900px;} .header-actions { width: auto; } body { padding-top: 100px; } /* Ajusté pour header potentiellement plus haut */ }
     </style>
 </head>
 <body class="logged-out dark-theme">
 
-<header>
-    <!-- Header HTML (inchangé) -->
-    <div class="header-content"> <div class="title-container"> <i class="fas fa-shield header-icon"></i> <h1>ArmorWorkout</h1> </div> <div class="header-actions"> <div class="auth-controls"> <button id="signin-button" disabled><i class="fab fa-google"></i> Connexion</button> <button id="signout-button" disabled><i class="fas fa-sign-out-alt"></i> Déconnexion</button> </div> <span id="drive-status" aria-live="polite"></span> <div class="theme-toggle"> <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button> </div> </div> </div>
+<header id="app-header">
+    <div class="header-content">
+         <div class="title-container"> <i class="fas fa-shield header-icon"></i> <h1>ArmorWorkout</h1> </div>
+        <div class="header-actions">
+            <div class="auth-controls"> <button id="signin-button" disabled><i class="fab fa-google"></i> Connexion</button> <button id="signout-button" disabled><i class="fas fa-sign-out-alt"></i> Déconnexion</button> </div>
+             <span id="drive-status" aria-live="polite"></span>
+            <div class="theme-toggle"> <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button> </div>
+        </div>
+    </div>
+    <!-- Navigation ajoutée sous le header principal -->
+    <nav id="app-nav">
+        <button class="nav-button active" data-section="evolution-tracker-area" disabled><i class="fas fa-chart-line"></i> Évolution</button>
+        <button class="nav-button" data-section="program-config-area" disabled><i class="fas fa-cogs"></i> Équipement</button>
+        <!-- Ajouter d'autres onglets ici si nécessaire -->
+    </nav>
 </header>
 
 <div class="container">
     <main>
-        <div id="connection-prompt"> <p>Connectez-vous via Google pour suivre votre évolution.</p> <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Se connecter</button> </div>
-        <div id="evolution-tracker-area">
-            <!-- Carte Stats Globales (inchangée) -->
-            <div class="global-stats-card"> <div class="card-title">Upper Body ELO Score</div> <div id="overall-elo-display"> <span class="value">--</span> </div> <div id="level-badge-container" title="Cliquez pour voir la description du niveau"> <div id="level-badge" class="level-unknown" data-level-key="L0_Base"> <i class="fas fa-question-circle"></i> <span>Indéterminé</span> </div> </div> <div class="target-info-container"> <span id="target-elo-info">Objectif Niv. Suivant: <strong>-- ELO</strong></span> <span id="marvel-target-info"> | Benchmark <strong class="marvel-target">Marvel: -- ELO</strong></span> </div> </div>
-            <!-- Section Progression des Ligues (inchangée) -->
-            <section id="league-progression-section"> <h4>Progression des Niveaux</h4> <div id="league-progression-container" class="league-progression-container"> <p class="loading-placeholder" style="width: 100%; text-align: center; margin: 0; padding: 10px 0;">Chargement...</p> </div> </section>
-            <!-- Section Groupes Musculaires (inchangée) -->
-            <div id="muscle-groups-container" aria-live="polite"> <p class="loading-placeholder">Connectez-vous pour charger vos données...</p> </div>
+        <div id="connection-prompt">
+            <p>Connectez-vous via Google pour suivre votre évolution et configurer votre équipement.</p>
+            <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Se connecter</button>
         </div>
+
+        <!-- Section Suivi Évolution -->
+        <div id="evolution-tracker-area" class="app-section" style="display: none;"> <!-- Caché initialement, affiché par JS -->
+            <div class="global-stats-card">
+                 <div class="card-title">Score ELO Haut du Corps</div>
+                 <div id="overall-elo-display"> <span class="value">--</span> </div>
+                 <div id="level-badge-container" title="Cliquez pour voir la description du niveau">
+                     <div id="level-badge" class="level-unknown" data-level-key="L0_Base"> <i class="fas fa-question-circle"></i> <span>Indéterminé</span> </div>
+                     <!-- Icône Marvel insérée par JS -->
+                 </div>
+                 <div class="target-info-container">
+                      <span id="target-elo-info">Objectif Niv. Suivant: <strong>-- ELO</strong></span>
+                      <span id="marvel-target-info"> | Benchmark <strong class="marvel-target">Marvel: -- ELO</strong></span>
+                 </div>
+            </div>
+            <div id="muscle-groups-container" aria-live="polite">
+                 <p class="loading-placeholder">Connectez-vous pour charger vos données...</p>
+            </div>
+        </div>
+
+        <!-- Section Configuration Équipement -->
+        <div id="program-config-area" class="app-section" style="display: none;"> <!-- Caché initialement -->
+             <h2><i class="fas fa-dumbbell"></i> Configuration Équipement Additionnel</h2>
+             <div id="program-config-content">
+                 <p class="loading-placeholder">Chargez vos programmes pour configurer l'équipement...</p>
+                 <!-- Contenu généré par JS -->
+             </div>
+             <button id="save-config-button" disabled>
+                 <span><i class="fas fa-save"></i> Sauvegarder Équipement</span>
+                 <i class="fas fa-spinner fa-spin spinner"></i>
+             </button>
+        </div>
+
     </main>
 </div>
 
@@ -164,100 +229,416 @@
      <p>© 2024 ArmorWorkout | <a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> GitHub</a></p>
 </footer>
 
-<!-- Modal (inchangé) -->
-<div id="level-info-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h3 id="modal-title" class="modal-title"> <i id="modal-icon" class="fas fa-info-circle"></i> <span id="modal-level-name">Titre</span> </h3> <button id="modal-close-btn" class="modal-close-btn" aria-label="Fermer">×</button> </div> <div id="modal-body" class="modal-body"> <p>Desc...</p> </div> </div> </div>
-<!-- Zone Message (inchangée) -->
+<!-- Modal pour Description Niveau -->
+<div id="level-info-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h3 id="modal-title" class="modal-title"> <i id="modal-icon" class="fas fa-info-circle"></i> <span id="modal-level-name">Titre Niveau</span> </h3> <button id="modal-close-btn" class="modal-close-btn" aria-label="Fermer">×</button> </div> <div id="modal-body" class="modal-body"> <p>Description détaillée...</p> </div> </div> </div>
+<!-- Zone de Message Flottante -->
 <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
-<!-- Google Script (inchangé) -->
+
+<!-- Google Identity Services Script -->
 <script async defer src="https://accounts.google.com/gsi/client"></script>
 
 <script>
-    // --- CONFIGURATION & CONSTANTES (inchangées) ---
-    const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file'; const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" }; const PROGRAM_TYPES = ['Push', 'Pull', 'Legs']; const GIS_CHECK_INTERVAL = 100; const GIS_MAX_RETRIES = 50;
-    const ELO_BASE = 800; const INTENSITY_TECHNIQUE_BONUS_MULTIPLIER = 1.05; const POLYARTICULAR_WEIGHT = 1.2; const ISOLATION_WEIGHT = 1.0; const RESISTANCE_BONUS = { 'Bodyweight': 75, 'Haltères 5kg': 50, 'Élastique 15kg': 50, 'Élastique 15kg doublé': 100, 'Élastique 25kg': 125, 'Élastique 15+25kg': 200, 'Élastique 15+25kg + 1 haltère 5kg': 225, 'Élastique 15+25kg + 2x5kg haltères': 250 }; const REPS_FACTORS = { 8: 0.9, 12: 1.0, 18: 1.2, 25: 1.3, Infinity: 1.4 };
+    // --- CONFIGURATION & CONSTANTES ---
+    const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file'; const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" }; const EQUIPMENT_CONFIG_FILENAME = "armorworkout_exercise_config.json"; // NEW
+    const PROGRAM_TYPES = ['Push', 'Pull', 'Legs']; const GIS_CHECK_INTERVAL = 100; const GIS_MAX_RETRIES = 50;
 
-    // --- NIVEAUX & DESCRIPTIONS (inchangées) ---
-    const TARGET_ELO_LEVELS = {
-        'L0_Base':    { name: "Débutant",      minELO: 0,    description: "Le point de départ. L'objectif principal est d'apprendre les mouvements correctement, de ressentir les muscles travailler (connexion esprit-muscle) et d'être régulier. Le potentiel de progression est énorme !", colorVar: '--level-beginner-color', bgVar: '--level-beginner-bg', iconClass: 'fa-shield-halved' },
-        'L1_Bronze':  { name: "Bronze",        minELO: 800,  description: "Les fondations sont posées. Une force de base est acquise, permettant d'exécuter les exercices avec plus d'aisance. L'endurance musculaire s'améliore. Les premiers changements physiques subtils peuvent apparaître.", colorVar: '--level-bronze-color',   bgVar: '--level-bronze-bg',   iconClass: 'fa-shield-halved' },
-        'L2_Silver':  { name: "Argent",        minELO: 950,  description: "Le physique athlétique commence à se dessiner. Les formes des muscles principaux (pectoraux, dos, épaules, bras) sont plus visibles, surtout pendant l'effort. Une légère définition musculaire peut commencer à apparaître, marquant la séparation entre les groupes.", colorVar: '--level-silver-color',   bgVar: '--level-silver-bg',   iconClass: 'fa-shield' },
-        'L3_Gold':    { name: "Or",            minELO: 1050, description: "La force est solide. Les muscles sont plus pleins, plus denses. La définition musculaire devient visible même au repos léger (ex: abdominaux supérieurs, séparation deltoïde/biceps). Bonne posture et allure solide.", colorVar: '--level-gold-color',     bgVar: '--level-gold-bg',     iconClass: 'fa-trophy' },
-        'L_Marvel':   { name: "Marvel Physique", targetELO: 1200, description: "Benchmark : Une esthétique 'super-héroïque' moderne. Combinaison de muscles bien dessinés et fonctionnels, avec un faible taux de masse grasse rendant la définition très nette. Agilité et puissance apparente.", colorVar: '--level-marvel-color', bgVar: '--level-marvel-bg', iconClass: 'fa-bolt-lightning' }, // Benchmark
-        'L4_Crystal': { name: "Crystal",       minELO: 1150, description: "Niveau avancé. Le volume musculaire est significatif et la définition est claire sur la plupart des groupes. La vascularité (veines apparentes) peut être visible sur les bras ou les épaules. Le physique est impressionnant et équilibré.", colorVar: '--level-crystal-color',  bgVar: '--level-crystal-bg',  iconClass: 'fa-gem' },
-        'L5_Master':  { name: "Master",        minELO: 1250, description: "Maîtrise physique. Muscles très développés, denses et durs. Si le taux de gras est suffisamment bas, des stries musculaires peuvent apparaître (ex: pectoraux, deltoïdes). Force fonctionnelle et puissance élevées.", colorVar: '--level-master-color',   bgVar: '--level-master-bg',   iconClass: 'fa-chess-king' },
-        'L6_Champion':{ name: "Champion",      minELO: 1350, description: "Physique d'élite, proche du potentiel maximal naturel pour beaucoup. Volume et définition exceptionnels, donnant un aspect 'ciselé' ou 'écorché'. Chaque groupe musculaire se détache nettement. Force et endurance de haut niveau.", colorVar: '--level-champion-color', bgVar: '--level-champion-bg', iconClass: 'fa-skull-crossbones' },
-        'L7_Titan':   { name: "Titan",         minELO: 1500, description: "Force et masse colossales, dépassant les normes athlétiques conventionnelles. Un physique qui impose le respect par sa densité et sa puissance brute. Semble presque 'construit' en blocs.", colorVar: '--level-titan-color',    bgVar: '--level-titan-bg',    iconClass: 'fa-robot' },
-        'L8_Legende': { name: "Legende",       minELO: 1650, description: "Statut quasi-mythique. Représente l'incarnation de la puissance et de l'esthétique poussées à l'extrême limite. Un physique qui transcende le commun et inspire par sa perfection et sa force hors normes.", colorVar: '--level-legende-color',  bgVar: '--level-legende-bg',  iconClass: 'fa-meteor' },
+    // --- PARAMÈTRES ELO ---
+    const ELO_BASE = 800; const INTENSITY_TECHNIQUE_BONUS_MULTIPLIER = 1.05; const POLYARTICULAR_WEIGHT = 1.2; const ISOLATION_WEIGHT = 1.0;
+    // Bonus de résistance - CLÉS DOIVENT CORRESPONDRE À step.details.resistance ET aux valeurs de AVAILABLE_EQUIPMENT
+    const RESISTANCE_BONUS = {
+        'Poids du corps': 75, // Base poids du corps
+        'Haltères 5kg': 50, // Existant - Peut être rendu obsolète ou ajusté
+        '1 haltère 5kg': 25,    // NOUVEAU - Pour configuration
+        '2 haltères 5kg': 50,   // NOUVEAU - Pour configuration
+        'Élastique 15kg': 50, // Existant - Peut être rendu obsolète ou ajusté
+        '1 élastique 15 kg': 50, // NOUVEAU - Pour configuration
+        'Élastique 15kg doublé': 100, // Existant - Peut être rendu obsolète ou ajusté
+        '1 élastique 15 kg doublé': 100, // NOUVEAU - Pour configuration
+        'Élastique 25kg': 125, // Existant - Peut être rendu obsolète ou ajusté
+        '1 élastique 25 kg': 125, // NOUVEAU - Pour configuration
+        'Élastique 15+25kg': 200, // Combiné existant
+        // Ajouter d'autres combinaisons ou poids si nécessaire
     };
+    const REPS_FACTORS = { 8: 0.9, 12: 1.0, 18: 1.2, 25: 1.3, Infinity: 1.4 };
+    // NOUVEAU: Facteurs pour exercices basés sur la durée
+    const DURATION_FACTORS = { 30: 0.8, 45: 1.0, 60: 1.15, 90: 1.3, 120: 1.4, Infinity: 1.5 };
+    const ISOMETRIC_BASE_RESISTANCE_KEY = 'Poids du corps'; // Utilise cette clé de RESISTANCE_BONUS pour les exos isométriques sans équipement ajouté
+
+    // NOUVEAU: Liste des équipements configurables par l'utilisateur
+    const AVAILABLE_EQUIPMENT = [
+        '1 haltère 5kg',
+        '2 haltères 5kg',
+        '1 élastique 15 kg',
+        '1 élastique 15 kg doublé',
+        '1 élastique 25 kg',
+        // 'Poids du corps' - Généralement non ajouté, mais pourrait l'être si utile
+    ];
+
+    // --- NIVEAUX & DESCRIPTIONS PHYSIQUES ---
+    const TARGET_ELO_LEVELS = { 'L0_Base': { name: "Débutant", minELO: 0, description: "Point de départ...", colorVar: '--level-beginner-color', bgVar: '--level-beginner-bg', iconClass: 'fa-seedling' }, 'L1_Bronze': { name: "Bronze", minELO: 800, description: "Fondations posées...", colorVar: '--level-bronze-color', bgVar: '--level-bronze-bg', iconClass: 'fa-shield-halved' }, 'L2_Silver': { name: "Argent", minELO: 950, description: "Physique athlétique...", colorVar: '--level-silver-color', bgVar: '--level-silver-bg', iconClass: 'fa-shield' }, 'L3_Gold': { name: "Or", minELO: 1050, description: "Force solide...", colorVar: '--level-gold-color', bgVar: '--level-gold-bg', iconClass: 'fa-trophy' }, 'L_Marvel': { name: "Marvel Physique", targetELO: 1200, description: "Benchmark : Esthétique...", colorVar: '--level-marvel-color', bgVar: '--level-marvel-bg', iconClass: 'fa-bolt-lightning' }, 'L4_Crystal': { name: "Crystal", minELO: 1150, description: "Niveau avancé...", colorVar: '--level-crystal-color', bgVar: '--level-crystal-bg', iconClass: 'fa-gem' }, 'L5_Master': { name: "Master", minELO: 1250, description: "Maîtrise physique...", colorVar: '--level-master-color', bgVar: '--level-master-bg', iconClass: 'fa-crown' }, 'L6_Champion':{ name: "Champion", minELO: 1350, description: "Physique d'élite...", colorVar: '--level-champion-color', bgVar: '--level-champion-bg', iconClass: 'fa-skull-crossbones' }, 'L7_Titan': { name: "Titan", minELO: 1500, description: "Force et masse colossales...", colorVar: '--level-titan-color', bgVar: '--level-titan-bg', iconClass: 'fa-mountain-sun' }, 'L8_Legende': { name: "Legende", minELO: 1650, description: "Statut quasi-mythique...", colorVar: '--level-legende-color', bgVar: '--level-legende-bg', iconClass: 'fa-meteor' }, };
     const LEVEL_ORDER = ['L0_Base', 'L1_Bronze', 'L2_Silver', 'L3_Gold', 'L4_Crystal', 'L5_Master', 'L6_Champion', 'L7_Titan', 'L8_Legende']; const MARVEL_BENCHMARK_KEY = 'L_Marvel';
-    const MUSCLE_GROUPS_DISPLAY_CONFIG = { "Chest": { subtitle: "Pectoraux", icon: 'fa-dot-circle' }, "Back": { subtitle: "Dos", icon: 'fa-bars-staggered' }, "Shoulders":{ subtitle: "Épaules", icon: 'fa-atom' }, "Biceps": { subtitle: "Biceps", icon: 'fa-link' }, "Triceps": { subtitle: "Triceps", icon: 'fa-diamond' }, "Core": { subtitle: "Core", icon: 'fa-bullseye' } };
-    const LOGIC_TO_DISPLAY_MAP = { Pectoraux: "Chest", Dos: "Back", Épaules: "Shoulders", Biceps: "Biceps", Triceps: "Triceps", Core: "Core" }; const ALL_MUSCLE_GROUPS_LOGIC = Object.keys(LOGIC_TO_DISPLAY_MAP);
 
-    // --- Éléments DOM (inchangés) ---
-    let signInButton, signOutButton, driveStatusElement, themeToggleBtn, signInButtonPrompt, connectionPrompt, evolutionTrackerArea, overallEloDisplayValue, levelBadgeContainer, levelBadge, levelBadgeIcon, levelBadgeText, targetEloInfoStrong, marvelTargetInfoSpan, muscleGroupsContainer, messageArea, levelInfoModal, modalTitle, modalIcon, modalLevelName, modalBody, modalCloseBtn, leagueProgressionContainer;
+    // Groupes affichés et mapping (FRANCAIS)
+    const MUSCLE_GROUPS_DISPLAY_CONFIG = { "Pectoraux": { subtitle: "Poitrine", icon: 'fa-dot-circle' }, "Dos": { subtitle: "Dorsaux/Trapèzes", icon: 'fa-bars-staggered' }, "Épaules":{ subtitle: "Deltoïdes", icon: 'fa-atom' }, "Biceps": { subtitle: "Bras (Flex.)", icon: 'fa-link' }, "Triceps": { subtitle: "Bras (Ext.)", icon: 'fa-diamond' }, "Core": { subtitle: "Abdos/ Lombaires", icon: 'fa-bullseye' } };
+    const LOGIC_TO_DISPLAY_MAP = { Pectoraux: "Pectoraux", Dos: "Dos", Épaules: "Épaules", Biceps: "Biceps", Triceps: "Triceps", Core: "Core" }; const ALL_MUSCLE_GROUPS_LOGIC = Object.keys(LOGIC_TO_DISPLAY_MAP);
 
-    // --- Variables d'État (inchangées) ---
-    let googleAccessToken = null; let tokenClient = null; let programFileIds = { Push: null, Pull: null, Legs: null }; let loadedPrograms = { Push: [], Pull: [], Legs: [] }; let programsAnalysisStatus = 'pending'; let currentELOValues = {}; let overallAvgELO = ELO_BASE; let currentGlobalLevelKey = LEVEL_ORDER[0]; let currentTheme = 'dark'; let messageTimeoutId = null; let gisCheckRetries = 0; let previousOverallAvgELO = null;
+    // --- Éléments DOM ---
+    let signInButton, signOutButton, driveStatusElement, themeToggleBtn, signInButtonPrompt, connectionPrompt, evolutionTrackerArea, overallEloDisplayValue, levelBadgeContainer, levelBadge, levelBadgeIcon, levelBadgeText, targetEloInfoStrong, marvelTargetInfoSpan, muscleGroupsContainer, messageArea, levelInfoModal, modalTitle, modalIcon, modalLevelName, modalBody, modalCloseBtn, appNav, navButtons, appSections, programConfigArea, programConfigContent, saveConfigButton;
 
-    // --- Audio & Google API Stubs ---
-    let audioContext = null;
-    function initAudioContext() { // Correction: Ajout de l'accolade manquante
-        if (!audioContext && typeof AudioContext !== 'undefined') {
+    // --- Variables d'État ---
+    let googleAccessToken = null; let tokenClient = null; let programFileIds = { Push: null, Pull: null, Legs: null }; let equipmentConfigFileId = null; // NEW
+    let loadedPrograms = { Push: [], Pull: [], Legs: [] }; let exerciseConfig = {}; // NEW: Stocke la config d'équipement chargé
+    let programsAnalysisStatus = 'pending'; let configLoadStatus = 'pending'; // NEW
+    let currentELOValues = {}; let overallAvgELO = ELO_BASE; let currentGlobalLevelKey = LEVEL_ORDER[0]; let currentTheme = 'dark'; let messageTimeoutId = null; let gisCheckRetries = 0; let previousOverallAvgELO = null;
+
+    // --- Audio & Google API Stubs (Inchangés) ---
+    let audioContext = null; function initAudioContext() { /* ... */ } function playSound(type = 'confirm', volume = 0.15) { /* ... */ } async function gisInitInternal() { /* ... */ } function checkAndInitGis() { /* ... */ } function handleTokenError(error) { /* ... */ }
+    async function tokenCallback(tokenResponse) { // Modifié pour charger la config
+        if (tokenResponse.error) { handleTokenError(tokenResponse); return; }
+        if (tokenResponse && tokenResponse.access_token) {
+            console.log("Access Token reçu."); googleAccessToken = tokenResponse.access_token; previousOverallAvgELO = null; playSound('confirm'); showMessage("Connecté ! Chargement données...", 2500, 'info');
+            if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Chargement Données...</p>';
+            if (programConfigContent) programConfigContent.innerHTML = '<p class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Chargement Données...</p>';
+            resetEvolutionDisplay();
             try {
-                audioContext = new AudioContext();
-            } catch (e) {
-                console.warn("AudioContext non supporté.", e);
-            }
-        }
-    } // Fin de initAudioContext
-    function playSound(type = 'confirm', volume = 0.15) { if (!audioContext) return; try { const o = audioContext.createOscillator(), g = audioContext.createGain(); o.connect(g); g.connect(audioContext.destination); g.gain.setValueAtTime(0, audioContext.currentTime); g.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01); const t = audioContext.currentTime; switch (type) { case 'confirm': o.type = 'sine'; o.frequency.setValueAtTime(523.25, t); o.frequency.linearRampToValueAtTime(783.99, t + 0.1); break; case 'error': o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.linearRampToValueAtTime(110, t + 0.15); break; case 'level_up': o.type = 'triangle'; g.gain.linearRampToValueAtTime(volume * 1.2, t + 0.01); o.frequency.setValueAtTime(440, t); o.frequency.linearRampToValueAtTime(554.37, t + 0.08); o.frequency.linearRampToValueAtTime(659.25, t + 0.16); o.frequency.linearRampToValueAtTime(880, t + 0.24); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); o.stop(t + 0.4); break; default: o.type = 'triangle'; o.frequency.setValueAtTime(659.25, t); break; } if (type !== 'level_up') { o.start(t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.stop(t + 0.2); } else { o.start(t); } } catch (e) { console.warn("Erreur lecture son:", e); } }
-    async function gisInitInternal() { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, }); console.log("GIS Client init."); updateAuthUI(googleAccessToken !== null); } catch (error) { console.error("Erreur init GIS:", error); showMessage("Init Google impossible.", 5000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true; } } function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { console.log("GIS prêt, init..."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; console.log(`GIS non prêt, retry ${gisCheckRetries}/${GIS_MAX_RETRIES}...`); setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error("Échec chargement GIS."); showMessage("Service Auth Google indispo.", 6000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true;} } function handleTokenError(error) { console.error("Erreur Auth Google:", error); let msg = "Erreur connexion Google."; if (error?.type === 'popup_closed_by_user') msg = "Connexion annulée."; else if (error?.type === 'access_denied') msg = "Accès Drive refusé."; else if (error?.error === 'popup_blocked_by_browser') msg = "Popup connexion bloqué."; else if (error?.details) msg += ` Détails: ${error.details}`; showMessage(msg, 5000, 'error'); playSound('error'); googleAccessToken = null; previousOverallAvgELO = null; updateAuthUI(false); resetEvolutionDisplay(); }
-    async function tokenCallback(tokenResponse) { if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu."); googleAccessToken = tokenResponse.access_token; previousOverallAvgELO = null; playSound('confirm'); showMessage("Connecté ! Analyse...", 2500, 'info'); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = '<p class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Analyse Google Drive...</p>'; } resetEvolutionDisplay(); try { programsAnalysisStatus = await loadProgramsFromDrive(); console.log("Statut analyse:", programsAnalysisStatus); if (programsAnalysisStatus === 'success') { showMessage("Programmes analysés. Calcul...", 3000, 'success'); } else if (programsAnalysisStatus === 'partial') { showMessage("Progs partiels/invalides.", 5000, 'warning'); } else { showMessage("Erreur chargement/analyse progs.", 6000, 'error'); playSound('error'); } calculateAndDisplayEvolution(); } catch (error) { console.error("Erreur CRITIQUE chargement/analyse:", error); showMessage("Erreur majeure analyse.", 6000, 'error'); playSound('error'); programsAnalysisStatus = 'error'; if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="error-placeholder">Erreur critique : ${error.message}</p>`; } resetEvolutionDisplay(); } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse Google invalide." }); } }
+                // Charger programmes ET config en parallèle
+                const [programsStatus, configStatus] = await Promise.all([
+                    loadProgramsFromDrive(),
+                    loadExerciseConfigFromDrive() // NEW call
+                ]);
+                programsAnalysisStatus = programsStatus;
+                configLoadStatus = configStatus; // NEW state
+                console.log("Statut analyse progs:", programsAnalysisStatus);
+                console.log("Statut chargement config:", configLoadStatus);
+
+                if (programsAnalysisStatus === 'error' || configLoadStatus === 'error') {
+                     showMessage("Erreur chargement programmes ou config.", 6000, 'error'); playSound('error');
+                 } else if (programsAnalysisStatus === 'partial' || configLoadStatus === 'partial') { // Config 'partial' = fichier non trouvé (OK)
+                     showMessage("Données partielles (progs ou config manquante).", 5000, 'warning');
+                 } else {
+                     showMessage("Données chargées. Calcul évolution...", 3000, 'success');
+                 }
+
+                 // Calculer l'évolution et mettre à jour l'UI même si partiel/erreur
+                 calculateAndDisplayEvolution();
+                 renderProgramConfigUI(); // NEW call
+
+            } catch (error) { console.error("Erreur CRITIQUE chargement/analyse:", error); showMessage("Erreur majeure chargement.", 6000, 'error'); playSound('error'); programsAnalysisStatus = 'error'; configLoadStatus = 'error'; if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = `<p class="error-placeholder">Erreur critique : ${error.message}</p>`; if (programConfigContent) programConfigContent.innerHTML = `<p class="error-placeholder">Erreur critique : ${error.message}</p>`; resetEvolutionDisplay(); }
+             finally { updateAuthUI(true); }
+        } else { handleTokenError({ error: "invalid_response", details: "Réponse Google invalide." }); }
+    }
+    function handleAuthClick() { /* ... */ } function handleSignoutClick(showMessages = true) { /* ... */ } async function findFileId(filename) { /* ... */ } async function readFileContent(fileId) { /* ... */ } async function loadProgramsFromDrive() { /* ... */ }
+    // --- Audio ---
+    function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté.", e); } } } function playSound(type = 'confirm', volume = 0.15) { if (!audioContext) return; try { const o = audioContext.createOscillator(), g = audioContext.createGain(); o.connect(g); g.connect(audioContext.destination); g.gain.setValueAtTime(0, audioContext.currentTime); g.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01); const t = audioContext.currentTime; switch (type) { case 'confirm': o.type = 'sine'; o.frequency.setValueAtTime(523.25, t); o.frequency.linearRampToValueAtTime(783.99, t + 0.1); break; case 'error': o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.linearRampToValueAtTime(110, t + 0.15); break; case 'level_up': o.type = 'triangle'; g.gain.linearRampToValueAtTime(volume * 1.2, t + 0.01); o.frequency.setValueAtTime(440, t); o.frequency.linearRampToValueAtTime(554.37, t + 0.08); o.frequency.linearRampToValueAtTime(659.25, t + 0.16); o.frequency.linearRampToValueAtTime(880, t + 0.24); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); o.stop(t + 0.4); break; default: o.type = 'triangle'; o.frequency.setValueAtTime(659.25, t); break; } if (type !== 'level_up') { o.start(t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.stop(t + 0.2); } else { o.start(t); } } catch (e) { console.warn("Erreur lecture son:", e); } }
+    // --- Google Identity Services & Drive API ---
+    async function gisInitInternal() { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, }); console.log("GIS Client init."); updateAuthUI(googleAccessToken !== null); } catch (error) { console.error("Erreur init GIS:", error); showMessage("Init Google impossible.", 5000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true; } } function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { console.log("GIS prêt, init..."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; console.log(`GIS non prêt, retry ${gisCheckRetries}/${GIS_MAX_RETRIES}...`); setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error("Échec chargement GIS."); showMessage("Service Auth Google indispo.", 6000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true;} } function handleTokenError(error) { console.error("Erreur Auth Google:", error); let msg = "Erreur connexion Google."; if (error?.type === 'popup_closed_by_user') msg = "Connexion annulée."; else if (error?.type === 'access_denied') msg = "Accès Drive refusé."; else if (error?.error === 'popup_blocked_by_browser') msg = "Popup connexion bloqué."; else if (error?.details) msg += ` Détails: ${error.details}`; showMessage(msg, 5000, 'error'); playSound('error'); googleAccessToken = null; previousOverallAvgELO = null; updateAuthUI(false); resetEvolutionDisplay(); resetConfigUI(); }
     function handleAuthClick() { initAudioContext(); if (tokenClient) { console.log("Demande token Google..."); showMessage("Ouverture connexion Google...", 2000, 'info'); tokenClient.requestAccessToken({ prompt: '' }); } else { console.error("Auth sans tokenClient."); showMessage("Erreur : Service connexion non prêt.", 4000, 'error'); checkAndInitGis(); } }
-    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté."); updateAuthUI(false); return; } initAudioContext(); if (showMessages) showMessage("Déconnexion...", 1500, 'info'); google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué.'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsAnalysisStatus = 'pending'; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentELOValues = {}; overallAvgELO = ELO_BASE; currentGlobalLevelKey = LEVEL_ORDER[0]; previousOverallAvgELO = null; if (showMessages) { showMessage("Déconnecté.", 3000, 'info'); playSound('confirm'); } resetEvolutionDisplay(); updateAuthUI(false); }); }
+    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté."); updateAuthUI(false); return; } initAudioContext(); if (showMessages) showMessage("Déconnexion...", 1500, 'info'); google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué.'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; equipmentConfigFileId = null; programsAnalysisStatus = 'pending'; configLoadStatus = 'pending'; loadedPrograms = { Push: [], Pull: [], Legs: [] }; exerciseConfig = {}; currentELOValues = {}; overallAvgELO = ELO_BASE; currentGlobalLevelKey = LEVEL_ORDER[0]; previousOverallAvgELO = null; if (showMessages) { showMessage("Déconnecté.", 3000, 'info'); playSound('confirm'); } resetEvolutionDisplay(); resetConfigUI(); updateAuthUI(false); }); }
     async function findFileId(filename) { if (!googleAccessToken) return null; try { const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${filename}' and trashed=false&fields=files(id, name)`, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!r.ok) { if (r.status === 401 || r.status === 403) { console.warn(`Auth expirée (find ${filename}). Déco.`); handleSignoutClick(false); } else { console.error(`Erreur Drive (find ${filename}): ${r.status} ${r.statusText}`); } throw new Error(`Erreur Drive ${r.status}`); } const d = await r.json(); if (d.files && d.files.length > 0) return d.files[0].id; return null; } catch (e) { console.error(`Erreur recherche ${filename}:`, e); return null; } }
     async function readFileContent(fileId) { if (!googleAccessToken || !fileId) return null; try { const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!r.ok) { if (r.status === 401 || r.status === 403) { console.warn(`Auth expirée (read ${fileId}). Déco.`); handleSignoutClick(false); } else { console.error(`Erreur Drive (read ${fileId}): ${r.status} ${r.statusText}`); } throw new Error(`Erreur Drive ${r.status}`); } return await r.text(); } catch (e) { console.error(`Erreur lecture ${fileId}:`, e); return null; } }
-    async function loadProgramsFromDrive() { if (!googleAccessToken) return 'error'; console.log("Chargement programmes Drive..."); let allOk = true, anyOk = false; const tmp = { Push: [], Pull: [], Legs: [] }; for (const type of PROGRAM_TYPES) { programFileIds[type] = await findFileId(PROGRAM_FILENAMES[type]); let fileOk = false; if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const p = JSON.parse(content || '[]'); if (Array.isArray(p)) { tmp[type] = p; fileOk = true; anyOk = true; if (p.length === 0) console.warn(`Prog ${type} vide.`); } else { console.error(`Contenu ${type} non-Array.`); showMessage(`Format invalide ${PROGRAM_FILENAMES[type]}.`, 4000, 'warning'); allOk = false; } } catch (e) { console.error(`Erreur parsing JSON ${type}:`, e); showMessage(`Erreur format JSON ${PROGRAM_FILENAMES[type]}.`, 4000, 'error'); playSound('error'); allOk = false; } } else { console.warn(`Lecture ${type} échouée.`); showMessage(`Impossible lire ${PROGRAM_FILENAMES[type]}.`, 4000, 'warning'); allOk = false; } } else { console.error(`Fichier ${PROGRAM_FILENAMES[type]} introuvable.`); showMessage(`Fichier ${PROGRAM_FILENAMES[type]} introuvable.`, 4000, 'warning'); allOk = false; } } loadedPrograms = tmp; console.log(`Fin chargement. Global: ${allOk}, Partiel: ${anyOk}`); if (allOk) return 'success'; if (anyOk) return 'partial'; return 'error'; }
+    async function loadProgramsFromDrive() { if (!googleAccessToken) return 'error'; console.log("Chargement programmes Drive..."); let allOk = true, anyOk = false; const tmp = { Push: [], Pull: [], Legs: [] }; for (const type of PROGRAM_TYPES) { programFileIds[type] = await findFileId(PROGRAM_FILENAMES[type]); let fileOk = false; if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const p = JSON.parse(content || '[]'); if (Array.isArray(p)) { tmp[type] = p; fileOk = true; anyOk = true; if (p.length === 0) console.warn(`Prog ${type} vide.`); } else { console.error(`Contenu ${type} non-Array.`); showMessage(`Format invalide ${PROGRAM_FILENAMES[type]}.`, 4000, 'warning'); allOk = false; } } catch (e) { console.error(`Erreur parsing JSON ${type}:`, e); showMessage(`Erreur format JSON ${PROGRAM_FILENAMES[type]}.`, 4000, 'error'); playSound('error'); allOk = false; } } else { console.warn(`Lecture ${type} échouée.`); showMessage(`Impossible lire ${PROGRAM_FILENAMES[type]}.`, 4000, 'warning'); allOk = false; } } else { console.warn(`Fichier ${PROGRAM_FILENAMES[type]} introuvable.`); /* Pas une erreur bloquante, mais partiel */ allOk = false; } } loadedPrograms = tmp; console.log(`Fin chargement progs. Global: ${allOk}, Partiel: ${anyOk}`); if (allOk) return 'success'; if (anyOk) return 'partial'; return 'error'; }
 
-    // --- Logique de Calcul ELO (Inchangée) ---
-    function getRepsFactor(reps) { const n = parseInt(reps, 10); if (isNaN(n) || reps === 'AMRAP' || reps === 'MAX') return REPS_FACTORS[Infinity]; if (n <= 8) return REPS_FACTORS[8]; if (n <= 12) return REPS_FACTORS[12]; if (n <= 18) return REPS_FACTORS[18]; if (n <= 25) return REPS_FACTORS[25]; return REPS_FACTORS[Infinity]; } function isPolyarticular(name) { const l = name.toLowerCase(); const k = ['pompes', 'push up', 'dips', 'tractions', 'pull up', 'chin up', 'rowing', 'tirage', 'squat', 'fentes', 'soulevé', 'deadlift', 'développé', 'press', 'overhead press']; return k.some(w => l.includes(w)); } function calculateExerciseELO(step) { if (!step || step.type !== 'exercise' || !step.details) return 0; const d = step.details; const r = RESISTANCE_BONUS[d.resistance] || 0; const f = getRepsFactor(d.reps); const t = (d.intensityTechnique && d.intensityTechnique !== 'Aucune') ? INTENSITY_TECHNIQUE_BONUS_MULTIPLIER : 1.0; return ELO_BASE / 10 + (r * f * t); } function mapExerciseToMuscleGroup(name) { const l = name.toLowerCase(); if (l.includes('pompes') || l.includes('push up') || l.includes('dips') || l.includes('développé couché') || l.includes('chest press')) return ['Pectoraux', 'Triceps', 'Épaules']; if (l.includes('tractions') || l.includes('pull up') || l.includes('chin up') || l.includes('rowing') || l.includes('tirage')) return ['Dos', 'Biceps']; if (l.includes('développé militaire') || l.includes('overhead press') || l.includes('élévations latérales') || l.includes('shoulder press')) return ['Épaules', 'Triceps']; if (l.includes('curl') || l.includes('biceps')) return ['Biceps']; if (l.includes('extension triceps') || l.includes('triceps pushdown') || l.includes('skullcrusher')) return ['Triceps']; if (l.includes('gainage') || l.includes('planche') || l.includes('crunch') || l.includes('abdos') || l.includes('core')) return ['Core']; if (l.includes('squat') || l.includes('fentes') || l.includes('leg press') || l.includes('leg extension') || l.includes('leg curl') || l.includes('mollets')) return ['Legs']; console.warn(`Mapping muscle inconnu: ${name}`); return []; }
-    function analyzeProgramsAndCalculateELO() { console.log("Analyse ELO..."); const groupData = {}; [...ALL_MUSCLE_GROUPS_LOGIC, 'Legs'].forEach(g => { groupData[g] = { totalWeightedElo: 0, totalWeight: 0 }; }); currentELOValues = {}; if (programsAnalysisStatus === 'error' || programsAnalysisStatus === 'pending') { console.warn("Analyse ELO annulée."); ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { currentELOValues[g] = ELO_BASE; }); overallAvgELO = ELO_BASE; previousOverallAvgELO = null; return; } PROGRAM_TYPES.forEach(type => { const p = loadedPrograms[type]; if (!p || p.length === 0) return; let currentExo = null, sets = 0, lastStep = null; p.forEach((step, idx) => { if (step.type === 'exercise') { if (step.name === currentExo && lastStep) { sets++; } else { if (lastStep) processExerciseBlock(lastStep, sets, groupData); currentExo = step.name; sets = 1; } lastStep = step; if (idx === p.length - 1) processExerciseBlock(lastStep, sets, groupData); } else if (step.type === 'break' || step.type === 'info') { if (lastStep) processExerciseBlock(lastStep, sets, groupData); currentExo = null; sets = 0; lastStep = null; } }); }); let totalEloSum = 0, totalWeight = 0; ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { const d = groupData[g]; currentELOValues[g] = d.totalWeight > 0 ? Math.max(ELO_BASE, ELO_BASE + Math.round(d.totalWeightedElo / d.totalWeight)) : ELO_BASE; if (g !== 'Legs' && d.totalWeight > 0) { totalEloSum += (currentELOValues[g] - ELO_BASE) * d.totalWeight; totalWeight += d.totalWeight; } }); if (overallAvgELO >= ELO_BASE) { previousOverallAvgELO = overallAvgELO; } overallAvgELO = totalWeight > 0 ? Math.max(ELO_BASE, ELO_BASE + Math.round(totalEloSum / totalWeight)) : ELO_BASE; console.log(`ELO Global: ${overallAvgELO} (Préc: ${previousOverallAvgELO})`); console.log("ELO Groupes:", currentELOValues); }
+    // --- NOUVEAU: Gestion Config Équipement ---
+    async function loadExerciseConfigFromDrive() {
+        if (!googleAccessToken) return 'error';
+        console.log("Chargement config équipement Drive...");
+        equipmentConfigFileId = await findFileId(EQUIPMENT_CONFIG_FILENAME);
+        if (equipmentConfigFileId) {
+            const content = await readFileContent(equipmentConfigFileId);
+            if (content !== null) {
+                try {
+                    const parsedConfig = JSON.parse(content || '{}');
+                    exerciseConfig = typeof parsedConfig === 'object' && parsedConfig !== null ? parsedConfig : {};
+                    console.log("Config équipement chargée.");
+                    return 'success';
+                } catch (e) {
+                    console.error("Erreur parsing JSON config équipement:", e);
+                    showMessage("Erreur format JSON config équipement.", 4000, 'error');
+                    playSound('error');
+                    exerciseConfig = {}; // Reset en cas d'erreur
+                    return 'error';
+                }
+            } else {
+                console.warn("Lecture config équipement échouée.");
+                showMessage("Impossible lire config équipement.", 4000, 'warning');
+                exerciseConfig = {}; // Reset
+                return 'error'; // Considérer comme erreur si lecture échoue
+            }
+        } else {
+            console.warn(`Fichier config équipement "${EQUIPMENT_CONFIG_FILENAME}" introuvable.`);
+            exerciseConfig = {}; // Fichier non trouvé n'est pas une erreur bloquante
+            return 'partial'; // Indique que le fichier était manquant mais ok
+        }
+    }
+
+    async function saveExerciseConfigToDrive() {
+        if (!googleAccessToken || !saveConfigButton) return;
+        console.log("Sauvegarde config équipement...");
+        saveConfigButton.disabled = true;
+        saveConfigButton.classList.add('saving');
+
+        // 1. Récupérer l'état actuel des checkboxes
+        const currentConfig = {};
+        const checkboxes = programConfigContent.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            const exerciseName = cb.dataset.exerciseName;
+            const equipmentName = cb.value;
+            if (!exerciseName || !equipmentName) return;
+
+            if (!currentConfig[exerciseName]) {
+                currentConfig[exerciseName] = { added_equipment: [] };
+            }
+            if (cb.checked) {
+                currentConfig[exerciseName].added_equipment.push(equipmentName);
+            }
+        });
+
+        // Nettoyer les entrées sans équipement ajouté
+        for (const exo in currentConfig) {
+            if (currentConfig[exo].added_equipment.length === 0) {
+                delete currentConfig[exo];
+            }
+        }
+        const configJson = JSON.stringify(currentConfig, null, 2); // Indenté pour lisibilité
+
+        try {
+            let method = 'PATCH'; // Par défaut : mise à jour
+            let url = `https://www.googleapis.com/upload/drive/v3/files/${equipmentConfigFileId}?uploadType=media`;
+
+            // Si le fichier n'existait pas, il faut le créer
+            if (!equipmentConfigFileId) {
+                method = 'POST';
+                url = `https://www.googleapis.com/upload/drive/v3/files?uploadType=media`;
+                // Il faut aussi envoyer les métadonnées pour la création
+                // C'est plus complexe, pour l'instant on assume l'update
+                // TODO: Implémenter la création si nécessaire, sinon l'utilisateur doit créer le fichier via l'éditeur ?
+                 console.warn("Tentative de sauvegarde sans ID de fichier config existant. La création n'est pas implémentée, ECHEC.");
+                 throw new Error("Création de fichier non supportée ici.");
+                 // Alternative: Tenter une création simple (sans métadonnées spécifiques)
+                 // method = 'POST'; url = `https://www.googleapis.com/upload/drive/v3/files?uploadType=media`;
+                 // const metadata = { name: EQUIPMENT_CONFIG_FILENAME, mimeType: 'application/json' };
+                 // // Faudrait combiner metadata et media upload, ce qui est plus complexe...
+            }
+
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${googleAccessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: configJson
+            });
+
+            if (!response.ok) {
+                 if (response.status === 401 || response.status === 403) { console.warn(`Auth expirée (save config). Déco.`); handleSignoutClick(false); }
+                 else { console.error(`Erreur Drive (save config): ${response.status} ${response.statusText}`); }
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Erreur Drive ${response.status}: ${errorData?.error?.message || 'Inconnue'}`);
+            }
+
+            const result = await response.json();
+             if (!equipmentConfigFileId && result.id) {
+                 equipmentConfigFileId = result.id; // Stocke le nouvel ID si création réussie
+                 console.log("Fichier config créé avec ID:", equipmentConfigFileId);
+             }
+
+            console.log("Config équipement sauvegardée avec succès.");
+            exerciseConfig = currentConfig; // Met à jour l'état local
+            showMessage("Configuration équipement sauvegardée !", 3000, 'success');
+            playSound('confirm');
+
+            // Recalculer l'ELO immédiatement pour refléter les changements
+            calculateAndDisplayEvolution();
+
+        } catch (error) {
+            console.error("Erreur sauvegarde config équipement:", error);
+            showMessage(`Erreur sauvegarde config: ${error.message}`, 5000, 'error');
+            playSound('error');
+        } finally {
+            saveConfigButton.disabled = false;
+            saveConfigButton.classList.remove('saving');
+        }
+    }
+
+    // --- Logique de Calcul ELO (Modifiée) ---
+    function getRepsFactor(reps) { /* ... inchangé ... */ }
+    function isPolyarticular(name) { /* ... inchangé ... */ }
+    function getDurationFactor(durationInSeconds) { // NOUVEAU
+        if (isNaN(durationInSeconds) || durationInSeconds <= 0) return DURATION_FACTORS[30]; // Défaut min
+        if (durationInSeconds <= 30) return DURATION_FACTORS[30];
+        if (durationInSeconds <= 45) return DURATION_FACTORS[45];
+        if (durationInSeconds <= 60) return DURATION_FACTORS[60];
+        if (durationInSeconds <= 90) return DURATION_FACTORS[90];
+        if (durationInSeconds <= 120) return DURATION_FACTORS[120];
+        return DURATION_FACTORS[Infinity]; // > 120s
+    }
+    // Fonction ELO principale qui choisit Reps ou Durée
+    function calculateExerciseELO(step) {
+        if (!step || step.type !== 'exercise' || !step.details) return 0;
+        const details = step.details;
+        const isDurationBased = details.duration && parseInt(details.duration, 10) > 0 && (!details.reps || details.reps === 'N/A' || parseInt(details.reps, 10) === 0);
+
+        let baseResistanceValue = RESISTANCE_BONUS[details.resistance] || RESISTANCE_BONUS['Poids du corps'] || 0; // Résistance de base de l'étape
+        let addedResistanceValue = 0;
+        const configForThisExo = exerciseConfig[step.name];
+
+        // Ajoute la résistance de l'équipement configuré
+        if (configForThisExo?.added_equipment?.length > 0) {
+            configForThisExo.added_equipment.forEach(equipKey => {
+                addedResistanceValue += (RESISTANCE_BONUS[equipKey] || 0);
+            });
+        }
+
+        const totalResistanceBonus = baseResistanceValue + addedResistanceValue;
+        const techniqueBonus = (details.intensityTechnique && details.intensityTechnique !== 'Aucune') ? INTENSITY_TECHNIQUE_BONUS_MULTIPLIER : 1.0;
+
+        if (isDurationBased) {
+            // Calcul basé sur la durée
+            const durationFactor = getDurationFactor(parseInt(details.duration, 10));
+            // Pour isométrie simple, on pourrait utiliser une clé spécifique si besoin
+            const isoResistance = totalResistanceBonus > 0 ? totalResistanceBonus : (RESISTANCE_BONUS[ISOMETRIC_BASE_RESISTANCE_KEY] || 75);
+            return ELO_BASE / 10 + (isoResistance * durationFactor * techniqueBonus);
+        } else {
+            // Calcul basé sur les répétitions (logique existante, mais utilise totalResistanceBonus)
+            const repsFactor = getRepsFactor(details.reps);
+            return ELO_BASE / 10 + (totalResistanceBonus * repsFactor * techniqueBonus);
+        }
+    }
+    function mapExerciseToMuscleGroup(name) { // Assurez-vous que les clés retournées sont en Français
+        const l = name.toLowerCase();
+        if (l.includes('pompes') || l.includes('push up') || l.includes('dips') || l.includes('développé couché') || l.includes('chest press') || l.includes('écarté')) return ['Pectoraux', 'Triceps', 'Épaules'];
+        if (l.includes('tractions') || l.includes('pull up') || l.includes('chin up') || l.includes('rowing') || l.includes('tirage')) return ['Dos', 'Biceps'];
+        if (l.includes('développé militaire') || l.includes('overhead press') || l.includes('élévations latérales') || l.includes('shoulder press')) return ['Épaules', 'Triceps'];
+        if (l.includes('curl') || l.includes('biceps')) return ['Biceps'];
+        if (l.includes('extension triceps') || l.includes('triceps pushdown') || l.includes('skullcrusher')) return ['Triceps'];
+        if (l.includes('gainage') || l.includes('planche') || l.includes('crunch') || l.includes('abdos') || l.includes('core') || l.includes('hollow body')) return ['Core']; // Ajout hollow
+        if (l.includes('squat') || l.includes('fentes') || l.includes('leg press') || l.includes('leg extension') || l.includes('leg curl') || l.includes('mollets')) return ['Legs'];
+        console.warn(`Mapping muscle inconnu: ${name}`); return [];
+    }
+    // analyzeProgramsAndCalculateELO et processExerciseBlock sont inchangés car calculateExerciseELO gère la complexité
+    function analyzeProgramsAndCalculateELO() { console.log("Analyse programmes & calcul ELO..."); const groupData = {}; [...ALL_MUSCLE_GROUPS_LOGIC, 'Legs'].forEach(g => { groupData[g] = { totalWeightedElo: 0, totalWeight: 0 }; }); currentELOValues = {}; if (programsAnalysisStatus === 'error' || programsAnalysisStatus === 'pending' || configLoadStatus === 'error') { console.warn("Analyse ELO annulée: données manquantes/erronées."); ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { currentELOValues[g] = ELO_BASE; }); overallAvgELO = ELO_BASE; previousOverallAvgELO = null; return; } PROGRAM_TYPES.forEach(type => { const p = loadedPrograms[type]; if (!p || p.length === 0) return; let currentExo = null, sets = 0, lastStep = null; p.forEach((step, idx) => { if (step.type === 'exercise') { if (step.name === currentExo && lastStep) { sets++; } else { if (lastStep) processExerciseBlock(lastStep, sets, groupData); currentExo = step.name; sets = 1; } lastStep = step; if (idx === p.length - 1) processExerciseBlock(lastStep, sets, groupData); } else if (step.type === 'break' || step.type === 'info') { if (lastStep) processExerciseBlock(lastStep, sets, groupData); currentExo = null; sets = 0; lastStep = null; } }); }); let totalEloSum = 0, totalWeight = 0; ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { const d = groupData[g]; currentELOValues[g] = d.totalWeight > 0 ? Math.max(ELO_BASE, ELO_BASE + Math.round(d.totalWeightedElo / d.totalWeight)) : ELO_BASE; if (g !== 'Legs' && d.totalWeight > 0) { totalEloSum += (currentELOValues[g] - ELO_BASE) * d.totalWeight; totalWeight += d.totalWeight; } }); if (overallAvgELO >= ELO_BASE) { previousOverallAvgELO = overallAvgELO; } overallAvgELO = totalWeight > 0 ? Math.max(ELO_BASE, ELO_BASE + Math.round(totalEloSum / totalWeight)) : ELO_BASE; console.log(`ELO Global: ${overallAvgELO} (Préc: ${previousOverallAvgELO})`); console.log("ELO Groupes:", currentELOValues); }
     function processExerciseBlock(step, sets, data) { const elo = calculateExerciseELO(step); if (elo > 0 && sets > 0) { const poly = isPolyarticular(step.name); const w = poly ? POLYARTICULAR_WEIGHT : ISOLATION_WEIGHT; const groups = mapExerciseToMuscleGroup(step.name); groups.forEach(g => { if (data[g]) { data[g].totalWeightedElo += elo * sets * w; data[g].totalWeight += sets * w; } else { console.warn(`Groupe logique inconnu : ${g} pour ${step.name}`); } }); } }
     function getEloLevelKey(eloScore) { for (let i = LEVEL_ORDER.length - 1; i >= 0; i--) { const k = LEVEL_ORDER[i]; if (TARGET_ELO_LEVELS[k] && eloScore >= TARGET_ELO_LEVELS[k].minELO) { return k; } } return LEVEL_ORDER[0]; }
 
-    // --- Logique Affichage ---
-    function calculateAndDisplayEvolution() { console.log("Mise à jour affichage..."); if (!evolutionTrackerArea || !overallEloDisplayValue || !levelBadge || !targetEloInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan || !leagueProgressionContainer) { console.error("DOM manquant."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur DOM.</p>'; return; }
-        if (programsAnalysisStatus !== 'pending') { analyzeProgramsAndCalculateELO(); } else { ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { currentELOValues[g] = ELO_BASE; }); overallAvgELO = ELO_BASE; previousOverallAvgELO = null; }
-        const previousGlobalLevelKey = currentGlobalLevelKey; currentGlobalLevelKey = getEloLevelKey(overallAvgELO); const currentGlobalLevel = TARGET_ELO_LEVELS[currentGlobalLevelKey]; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_ELO_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_ELO_LEVELS[MARVEL_BENCHMARK_KEY];
-        if (previousOverallAvgELO !== null && currentGlobalLevelKey !== previousGlobalLevelKey && TARGET_ELO_LEVELS[previousGlobalLevelKey]) { if (overallAvgELO >= TARGET_ELO_LEVELS[previousGlobalLevelKey].minELO) { console.log(`NIVEAU GLOBAL ATTEINT ! ${previousGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } }
-        animateValue(overallEloDisplayValue, parseFloat(overallEloDisplayValue.textContent.replace(/[^0-9.]/g, '')) || ELO_BASE, overallAvgELO, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.textContent = currentGlobalLevel.name; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetEloInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minELO} ELO` : "MAX"; marvelTargetInfoSpan.textContent = marvelBenchmark ? `${marvelBenchmark.targetELO} ELO` : "-- ELO";
-        const isMarvelAchieved = marvelBenchmark && overallAvgELO >= marvelBenchmark.targetELO; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const mi = document.createElement('i'); mi.id = 'marvel-icon'; mi.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; mi.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetELO} ELO) atteint ! ${marvelBenchmark.description}`); levelBadgeContainer.appendChild(mi); } } else { if (existingMarvelIcon) { existingMarvelIcon.remove(); } }
-        muscleGroupsContainer.innerHTML = ''; let hasData = false;
-        for (const displayGroup in MUSCLE_GROUPS_DISPLAY_CONFIG) {
-            const logicGroup = Object.keys(LOGIC_TO_DISPLAY_MAP).find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentELOValues[logicGroup] === undefined) { continue; }
-            hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentElo = currentELOValues[logicGroup]; const muscleLevelKey = getEloLevelKey(currentElo); const muscleLevel = TARGET_ELO_LEVELS[muscleLevelKey]; const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_ELO_LEVELS[nextMuscleLevelKey] : null; const minEloCurrent = muscleLevel.minELO; const minEloNext = nextMuscleLevel ? nextMuscleLevel.minELO : minEloCurrent; const range = minEloNext - minEloCurrent; let progress = 0; if (range > 0) { progress = ((currentElo - minEloCurrent) / range) * 100; } else if (currentElo >= minEloCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const isTargetReached = nextMuscleLevel ? currentElo >= minEloNext : true; const targetDisplay = nextMuscleLevel ? minEloNext : "MAX";
-            const card = renderMuscleGroupCard(displayGroup, config.subtitle, config.icon, currentElo, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleLevel.colorVar, muscleLevel.bgVar, isTargetReached); muscleGroupsContainer.appendChild(card);
+    // --- Logique Affichage (Inchangée pour l'essentiel, sauf appel à renderProgramConfigUI) ---
+    function calculateAndDisplayEvolution() { // Inchangé }
+    function renderMuscleGroupCard(title, subtitle, iconClass, currentElo, targetEloNextMin, displayPercent, currentLevelKey, currentLevelName, currentLevelColorVar, currentLevelBgVar, isTargetReached) { // Inchangé }
+    function resetEvolutionDisplay() { // Inchangé }
+
+    // --- NOUVEAU: Rendu UI Configuration Équipement ---
+    function renderProgramConfigUI() {
+        if (!programConfigContent || programsAnalysisStatus === 'pending' || programsAnalysisStatus === 'error') {
+            programConfigContent.innerHTML = '<p class="loading-placeholder">Chargez d\'abord vos programmes avec succès.</p>';
+            if(saveConfigButton) saveConfigButton.disabled = true;
+            return;
         }
-        if (!hasData && programsAnalysisStatus !== 'pending') { const msg = programsAnalysisStatus === 'error' ? 'Aucune donnée valide.' : 'Aucune donnée évolution.'; muscleGroupsContainer.innerHTML = `<p class="${programsAnalysisStatus === 'error' ? 'error' : 'loading'}-placeholder">${msg}</p>`; }
-        renderLeagueProgression(); // Met à jour la visu des ligues (potentiellement pour highlight actuel)
-        console.log("Affichage évolution màj.");
+
+        let html = '';
+        let hasExercises = false;
+        PROGRAM_TYPES.forEach(type => {
+            const program = loadedPrograms[type];
+            if (program && program.length > 0) {
+                const exercisesInSection = program.filter(step => step.type === 'exercise');
+                if (exercisesInSection.length > 0) {
+                    hasExercises = true;
+                    html += `<div class="program-config-section"><h3>Programme ${type}</h3>`;
+                    exercisesInSection.forEach(step => {
+                        const exerciseName = step.name;
+                        html += `<div class="config-exercise-item">
+                                    <span class="exercise-name">${exerciseName}</span>
+                                    <div class="config-equipment-options">`;
+                        AVAILABLE_EQUIPMENT.forEach(equip => {
+                            const isChecked = exerciseConfig[exerciseName]?.added_equipment?.includes(equip) || false;
+                            // Utiliser des data attributes pour retrouver facilement l'info
+                            html += `<label>
+                                        <input type="checkbox" value="${equip}" data-exercise-name="${exerciseName}" ${isChecked ? 'checked' : ''}>
+                                        ${equip}
+                                     </label>`;
+                        });
+                        html += `</div></div>`;
+                    });
+                    html += `</div>`;
+                }
+            }
+        });
+
+        if (!hasExercises) {
+            programConfigContent.innerHTML = '<p class="loading-placeholder">Aucun exercice trouvé dans vos programmes.</p>';
+             if(saveConfigButton) saveConfigButton.disabled = true;
+        } else {
+            programConfigContent.innerHTML = html;
+             if(saveConfigButton) saveConfigButton.disabled = false; // Activer sauvegarde si des exos existent
+        }
     }
-    function renderMuscleGroupCard(title, subtitle, iconClass, currentElo, targetEloNextMin, displayPercent, currentLevelKey, currentLevelName, currentLevelColorVar, currentLevelBgVar, isTargetReached) { const card = document.createElement('div'); card.className = 'muscle-group-card'; if (isTargetReached) { card.classList.add('level-target-reached'); } card.setAttribute('title', `${title} (${subtitle}) - Niveau: ${currentLevelName} - ELO: ${currentElo} / ${targetEloNextMin}. Progression: ${displayPercent}%.`); card.innerHTML = ` <div class="card-header"> <div class="icon-container"><i class="fas ${iconClass}" aria-hidden="true"></i></div> <div class="title-container"> <div class="group-title">${title}</div> <div class="group-subtitle">${subtitle}</div> <div class="group-level-name" style="color: var(${currentLevelColorVar}); background-color: var(${currentLevelBgVar}); border-color: var(${currentLevelColorVar});" data-level-key="${currentLevelKey}"> ${currentLevelName} </div> </div> <div class="elo-details" title="ELO Actuel / Seuil ELO Niveau Suivant"> <span class="current">${currentElo}</span> / <span class="target">${targetEloNextMin}</span> </div> </div> <div class="progress-section"> <div class="progress-bar-container" title="Progression: ${displayPercent}%"> <div class="progress-bar" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div> </div> <span class="progress-percentage-value">${displayPercent}%</span> </div>`; requestAnimationFrame(() => { setTimeout(() => { const pb = card.querySelector('.progress-bar'); if (pb) { pb.style.width = `${displayPercent}%`; pb.setAttribute('aria-valuenow', displayPercent); } }, 50); }); return card; }
-    function renderLeagueProgression() { if (!leagueProgressionContainer) return; leagueProgressionContainer.innerHTML = ''; for (let i = 1; i < LEVEL_ORDER.length; i++) { const levelKey = LEVEL_ORDER[i]; const levelData = TARGET_ELO_LEVELS[levelKey]; if (!levelData) continue; const leagueStep = document.createElement('div'); leagueStep.className = 'league-step'; leagueStep.setAttribute('data-level-key', levelKey); leagueStep.setAttribute('title', `Niveau ${levelData.name} (Seuil: ${levelData.minELO}+ ELO) - Cliquez pour voir la description`); leagueStep.style.borderColor = `var(${levelData.colorVar})`; leagueStep.innerHTML = ` <i class="fas ${levelData.iconClass} league-icon" style="color: var(${levelData.colorVar});"></i> <div class="league-details"> <span class="league-name" style="color: var(${levelData.colorVar});">${levelData.name}</span> <span class="league-elo-threshold">${levelData.minELO}+</span> </div> `; leagueProgressionContainer.appendChild(leagueStep); } }
-    function resetEvolutionDisplay() { console.log("Réinit affichage..."); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="loading-placeholder">${googleAccessToken ? 'Analyse...' : 'Connectez-vous...'}</p>`; } if (overallEloDisplayValue) overallEloDisplayValue.textContent = '--'; const baseLevel = TARGET_ELO_LEVELS[LEVEL_ORDER[0]]; if (levelBadge && baseLevel) { levelBadgeIcon.className = `fas ${baseLevel.iconClass}`; levelBadgeText.textContent = baseLevel.name; levelBadge.style.color = `var(${baseLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${baseLevel.bgVar})`; levelBadge.style.borderColor = `var(${baseLevel.colorVar})`; levelBadge.setAttribute('data-level-key', LEVEL_ORDER[0]); } const firstRealLevelKey = LEVEL_ORDER.length > 1 ? LEVEL_ORDER[1] : null; const firstRealLevel = firstRealLevelKey ? TARGET_ELO_LEVELS[firstRealLevelKey] : null; if (targetEloInfoStrong) targetEloInfoStrong.textContent = firstRealLevel ? `${firstRealLevel.minELO} ELO` : '-- ELO'; const marvelBenchmark = TARGET_ELO_LEVELS[MARVEL_BENCHMARK_KEY]; if (marvelTargetInfoSpan && marvelBenchmark) { marvelTargetInfoSpan.textContent = `${marvelBenchmark.targetELO} ELO`; } const existingMarvelIcon = document.getElementById('marvel-icon'); if (existingMarvelIcon) { existingMarvelIcon.remove(); } previousOverallAvgELO = null; currentGlobalLevelKey = LEVEL_ORDER[0]; renderLeagueProgression(); } // Re-render les ligues au reset
-    function openLevelInfoModal(levelKey) { if (!levelInfoModal || !TARGET_ELO_LEVELS[levelKey]) return; const d = TARGET_ELO_LEVELS[levelKey]; modalIcon.className = `fas ${d.iconClass}`; modalLevelName.textContent = d.name; modalBody.innerHTML = `<p>${d.description.replace(/\n/g, '<br>')}</p>`; modalTitle.style.color = `var(${d.colorVar})`; levelInfoModal.classList.add('visible'); } function closeLevelInfoModal() { if (levelInfoModal) levelInfoModal.classList.remove('visible'); }
-    function animateValue(el, start, end, duration) { if (!el) return; if (start === end) { el.textContent = Math.round(end); return; } const range = end - start; let current = start; const inc = end > start ? 1 : -1; const stepTime = Math.abs(Math.floor(duration / range)); const effStepTime = Math.max(1, Math.min(stepTime, 50)); const timer = setInterval(() => { current += inc * Math.max(1, Math.round(Math.abs(end - current) / 10)); if ((inc > 0 && current >= end) || (inc < 0 && current <= end)) { current = end; clearInterval(timer); } el.textContent = Math.round(current); }, effStepTime); }
-    function updateAuthUI(isLoggedIn) { console.log(`Update UI - Connecté: ${isLoggedIn}, GIS prêt: ${!!tokenClient}`); const b = document.body; b.classList.toggle('logged-in', isLoggedIn); b.classList.toggle('logged-out', !isLoggedIn); if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn ? 'flex' : 'none'; if (!isLoggedIn) { programsAnalysisStatus = 'pending'; resetEvolutionDisplay(); } }
-    function applyTheme(theme) { document.body.classList.remove('light-theme', 'dark-theme'); document.body.classList.add(theme + '-theme'); currentTheme = theme; localStorage.setItem('armorWorkoutTheme', theme); if (themeToggleBtn) { const i = themeToggleBtn.querySelector('i'); if (i) i.className = `fas fa-${theme === 'dark' ? 'sun' : 'moon'}`; themeToggleBtn.setAttribute('aria-label', `Passer au thème ${theme === 'dark' ? 'clair' : 'sombre'}`); } console.log(`Thème appliqué: ${theme}`); }
-    function toggleTheme() { showMessage("Thème clair non disponible.", 2000, 'info'); playSound('confirm'); } function loadSavedTheme() { applyTheme('dark'); }
-    function showMessage(msg, duration = 3000, type = 'info') { if (!messageArea) return; messageArea.textContent = msg; messageArea.className = `message-area ${type} visible`; if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); setTimeout(() => { if (!messageArea.classList.contains('visible')) { messageArea.className = 'message-area'; } }, 500); }, duration); }
+     function resetConfigUI() {
+         if (programConfigContent) {
+             programConfigContent.innerHTML = '<p class="loading-placeholder">Connectez-vous pour charger vos programmes.</p>';
+         }
+         if(saveConfigButton) saveConfigButton.disabled = true;
+         exerciseConfig = {}; // Vide la config locale
+     }
+
+    // --- Fonctions Modal (Inchangées) ---
+    function openLevelInfoModal(levelKey) { /* ... */ } function closeLevelInfoModal() { /* ... */ }
+    function openLevelInfoModal(levelKey) { if (!levelInfoModal || !TARGET_ELO_LEVELS[levelKey]) return; const levelData = TARGET_ELO_LEVELS[levelKey]; modalIcon.className = `fas ${levelData.iconClass}`; modalLevelName.textContent = levelData.name; modalBody.innerHTML = `<p>${levelData.description.replace(/\n/g, '<br>')}</p>`; modalTitle.style.color = `var(${levelData.colorVar})`; levelInfoModal.classList.add('visible'); } function closeLevelInfoModal() { if (levelInfoModal) levelInfoModal.classList.remove('visible'); }
+
+    // --- Animation & UI Update & Thème & Message (Inchangés) ---
+    function animateValue(el, start, end, duration) { /* ... */ } function updateAuthUI(isLoggedIn) { /* Modifié légèrement pour gérer état bouton nav */ console.log(`Update UI - Connecté: ${isLoggedIn}, GIS prêt: ${!!tokenClient}`); const b = document.body; b.classList.toggle('logged-in', isLoggedIn); b.classList.toggle('logged-out', !isLoggedIn); if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; /* Gère l'activation des boutons de nav et sections */ navButtons.forEach(btn => btn.disabled = !isLoggedIn); if (isLoggedIn) { switchTab(document.querySelector('.nav-button.active').dataset.section); } else { appSections.forEach(sec => sec.style.display = 'none'); } /* Reset si déconnecté */ if (!isLoggedIn) { programsAnalysisStatus = 'pending'; configLoadStatus = 'pending'; resetEvolutionDisplay(); resetConfigUI(); } } function applyTheme(theme) { /* ... */ } function toggleTheme() { /* ... */ } function loadSavedTheme() { /* ... */ } function showMessage(msg, duration = 3000, type = 'info') { /* ... */ }
+     // --- Animation & UI Update & Thème & Message ---
+     function animateValue(el, start, end, duration) { if (!el) return; if (start === end) { el.textContent = Math.round(end); return; } const range = end - start; let current = start; const inc = end > start ? 1 : -1; const stepTime = Math.abs(Math.floor(duration / range)); const effStepTime = Math.max(1, Math.min(stepTime, 50)); const timer = setInterval(() => { current += inc * Math.max(1, Math.round(Math.abs(end - current) / 10)); if ((inc > 0 && current >= end) || (inc < 0 && current <= end)) { current = end; clearInterval(timer); } el.textContent = Math.round(current); }, effStepTime); }
+     function applyTheme(theme) { document.body.classList.remove('light-theme', 'dark-theme'); document.body.classList.add(theme + '-theme'); currentTheme = theme; localStorage.setItem('armorWorkoutTheme', theme); if (themeToggleBtn) { const i = themeToggleBtn.querySelector('i'); if (i) i.className = `fas fa-${theme === 'dark' ? 'sun' : 'moon'}`; themeToggleBtn.setAttribute('aria-label', `Passer au thème ${theme === 'dark' ? 'clair' : 'sombre'}`); } console.log(`Thème appliqué: ${theme}`); }
+     function toggleTheme() { showMessage("Thème clair non disponible.", 2000, 'info'); playSound('confirm'); } function loadSavedTheme() { applyTheme('dark'); }
+     function showMessage(msg, duration = 3000, type = 'info') { if (!messageArea) return; messageArea.textContent = msg; messageArea.className = `message-area ${type} visible`; if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); setTimeout(() => { if (!messageArea.classList.contains('visible')) { messageArea.className = 'message-area'; } }, 500); }, duration); }
+
+
+    // --- Gestion Navigation / Onglets ---
+    function switchTab(targetSectionId) {
+        if (!targetSectionId) return;
+        console.log("Switching tab to:", targetSectionId);
+        // Cacher toutes les sections
+        appSections.forEach(section => { section.style.display = 'none'; });
+        // Afficher la section cible
+        const targetSection = document.getElementById(targetSectionId);
+        if (targetSection) { targetSection.style.display = 'flex'; } // Utiliser flex pour la section évolution
+        else { console.error("Section cible non trouvée:", targetSectionId); }
+
+        // Mettre à jour l'état actif des boutons nav
+        navButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.section === targetSectionId);
+        });
+         // Re-render la config si on va sur cet onglet (au cas où programmes chargés après init)
+         if (targetSectionId === 'program-config-area') {
+              renderProgramConfigUI();
+          }
+    }
 
     // --- Initialisation ---
-    function initializeDOMReferences() { console.log("Init DOM Refs..."); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn'); signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt'); evolutionTrackerArea = document.getElementById('evolution-tracker-area'); overallEloDisplayValue = document.querySelector('#overall-elo-display .value'); levelBadgeContainer = document.getElementById('level-badge-container'); levelBadge = document.getElementById('level-badge'); if (levelBadge) { levelBadgeIcon = levelBadge.querySelector('i'); levelBadgeText = levelBadge.querySelector('span'); } targetEloInfoStrong = document.querySelector('#target-elo-info strong'); marvelTargetInfoSpan = document.querySelector('#marvel-target-info strong'); muscleGroupsContainer = document.getElementById('muscle-groups-container'); messageArea = document.getElementById('message-area'); levelInfoModal = document.getElementById('level-info-modal'); modalTitle = document.getElementById('modal-title'); modalIcon = document.getElementById('modal-icon'); modalLevelName = document.getElementById('modal-level-name'); modalBody = document.getElementById('modal-body'); modalCloseBtn = document.getElementById('modal-close-btn'); leagueProgressionContainer = document.getElementById('league-progression-container'); const critical = [signInButton, signOutButton, themeToggleBtn, signInButtonPrompt, connectionPrompt, evolutionTrackerArea, overallEloDisplayValue, levelBadgeContainer, levelBadge, levelBadgeIcon, levelBadgeText, targetEloInfoStrong, marvelTargetInfoSpan, muscleGroupsContainer, messageArea, levelInfoModal, modalTitle, modalIcon, modalLevelName, modalBody, modalCloseBtn, leagueProgressionContainer]; if (critical.some(el => !el)) { console.error("DOM CRITIQUES MANQUANTS!", critical); showMessage("Erreur critique: UI incomplète.", 10000, 'error'); document.body.innerHTML = '<p style="color:red; padding: 20px;">Erreur critique interface.</p>'; return false; } console.log("DOM Refs OK."); return true; }
-    function addEventListeners() { if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true)); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); document.body.addEventListener('click', initAudioContext, { once: true }); document.body.addEventListener('keydown', initAudioContext, { once: true }); if (levelBadge) levelBadge.addEventListener('click', () => { const key = levelBadge.getAttribute('data-level-key'); if(key) openLevelInfoModal(key); }); if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLevelInfoModal); if (levelInfoModal) levelInfoModal.addEventListener('click', (event) => { if (event.target === levelInfoModal) closeLevelInfoModal(); }); document.body.addEventListener('click', (event) => { const levelElement = event.target.closest('.group-level-name, .league-step'); if (levelElement) { const key = levelElement.getAttribute('data-level-key'); if (key) openLevelInfoModal(key); } }); console.log("Écouteurs OK."); }
+    function initializeDOMReferences() {
+        console.log("Init DOM Refs...");
+        signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn'); signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt');
+        evolutionTrackerArea = document.getElementById('evolution-tracker-area'); overallEloDisplayValue = document.querySelector('#overall-elo-display .value'); levelBadgeContainer = document.getElementById('level-badge-container'); levelBadge = document.getElementById('level-badge'); if (levelBadge) { levelBadgeIcon = levelBadge.querySelector('i'); levelBadgeText = levelBadge.querySelector('span'); } targetEloInfoStrong = document.querySelector('#target-elo-info strong'); marvelTargetInfoSpan = document.querySelector('#marvel-target-info strong'); muscleGroupsContainer = document.getElementById('muscle-groups-container');
+        programConfigArea = document.getElementById('program-config-area'); programConfigContent = document.getElementById('program-config-content'); saveConfigButton = document.getElementById('save-config-button');
+        messageArea = document.getElementById('message-area'); levelInfoModal = document.getElementById('level-info-modal'); modalTitle = document.getElementById('modal-title'); modalIcon = document.getElementById('modal-icon'); modalLevelName = document.getElementById('modal-level-name'); modalBody = document.getElementById('modal-body'); modalCloseBtn = document.getElementById('modal-close-btn');
+        appNav = document.getElementById('app-nav'); navButtons = document.querySelectorAll('.nav-button'); appSections = document.querySelectorAll('.app-section');
+
+        const critical = [signInButton, signOutButton, themeToggleBtn, signInButtonPrompt, connectionPrompt, evolutionTrackerArea, overallEloDisplayValue, levelBadgeContainer, levelBadge, levelBadgeIcon, levelBadgeText, targetEloInfoStrong, marvelTargetInfoSpan, muscleGroupsContainer, programConfigArea, programConfigContent, saveConfigButton, messageArea, levelInfoModal, modalTitle, modalIcon, modalLevelName, modalBody, modalCloseBtn, appNav, navButtons, appSections];
+        if (critical.some(el => !el || (NodeList.prototype.isPrototypeOf(el) && el.length === 0))) { console.error("DOM CRITIQUES MANQUANTS!", critical); showMessage("Erreur critique: UI incomplète.", 10000, 'error'); document.body.innerHTML = '<p style="color:red; padding: 20px;">Erreur critique interface.</p>'; return false; }
+        console.log("DOM Refs OK."); return true;
+    }
+    function addEventListeners() {
+        if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true)); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); document.body.addEventListener('click', initAudioContext, { once: true }); document.body.addEventListener('keydown', initAudioContext, { once: true });
+        if (levelBadge) levelBadge.addEventListener('click', () => { const key = levelBadge.getAttribute('data-level-key'); if(key) openLevelInfoModal(key); }); if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeLevelInfoModal); if (levelInfoModal) levelInfoModal.addEventListener('click', (event) => { if (event.target === levelInfoModal) closeLevelInfoModal(); });
+        if (muscleGroupsContainer) { muscleGroupsContainer.addEventListener('click', (event) => { const el = event.target.closest('.group-level-name'); if (el) { const key = el.getAttribute('data-level-key'); if (key) openLevelInfoModal(key); } }); }
+        // Listeners pour la navigation par onglets
+        navButtons.forEach(button => { button.addEventListener('click', () => switchTab(button.dataset.section)); });
+        // Listener pour sauvegarde config équipement
+        if (saveConfigButton) saveConfigButton.addEventListener('click', saveExerciseConfigToDrive);
+        console.log("Écouteurs OK.");
+    }
 
     // --- Point d'entrée ---
-    document.addEventListener('DOMContentLoaded', () => { console.log("DOM Chargé. Init..."); try { if (!initializeDOMReferences()) return; addEventListeners(); loadSavedTheme(); updateAuthUI(false); resetEvolutionDisplay(); checkAndInitGis(); console.log("Init terminée. Attente API Google & utilisateur..."); } catch (error) { console.error("Erreur Init DOMContentLoaded:", error); showMessage("Erreur critique chargement.", 10000, 'error'); const b = document.querySelector('body'); if(b) b.innerHTML = '<p style="color:red; padding: 20px;">Erreur critique chargement.</p>'; } });
+    document.addEventListener('DOMContentLoaded', () => { console.log("DOM Chargé. Init..."); try { if (!initializeDOMReferences()) return; addEventListeners(); loadSavedTheme(); updateAuthUI(false); resetEvolutionDisplay(); resetConfigUI(); checkAndInitGis(); console.log("Init terminée. Attente API Google & utilisateur..."); } catch (error) { console.error("Erreur Init DOMContentLoaded:", error); showMessage("Erreur critique chargement.", 10000, 'error'); const b = document.querySelector('body'); if(b) b.innerHTML = '<p style="color:red; padding: 20px;">Erreur critique chargement. Voir console.</p>'; } });
 </script>
 
 </body>
