@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArmorWorkout - Suivi Évolution</title>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -173,6 +171,7 @@
 </head>
 <body class="logged-out dark-theme">
 
+<!-- HTML Structure (inchangé) -->
 <header id="app-header">
     <div class="header-content">
          <div class="title-container"> <i class="fas fa-shield header-icon"></i> <h1>ArmorWorkout</h1> </div>
@@ -188,15 +187,12 @@
         <button class="nav-button" data-section="level-details-area" disabled><i class="fas fa-layer-group"></i> Niveaux</button>
     </nav>
 </header>
-
 <div class="container">
     <main>
         <div id="connection-prompt">
             <p>Connectez-vous via Google pour suivre votre évolution et configurer votre équipement.</p>
             <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Se connecter</button>
         </div>
-
-        <!-- Section Suivi Évolution -->
         <div id="evolution-tracker-area" class="app-section" style="display: none;">
             <div class="global-stats-card">
                  <div class="card-title">Score ELO Haut du Corps</div>
@@ -213,8 +209,6 @@
                  <p class="loading-placeholder">Connectez-vous pour charger vos données...</p>
             </div>
         </div>
-
-        <!-- Section Configuration Équipement -->
         <div id="program-config-area" class="app-section" style="display: none;">
              <h2><i class="fas fa-dumbbell"></i> Configuration Équipement Additionnel</h2>
              <div id="program-config-content">
@@ -225,8 +219,6 @@
                  <i class="fas fa-spinner fa-spin spinner"></i>
              </button>
         </div>
-
-         <!-- Section Détails Niveaux -->
          <div id="level-details-area" class="app-section" style="display: none;">
              <h2><i class="fas fa-layer-group"></i> Détails des Niveaux</h2>
              <div id="level-details-content">
@@ -235,12 +227,9 @@
          </div>
     </main>
 </div>
-
 <footer>
      <p>© 2024 ArmorWorkout | <a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> GitHub</a></p>
 </footer>
-
-<!-- Modal & Message Area -->
 <div id="level-info-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h3 id="modal-title" class="modal-title"> <i id="modal-icon" class="fas fa-info-circle"></i> <span id="modal-level-name"></span> </h3> <button id="modal-close-btn" class="modal-close-btn">×</button> </div> <div id="modal-body" class="modal-body"></div> </div> </div>
 <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
 
@@ -258,7 +247,7 @@
     const ISOMETRIC_BASE_RESISTANCE_KEY = 'Poids du corps';
     const AVAILABLE_EQUIPMENT = [ '1 haltère 5kg', '2 haltères 5kg', '1 élastique 15 kg', '1 élastique 15 kg doublé', '1 élastique 25 kg', ];
 
-    // --- NIVEAUX & DESCRIPTIONS PHYSIQUES (avec Icônes FA Thématiques & Exemples) ---
+    // --- NIVEAUX & DESCRIPTIONS PHYSIQUES (Icônes FA Thématiques) ---
     const TARGET_ELO_LEVELS = {
         'L0_Base':    { name: "Débutant",      minELO: 0,    description: "Point de départ. Focus sur la technique, la connexion esprit-muscle et la régularité. Construire les fondations.", celebrity_example: "N/A", colorVar: '--level-beginner-color', bgVar: '--level-beginner-bg', iconClass: 'fa-seedling' },
         'L1_Bronze':  { name: "Bronze",        minELO: 800,  description: "Fondations posées. Force de base acquise, endurance améliorée. Premiers changements physiques subtils.", celebrity_example: "Début de transformation (ex: acteur avant préparation rôle)", colorVar: '--level-bronze-color',   bgVar: '--level-bronze-bg',   iconClass: 'fa-shield-halved' },
@@ -282,7 +271,7 @@
     let googleAccessToken = null; let tokenClient = null; let programFileIds = { Push: null, Pull: null, Legs: null }; let equipmentConfigFileId = null; let loadedPrograms = { Push: [], Pull: [], Legs: [] }; let exerciseConfig = {}; let programsAnalysisStatus = 'pending'; let configLoadStatus = 'pending'; let currentELOValues = {}; let overallAvgELO = ELO_BASE; let currentGlobalLevelKey = LEVEL_ORDER[0]; let currentTheme = 'dark'; let messageTimeoutId = null; let gisCheckRetries = 0; let previousOverallAvgELO = null;
 
     // --- Audio ---
-    let audioContext = null; function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté.", e); } } } function playSound(type = 'confirm', volume = 0.15) { if (!audioContext) return; try { const o = audioContext.createOscillator(), g = audioContext.createGain(); o.connect(g); g.connect(audioContext.destination); g.gain.setValueAtTime(0, audioContext.currentTime); g.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01); const t = audioContext.currentTime; let stopTime = t + 0.2; switch (type) { case 'confirm': o.type = 'sine'; o.frequency.setValueAtTime(523.25, t); o.frequency.linearRampToValueAtTime(783.99, t + 0.1); break; case 'error': o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.linearRampToValueAtTime(110, t + 0.15); break; case 'level_up': o.type = 'triangle'; g.gain.linearRampToValueAtTime(volume * 1.2, t + 0.01); o.frequency.setValueAtTime(440, t); o.frequency.linearRampToValueAtTime(554.37, t + 0.08); o.frequency.linearRampToValueAtTime(659.25, t + 0.16); o.frequency.linearRampToValueAtTime(880, t + 0.24); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); stopTime = t + 0.4; break; default: o.type = 'triangle'; o.frequency.setValueAtTime(659.25, t); break; } o.start(t); if(type !== 'level_up'){ o.stop(stopTime); } /* Correction : stop seulement si pas level_up */ } catch (e) { console.warn("Erreur lecture son:", e); } }
+    let audioContext = null; function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté.", e); } } } function playSound(type = 'confirm', volume = 0.15) { if (!audioContext) return; try { const o = audioContext.createOscillator(), g = audioContext.createGain(); o.connect(g); g.connect(audioContext.destination); g.gain.setValueAtTime(0, audioContext.currentTime); g.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01); const t = audioContext.currentTime; let stopTime = t + 0.2; switch (type) { case 'confirm': o.type = 'sine'; o.frequency.setValueAtTime(523.25, t); o.frequency.linearRampToValueAtTime(783.99, t + 0.1); break; case 'error': o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.linearRampToValueAtTime(110, t + 0.15); break; case 'level_up': o.type = 'triangle'; g.gain.linearRampToValueAtTime(volume * 1.2, t + 0.01); o.frequency.setValueAtTime(440, t); o.frequency.linearRampToValueAtTime(554.37, t + 0.08); o.frequency.linearRampToValueAtTime(659.25, t + 0.16); o.frequency.linearRampToValueAtTime(880, t + 0.24); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); stopTime = t + 0.4; o.start(t); o.stop(stopTime); return; default: o.type = 'triangle'; o.frequency.setValueAtTime(659.25, t); break; } o.start(t); o.stop(stopTime); } catch (e) { console.warn("Erreur lecture son:", e); } }
 
     // --- Google Identity Services & Drive API ---
     async function gisInitInternal() { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, }); console.log("GIS Client init."); updateAuthUI(googleAccessToken !== null); } catch (error) { console.error("Erreur init GIS:", error); showMessage("Init Google impossible.", 5000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true; } } function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { console.log("GIS prêt, init..."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; console.log(`GIS non prêt, retry ${gisCheckRetries}/${GIS_MAX_RETRIES}...`); setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error("Échec chargement GIS."); showMessage("Service Auth Google indispo.", 6000, 'error'); if (signInButton) signInButton.disabled = true; if (signInButtonPrompt) signInButtonPrompt.disabled = true;} } function handleTokenError(error) { console.error("Erreur Auth Google:", error); let msg = "Erreur connexion Google."; if (error?.type === 'popup_closed_by_user') msg = "Connexion annulée."; else if (error?.type === 'access_denied') msg = "Accès Drive refusé."; else if (error?.error === 'popup_blocked_by_browser') msg = "Popup connexion bloqué."; else if (error?.details) msg += ` Détails: ${error.details}`; showMessage(msg, 5000, 'error'); playSound('error'); googleAccessToken = null; previousOverallAvgELO = null; updateAuthUI(false); resetEvolutionDisplay(); resetConfigUI(); resetLevelDetailsUI(); }
@@ -301,8 +290,9 @@
     function getDurationFactor(durationInSeconds) { if (isNaN(durationInSeconds) || durationInSeconds <= 0) return DURATION_FACTORS[30]; if (durationInSeconds <= 30) return DURATION_FACTORS[30]; if (durationInSeconds <= 45) return DURATION_FACTORS[45]; if (durationInSeconds <= 60) return DURATION_FACTORS[60]; if (durationInSeconds <= 90) return DURATION_FACTORS[90]; if (durationInSeconds <= 120) return DURATION_FACTORS[120]; return DURATION_FACTORS[Infinity]; }
     function calculateExerciseELO(step) { if (!step || step.type !== 'exercise' || !step.details) return 0; const details = step.details; const isDurationBased = details.duration && parseInt(details.duration, 10) > 0 && (!details.reps || details.reps === 'N/A' || parseInt(details.reps, 10) === 0); let baseResistanceValue = RESISTANCE_BONUS[details.resistance] || RESISTANCE_BONUS['Poids du corps'] || 0; let addedResistanceValue = 0; const configForThisExo = exerciseConfig[step.name]; if (configForThisExo?.added_equipment?.length > 0) { configForThisExo.added_equipment.forEach(equipKey => { addedResistanceValue += (RESISTANCE_BONUS[equipKey] || 0); }); } const totalResistanceBonus = baseResistanceValue + addedResistanceValue; const techniqueBonus = (details.intensityTechnique && details.intensityTechnique !== 'Aucune') ? INTENSITY_TECHNIQUE_BONUS_MULTIPLIER : 1.0; let calculatedElo = 0; if (isDurationBased) { const durationFactor = getDurationFactor(parseInt(details.duration, 10)); const isoResistance = totalResistanceBonus > 0 ? totalResistanceBonus : (RESISTANCE_BONUS[ISOMETRIC_BASE_RESISTANCE_KEY] || 75); calculatedElo = ELO_BASE / 10 + (isoResistance * durationFactor * techniqueBonus); } else { const repsFactor = getRepsFactor(details.reps); calculatedElo = ELO_BASE / 10 + (totalResistanceBonus * repsFactor * techniqueBonus); } return calculatedElo; }
     function mapExerciseToMuscleGroup(name) { const cleanedName = name.replace(/\s*\d+$/, '').trim(); const l = cleanedName.toLowerCase(); if (l.includes('pompes') || l.includes('push up') || l.includes('dips') || l.includes('développé couché') || l.includes('chest press') || l.includes('écarté') || l.includes('band floor press')) return ['Pectoraux', 'Triceps', 'Épaules']; if (l.includes('tractions') || l.includes('pull up') || l.includes('chin up') || l.includes('rowing') || l.includes('tirage') || l.includes('band bent-over row') || l.includes('band kneeling lat pulldown')) return ['Dos', 'Biceps']; if (l.includes('développé militaire') || l.includes('overhead press') || l.includes('élévations latérales') || l.includes('shoulder press') || l.includes('dumbbell lateral raises') || l.includes('band face pull')) return ['Épaules', 'Triceps']; if (l.includes('curl') || l.includes('biceps')) return ['Biceps']; if (l.includes('extension triceps') || l.includes('triceps pushdown') || l.includes('skullcrusher') || l.includes('overhead triceps extension (band)')) return ['Triceps']; if (l.includes('gainage') || l.includes('planche') || l.includes('crunch') || l.includes('abdos') || l.includes('core') || l.includes('hollow body') || l.includes('band sit-up') || l.includes('leg raises')) return ['Core']; if (l.includes('squat') || l.includes('fentes') || l.includes('leg press') || l.includes('leg extension') || l.includes('leg curl') || l.includes('mollets') || l.includes('calf raises')) return ['Legs']; console.warn(`Mapping muscle inconnu pour: "${name}" (nettoyé en "${cleanedName}")`); return []; }
+    // Correction Bug ELO Identique + Refactorisation (v6 - Retour ELO Total Moyen)
     function analyzeProgramsAndCalculateELO() {
-        console.log("Analyse programmes & calcul ELO (v5 - Correction finale)...");
+        console.log("Analyse programmes & calcul ELO (v6)...");
         const groupData = {};
         [...ALL_MUSCLE_GROUPS_LOGIC, 'Legs'].forEach(g => { groupData[g] = { totalWeightedEloSum: 0, totalWeight: 0 }; });
         currentELOValues = {};
@@ -310,8 +300,7 @@
         if (programsAnalysisStatus === 'error' || programsAnalysisStatus === 'pending' || configLoadStatus === 'error') {
             console.warn("Analyse ELO annulée: données manquantes/erronées.");
             ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { currentELOValues[g] = ELO_BASE; });
-            overallAvgELO = ELO_BASE; previousOverallAvgELO = null;
-            return;
+            overallAvgELO = ELO_BASE; previousOverallAvgELO = null; return;
         }
 
         PROGRAM_TYPES.forEach(type => {
@@ -338,16 +327,15 @@
             const d = groupData[g];
             let finalEloGroup = ELO_BASE; // Init à la base
             if (d.totalWeight > 0) {
-                const averageElo = d.totalWeightedEloSum / d.totalWeight; // Calculer la moyenne pondérée ELO
-                finalEloGroup = Math.round(averageElo); // Arrondir
+                const averageElo = d.totalWeightedEloSum / d.totalWeight;
+                finalEloGroup = Math.round(averageElo);
             }
-             // Assurer un minimum ELO_BASE
-            currentELOValues[g] = Math.max(ELO_BASE, finalEloGroup);
+            currentELOValues[g] = Math.max(ELO_BASE, finalEloGroup); // Assurer ELO >= BASE
 
             console.log(`Debug ELO Calcul [${g}]: SumELO=${d.totalWeightedEloSum.toFixed(2)}, SumWeight=${d.totalWeight.toFixed(2)}, AvgELO=${(d.totalWeightedEloSum / (d.totalWeight||1)).toFixed(2)}, FinalELO=${currentELOValues[g]}`);
 
             if (g !== 'Legs' && d.totalWeight > 0) {
-                totalEloSumOverall += currentELOValues[g] * d.totalWeight; // Somme des ELO *finaux* pondérés
+                totalEloSumOverall += currentELOValues[g] * d.totalWeight;
                 totalWeightOverall += d.totalWeight;
             }
         });
@@ -360,22 +348,22 @@
         console.log("ELO Groupes Finaux:", currentELOValues);
     }
     function processExerciseBlock(step, sets, data) {
-        const eloPerSet = calculateExerciseELO(step); // ELO *total* pour une série
-        if (eloPerSet >= 0 && sets > 0) { // ELO ne devrait pas être négatif
+        const eloPerSet = calculateExerciseELO(step);
+        if (eloPerSet > 0 && sets > 0) { // ELO devrait être > 0 normalement
             const poly = isPolyarticular(step.name);
             const w = poly ? POLYARTICULAR_WEIGHT : ISOLATION_WEIGHT;
             const groups = mapExerciseToMuscleGroup(step.name);
             groups.forEach(g => {
                 if (data[g]) {
-                    data[g].totalWeightedEloSum += eloPerSet * sets * w; // Accumuler ELO total pondéré
-                    data[g].totalWeight += sets * w; // Accumuler poids total
+                    data[g].totalWeightedEloSum += eloPerSet * sets * w;
+                    data[g].totalWeight += sets * w;
                 } else { console.warn(`Groupe logique inconnu : ${g} pour ${step.name}`); }
             });
         }
     }
     function getEloLevelKey(eloScore) { for (let i = LEVEL_ORDER.length - 1; i >= 0; i--) { const k = LEVEL_ORDER[i]; if (TARGET_ELO_LEVELS[k] && eloScore >= TARGET_ELO_LEVELS[k].minELO) { return k; } } return LEVEL_ORDER[0]; }
 
-    // --- Logique Affichage (Inchangée) ---
+    // --- Logique Affichage ---
     function calculateAndDisplayEvolution() { console.log("Mise à jour affichage évolution..."); if (!evolutionTrackerArea || !overallEloDisplayValue || !levelBadge || !targetEloInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan) { console.error("DOM manquant."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur interne: DOM manquant.</p>'; return; } if (programsAnalysisStatus !== 'pending') { analyzeProgramsAndCalculateELO(); } else { ALL_MUSCLE_GROUPS_LOGIC.forEach(g => { currentELOValues[g] = ELO_BASE; }); overallAvgELO = ELO_BASE; previousOverallAvgELO = null; } const previousGlobalLevelKey = currentGlobalLevelKey; currentGlobalLevelKey = getEloLevelKey(overallAvgELO); const currentGlobalLevel = TARGET_ELO_LEVELS[currentGlobalLevelKey]; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_ELO_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_ELO_LEVELS[MARVEL_BENCHMARK_KEY]; if (previousOverallAvgELO !== null && currentGlobalLevelKey !== previousGlobalLevelKey && TARGET_ELO_LEVELS[previousGlobalLevelKey]) { if (overallAvgELO >= TARGET_ELO_LEVELS[previousGlobalLevelKey].minELO) { console.log(`NIVEAU GLOBAL ATTEINT ! ${previousGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } } animateValue(overallEloDisplayValue, parseFloat(overallEloDisplayValue.textContent.replace(/[^0-9.]/g, '')) || ELO_BASE, overallAvgELO, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.textContent = currentGlobalLevel.name; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetEloInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minELO} ELO` : "MAX"; marvelTargetInfoSpan.textContent = marvelBenchmark ? `${marvelBenchmark.targetELO} ELO` : "-- ELO"; const isMarvelAchieved = marvelBenchmark && overallAvgELO >= marvelBenchmark.targetELO; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const marvelIcon = document.createElement('i'); marvelIcon.id = 'marvel-icon'; marvelIcon.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; marvelIcon.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetELO} ELO) atteint ! ${marvelBenchmark.description}`); levelBadgeContainer.appendChild(marvelIcon); } } else { if (existingMarvelIcon) { existingMarvelIcon.remove(); } } muscleGroupsContainer.innerHTML = ''; let hasData = false; for (const displayGroup in MUSCLE_GROUPS_DISPLAY_CONFIG) { const logicGroup = ALL_MUSCLE_GROUPS_LOGIC.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentELOValues[logicGroup] === undefined) { console.warn(`Skipping render for ${displayGroup} - Logic group ${logicGroup} not found or ELO undefined`); continue; } hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentElo = currentELOValues[logicGroup]; const muscleLevelKey = getEloLevelKey(currentElo); const muscleLevel = TARGET_ELO_LEVELS[muscleLevelKey]; const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_ELO_LEVELS[nextMuscleLevelKey] : null; const minEloCurrent = muscleLevel.minELO; const minEloNext = nextMuscleLevel ? nextMuscleLevel.minELO : minEloCurrent; const range = minEloNext - minEloCurrent; let progress = 0; if (range > 0) { progress = ((currentElo - minEloCurrent) / range) * 100; } else if (currentElo >= minEloCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const isTargetReached = nextMuscleLevel ? currentElo >= minEloNext : true; const targetDisplay = nextMuscleLevel ? minEloNext : "MAX"; const card = renderMuscleGroupCard(displayGroup, config.subtitle, config.icon, currentElo, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleLevel.colorVar, muscleLevel.bgVar, isTargetReached); muscleGroupsContainer.appendChild(card); } if (!hasData && programsAnalysisStatus !== 'pending') { const msg = programsAnalysisStatus === 'error' ? 'Aucune donnée valide analysée.' : 'Aucune donnée évolution.'; muscleGroupsContainer.innerHTML = `<p class="${programsAnalysisStatus === 'error' ? 'error' : 'loading'}-placeholder">${msg}</p>`; } console.log("Affichage évolution mis à jour."); }
     function renderMuscleGroupCard(title, subtitle, iconClass, currentElo, targetEloNextMin, displayPercent, currentLevelKey, currentLevelName, currentLevelColorVar, currentLevelBgVar, isTargetReached) { const card = document.createElement('div'); card.className = 'muscle-group-card'; if (isTargetReached) { card.classList.add('level-target-reached'); } card.setAttribute('title', `${title} (${subtitle}) - Niveau: ${currentLevelName} - ELO: ${currentElo} / ${targetEloNextMin}. Progression: ${displayPercent}%.`); card.innerHTML = `<div class="card-header"><div class="icon-container"><i class="fas ${iconClass}" aria-hidden="true"></i></div><div class="title-container"><div class="group-title">${title}</div><div class="group-subtitle">${subtitle}</div><div class="group-level-name" style="color: var(${currentLevelColorVar}); background-color: var(${currentLevelBgVar}); border-color: var(${currentLevelColorVar});" data-level-key="${currentLevelKey}">${currentLevelName}</div></div><div class="elo-details" title="ELO Actuel / Seuil ELO Niveau Suivant"><span class="current">${currentElo}</span> / <span class="target">${targetEloNextMin}</span></div></div><div class="progress-section"><div class="progress-bar-container" title="Progression: ${displayPercent}%"><div class="progress-bar" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div></div><span class="progress-percentage-value">${displayPercent}%</span></div>`; requestAnimationFrame(() => { setTimeout(() => { const pb = card.querySelector('.progress-bar'); if (pb) { pb.style.width = `${displayPercent}%`; pb.setAttribute('aria-valuenow', displayPercent); } }, 50); }); return card; }
     function resetEvolutionDisplay() { console.log("Réinitialisation affichage..."); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="loading-placeholder">${googleAccessToken ? 'Analyse...' : 'Connectez-vous...'}</p>`; } if (overallEloDisplayValue) overallEloDisplayValue.textContent = '--'; const baseLevel = TARGET_ELO_LEVELS[LEVEL_ORDER[0]]; if (levelBadge && baseLevel) { levelBadgeIcon.className = `fas ${baseLevel.iconClass}`; levelBadgeText.textContent = baseLevel.name; levelBadge.style.color = `var(${baseLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${baseLevel.bgVar})`; levelBadge.style.borderColor = `var(${baseLevel.colorVar})`; levelBadge.setAttribute('data-level-key', LEVEL_ORDER[0]); } const firstRealLevelKey = LEVEL_ORDER.length > 1 ? LEVEL_ORDER[1] : null; const firstRealLevel = firstRealLevelKey ? TARGET_ELO_LEVELS[firstRealLevelKey] : null; if (targetEloInfoStrong) targetEloInfoStrong.textContent = firstRealLevel ? `${firstRealLevel.minELO} ELO` : '-- ELO'; const marvelBenchmark = TARGET_ELO_LEVELS[MARVEL_BENCHMARK_KEY]; if (marvelTargetInfoSpan && marvelBenchmark) { marvelTargetInfoSpan.textContent = `${marvelBenchmark.targetELO} ELO`; } const existingMarvelIcon = document.getElementById('marvel-icon'); if (existingMarvelIcon) { existingMarvelIcon.remove(); } previousOverallAvgELO = null; currentGlobalLevelKey = LEVEL_ORDER[0]; }
