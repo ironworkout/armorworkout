@@ -346,7 +346,7 @@
         // Potentiellement L3_CaptainAmerica etc.
     };
     const FINAL_TARGET_LEVEL_KEY = 'L2_TomHolland'; // Clé du niveau visé par la barre globale
-    const FINAL_TARGET_ELO = TARGET_ELO_LEVELS[FINAL_TARGET_LEVEL_KEY].targetELO || 1150; // Cible finale pour la barre globale
+    const FINAL_TARGET_ELO = TARGET_ELO_LEVELS[FINAL_TARGET_LEVEL_KEY]?.targetELO || 1150; // Cible finale pour la barre globale - Utilisation optional chaining
     const MUSCLE_GROUPS_DISPLAY_ORDER = { // Ajout catégorie Jambes
         "Torse": ["Pectoraux", "Dos"],
         "Épaules": ["Épaules"],
@@ -724,7 +724,7 @@
     function determineCurrentGoalLevel() { // Utilise la clé d'état
         // Ici on pourrait ajouter la logique pour lire la sélection utilisateur si implémentée
         // Pour l'instant, on garde la logique automatique basée sur l'ELO actuel vs L1
-        if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps.targetELO || 950)) {
+        if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps?.targetELO || 950)) { // Optional chaining
              if (TARGET_ELO_LEVELS.L2_TomHolland) { return 'L2_TomHolland'; }
         }
         return 'L1_MaxReps';
@@ -746,9 +746,9 @@
         const previousGoal = previousGoalLevelKey ? TARGET_ELO_LEVELS[previousGoalLevelKey] : { targetELO: ELO_BASE, groups: {} }; // Base ELO comme "niveau 0"
 
         overallEloDisplay.innerHTML = `${overallAvgELO} <span>ELO Moyen (Haut du Corps)</span>`;
-        goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal.name}</span> (ELO Cible Groupe <span class="target-elo-value">${currentGoal.targetELO}</span>)`;
-        goalDescriptionElement.textContent = currentGoal.description || "";
-        finalGoalNameSpan.textContent = finalGoal.name || "Final"; // Nom pour la barre globale
+        goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal?.name || 'N/A'}</span> (ELO Cible Groupe <span class="target-elo-value">${currentGoal?.targetELO || '--'}</span>)`; // Optional chaining
+        goalDescriptionElement.textContent = currentGoal?.description || ""; // Optional chaining
+        finalGoalNameSpan.textContent = finalGoal?.name || "Final"; // Optional chaining - Nom pour la barre globale
 
         muscleGroupsContainer.innerHTML = ''; // Vider avant de remplir
         for (const category in MUSCLE_GROUPS_DISPLAY_ORDER) {
@@ -759,8 +759,9 @@
              MUSCLE_GROUPS_DISPLAY_ORDER[category].forEach(group => {
                  // NE PAS ignorer 'Legs' ici pour afficher la carte
                  const currentAvgELO = currentELOValues[group] || ELO_BASE;
-                 const targetELO = currentGoal.groups[group] || currentGoal.targetELO; // ELO cible pour CE niveau
-                 const stageStartELO = previousGoal.groups[group] || previousGoal.targetELO || ELO_BASE; // ELO de départ pour CE niveau
+                 // Utiliser Optional Chaining pour la sécurité
+                 const targetELO = currentGoal?.groups?.[group] || currentGoal?.targetELO || ELO_BASE; // ELO cible pour CE niveau
+                 const stageStartELO = previousGoal?.groups?.[group] || previousGoal?.targetELO || ELO_BASE; // ELO de départ pour CE niveau
 
                  let progressPercent = 0;
                  if (targetELO > stageStartELO) {
@@ -779,7 +780,7 @@
 
         // Calcul et MAJ Barre Globale vers l'objectif FINAL
         let globalProgressPercent = 0;
-        const finalTargetEloValue = finalGoal.targetELO || FINAL_TARGET_ELO; // Assurer qu'on a une valeur numérique
+        const finalTargetEloValue = finalGoal?.targetELO || FINAL_TARGET_ELO; // Assurer qu'on a une valeur numérique
         if (finalTargetEloValue > ELO_BASE) {
              globalProgressPercent = ((overallAvgELO - ELO_BASE) / (finalTargetEloValue - ELO_BASE)) * 100;
         } else if (overallAvgELO >= finalTargetEloValue) {
@@ -836,7 +837,7 @@
     }
 
     // --- Affichage Historique ELO ---
-    function displayEloHistoryChart() {
+    function displayEloHistoryChart() { // <<<=== FONCTION OUVERTE À LA LIGNE 1019
         if (!eloHistoryChartCanvas || !Chart || eloHistoryData.length === 0) {
             console.log("Canvas non prêt, Chart.js non chargé ou historique vide.");
              if(historyLoadingMsg && eloHistoryData.length === 0 && programsLoaded) historyLoadingMsg.textContent = 'Aucune donnée historique à afficher.';
@@ -946,7 +947,7 @@
             }
         });
         console.log("Graphique historique ELO affiché/mis à jour.");
-    }
+    } // <<<=== ACCOLADE MANQUANTE CORRIGÉE ICI
 
 
     // --- Gestion Modale Détails Exercice ---
@@ -984,13 +985,13 @@
             });
         }
 
-        exerciseDetailModal.style.display = "block";
+        if (exerciseDetailModal) exerciseDetailModal.style.display = "block"; // Check if modal exists
     }
 
     function closeModal() {
         if (exerciseDetailModal) {
             exerciseDetailModal.style.display = "none";
-            modalExerciseList.innerHTML = '<li>Chargement...</li>'; // Reset content
+            if (modalExerciseList) modalExerciseList.innerHTML = '<li>Chargement...</li>'; // Reset content only if list exists
         }
     }
 
@@ -1016,7 +1017,7 @@
     function updateAuthUI(isLoggedIn) { /* MAJ pour gérer historique et modale */ console.log(`Update UI (Evolution v2) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`); const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none'; // Afficher si loggué ET programmes OK if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } if (!isLoggedIn) { // Reset UI quand déconnecté if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; if(historyChartContainer) historyChartContainer.style.display = 'none'; if(historyChart) { historyChart.destroy(); historyChart = null; } closeModal(); // Fermer la modale si ouverte } }
 
     // --- Gestion Thème ---
-    function applyTheme(theme) { /* MAJ pour graphique */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution v2): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution v2):", e); } // Re-render le graphique si visible pour appliquer les couleurs du thème if (historyChart && historyChart.ctx) { // Vérifier que le graphique existe encore historyChart.destroy(); // Recréer complètement est plus simple pour assurer la prise en compte des variables CSS displayEloHistoryChart(); } }
+    function applyTheme(theme) { /* MAJ pour graphique */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution v2): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution v2):", e); } // Re-render le graphique si visible pour appliquer les couleurs du thème if (historyChart && historyChart.ctx && eloHistoryData.length > 0) { // Vérifier que le graphique existe encore et qu'il y a des données historyChart.destroy(); // Recréer complètement est plus simple pour assurer la prise en compte des variables CSS displayEloHistoryChart(); } }
     function toggleTheme() { /* ... (Identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
     function loadSavedTheme() { /* ... (Identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution v2):", e); } applyTheme(savedTheme); }
 
@@ -1096,7 +1097,7 @@
         // L'écouteur pour les cartes est ajouté dynamiquement dans renderMuscleGroupCard
         initModal(); // Initialise les écouteurs de la modale (fermeture, etc.)
         console.log("Event Listeners ajoutés (Evolution v2).");
-    } // <<<=== ACCOLADE MANQUANTE CORRIGÉE ICI
+    }
 
     // --- Point d'entrée ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -1123,7 +1124,7 @@
 
     /*
     =========================================
-    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour v3.1 - Post Debug)
+    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour v3.2 - Post Debug x2)
     =========================================
     (Identique à v3, mais avec code fonctionnel)
 
