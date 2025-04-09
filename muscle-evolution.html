@@ -247,7 +247,7 @@
                     -- <span>ELO Moyen (Haut du Corps)</span>
                 </div>
                 <div id="goal-info">
-                    Objectif Actuel : <span class="target-level">Chargement...</span> (ELO Cible <span class="target-elo-value">--</span>)
+                    Objectif Actuel : <span class="target-level">Chargement...</span> (ELO Cible Groupe <span class="target-elo-value">--</span>)
                 </div>
                  <!-- Placeholder pour sélection d'objectif future -->
                  <div id="goal-selector-container" style="display: none;"> <!-- Caché pour l'instant -->
@@ -528,7 +528,7 @@
              // Formule simple: Base + Durée * Facteur. À affiner potentiellement.
              // On pourrait aussi avoir des paliers de durée.
             const durationElo = base + (step.duration * DURATION_ELO_FACTOR);
-            console.log(`ELO Calc (${step.name}): Durée=${step.duration}s => ELO=${Math.round(durationElo)}`);
+            // console.log(`ELO Calc (${step.name}): Durée=${step.duration}s => ELO=${Math.round(durationElo)}`); // DEBUG
             // Appliquer bonus technique (si pertinent pour exos statiques?)
              if (step.intensity_technique === true) { return Math.round(durationElo * INTENSITY_TECHNIQUE_BONUS_MULTIPLIER); }
             return Math.round(durationElo);
@@ -548,7 +548,7 @@
             if (equipmentString.toLowerCase().includes(key.toLowerCase())) {
                  bonusResistance = RESISTANCE_BONUS[key];
                  matchedKey = key;
-                 console.log(`ELO Calc (${step.name}): Matched resistance key "${matchedKey}" -> Bonus ${bonusResistance}`);
+                 // console.log(`ELO Calc (${step.name}): Matched resistance key "${matchedKey}" -> Bonus ${bonusResistance}`); // DEBUG
                  break; // Prend la première (la plus longue) correspondance
             }
         }
@@ -565,7 +565,7 @@
                  else if (step.weight <= 45) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 1 haltère 5kg'] || 225; // Catche 45kg
                  else if (step.weight <= 50) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 2x5kg haltères'] || 250; // Catche 50kg
                  else bonusResistance = step.weight * 2; // Fallback générique pour poids > 50
-            console.log(`ELO Calc (${step.name}): Fallback weight ${step.weight} -> Bonus ${bonusResistance}`);
+            // console.log(`ELO Calc (${step.name}): Fallback weight ${step.weight} -> Bonus ${bonusResistance}`); // DEBUG
         } else if (bonusResistance === 0 && equipmentString) {
              console.warn(`ELO Calc (${step.name}): Equipment "${equipmentString}" non reconnu dans RESISTANCE_BONUS et pas de poids fallback.`);
         }
@@ -576,7 +576,7 @@
             const reps = step.reps === 'max' ? Infinity : step.reps; // Gérer 'max'
             const repsFactor = getRepsFactor(reps);
             bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0); // Bonus = % au dessus du facteur 1.0
-            console.log(`ELO Calc (${step.name}): Reps=${reps} (Factor ${repsFactor}) -> Bonus Reps ${Math.round(bonusReps)}`);
+            // console.log(`ELO Calc (${step.name}): Reps=${reps} (Factor ${repsFactor}) -> Bonus Reps ${Math.round(bonusReps)}`); // DEBUG
         }
 
         let elo = base + bonusResistance + bonusReps;
@@ -584,7 +584,7 @@
         // Appliquer bonus technique d'intensité
         if (step.intensity_technique === true) {
             elo *= INTENSITY_TECHNIQUE_BONUS_MULTIPLIER;
-             console.log(`ELO Calc (${step.name}): Bonus Intensité appliqué -> ELO ${Math.round(elo)}`);
+             // console.log(`ELO Calc (${step.name}): Bonus Intensité appliqué -> ELO ${Math.round(elo)}`); // DEBUG
         }
 
         return Math.round(elo);
@@ -779,9 +779,10 @@
 
         // Calcul et MAJ Barre Globale vers l'objectif FINAL
         let globalProgressPercent = 0;
-        if (FINAL_TARGET_ELO > ELO_BASE) {
-             globalProgressPercent = ((overallAvgELO - ELO_BASE) / (FINAL_TARGET_ELO - ELO_BASE)) * 100;
-        } else if (overallAvgELO >= FINAL_TARGET_ELO) {
+        const finalTargetEloValue = finalGoal.targetELO || FINAL_TARGET_ELO; // Assurer qu'on a une valeur numérique
+        if (finalTargetEloValue > ELO_BASE) {
+             globalProgressPercent = ((overallAvgELO - ELO_BASE) / (finalTargetEloValue - ELO_BASE)) * 100;
+        } else if (overallAvgELO >= finalTargetEloValue) {
              globalProgressPercent = 100;
         }
         globalProgressPercent = Math.max(0, Math.min(100, Math.round(globalProgressPercent)));
@@ -790,7 +791,7 @@
         globalProgressBar.style.width = `0%`; // Reset pour animation
         globalProgressBar.setAttribute('aria-valuenow', overallAvgELO); // Valeur actuelle ELO
         globalProgressBar.setAttribute('aria-valuemin', ELO_BASE);
-        globalProgressBar.setAttribute('aria-valuemax', FINAL_TARGET_ELO); // Cible finale
+        globalProgressBar.setAttribute('aria-valuemax', finalTargetEloValue); // Cible finale
         requestAnimationFrame(() => {
              setTimeout(() => { globalProgressBar.style.width = `${globalProgressPercent}%`; }, 50);
         });
@@ -896,13 +897,14 @@
                         },
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: 'Date',
+                            color: 'var(--secondary-text-color)' // Couleur titre axe X
                         },
                         grid: {
                             color: 'rgba(var(--secondary-text-color-dark-rgb), 0.2)'
                          },
                          ticks: {
-                             color: 'var(--secondary-text-color)'
+                             color: 'var(--secondary-text-color)' // Couleur labels axe X
                          }
                     },
                     y: {
@@ -910,20 +912,21 @@
                         min: ELO_BASE - 50, // Ajuster si besoin
                         title: {
                             display: true,
-                            text: 'ELO Score'
+                            text: 'ELO Score',
+                             color: 'var(--secondary-text-color)' // Couleur titre axe Y
                         },
                          grid: {
                             color: 'rgba(var(--secondary-text-color-dark-rgb), 0.2)'
                          },
                           ticks: {
-                             color: 'var(--secondary-text-color)'
+                             color: 'var(--secondary-text-color)' // Couleur labels axe Y
                          }
                     }
                 },
                 plugins: {
                     legend: {
                         labels: {
-                            color: 'var(--primary-text-color)'
+                            color: 'var(--primary-text-color)' // Couleur légende
                         }
                     },
                      tooltip: {
@@ -1003,7 +1006,7 @@
         });
          // Fermer avec la touche Echap
          window.addEventListener('keydown', (event) => {
-             if (event.key === 'Escape' && exerciseDetailModal.style.display === 'block') {
+             if (event.key === 'Escape' && exerciseDetailModal && exerciseDetailModal.style.display === 'block') {
                  closeModal();
              }
          });
@@ -1013,7 +1016,7 @@
     function updateAuthUI(isLoggedIn) { /* MAJ pour gérer historique et modale */ console.log(`Update UI (Evolution v2) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`); const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none'; // Afficher si loggué ET programmes OK if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } if (!isLoggedIn) { // Reset UI quand déconnecté if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; if(historyChartContainer) historyChartContainer.style.display = 'none'; if(historyChart) { historyChart.destroy(); historyChart = null; } closeModal(); // Fermer la modale si ouverte } }
 
     // --- Gestion Thème ---
-    function applyTheme(theme) { /* MAJ pour graphique */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution v2): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution v2):", e); } // Re-render le graphique si visible pour appliquer les couleurs du thème if (historyChart) { // Détruire et recréer pour que les couleurs de variables CSS soient prises en compte? Ou MAJ options? // Essayons de mettre à jour les options si possible, sinon recréer. historyChart.options.scales.x.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border-color'); historyChart.options.scales.y.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border-color'); historyChart.options.scales.x.ticks.color = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color'); historyChart.options.scales.y.ticks.color = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color'); historyChart.options.plugins.legend.labels.color = getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color'); // Mettre à jour les couleurs des datasets est plus complexe, recréation peut être plus simple // displayEloHistoryChart(); // Recréer complètement le graphique } }
+    function applyTheme(theme) { /* MAJ pour graphique */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution v2): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution v2):", e); } // Re-render le graphique si visible pour appliquer les couleurs du thème if (historyChart && historyChart.ctx) { // Vérifier que le graphique existe encore historyChart.destroy(); // Recréer complètement est plus simple pour assurer la prise en compte des variables CSS displayEloHistoryChart(); } }
     function toggleTheme() { /* ... (Identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
     function loadSavedTheme() { /* ... (Identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution v2):", e); } applyTheme(savedTheme); }
 
@@ -1023,22 +1026,25 @@
         messageArea.textContent = msg;
         messageArea.classList.remove('error', 'success', 'warning'); // Reset types
 
+        // Reset inline styles qui pourraient interférer
+        messageArea.style.backgroundColor = '';
+        messageArea.style.color = '';
+        messageArea.style.borderColor = '';
+
         if (type === 'error' || isError) { // isError pour compatibilité ascendante
-            messageArea.classList.add('error');
+            messageArea.classList.add('error'); // Utilise les styles CSS de .message-area.error
         } else if (type === 'success') {
-             messageArea.classList.add('success');
+             messageArea.classList.add('success'); // Utilise les styles CSS de .message-area.success
         } else if (type === 'warning') {
-             // Ajouter une classe 'warning' si on veut un style différent
+             // Ajouter une classe 'warning' si un style différent est défini en CSS
              // messageArea.classList.add('warning');
-             // Pour l'instant, on utilise le style par défaut
+             // Pour l'instant, on utilise un style inline pour le warning
              messageArea.style.backgroundColor = 'rgba(var(--neon-yellow-rgb), 0.8)';
-             messageArea.style.color = '#000'; // Texte noir sur jaune? Ou garder défaut
+             messageArea.style.color = '#000'; // Texte noir sur jaune?
              messageArea.style.borderColor = 'var(--neon-yellow)';
         } else {
-            // Style par défaut (ni erreur, ni succès)
-            messageArea.style.backgroundColor = 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)';
-            messageArea.style.color = 'var(--primary-text-color)';
-            messageArea.style.borderColor = 'var(--border-color)';
+            // Style par défaut (ni erreur, ni succès, ni warning)
+             // Utilise les styles CSS de .message-area (pas besoin d'inline ici)
         }
 
         messageArea.classList.add('visible');
@@ -1052,13 +1058,23 @@
     // --- Initialisation ---
     function initializeDOMReferences() { // MAJ pour nouveaux éléments
         console.log("Init DOM Refs (Evolution v2)...");
-        signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn');
-        signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt'); evolutionTrackerArea = document.getElementById('evolution-tracker-area');
-        overallEloDisplay = document.getElementById('overall-elo-display'); goalInfo = document.getElementById('goal-info'); goalDescriptionElement = document.getElementById('goal-description');
-         goalSelectorContainer = document.getElementById('goal-selector-container'); // Pour personnalisation future
-         goalSelector = document.getElementById('goal-selector'); // Pour personnalisation future
-        muscleGroupsContainer = document.getElementById('muscle-groups-container'); messageArea = document.getElementById('message-area');
-        globalProgressBar = document.getElementById('global-progress-bar'); globalProgressPercentage = document.getElementById('global-progress-percentage'); finalGoalNameSpan = document.getElementById('final-goal-name');
+        signInButton = document.getElementById('signin-button');
+        signOutButton = document.getElementById('signout-button');
+        driveStatusElement = document.getElementById('drive-status');
+        themeToggleBtn = document.getElementById('theme-toggle-btn');
+        signInButtonPrompt = document.getElementById('signin-button-prompt');
+        connectionPrompt = document.getElementById('connection-prompt');
+        evolutionTrackerArea = document.getElementById('evolution-tracker-area');
+        overallEloDisplay = document.getElementById('overall-elo-display');
+        goalInfo = document.getElementById('goal-info');
+        goalDescriptionElement = document.getElementById('goal-description');
+        goalSelectorContainer = document.getElementById('goal-selector-container'); // Pour personnalisation future
+        goalSelector = document.getElementById('goal-selector'); // Pour personnalisation future
+        muscleGroupsContainer = document.getElementById('muscle-groups-container');
+        messageArea = document.getElementById('message-area');
+        globalProgressBar = document.getElementById('global-progress-bar');
+        globalProgressPercentage = document.getElementById('global-progress-percentage');
+        finalGoalNameSpan = document.getElementById('final-goal-name');
         // Historique
         historyChartContainer = document.getElementById('history-chart-container');
         eloHistoryChartCanvas = document.getElementById('elo-history-chart');
@@ -1071,7 +1087,16 @@
 
         console.log("DOM Refs initialisées (Evolution v2).");
     }
-    function addEventListeners() { /* MAJ pour modale */ console.log("Ajout Event Listeners (Evolution v2)..."); if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); // L'écouteur pour les cartes est ajouté dans renderMuscleGroupCard initModal(); // Initialise les écouteurs de la modale (fermeture, etc.) console.log("Event Listeners ajoutés (Evolution v2)."); }
+    function addEventListeners() { /* MAJ pour modale */
+        console.log("Ajout Event Listeners (Evolution v2)...");
+        if(signInButton) signInButton.addEventListener('click', handleAuthClick);
+        if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
+        if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true)); // Passer true explicitement
+        if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+        // L'écouteur pour les cartes est ajouté dynamiquement dans renderMuscleGroupCard
+        initModal(); // Initialise les écouteurs de la modale (fermeture, etc.)
+        console.log("Event Listeners ajoutés (Evolution v2).");
+    } // <<<=== ACCOLADE MANQUANTE CORRIGÉE ICI
 
     // --- Point d'entrée ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -1098,8 +1123,9 @@
 
     /*
     =========================================
-    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour v3)
+    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour v3.1 - Post Debug)
     =========================================
+    (Identique à v3, mais avec code fonctionnel)
 
     **Implémentées / Initiées dans cette version:**
     1.  ✅ **Pondération Poly/Iso:** Maintenue.
