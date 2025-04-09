@@ -10,7 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Google Identity Services (GIS) -->
+    <!-- Chart.js (pour l'historique ELO) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script> <!-- Adapter pour les dates -->
+
     <style>
         /* --- Variables Globales & Thèmes (Identiques aux autres pages) --- */
         :root {
@@ -43,6 +46,7 @@
             --bg-color-dark-rgb: 255, 255, 255; --secondary-bg-color-dark-rgb: 246, 248, 250; --primary-text-color-dark-rgb: 36, 41, 47; --secondary-text-color-dark-rgb: 87, 96, 106;
              --neon-orange-rgb: 246, 106, 10;
              --progress-bar-bg: #e1e4e8;
+             --secondary-bg-color-dark-rgb: 246, 248, 250; /* MAJ pour thème clair message area */
         }
 
         /* --- Styles de Base & Réinitialisation --- */
@@ -101,6 +105,10 @@
         #goal-info { font-size: 1.1em; color: var(--primary-text-color); font-weight: 500; margin-top: 10px; }
         #goal-info .target-level { color: var(--neon-green); font-weight: 700; }
         #goal-info .target-elo-value { font-weight: 700; }
+        /* Placeholder pour sélecteur d'objectif (stylisé comme du texte normal pour l'instant) */
+        #goal-selector-container { font-size: 0.9em; margin-top: 8px; color: var(--secondary-text-color);}
+        #goal-selector-container label { margin-right: 5px;}
+        #goal-selector { background-color: var(--input-bg); color: var(--primary-text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 3px 6px; font-size: 0.9em;}
         #goal-description { font-size: 0.9em; color: var(--secondary-text-color); font-style: italic; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
         /* Conteneur des catégories et groupes */
@@ -110,7 +118,7 @@
         .muscle-group-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
 
         /* Carte pour un groupe musculaire */
-        .muscle-group-card { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: all var(--transition-speed) ease; }
+        .muscle-group-card { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: all var(--transition-speed) ease; cursor: pointer; /* Pour indiquer qu'elle est cliquable */ }
         .muscle-group-card:hover { border-color: var(--accent-border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
         .muscle-group-header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 5px; }
         .muscle-group-header i { font-size: 1.4em; width: 25px; text-align: center; color: var(--neon-blue); }
@@ -136,9 +144,31 @@
         .global-progress-percentage { font-size: 0.9em; font-weight: 700; color: rgba(0,0,0,0.7); text-shadow: 0 0 2px rgba(255,255,255,0.5); z-index: 1; line-height: 18px; opacity: 0; transition: opacity 0.5s ease; }
          .global-progress-bar:not([style*="width: 0%"]) .global-progress-percentage { opacity: 1; }
 
+        /* --- Historique ELO (Graphique) --- */
+        #history-chart-container { margin-top: 40px; padding: 25px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); }
+        #history-chart-container h3 { font-size: 1.2em; font-weight: 700; color: var(--primary-text-color); margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #history-chart-container h3 i { color: var(--neon-yellow); }
+        #elo-history-chart { max-height: 350px; width: 100% !important; } /* Important pour forcer la largeur */
+
+        /* --- Modale Détails Exercice --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background-color: var(--secondary-bg-color); margin: 10% auto; padding: 25px 30px; border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); width: 80%; max-width: 650px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.2); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-close-button { color: var(--secondary-text-color); position: absolute; top: 15px; right: 20px; font-size: 1.8em; font-weight: bold; cursor: pointer; transition: color var(--transition-speed); }
+        .modal-close-button:hover, .modal-close-button:focus { color: var(--primary-text-color); text-decoration: none; }
+        .modal h4 { font-size: 1.4em; color: var(--neon-blue); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .modal-exercise-list { list-style: none; padding: 0; max-height: 40vh; overflow-y: auto; }
+        .modal-exercise-list li { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 12px 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.95em; }
+        .modal-exercise-list .exercise-name { font-weight: 600; color: var(--primary-text-color); flex-basis: 50%; }
+        .modal-exercise-list .exercise-details { font-size: 0.9em; color: var(--secondary-text-color); text-align: right; flex-basis: 45%; }
+        .modal-exercise-list .exercise-elo { font-weight: 700; color: var(--neon-purple); }
+
         /* --- Zone de Messages Flottante --- */
         .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
         .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
+        .message-area.error { background-color: var(--neon-red); color: #fff; border-color: var(--neon-red); }
+        .message-area.success { background-color: var(--neon-green); color: #fff; border-color: var(--neon-green); }
 
         /* --- Pied de Page --- */
         footer { color: var(--secondary-text-color); opacity: 0.7; border-top: 1px solid var(--border-color); margin-top: 60px; padding: 25px; text-align: center; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; }
@@ -147,8 +177,36 @@
         footer .fab.fa-google-drive { color: #4CAF50; }
 
         /* --- Responsive --- */
-        @media (max-width: 768px) { .container { padding: 20px 15px; } main h2 { font-size: 1.4em; } .global-stats { margin-bottom: 15px; padding-bottom: 15px; } #overall-elo-display { font-size: 1.8em; } #goal-info { font-size: 1em; } .muscle-category-header { font-size: 1.2em; } .muscle-group-grid { grid-template-columns: 1fr; gap: 15px; } .muscle-group-card { padding: 15px; } .muscle-group-title { font-size: 1.1em; } .global-goal-progress h3 {font-size: 1.1em;} }
-        @media (max-width: 480px) { .header-content { padding: 0 15px; } .header-actions { gap: 10px; } .auth-controls button { padding: 5px 10px; font-size: 0.8em; } main h2 { font-size: 1.3em; } #overall-elo-display { font-size: 1.6em; } #goal-info { font-size: 0.95em; } #goal-description { font-size: 0.85em; } .global-goal-progress h3 {font-size: 1em;} .global-progress-bar-container {height: 16px;} .global-progress-percentage{font-size: 0.8em;}}
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            main h2 { font-size: 1.4em; }
+            .global-stats { margin-bottom: 15px; padding-bottom: 15px; }
+            #overall-elo-display { font-size: 1.8em; }
+            #goal-info { font-size: 1em; }
+            .muscle-category-header { font-size: 1.2em; }
+            .muscle-group-grid { grid-template-columns: 1fr; gap: 15px; }
+            .muscle-group-card { padding: 15px; }
+            .muscle-group-title { font-size: 1.1em; }
+            .global-goal-progress h3 {font-size: 1.1em;}
+            #history-chart-container h3 { font-size: 1.1em; }
+            .modal-content { width: 90%; margin: 15% auto; }
+        }
+        @media (max-width: 480px) {
+            .header-content { padding: 0 15px; }
+            .header-actions { gap: 10px; }
+            .auth-controls button { padding: 5px 10px; font-size: 0.8em; }
+            main h2 { font-size: 1.3em; }
+            #overall-elo-display { font-size: 1.6em; }
+            #goal-info { font-size: 0.95em; }
+            #goal-description { font-size: 0.85em; }
+            .global-goal-progress h3 {font-size: 1em;}
+            .global-progress-bar-container {height: 16px;}
+            .global-progress-percentage{font-size: 0.8em;}
+            #history-chart-container h3 { font-size: 1em; }
+            .modal-content { margin: 20% auto; }
+            .modal-exercise-list .exercise-name { flex-basis: 100%; }
+            .modal-exercise-list .exercise-details { flex-basis: 100%; text-align: left; margin-top: 5px;}
+        }
 
     </style>
 </head>
@@ -179,7 +237,7 @@
         <h2><i class="fas fa-chart-line"></i> Suivi d'Évolution</h2>
 
         <div id="connection-prompt">
-            <p>Connectez-vous à Google Drive pour analyser vos programmes et suivre votre évolution.</p>
+            <p>Connectez-vous à Google Drive pour analyser vos programmes, suivre votre évolution et voir votre historique.</p>
             <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Connecter Drive</button>
         </div>
 
@@ -191,6 +249,13 @@
                 <div id="goal-info">
                     Objectif Actuel : <span class="target-level">Chargement...</span> (ELO Cible <span class="target-elo-value">--</span>)
                 </div>
+                 <!-- Placeholder pour sélection d'objectif future -->
+                 <div id="goal-selector-container" style="display: none;"> <!-- Caché pour l'instant -->
+                     <label for="goal-selector">Choisir objectif:</label>
+                     <select id="goal-selector">
+                         <!-- Options chargées par JS -->
+                     </select>
+                 </div>
                 <div id="goal-description">
                     <!-- Description chargée par JS -->
                 </div>
@@ -203,18 +268,38 @@
 
              <!-- Section Barre de Progression Globale -->
              <div class="global-goal-progress" id="global-goal-progress-section">
-                 <h3><i class="fas fa-bullseye"></i> Progression vers Objectif "Tom Holland"</h3>
-                 <div class="global-progress-bar-container" aria-label="Progression globale vers l'objectif final (ELO 1150)">
+                 <h3><i class="fas fa-bullseye"></i> Progression vers Objectif "<span id="final-goal-name">Tom Holland</span>"</h3>
+                 <div class="global-progress-bar-container" aria-label="Progression globale vers l'objectif final">
                      <div class="global-progress-bar" id="global-progress-bar" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="800" aria-valuemax="1150">
                          <span class="global-progress-percentage" id="global-progress-percentage">0%</span>
                      </div>
                  </div>
              </div>
 
+             <!-- Section Historique ELO -->
+             <div id="history-chart-container" style="display: none;"> <!-- Caché initialement -->
+                <h3><i class="fas fa-timeline"></i> Historique ELO Global</h3>
+                <canvas id="elo-history-chart"></canvas>
+                <p id="history-loading-msg" style="text-align: center; color: var(--secondary-text-color); margin-top: 15px;">Chargement de l'historique...</p>
+             </div>
+
         </div>
 
     </main>
 </div>
+
+<!-- Modale Détails Exercice -->
+<div id="exercise-detail-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-button" id="modal-close-btn">×</span>
+        <h4 id="modal-title">Détails Groupe Musculaire</h4>
+        <ul id="modal-exercise-list" class="modal-exercise-list">
+            <!-- Contenu généré par JS -->
+            <li>Chargement...</li>
+        </ul>
+    </div>
+</div>
+
 
 <footer>
     <p>© 2024 ArmorWorkout Evolution Tracker. Analyse basée sur vos programmes Drive.</p>
@@ -230,133 +315,320 @@
 <script>
     // --- CONFIGURATION & CONSTANTES ---
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
-    const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file'; // Garder .file pour créer/modifier historique
     const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" };
+    const ELO_HISTORY_FILENAME = "armorworkout_elo_history.json"; // Nouveau fichier pour l'historique
     const PROGRAM_TYPES = ['Push', 'Pull', 'Legs'];
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
+    const MAX_HISTORY_ENTRIES = 100; // Limiter la taille de l'historique
 
     // --- ELO PARAMETERS & TARGETS ---
     const ELO_BASE = 800;
     const INTENSITY_TECHNIQUE_BONUS_MULTIPLIER = 1.05; // +5% ELO bonus
     const POLYARTICULAR_WEIGHT = 1.2; // Poids pour exos polyarticulaires
     const ISOLATION_WEIGHT = 1.0;     // Poids pour exos d'isolation
-    const RESISTANCE_BONUS = {
-        'Bodyweight': 75, 'Haltères 5kg': 50, 'Élastique 15kg': 50,
-        'Élastique 15kg doublé': 100, 'Élastique 25kg': 125, 'Élastique 15+25kg': 200,
-        'Élastique 15+25kg + 1 haltère 5kg': 225, 'Élastique 15+25kg + 2x5kg haltères': 250
+    const DURATION_ELO_FACTOR = 1.5; // Facteur pour ELO basé sur durée (ex: ELO = BASE + duration * FACTOR) - À AJUSTER
+    const RESISTANCE_BONUS = { // Clés triées par longueur DESC pour meilleure correspondance
+        'Élastique 15+25kg + 2x5kg haltères': 250,
+        'Élastique 15+25kg + 1 haltère 5kg': 225,
+        'Élastique 15+25kg': 200,
+        'Élastique 25kg': 125,
+        'Élastique 15kg doublé': 100,
+        'Élastique 15kg': 50,
+        'Haltères 5kg': 50, // Attention si utilisé avec élastiques, la clé plus longue primera
+        'Bodyweight': 75,
     };
-    const REPS_FACTORS = { 12: 1.0, 18: 1.2, 25: 1.3, Infinity: 1.4 };
-    const TARGET_ELO_LEVELS = {
-        'L1_MaxReps': { name: "Solide via Reps 💪", targetELO: 950, description: "Niveau solide atteignable en maximisant les répétitions avec l'équipement actuel. Physique athlétique visible, bonne endurance musculaire.", groups: { Pectoraux: 900, Dos: 920, Épaules: 865, Biceps: 940, Triceps: 865, Core: 880 } },
-        'L2_TomHolland': { name: "Athlétique Avancé / Tom Holland Style 🕷️", targetELO: 1150, description: "Niveau avancé style 'acteur film d'action'. Nécessite l'application des techniques de progression (combinaison d'élastiques, pompes lestées...). Muscles plus développés, meilleure définition (avec diète adaptée).", groups: { Pectoraux: 1150, Dos: 1150, Épaules: 1150, Biceps: 1100, Triceps: 1100, Core: 950 } }
+    const REPS_FACTORS = { 8: 0.8, 12: 1.0, 18: 1.2, 25: 1.3, Infinity: 1.4 }; // Ajout seuil 8 reps
+    const TARGET_ELO_LEVELS = { // Structure prête pour plus de niveaux / personnalisation
+        'L1_MaxReps': { name: "Solide via Reps 💪", targetELO: 950, description: "Niveau solide atteignable en maximisant les répétitions avec l'équipement actuel. Physique athlétique visible, bonne endurance musculaire.", groups: { Pectoraux: 900, Dos: 920, Épaules: 865, Biceps: 940, Triceps: 865, Core: 880, Legs: 900 } }, // Ajout Legs
+        'L2_TomHolland': { name: "Athlétique Avancé / Tom Holland Style 🕷️", targetELO: 1150, description: "Niveau avancé style 'acteur film d'action'. Nécessite l'application des techniques de progression (combinaison d'élastiques, pompes lestées...). Muscles plus développés, meilleure définition (avec diète adaptée).", groups: { Pectoraux: 1150, Dos: 1150, Épaules: 1150, Biceps: 1100, Triceps: 1100, Core: 950, Legs: 1100 } } // Ajout Legs
+        // Potentiellement L3_CaptainAmerica etc.
     };
-    const FINAL_TARGET_ELO = TARGET_ELO_LEVELS.L2_TomHolland.targetELO || 1150; // Cible finale pour la barre globale
-    const MUSCLE_GROUPS_DISPLAY_ORDER = { "Torse": ["Pectoraux", "Dos"], "Épaules": ["Épaules"], "Bras": ["Biceps", "Triceps"], "Core": ["Core"] };
-    const MUSCLE_GROUP_ICONS = { Pectoraux: 'fa-heart-pulse', Dos: 'fa-circle-nodes', Épaules: 'fa-person-burst', Biceps: 'fa-dumbbell', Triceps: 'fa-hand-back-fist', Core: 'fa-fire' };
+    const FINAL_TARGET_LEVEL_KEY = 'L2_TomHolland'; // Clé du niveau visé par la barre globale
+    const FINAL_TARGET_ELO = TARGET_ELO_LEVELS[FINAL_TARGET_LEVEL_KEY].targetELO || 1150; // Cible finale pour la barre globale
+    const MUSCLE_GROUPS_DISPLAY_ORDER = { // Ajout catégorie Jambes
+        "Torse": ["Pectoraux", "Dos"],
+        "Épaules": ["Épaules"],
+        "Bras": ["Biceps", "Triceps"],
+        "Core": ["Core"],
+        "Jambes": ["Legs"] // Nouvelle catégorie
+    };
+    const MUSCLE_GROUP_ICONS = { // Ajout icône Jambes
+        Pectoraux: 'fa-heart-pulse', Dos: 'fa-circle-nodes', Épaules: 'fa-person-burst',
+        Biceps: 'fa-dumbbell', Triceps: 'fa-hand-back-fist', Core: 'fa-fire',
+        Legs: 'fa-person-walking' // Nouvelle icône
+    };
 
     // --- Éléments DOM ---
     let signInButton, signOutButton, driveStatusElement, themeToggleBtn,
         signInButtonPrompt, connectionPrompt, evolutionTrackerArea,
-        overallEloDisplay, goalInfo, goalDescriptionElement,
+        overallEloDisplay, goalInfo, goalDescriptionElement, goalSelectorContainer, goalSelector,
         muscleGroupsContainer, messageArea,
-        globalProgressBar, globalProgressPercentage;
+        globalProgressBar, globalProgressPercentage, finalGoalNameSpan,
+        historyChartContainer, eloHistoryChartCanvas, historyLoadingMsg,
+        exerciseDetailModal, modalCloseBtn, modalTitle, modalExerciseList;
 
     // --- Variables d'État ---
-    let googleAccessToken = null; let tokenClient = null; let programFileIds = { Push: null, Pull: null, Legs: null };
+    let googleAccessToken = null; let tokenClient = null;
+    let programFileIds = { Push: null, Pull: null, Legs: null };
+    let eloHistoryFileId = null; // ID du fichier d'historique
     let loadedPrograms = { Push: [], Pull: [], Legs: [] }; let programsLoaded = false;
-    let currentELOValues = {}; let overallAvgELO = 0; let currentGoalLevel = 'L1_MaxReps';
+    let eloHistoryData = []; // Stockage de l'historique [{timestamp, eloValues, overallAvgELO}, ...]
+    let currentELOValues = {}; let overallAvgELO = 0; let currentGoalLevelKey = 'L1_MaxReps';
+    let exerciseDetailsPerGroup = {}; // Stocke les détails des exos pour la modale: { Pectoraux: [{name, sets, reps, equipment, elo}, ...], ...}
     let currentTheme = 'dark'; let messageTimeoutId = null; let gisCheckRetries = 0;
+    let historyChart = null; // Instance Chart.js
 
     // --- Audio ---
     let audioContext = null;
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
 
     // --- Google Identity Services & Drive API ---
-    async function gisInitInternal() { console.log(">>> gisInitInternal appelée (Evolution)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Evolution)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Evolution)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Evolution)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Evolution):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Evolution) - Fin d'exécution"); }
-    function checkAndInitGis() { console.log(`Vérification GIS (Evolution - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Evolution)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Evolution) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
-    function handleTokenError(error) { console.error("Erreur Google Token Client (Evolution):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
-    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu (Evolution)."); googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Analyse des programmes...", 2500); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Analyse des programmes en cours...</p>'; try { programsLoaded = await loadProgramsFromDrive(); if (programsLoaded) { showMessage("Programmes analysés. Affichage de l'évolution...", 3000); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } calculateAndDisplayEvolution(); } else { showMessage("Erreur chargement programmes. Impossible d'analyser l'évolution.", 5000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Impossible de charger les programmes depuis Drive.</p>'; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement/analyse des programmes (Evolution):", error); showMessage("Erreur majeure lors de l'analyse des programmes.", 6000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Analyse'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Erreur lors de l\'analyse des programmes.</p>'; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Evolution)." }); } }
-    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Evolution)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Evolution)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Evolution).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentELOValues = {}; overallAvgELO = 0; currentGoalLevel = 'L1_MaxReps'; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; updateAuthUI(false); }); }
-    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { console.log(`Drive (Evolution): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Evolution): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Evolution): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Evolution): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Evolution): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Evolution): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Evolution): Fichier ${filename} créé (ID: ${newFileId}). Contenu par défaut PAS écrit (page read-only).`); return newFileId; } catch (error) { console.error(`Erreur Drive (Evolution - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
-    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) { console.warn("readFileContent (Evolution): Pas de token ou d'ID."); return null; } console.log(`Drive (Evolution): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Evolution): Fichier non trouvé (404).`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Evolution). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Evolution): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Evolution): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Evolution - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
+    async function gisInitInternal() { /* ... (Identique, mais vérifie le scope .file) ... */ console.log(">>> gisInitInternal appelée (Evolution v2)... Scope demandé:", GOOGLE_DRIVE_SCOPES); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Evolution v2)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Evolution v2)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Evolution v2)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Evolution v2):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Evolution v2) - Fin d'exécution"); }
+    function checkAndInitGis() { /* ... (Identique) ... */ console.log(`Vérification GIS (Evolution v2 - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Evolution v2)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Evolution v2) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function handleTokenError(error) { /* ... (Identique) ... */ console.error("Erreur Google Token Client (Evolution v2):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    async function tokenCallback(tokenResponse) { /* MAJ pour charger aussi l'historique */ if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu (Evolution v2)."); googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Analyse des données...", 2500, false, 'success'); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Analyse des programmes et de l\'historique en cours...</p>'; if(historyChartContainer) historyChartContainer.style.display = 'block'; if(historyLoadingMsg) historyLoadingMsg.textContent = 'Chargement de l\'historique...'; if(historyChart) historyChart.destroy(); historyChart = null; try { const programsOk = await loadProgramsFromDrive(); const historyOk = await loadEloHistory(); programsLoaded = programsOk; // historyOk n'empêche pas l'affichage principal if (programsLoaded) { showMessage("Programmes analysés. Calcul ELO...", 2000); calculateAndDisplayEvolution(); // Ceci déclenchera aussi saveCurrentEloToHistory if (historyOk && eloHistoryData.length > 0) { displayEloHistoryChart(); showMessage("Programmes et historique chargés.", 3000, false, 'success'); if(historyLoadingMsg) historyLoadingMsg.style.display = 'none'; } else if (historyOk) { showMessage("Programmes chargés. Historique vide.", 3000); if(historyLoadingMsg) historyLoadingMsg.textContent = 'Aucun historique trouvé. Il sera créé après cette analyse.'; } else { showMessage("Programmes chargés. Erreur chargement historique.", 4000, true); if(historyLoadingMsg) historyLoadingMsg.textContent = 'Erreur chargement historique.'; } if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } } else { showMessage("Erreur chargement programmes. Impossible d'analyser l'évolution.", 5000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Impossible de charger les programmes depuis Drive.</p>'; if(historyChartContainer) historyChartContainer.style.display = 'none'; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement/analyse (Evolution v2):", error); showMessage("Erreur majeure lors de l'analyse des données.", 6000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Analyse'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-text-color); grid-column: 1 / -1;">Erreur lors de l\'analyse des programmes.</p>'; if(historyChartContainer) historyChartContainer.style.display = 'none'; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Evolution v2)." }); } }
+    function handleAuthClick() { /* ... (Identique) ... */ initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Evolution v2)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
+    function handleSignoutClick(showMessages = true) { /* MAJ pour reset history aussi */ const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Evolution v2)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Evolution v2).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; eloHistoryFileId = null; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; eloHistoryData = []; currentELOValues = {}; overallAvgELO = 0; exerciseDetailsPerGroup = {}; currentGoalLevelKey = 'L1_MaxReps'; if (historyChart) { historyChart.destroy(); historyChart = null; } if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } // Reset UI elements if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; if(historyChartContainer) historyChartContainer.style.display = 'none'; updateAuthUI(false); }); }
+    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { /* MAJ pour écrire contenu si création */ console.log(`Drive (Evolution v2): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn(`findOrCreateFile (${filename}): Pas de token Google.`); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou accès refusé. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive: Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive: Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive: Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const updateOk = await updateFileContent(newFileId, defaultContent); if (updateOk) { console.log(`Drive: Contenu par défaut écrit dans ${filename}.`); } else { console.error(`Drive: Échec de l'écriture du contenu par défaut dans ${filename}.`); // Pas critique, la lecture renverra vide } return newFileId; } catch (error) { console.error(`Erreur Drive (findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
+    async function readFileContent(fileId) { /* ... (Identique) ... */ if (!googleAccessToken || !fileId) { console.warn("readFileContent (Evolution v2): Pas de token ou d'ID."); return null; } console.log(`Drive (Evolution v2): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}): Fichier non trouvé (404).`); return ""; // Renvoyer chaîne vide pour permettre création/parsing facile } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou accès refusé. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}): ${await response.text()}`); } const content = await response.text(); console.log(`Drive: Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
+    async function updateFileContent(fileId, content, mimeType = 'application/json') { // Nouvelle fonction pour écrire/MAJ
+        if (!googleAccessToken || !fileId) { console.warn("updateFileContent: Pas de token ou d'ID."); return false; }
+        console.log(`Drive: Mise à jour du fichier ${fileId}...`);
+        const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${googleAccessToken}`,
+                    'Content-Type': mimeType
+                },
+                body: content
+            });
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                     console.warn(`updateFileContent(${fileId}): Erreur d'autorisation (${response.status}). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée ou accès refusé. Reconnectez-vous.", 5000, true); return false;
+                }
+                throw new Error(`Mise à jour échouée (${response.status}): ${await response.text()}`);
+            }
+            console.log(`Drive: Fichier ${fileId} mis à jour avec succès.`);
+            return true;
+        } catch (error) {
+            console.error(`Erreur Drive (updateFile ${fileId}):`, error);
+            showMessage(`Erreur Sauvegarde Drive (${fileId}): ${error.message}`, 6000, true);
+            return false;
+        }
+    }
 
-    // --- Chargement des Programmes ---
-    async function loadProgramsFromDrive() {
+    // --- Chargement des Programmes & Historique ---
+    async function loadProgramsFromDrive() { /* ... (Identique mais log plus clair) ... */ if (!googleAccessToken) return false; console.log("Chargement des programmes depuis Drive (Evolution v2)..."); let allLoadedSuccessfully = true; const tempLoadedPrograms = {}; for (const type of PROGRAM_TYPES) { console.log(`Chargement programme: ${type}...`); const defaultJsonString = JSON.stringify([], null, 2); programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString); if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const parsedContent = JSON.parse(content || '[]'); tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : []; if (tempLoadedPrograms[type].length === 0) console.warn(`Programme ${type} chargé mais vide ou invalide.`); else console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`); } catch (e) { console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content); showMessage(`Erreur format programme ${type}. Utilisation vide.`, 4000, true); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } else { console.warn(`Lecture programme ${type} échouée. Utilisation programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } else { console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation programme vide.`); tempLoadedPrograms[type] = []; allLoadedSuccessfully = false; } } loadedPrograms = tempLoadedPrograms; console.log("Fin chargement programmes (Evolution v2). Global success:", allLoadedSuccessfully); return allLoadedSuccessfully; }
+    async function loadEloHistory() { // Nouvelle fonction pour charger l'historique
         if (!googleAccessToken) return false;
-        console.log("Chargement des programmes depuis Drive (Evolution)...");
-        let allLoadedSuccessfully = true;
-        const tempLoadedPrograms = {};
-        for (const type of PROGRAM_TYPES) {
-            console.log(`Chargement programme: ${type}...`);
-            const defaultJsonString = JSON.stringify([], null, 2);
-            programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString);
-            if (programFileIds[type]) {
-                const content = await readFileContent(programFileIds[type]);
-                if (content !== null) {
-                    try {
-                        const parsedContent = JSON.parse(content || '[]');
-                        tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : [];
-                        if (tempLoadedPrograms[type].length === 0) console.warn(`Programme ${type} chargé mais vide ou invalide.`);
-                        else console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`);
-                    } catch (e) {
-                        console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content);
-                        showMessage(`Erreur format programme ${type}. Analyse impossible.`, 4000, true);
-                        tempLoadedPrograms[type] = [];
-                        allLoadedSuccessfully = false;
+        console.log("Chargement de l'historique ELO depuis Drive...");
+        const defaultHistory = JSON.stringify([], null, 2);
+        eloHistoryFileId = await findOrCreateFile(ELO_HISTORY_FILENAME, defaultHistory);
+        if (eloHistoryFileId) {
+            const content = await readFileContent(eloHistoryFileId);
+            if (content !== null) {
+                try {
+                    const parsedHistory = JSON.parse(content || '[]');
+                    eloHistoryData = Array.isArray(parsedHistory) ? parsedHistory : [];
+                    // Trier par date au cas où et limiter la taille
+                    eloHistoryData.sort((a, b) => a.timestamp - b.timestamp);
+                    if (eloHistoryData.length > MAX_HISTORY_ENTRIES) {
+                        eloHistoryData = eloHistoryData.slice(-MAX_HISTORY_ENTRIES);
+                        console.warn(`Historique tronqué aux ${MAX_HISTORY_ENTRIES} dernières entrées.`);
+                        // Optionnel: Sauvegarder l'historique tronqué immédiatement ? Non, on attend la prochaine sauvegarde.
                     }
-                } else {
-                    console.warn(`Lecture programme ${type} échouée. Utilisation d'un programme vide.`);
-                    tempLoadedPrograms[type] = [];
-                    allLoadedSuccessfully = false;
+                    console.log(`Historique ELO chargé (${eloHistoryData.length} entrées).`);
+                    return true;
+                } catch (e) {
+                    console.error("Erreur parsing JSON historique ELO:", e, "Contenu:", content);
+                    showMessage("Erreur format historique ELO. Historique ignoré.", 4000, true);
+                    eloHistoryData = [];
+                    return false;
                 }
             } else {
-                console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation d'un programme vide.`);
-                tempLoadedPrograms[type] = [];
-                allLoadedSuccessfully = false;
+                console.warn("Lecture historique ELO échouée.");
+                eloHistoryData = [];
+                return false;
+            }
+        } else {
+            console.error("Impossible d'obtenir/créer l'ID pour l'historique ELO.");
+            eloHistoryData = [];
+            return false;
+        }
+    }
+    async function saveCurrentEloToHistory() { // Nouvelle fonction pour sauvegarder l'ELO actuel
+        if (!googleAccessToken || !eloHistoryFileId || Object.keys(currentELOValues).length === 0) {
+            console.warn("Sauvegarde historique annulée: non connecté, ID manquant ou ELO non calculé.");
+            return;
+        }
+
+        const now = Date.now();
+        const newEntry = {
+            timestamp: now,
+            eloValues: { ...currentELOValues }, // Copie
+            overallAvgELO: overallAvgELO
+        };
+
+        // Éviter les doublons si calculé plusieurs fois rapidement
+        const lastEntry = eloHistoryData[eloHistoryData.length - 1];
+        if (lastEntry && (now - lastEntry.timestamp < 60000)) { // Moins d'1 minute
+             // Comparaison rapide (pas parfaite mais suffisante)
+             if(JSON.stringify(lastEntry.eloValues) === JSON.stringify(newEntry.eloValues) && lastEntry.overallAvgELO === newEntry.overallAvgELO) {
+                 console.log("Sauvegarde historique ignorée: données ELO identiques à la dernière entrée récente.");
+                 return;
+             }
+        }
+
+
+        eloHistoryData.push(newEntry);
+
+        // Limiter la taille
+        if (eloHistoryData.length > MAX_HISTORY_ENTRIES) {
+            eloHistoryData = eloHistoryData.slice(-MAX_HISTORY_ENTRIES);
+        }
+
+        console.log("Préparation sauvegarde historique ELO...");
+        try {
+            const historyJsonString = JSON.stringify(eloHistoryData, null, 2);
+            const success = await updateFileContent(eloHistoryFileId, historyJsonString);
+            if (success) {
+                console.log("Historique ELO sauvegardé sur Drive.");
+                // Mettre à jour le graphique immédiatement
+                 if (historyChart) {
+                    displayEloHistoryChart(); // Re-render avec la nouvelle donnée
+                 }
+            } else {
+                console.error("Échec sauvegarde historique ELO sur Drive.");
+                // Retirer la dernière entrée ajoutée localement si la sauvegarde échoue? Peut-être pas nécessaire.
+                 showMessage("Erreur sauvegarde historique.", 4000, true);
+            }
+        } catch (e) {
+            console.error("Erreur lors de la sérialisation/sauvegarde de l'historique:", e);
+             showMessage("Erreur interne sauvegarde historique.", 4000, true);
+        }
+    }
+
+    // --- Logique de Calcul et Affichage ELO (MAJ v3) ---
+
+    function getRepsFactor(reps) { /* ... (Identique avec seuil 8) ... */ if (reps === null || reps === undefined) return 0.8; if (reps === Infinity) return REPS_FACTORS[Infinity]; const thresholds = Object.keys(REPS_FACTORS).map(Number).filter(n => isFinite(n)).sort((a, b) => a - b); for (let i = thresholds.length - 1; i >= 0; i--) { if (reps >= thresholds[i]) { return REPS_FACTORS[thresholds[i]]; } } return 0.8; // Default for less than 8 }
+
+    function isPolyarticular(exerciseName) { /* ... (Identique) ... */ const name = (exerciseName || '').toLowerCase(); const polyKeywords = ['press', 'pompe', 'row', 'pulldown', 'ohp', 'squat', 'fente']; return polyKeywords.some(keyword => name.includes(keyword)); }
+
+    function calculateExerciseELO(step) { // MAJ pour durée et résistance affinée
+        if (step.type !== 'exercise') return 0;
+
+        const base = ELO_BASE;
+
+        // 1. Calcul ELO basé sur la durée (prioritaire si défini)
+        if (step.duration !== null && step.duration !== undefined && step.duration > 0) {
+             // Formule simple: Base + Durée * Facteur. À affiner potentiellement.
+             // On pourrait aussi avoir des paliers de durée.
+            const durationElo = base + (step.duration * DURATION_ELO_FACTOR);
+            console.log(`ELO Calc (${step.name}): Durée=${step.duration}s => ELO=${Math.round(durationElo)}`);
+            // Appliquer bonus technique (si pertinent pour exos statiques?)
+             if (step.intensity_technique === true) { return Math.round(durationElo * INTENSITY_TECHNIQUE_BONUS_MULTIPLIER); }
+            return Math.round(durationElo);
+        }
+
+        // 2. Calcul ELO basé sur Répétitions et Résistance
+        let bonusResistance = 0;
+        let bonusReps = 0;
+        const equipmentString = step.equipment || '';
+        let matchedKey = null;
+
+        // Recherche de la clé la plus spécifique (la plus longue) dans RESISTANCE_BONUS
+        const sortedResistanceKeys = Object.keys(RESISTANCE_BONUS).sort((a, b) => b.length - a.length);
+        for (const key of sortedResistanceKeys) {
+            // Utiliser une regex pour chercher le mot/groupe exact peut être mieux,
+            // mais pour l'instant on garde includes() pour la flexibilité
+            if (equipmentString.toLowerCase().includes(key.toLowerCase())) {
+                 bonusResistance = RESISTANCE_BONUS[key];
+                 matchedKey = key;
+                 console.log(`ELO Calc (${step.name}): Matched resistance key "${matchedKey}" -> Bonus ${bonusResistance}`);
+                 break; // Prend la première (la plus longue) correspondance
             }
         }
-        loadedPrograms = tempLoadedPrograms;
-        console.log("Fin chargement programmes (Evolution). Global success:", allLoadedSuccessfully);
-        return allLoadedSuccessfully;
-    }
+
+        // Fallback sur step.weight si aucune clé n'a matché via 'equipment'
+        if (bonusResistance === 0 && step.weight !== null && step.weight !== undefined) {
+            console.warn(`ELO Calc (${step.name}): Résistance non trouvée via 'equipment' ("${equipmentString}"). Utilisation de 'weight' (${step.weight}) comme fallback.`);
+            // Mapping simple weight -> bonus (peut être amélioré)
+                 if (step.weight === 0) bonusResistance = RESISTANCE_BONUS['Bodyweight'] || 75;
+                 else if (step.weight <= 5) bonusResistance = RESISTANCE_BONUS['Haltères 5kg'] || 50; // Catche 5kg
+                 else if (step.weight <= 15) bonusResistance = RESISTANCE_BONUS['Élastique 15kg'] || 50; // Catche 15kg
+                 else if (step.weight <= 25) bonusResistance = RESISTANCE_BONUS['Élastique 25kg'] || 125; // Catche 25kg
+                 else if (step.weight <= 40) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg'] || 200; // Catche 40kg
+                 else if (step.weight <= 45) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 1 haltère 5kg'] || 225; // Catche 45kg
+                 else if (step.weight <= 50) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 2x5kg haltères'] || 250; // Catche 50kg
+                 else bonusResistance = step.weight * 2; // Fallback générique pour poids > 50
+            console.log(`ELO Calc (${step.name}): Fallback weight ${step.weight} -> Bonus ${bonusResistance}`);
+        } else if (bonusResistance === 0 && equipmentString) {
+             console.warn(`ELO Calc (${step.name}): Equipment "${equipmentString}" non reconnu dans RESISTANCE_BONUS et pas de poids fallback.`);
+        }
 
 
-    // --- Logique de Calcul et Affichage ELO (MAJ) ---
+        // Calculer bonus reps basé sur la résistance trouvée
+        if (bonusResistance > 0 && step.reps !== null && step.reps !== undefined) {
+            const reps = step.reps === 'max' ? Infinity : step.reps; // Gérer 'max'
+            const repsFactor = getRepsFactor(reps);
+            bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0); // Bonus = % au dessus du facteur 1.0
+            console.log(`ELO Calc (${step.name}): Reps=${reps} (Factor ${repsFactor}) -> Bonus Reps ${Math.round(bonusReps)}`);
+        }
 
-    function getRepsFactor(reps) { if (reps === null || reps === undefined || reps < 8) return 0.8; const thresholds = Object.keys(REPS_FACTORS).map(Number).sort((a, b) => a - b); for (const threshold of thresholds) { if (reps <= threshold) { return REPS_FACTORS[threshold]; } } return 1.4; }
-
-    function isPolyarticular(exerciseName) {
-        const name = (exerciseName || '').toLowerCase();
-        const polyKeywords = ['press', 'pompe', 'row', 'pulldown', 'ohp', 'squat', 'fente'];
-        return polyKeywords.some(keyword => name.includes(keyword));
-    }
-
-    function calculateExerciseELO(step) {
-        if (step.type !== 'exercise') return 0;
-        const base = ELO_BASE; let bonusResistance = 0; let bonusReps = 0;
-        const equipmentString = step.equipment || ''; let matchedKey = null; let maxBonus = 0;
-        for (const key in RESISTANCE_BONUS) { if (equipmentString.includes(key) && RESISTANCE_BONUS[key] > maxBonus) { maxBonus = RESISTANCE_BONUS[key]; matchedKey = key; } }
-        bonusResistance = maxBonus;
-        if (bonusResistance === 0 && step.weight !== null && step.weight !== undefined) { console.warn(`ELO Calc (${step.name}): Résistance non trouvée via 'equipment' ("${equipmentString}"). Utilisation de 'weight' (${step.weight}) comme fallback.`); if (step.weight === 0) bonusResistance = RESISTANCE_BONUS['Bodyweight'] || 75; else if (step.weight === 10) bonusResistance = RESISTANCE_BONUS['Haltères 5kg'] || 50; else if (step.weight === 15) bonusResistance = RESISTANCE_BONUS['Élastique 15kg'] || 50; else if (step.weight === 25) bonusResistance = RESISTANCE_BONUS['Élastique 25kg'] || 125; else if (step.weight === 40) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg'] || 200; else if (step.weight === 45) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 1 haltère 5kg'] || 225; else if (step.weight === 50) bonusResistance = RESISTANCE_BONUS['Élastique 15+25kg + 2x5kg haltères'] || 250; else bonusResistance = step.weight * 2; }
-        if (bonusResistance > 0 && step.reps !== null && step.reps !== undefined) { const reps = step.reps; const repsFactor = getRepsFactor(reps); bonusReps = bonusResistance * Math.max(0, repsFactor - 1.0); }
         let elo = base + bonusResistance + bonusReps;
-        // Appliquer bonus technique d'intensité (si défini dans le JSON)
-        if (step.intensity_technique === true) { elo *= INTENSITY_TECHNIQUE_BONUS_MULTIPLIER; }
+
+        // Appliquer bonus technique d'intensité
+        if (step.intensity_technique === true) {
+            elo *= INTENSITY_TECHNIQUE_BONUS_MULTIPLIER;
+             console.log(`ELO Calc (${step.name}): Bonus Intensité appliqué -> ELO ${Math.round(elo)}`);
+        }
+
         return Math.round(elo);
     }
 
-    function mapExerciseToMuscleGroup(exerciseName) { /* ... (Identique) ... */ const name = (exerciseName || '').toLowerCase(); if (!name) return []; if (name.includes('press') || name.includes('pecs') || name.includes('pompe')) return ['Pectoraux']; if (name.includes('row') || name.includes('pulldown')) return ['Dos']; if (name.includes('face pull')) return ['Dos', 'Épaules']; if (name.includes('curl') || name.includes('bicep')) return ['Biceps']; if (name.includes('tricep') || name.includes('extension')) return ['Triceps']; if (name.includes('lateral raise')) return ['Épaules']; if (name.includes('ohp') || name.includes('overhead press')) return ['Épaules', 'Triceps']; if (name.includes('squat') || name.includes('fente') || name.includes('calf')) return ['Legs']; if (name.includes('sit-up') || name.includes('hollow') || name.includes('leg raise') || name.includes('planche') || name.includes('core') || name.includes('abdo')) return ['Core']; console.warn(`Groupe musculaire non mappé pour : "${exerciseName}"`); return []; }
+    function mapExerciseToMuscleGroup(exerciseName) { // Assurer que Legs est bien mappé
+        const name = (exerciseName || '').toLowerCase();
+        if (!name) return [];
 
-    function analyzeProgramsAndCalculateELO() {
-        console.log("Analyse des programmes et calcul ELO (v2)...");
-        // { Pectoraux: { totalWeightedElo: 0, totalWeight: 0 }, ... }
+        // Priorité aux plus spécifiques
+        if (name.includes('squat') || name.includes('bulgarian') || name.includes('fente') || name.includes('leg press') || name.includes('leg extension') || name.includes('leg curl') || name.includes('hip thrust') || name.includes('glute bridge') || name.includes('calf raise') || name.includes('mollet')) return ['Legs'];
+        if (name.includes('sit-up') || name.includes('hollow') || name.includes('leg raise') || name.includes('crunch') || name.includes('planche') || name.includes('gainage') || name.includes('abdo') || name.includes('oblique') || name.includes('russian twist')) return ['Core'];
+        if (name.includes('pec deck') || name.includes('chest fly')) return ['Pectoraux'];
+        if (name.includes('pull over') || name.includes('pullover')) return ['Dos', 'Pectoraux']; // Poly
+        if (name.includes('row') || name.includes('tirage horizontal') || name.includes('rowing')) return ['Dos'];
+        if (name.includes('pulldown') || name.includes('tirage vertical') || name.includes('traction')) return ['Dos', 'Biceps']; // Poly
+        if (name.includes('face pull')) return ['Dos', 'Épaules']; // Poly
+        if (name.includes('shrug')) return ['Dos', 'Épaules']; // Trapèzes (souvent classé dos ou épaules)
+        if (name.includes('press') || name.includes('pompe') || name.includes('push up') || name.includes('dips')) { // Exos de poussée
+            if (name.includes('bench') || name.includes('incline') || name.includes('decline') || name.includes('pec')) return ['Pectoraux', 'Triceps', 'Épaules']; // Poly Pectoraux dominant
+            if (name.includes('overhead') || name.includes('ohp') || name.includes('shoulder') || name.includes('militaire')) return ['Épaules', 'Triceps']; // Poly Épaules dominant
+            if (name.includes('close grip')) return ['Triceps', 'Pectoraux']; // Poly Triceps dominant
+            return ['Pectoraux', 'Triceps', 'Épaules']; // Cas général push (pompes classiques)
+        }
+        if (name.includes('curl') || name.includes('bicep')) return ['Biceps'];
+        if (name.includes('tricep extension') || name.includes('skullcrusher') || name.includes('pushdown') || name.includes('kickback')) return ['Triceps'];
+        if (name.includes('lateral raise') || name.includes('elevation laterale')) return ['Épaules'];
+        if (name.includes('front raise') || name.includes('elevation frontale')) return ['Épaules'];
+        if (name.includes('rear delt') || name.includes('oiseau')) return ['Épaules', 'Dos']; // Arrière épaule
+
+        console.warn(`Groupe musculaire non mappé pour : "${exerciseName}"`);
+        return [];
+    }
+
+    function analyzeProgramsAndCalculateELO() { // MAJ pour stocker détails exos
+        console.log("Analyse des programmes et calcul ELO (v3)...");
+        // Reset state
         const groupData = {};
+        exerciseDetailsPerGroup = {}; // Reset details for modal
         Object.keys(MUSCLE_GROUPS_DISPLAY_ORDER).flatMap(cat => MUSCLE_GROUPS_DISPLAY_ORDER[cat]).forEach(group => {
             groupData[group] = { totalWeightedElo: 0, totalWeight: 0 };
+            exerciseDetailsPerGroup[group] = []; // Initialize array for each group
         });
-        currentELOValues = {}; // Reset ELO values
+        currentELOValues = {};
 
         if (!programsLoaded) { console.warn("Programmes non chargés, analyse annulée."); return; }
 
@@ -368,37 +640,30 @@
             let lastExerciseStep = null;
 
             loadedPrograms[type].forEach((step, index) => {
-                if (step.type === 'exercise') {
-                    if (step.name === currentExerciseName) {
-                        // Même exercice que le précédent, incrémente les séries
-                        currentExerciseSets++;
-                    } else {
-                        // Nouvel exercice ou première série
-                        if (lastExerciseStep) {
-                            // Traiter le bloc d'exercice précédent
-                            processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData);
-                        }
-                        // Réinitialiser pour le nouvel exercice
-                        currentExerciseName = step.name;
-                        currentExerciseSets = 1;
-                    }
-                    lastExerciseStep = step; // Mémoriser l'étape actuelle
+                 if (step.type === 'exercise') {
+                     if (step.name === currentExerciseName) {
+                         currentExerciseSets++;
+                     } else {
+                         if (lastExerciseStep) {
+                             processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData, exerciseDetailsPerGroup);
+                         }
+                         currentExerciseName = step.name;
+                         currentExerciseSets = 1;
+                     }
+                     lastExerciseStep = step;
 
-                    // Si c'est la dernière étape du programme, traiter le bloc en cours
-                    if (index === loadedPrograms[type].length - 1) {
-                         processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData);
-                    }
+                     if (index === loadedPrograms[type].length - 1) {
+                          processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData, exerciseDetailsPerGroup);
+                     }
 
-                } else if (step.type === 'break') {
-                    // Fin d'un bloc d'exercice
-                    if (lastExerciseStep) {
-                         processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData);
-                    }
-                    // Réinitialiser
-                    currentExerciseName = null;
-                    currentExerciseSets = 0;
-                    lastExerciseStep = null;
-                }
+                 } else if (step.type === 'break') {
+                     if (lastExerciseStep) {
+                          processExerciseBlock(lastExerciseStep, currentExerciseSets, groupData, exerciseDetailsPerGroup);
+                     }
+                     currentExerciseName = null;
+                     currentExerciseSets = 0;
+                     lastExerciseStep = null;
+                 }
             });
         });
 
@@ -412,8 +677,8 @@
             } else {
                 currentELOValues[group] = ELO_BASE; // Si aucun exercice pour ce groupe
             }
-            // Ajouter à la moyenne globale (sauf jambes)
-            if (group !== 'Legs') {
+            // Ajouter à la moyenne globale (UNIQUEMENT Haut du Corps)
+            if (group !== 'Legs') { // Exclure les jambes de l'ELO moyen global
                 totalOverallEloSum += currentELOValues[group] * data.totalWeight; // Pondérer par le poids total du groupe
                 totalOverallWeight += data.totalWeight;
             }
@@ -422,56 +687,89 @@
         overallAvgELO = totalOverallWeight > 0 ? Math.round(totalOverallEloSum / totalOverallWeight) : ELO_BASE;
         console.log("ELO Moyen Global Pondéré (Haut Corps):", overallAvgELO);
         console.log("ELO Moyen Pondéré par Groupe:", currentELOValues);
-        console.log("Données agrégées:", groupData);
+        // console.log("Données agrégées:", groupData); // Debug
+        // console.log("Détails Exercices par Groupe:", exerciseDetailsPerGroup); // Debug
     }
 
-    function processExerciseBlock(exerciseStep, numSets, groupData) {
-        const elo = calculateExerciseELO(exerciseStep);
-        if (elo > 0) {
+    function processExerciseBlock(exerciseStep, numSets, groupData, detailsStore) { // MAJ pour stocker détails
+        const eloPerSet = calculateExerciseELO(exerciseStep);
+        if (eloPerSet > 0) {
             const isPoly = isPolyarticular(exerciseStep.name);
             const weight = isPoly ? POLYARTICULAR_WEIGHT : ISOLATION_WEIGHT;
             const groups = mapExerciseToMuscleGroup(exerciseStep.name);
 
-            // console.log(`Processing Block: ${exerciseStep.name}, Sets: ${numSets}, ELO/set: ${elo}, Poly: ${isPoly}, Weight: ${weight}, Groups: ${groups}`);
-
             groups.forEach(group => {
                 if (groupData[group]) {
-                    groupData[group].totalWeightedElo += elo * numSets * weight;
+                    groupData[group].totalWeightedElo += eloPerSet * numSets * weight;
                     groupData[group].totalWeight += numSets * weight;
+
+                    // Stocker les détails pour la modale
+                    if (detailsStore[group]) {
+                        detailsStore[group].push({
+                            name: exerciseStep.name,
+                            sets: numSets,
+                            reps: exerciseStep.reps ?? null,
+                            duration: exerciseStep.duration ?? null,
+                            equipment: exerciseStep.equipment || 'N/A',
+                            elo: eloPerSet,
+                             weighting: weight // Juste pour info éventuelle
+                        });
+                    }
                 }
             });
         }
     }
 
 
-    function determineCurrentGoalLevel() { /* ... (Identique) ... */ if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps.targetELO || 950)) { if (TARGET_ELO_LEVELS.L2_TomHolland) { return 'L2_TomHolland'; } } return 'L1_MaxReps'; }
+    function determineCurrentGoalLevel() { // Utilise la clé d'état
+        // Ici on pourrait ajouter la logique pour lire la sélection utilisateur si implémentée
+        // Pour l'instant, on garde la logique automatique basée sur l'ELO actuel vs L1
+        if (overallAvgELO >= (TARGET_ELO_LEVELS.L1_MaxReps.targetELO || 950)) {
+             if (TARGET_ELO_LEVELS.L2_TomHolland) { return 'L2_TomHolland'; }
+        }
+        return 'L1_MaxReps';
+    }
 
-    function calculateAndDisplayEvolution() { // MAJ pour barre globale
-        if (!evolutionTrackerArea || !overallEloDisplay || !goalInfo || !goalDescriptionElement || !muscleGroupsContainer || !globalProgressBar || !globalProgressPercentage) return;
-        analyzeProgramsAndCalculateELO();
-        currentGoalLevel = determineCurrentGoalLevel();
-        const currentGoal = TARGET_ELO_LEVELS[currentGoalLevel];
-        const previousGoalLevelKey = currentGoalLevel === 'L1_MaxReps' ? null : 'L1_MaxReps';
-        const previousGoal = previousGoalLevelKey ? TARGET_ELO_LEVELS[previousGoalLevelKey] : { targetELO: ELO_BASE, groups: {} };
+    function calculateAndDisplayEvolution() { // MAJ pour Legs, modale, objectif final, et sauvegarde historique
+        if (!evolutionTrackerArea || !overallEloDisplay || !goalInfo || !goalDescriptionElement || !muscleGroupsContainer || !globalProgressBar || !globalProgressPercentage || !finalGoalNameSpan) return;
+
+        analyzeProgramsAndCalculateELO(); // Calcule ELO et remplit exerciseDetailsPerGroup
+
+        currentGoalLevelKey = determineCurrentGoalLevel(); // Détermine L1 ou L2 (ou autre si sélectionné)
+        const currentGoal = TARGET_ELO_LEVELS[currentGoalLevelKey];
+        const finalGoal = TARGET_ELO_LEVELS[FINAL_TARGET_LEVEL_KEY];
+
+        // Trouver le niveau précédent pour calculer la progression DANS le niveau actuel
+        const goalKeys = Object.keys(TARGET_ELO_LEVELS);
+        const currentGoalIndex = goalKeys.indexOf(currentGoalLevelKey);
+        const previousGoalLevelKey = currentGoalIndex > 0 ? goalKeys[currentGoalIndex - 1] : null;
+        const previousGoal = previousGoalLevelKey ? TARGET_ELO_LEVELS[previousGoalLevelKey] : { targetELO: ELO_BASE, groups: {} }; // Base ELO comme "niveau 0"
 
         overallEloDisplay.innerHTML = `${overallAvgELO} <span>ELO Moyen (Haut du Corps)</span>`;
-        goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal.name}</span> (ELO Cible <span class="target-elo-value">${currentGoal.targetELO}</span>)`;
+        goalInfo.innerHTML = `Objectif Actuel : <span class="target-level">${currentGoal.name}</span> (ELO Cible Groupe <span class="target-elo-value">${currentGoal.targetELO}</span>)`;
         goalDescriptionElement.textContent = currentGoal.description || "";
+        finalGoalNameSpan.textContent = finalGoal.name || "Final"; // Nom pour la barre globale
 
-        muscleGroupsContainer.innerHTML = '';
+        muscleGroupsContainer.innerHTML = ''; // Vider avant de remplir
         for (const category in MUSCLE_GROUPS_DISPLAY_ORDER) {
              const categoryDiv = document.createElement('div'); categoryDiv.className = 'muscle-category';
              const categoryHeader = document.createElement('h3'); categoryHeader.className = 'muscle-category-header'; categoryHeader.textContent = category; categoryDiv.appendChild(categoryHeader);
              const groupGridDiv = document.createElement('div'); groupGridDiv.className = 'muscle-group-grid';
+
              MUSCLE_GROUPS_DISPLAY_ORDER[category].forEach(group => {
-                 if (group === 'Legs') return;
+                 // NE PAS ignorer 'Legs' ici pour afficher la carte
                  const currentAvgELO = currentELOValues[group] || ELO_BASE;
-                 const targetELO = currentGoal.groups[group] || currentGoal.targetELO;
-                 const stageStartELO = previousGoal.groups[group] || previousGoal.targetELO || ELO_BASE;
+                 const targetELO = currentGoal.groups[group] || currentGoal.targetELO; // ELO cible pour CE niveau
+                 const stageStartELO = previousGoal.groups[group] || previousGoal.targetELO || ELO_BASE; // ELO de départ pour CE niveau
+
                  let progressPercent = 0;
-                 if (targetELO > stageStartELO) { progressPercent = ((currentAvgELO - stageStartELO) / (targetELO - stageStartELO)) * 100; }
-                 else if (currentAvgELO >= targetELO) { progressPercent = 100; }
+                 if (targetELO > stageStartELO) {
+                     progressPercent = ((currentAvgELO - stageStartELO) / (targetELO - stageStartELO)) * 100;
+                 } else if (currentAvgELO >= targetELO) { // Si cible <= départ (peu probable) ou si cible atteinte
+                     progressPercent = 100;
+                 }
                  progressPercent = Math.max(0, Math.min(100, Math.round(progressPercent)));
+
                  const card = renderMuscleGroupCard(group, currentAvgELO, targetELO, progressPercent);
                  groupGridDiv.appendChild(card);
              });
@@ -479,7 +777,7 @@
              muscleGroupsContainer.appendChild(categoryDiv);
         }
 
-        // Calcul et MAJ Barre Globale "Marvel"
+        // Calcul et MAJ Barre Globale vers l'objectif FINAL
         let globalProgressPercent = 0;
         if (FINAL_TARGET_ELO > ELO_BASE) {
              globalProgressPercent = ((overallAvgELO - ELO_BASE) / (FINAL_TARGET_ELO - ELO_BASE)) * 100;
@@ -492,55 +790,307 @@
         globalProgressBar.style.width = `0%`; // Reset pour animation
         globalProgressBar.setAttribute('aria-valuenow', overallAvgELO); // Valeur actuelle ELO
         globalProgressBar.setAttribute('aria-valuemin', ELO_BASE);
-        globalProgressBar.setAttribute('aria-valuemax', FINAL_TARGET_ELO);
+        globalProgressBar.setAttribute('aria-valuemax', FINAL_TARGET_ELO); // Cible finale
         requestAnimationFrame(() => {
              setTimeout(() => { globalProgressBar.style.width = `${globalProgressPercent}%`; }, 50);
         });
+
+        // Sauvegarder l'état actuel dans l'historique (après que tout soit calculé)
+        saveCurrentEloToHistory();
     }
 
-    function renderMuscleGroupCard(groupName, currentElo, targetElo, progressPercent) { /* ... (Identique) ... */ const card = document.createElement('div'); card.className = 'muscle-group-card'; const iconClass = MUSCLE_GROUP_ICONS[groupName] || 'fa-question-circle'; card.innerHTML = ` <div class="muscle-group-header"> <i class="fas ${iconClass}" aria-hidden="true"></i> <h3 class="muscle-group-title">${groupName}</h3> </div> <div class="elo-info"> <span class="current-elo">${currentElo}</span> <span class="target-elo">Objectif: <strong>${targetElo}</strong></span> </div> <div class="progress-bar-container" title="${progressPercent}% vers l'objectif ELO ${targetElo}"> <div class="progress-bar" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"> <span class="progress-percentage">${progressPercent}%</span> </div> </div> `; requestAnimationFrame(() => { setTimeout(() => { const progressBar = card.querySelector('.progress-bar'); if (progressBar) { progressBar.style.width = `${progressPercent}%`; progressBar.setAttribute('aria-valuenow', progressPercent); } }, 50); }); return card; }
+    function renderMuscleGroupCard(groupName, currentElo, targetElo, progressPercent) { // MAJ pour data-group et event listener
+        const card = document.createElement('div');
+        card.className = 'muscle-group-card';
+        card.dataset.group = groupName; // Stocker le nom du groupe pour le clic
+        const iconClass = MUSCLE_GROUP_ICONS[groupName] || 'fa-question-circle';
+        card.innerHTML = `
+            <div class="muscle-group-header">
+                <i class="fas ${iconClass}" aria-hidden="true"></i>
+                <h3 class="muscle-group-title">${groupName}</h3>
+            </div>
+            <div class="elo-info">
+                <span class="current-elo">${currentElo}</span>
+                <span class="target-elo">Objectif: <strong>${targetElo}</strong></span>
+            </div>
+            <div class="progress-bar-container" title="${progressPercent}% vers l'objectif ELO ${targetElo} du niveau actuel">
+                <div class="progress-bar" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <span class="progress-percentage">${progressPercent}%</span>
+                </div>
+            </div>
+        `;
+        // Animation de la barre
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const progressBar = card.querySelector('.progress-bar');
+                if (progressBar) {
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressBar.setAttribute('aria-valuenow', progressPercent);
+                }
+            }, 50);
+        });
+        // Ajouter l'écouteur pour ouvrir la modale
+        card.addEventListener('click', handleMuscleGroupClick);
+        return card;
+    }
+
+    // --- Affichage Historique ELO ---
+    function displayEloHistoryChart() {
+        if (!eloHistoryChartCanvas || !Chart || eloHistoryData.length === 0) {
+            console.log("Canvas non prêt, Chart.js non chargé ou historique vide.");
+             if(historyLoadingMsg && eloHistoryData.length === 0 && programsLoaded) historyLoadingMsg.textContent = 'Aucune donnée historique à afficher.';
+            return;
+        }
+         if(historyLoadingMsg) historyLoadingMsg.style.display = 'none'; // Masquer message chargement
+
+        const ctx = eloHistoryChartCanvas.getContext('2d');
+
+        // Détruire l'ancien graphique s'il existe
+        if (historyChart) {
+            historyChart.destroy();
+        }
+
+        // Préparer les données pour Chart.js
+        const labels = eloHistoryData.map(entry => entry.timestamp); // Utiliser timestamp directement
+        const overallEloValues = eloHistoryData.map(entry => entry.overallAvgELO);
+        // Optionnel: Ajouter d'autres groupes si souhaité
+        // const pectorauxEloValues = eloHistoryData.map(entry => entry.eloValues?.Pectoraux || ELO_BASE);
+
+        historyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'ELO Moyen Global (Haut Corps)',
+                    data: overallEloValues,
+                    borderColor: 'var(--neon-purple)',
+                    backgroundColor: 'rgba(var(--neon-purple-rgb), 0.1)',
+                    borderWidth: 2,
+                    tension: 0.1, // Lisser la courbe
+                    pointBackgroundColor: 'var(--neon-purple)',
+                    fill: true,
+                }
+                // Ajoutez d'autres datasets ici pour les groupes spécifiques si besoin
+                // {
+                //     label: 'ELO Pectoraux',
+                //     data: pectorauxEloValues,
+                //     borderColor: 'var(--neon-blue)',
+                //     ...
+                // }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time', // Utiliser l'échelle de temps
+                        time: {
+                            unit: 'day', // Ajuster l'unité (day, week, month)
+                            tooltipFormat: 'PPP', // Format date dans tooltip (ex: Sep 14, 2023) Requires date-fns
+                             displayFormats: { // Format date sur l'axe
+                                 day: 'd MMM', // ex: 14 Sep
+                                 week: 'PP',
+                                 month: 'MMM yyyy'
+                             }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        },
+                        grid: {
+                            color: 'rgba(var(--secondary-text-color-dark-rgb), 0.2)'
+                         },
+                         ticks: {
+                             color: 'var(--secondary-text-color)'
+                         }
+                    },
+                    y: {
+                        beginAtZero: false, // Ne pas commencer à 0 mais proche de ELO_BASE
+                        min: ELO_BASE - 50, // Ajuster si besoin
+                        title: {
+                            display: true,
+                            text: 'ELO Score'
+                        },
+                         grid: {
+                            color: 'rgba(var(--secondary-text-color-dark-rgb), 0.2)'
+                         },
+                          ticks: {
+                             color: 'var(--secondary-text-color)'
+                         }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'var(--primary-text-color)'
+                        }
+                    },
+                     tooltip: {
+                         mode: 'index',
+                         intersect: false,
+                         backgroundColor: 'rgba(var(--bg-color-dark-rgb), 0.9)',
+                         titleColor: 'var(--primary-text-color)',
+                         bodyColor: 'var(--secondary-text-color)',
+                         borderColor: 'var(--border-color)',
+                         borderWidth: 1,
+                     }
+                },
+                interaction: { // Améliore l'interaction tooltip
+                     mode: 'index',
+                     intersect: false,
+                }
+            }
+        });
+        console.log("Graphique historique ELO affiché/mis à jour.");
+    }
+
+
+    // --- Gestion Modale Détails Exercice ---
+    function handleMuscleGroupClick(event) {
+        const groupName = event.currentTarget.dataset.group;
+        if (!groupName || !exerciseDetailsPerGroup[groupName]) {
+            console.error("Impossible de récupérer les détails pour le groupe:", groupName);
+            return;
+        }
+
+        const details = exerciseDetailsPerGroup[groupName];
+        modalTitle.textContent = `Détails Exercices - ${groupName}`;
+        modalExerciseList.innerHTML = ''; // Vider la liste
+
+        if (details.length === 0) {
+            modalExerciseList.innerHTML = '<li>Aucun exercice trouvé pour ce groupe dans les programmes analysés.</li>';
+        } else {
+            // Trier par ELO décroissant?
+             details.sort((a, b) => b.elo - a.elo);
+
+            details.forEach(ex => {
+                const li = document.createElement('li');
+                let detailText = `${ex.sets} série(s)`;
+                if (ex.reps !== null) detailText += ` x ${ex.reps} reps`;
+                if (ex.duration !== null) detailText += ` (${ex.duration}s)`;
+                detailText += ` | ${ex.equipment}`;
+
+                li.innerHTML = `
+                    <span class="exercise-name">${ex.name}</span>
+                    <span class="exercise-details">
+                        ${detailText} - ELO/set: <span class="exercise-elo">${ex.elo}</span>
+                    </span>
+                `;
+                modalExerciseList.appendChild(li);
+            });
+        }
+
+        exerciseDetailModal.style.display = "block";
+    }
+
+    function closeModal() {
+        if (exerciseDetailModal) {
+            exerciseDetailModal.style.display = "none";
+            modalExerciseList.innerHTML = '<li>Chargement...</li>'; // Reset content
+        }
+    }
+
+    function initModal() { // Ajouter les écouteurs pour la modale
+        if (modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', closeModal);
+        }
+        // Fermer si on clique en dehors de la modale
+        window.addEventListener('click', (event) => {
+            if (event.target === exerciseDetailModal) {
+                closeModal();
+            }
+        });
+         // Fermer avec la touche Echap
+         window.addEventListener('keydown', (event) => {
+             if (event.key === 'Escape' && exerciseDetailModal.style.display === 'block') {
+                 closeModal();
+             }
+         });
+    }
 
     // --- UI Update ---
-    function updateAuthUI(isLoggedIn) { /* ... (Identique) ... */ console.log(`Update UI (Evolution) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`); const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none'; if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } if (!isLoggedIn) { if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; } }
+    function updateAuthUI(isLoggedIn) { /* MAJ pour gérer historique et modale */ console.log(`Update UI (Evolution v2) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`); const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (evolutionTrackerArea) evolutionTrackerArea.style.display = isLoggedIn && programsLoaded ? 'flex' : 'none'; // Afficher si loggué ET programmes OK if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } if (!isLoggedIn) { // Reset UI quand déconnecté if (muscleGroupsContainer) muscleGroupsContainer.innerHTML = ''; if (overallEloDisplay) overallEloDisplay.innerHTML = '-- <span>ELO Moyen (Haut du Corps)</span>'; if (goalInfo) goalInfo.innerHTML = 'Objectif Actuel : <span class="target-level">N/A</span> (ELO <span class="target-elo-value">--</span>)'; if(goalDescriptionElement) goalDescriptionElement.textContent = ''; if(globalProgressBar) globalProgressBar.style.width = '0%'; if(globalProgressPercentage) globalProgressPercentage.textContent = '0%'; if(historyChartContainer) historyChartContainer.style.display = 'none'; if(historyChart) { historyChart.destroy(); historyChart = null; } closeModal(); // Fermer la modale si ouverte } }
 
     // --- Gestion Thème ---
-    function applyTheme(theme) { /* ... (Identique) ... */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution):", e); } }
+    function applyTheme(theme) { /* MAJ pour graphique */ const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Evolution v2): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Evolution v2):", e); } // Re-render le graphique si visible pour appliquer les couleurs du thème if (historyChart) { // Détruire et recréer pour que les couleurs de variables CSS soient prises en compte? Ou MAJ options? // Essayons de mettre à jour les options si possible, sinon recréer. historyChart.options.scales.x.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border-color'); historyChart.options.scales.y.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border-color'); historyChart.options.scales.x.ticks.color = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color'); historyChart.options.scales.y.ticks.color = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color'); historyChart.options.plugins.legend.labels.color = getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color'); // Mettre à jour les couleurs des datasets est plus complexe, recréation peut être plus simple // displayEloHistoryChart(); // Recréer complètement le graphique } }
     function toggleTheme() { /* ... (Identique) ... */ const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
-    function loadSavedTheme() { /* ... (Identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution):", e); } applyTheme(savedTheme); }
+    function loadSavedTheme() { /* ... (Identique) ... */ let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Evolution v2):", e); } applyTheme(savedTheme); }
 
     // --- Message Area ---
-    function showMessage(msg, duration = 3000, isError = false) { /* ... (Identique) ... */ if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
+    function showMessage(msg, duration = 3000, isError = false, type = null) { // type: 'error', 'success', 'warning', null (default)
+        if (!messageArea) return;
+        messageArea.textContent = msg;
+        messageArea.classList.remove('error', 'success', 'warning'); // Reset types
+
+        if (type === 'error' || isError) { // isError pour compatibilité ascendante
+            messageArea.classList.add('error');
+        } else if (type === 'success') {
+             messageArea.classList.add('success');
+        } else if (type === 'warning') {
+             // Ajouter une classe 'warning' si on veut un style différent
+             // messageArea.classList.add('warning');
+             // Pour l'instant, on utilise le style par défaut
+             messageArea.style.backgroundColor = 'rgba(var(--neon-yellow-rgb), 0.8)';
+             messageArea.style.color = '#000'; // Texte noir sur jaune? Ou garder défaut
+             messageArea.style.borderColor = 'var(--neon-yellow)';
+        } else {
+            // Style par défaut (ni erreur, ni succès)
+            messageArea.style.backgroundColor = 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)';
+            messageArea.style.color = 'var(--primary-text-color)';
+            messageArea.style.borderColor = 'var(--border-color)';
+        }
+
+        messageArea.classList.add('visible');
+        if (messageTimeoutId) clearTimeout(messageTimeoutId);
+        messageTimeoutId = setTimeout(() => {
+            messageArea.classList.remove('visible');
+        }, duration);
+    }
+
 
     // --- Initialisation ---
-    function initializeDOMReferences() {
-        console.log("Init DOM Refs (Evolution)...");
+    function initializeDOMReferences() { // MAJ pour nouveaux éléments
+        console.log("Init DOM Refs (Evolution v2)...");
         signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn');
         signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt'); evolutionTrackerArea = document.getElementById('evolution-tracker-area');
         overallEloDisplay = document.getElementById('overall-elo-display'); goalInfo = document.getElementById('goal-info'); goalDescriptionElement = document.getElementById('goal-description');
+         goalSelectorContainer = document.getElementById('goal-selector-container'); // Pour personnalisation future
+         goalSelector = document.getElementById('goal-selector'); // Pour personnalisation future
         muscleGroupsContainer = document.getElementById('muscle-groups-container'); messageArea = document.getElementById('message-area');
-        globalProgressBar = document.getElementById('global-progress-bar'); globalProgressPercentage = document.getElementById('global-progress-percentage');
-        console.log("DOM Refs initialisées (Evolution).");
+        globalProgressBar = document.getElementById('global-progress-bar'); globalProgressPercentage = document.getElementById('global-progress-percentage'); finalGoalNameSpan = document.getElementById('final-goal-name');
+        // Historique
+        historyChartContainer = document.getElementById('history-chart-container');
+        eloHistoryChartCanvas = document.getElementById('elo-history-chart');
+        historyLoadingMsg = document.getElementById('history-loading-msg');
+        // Modale
+        exerciseDetailModal = document.getElementById('exercise-detail-modal');
+        modalCloseBtn = document.getElementById('modal-close-btn');
+        modalTitle = document.getElementById('modal-title');
+        modalExerciseList = document.getElementById('modal-exercise-list');
+
+        console.log("DOM Refs initialisées (Evolution v2).");
     }
-    function addEventListeners() { /* ... (Identique) ... */ console.log("Ajout Event Listeners (Evolution)..."); if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); console.log("Event Listeners ajoutés (Evolution)."); }
+    function addEventListeners() { /* MAJ pour modale */ console.log("Ajout Event Listeners (Evolution v2)..."); if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); // L'écouteur pour les cartes est ajouté dans renderMuscleGroupCard initModal(); // Initialise les écouteurs de la modale (fermeture, etc.) console.log("Event Listeners ajoutés (Evolution v2)."); }
 
     // --- Point d'entrée ---
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM Chargé (Evolution). Initialisation...");
+        console.log("DOM Chargé (Evolution v2). Initialisation...");
         try {
             initializeDOMReferences();
             addEventListeners();
             loadSavedTheme();
-            updateAuthUI(false);
-            checkAndInitGis();
-            console.log("Initialisation Evolution terminée. Attente API Google...");
+            updateAuthUI(false); // Commence en état déconnecté
+            checkAndInitGis(); // Lance la vérification de l'API Google
+            console.log("Initialisation Evolution v2 terminée. Attente API Google...");
         } catch (error) {
-            console.error("Erreur majeure lors de l'initialisation DOMContentLoaded (Evolution):", error);
+            console.error("Erreur majeure lors de l'initialisation DOMContentLoaded (Evolution v2):", error);
              showMessage("Erreur critique au chargement du suivi d'évolution.", 10000, true);
              const body = document.querySelector('body');
              if(body) {
                 const errorDiv = document.createElement('div');
                 errorDiv.textContent = "Erreur chargement suivi: " + error.message;
-                errorDiv.style.color='red'; errorDiv.style.padding='10px';
+                errorDiv.style.color='red'; errorDiv.style.padding='10px'; errorDiv.style.backgroundColor='white';
                 body.prepend(errorDiv);
              }
         }
@@ -548,37 +1098,39 @@
 
     /*
     =========================================
-    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour)
+    LISTE DES AMÉLIORATIONS POSSIBLES (Mise à jour v3)
     =========================================
 
-    **Données & Calcul ELO:**
-    1.  ✅ **Pondération Poly/Iso:** Implémentée (1.2 vs 1.0).
-    2.  ✅ **Impact Techniques Intensité:** Préparé (via champ `intensity_technique: true`), bonus de 5%. Nécessite MAJ Editeur.
-    3.  ✅ **Prise en Compte des Séries:** Implémentée (contribution ELO * nb_series * poids_poly_iso).
-    4.  ✅/❓ **Affiner Bonus Résistance:** Structure en place, échelle actuelle conservée. Pourrait être ajustée avec plus de données/ressenti.
-    5.  **Historique ELO:** ***Non implémenté.*** Nécessite stockage périodique (localStorage ou fichier Drive dédié) et librairie de graphiques (Chart.js déjà présent dans le timer?). C'est l'amélioration la plus complexe mais la plus intéressante.
-    6.  **Normalisation ELO?** L'échelle actuelle (800+) est arbitraire. Faut-il la normaliser (ex: 0-100) ou la calibrer différemment?
+    **Implémentées / Initiées dans cette version:**
+    1.  ✅ **Pondération Poly/Iso:** Maintenue.
+    2.  ✅ **Impact Techniques Intensité:** Maintenu (via `intensity_technique`).
+    3.  ✅ **Prise en Compte des Séries:** Maintenue.
+    4.  ✅ **Affiner Bonus Résistance:** Logique de matching améliorée (plus longue clé d'abord), fallback `weight` conservé.
+    5.  ✅ **Historique ELO:** Implémenté (stockage Drive `elo_history.json`, affichage Chart.js). Sauvegarde auto. Limitation taille.
+    6.  ❓ **Normalisation ELO?** Échelle 800+ conservée.
+    7.  ✅ **Détail par Exercice:** Implémenté (Modale cliquable sur les cartes).
+    8.  ❓ **Conseils Personnalisés:** Non implémenté. Nécessite logique conditionnelle.
+    9.  ❓ **Visualisation Muscle Map:** Non implémenté. Nécessite SVG/Canvas complexe.
+    10. ✅ **Personnalisation Objectifs:** Préparé conceptuellement (structure `TARGET_ELO_LEVELS`, `determineCurrentGoalLevel`), UI selecteur cachée. Logique de sélection à ajouter.
+    11. ❓ **Tooltips d'Information:** Peu ajouté (juste sur barre de progression). Pourrait être étendu.
+    12. ❓ **Animation des Chiffres ELO:** Non implémenté. Nécessite librairie ou logique JS.
+    13. ❓ **Feedback Visuel Progrès:** Non implémenté.
+    14. ✅ **Lien vers l'Éditeur:** Maintenu.
+    15. ❓ **Lien vers l'Historique (Timer):** Non implémenté.
+    16. ❓ **Rappel Nutrition:** Non implémenté.
+    17. ✅ **Prise en Compte du Temps (Duration):** Implémenté dans `calculateExerciseELO` avec facteur simple. À affiner potentiellement.
+    18. ⏳ **Modularité du Code:** Non fait (contrainte "sans remettre en question"). **RECOMMANDÉ FORTEMENT** pour l'avenir.
+    19. ❓ **Gestion Erreurs JSON (Programmes):** Basique (utilise tableau vide). Pourrait être améliorée (message + spécifique).
+    20. ❓ **Tests Unitaires:** Non implémenté. **RECOMMANDÉ** pour logique ELO/Historique.
+    21. ❓ **Optimisation Chargement:** Programmes toujours chargés en série. Historique chargé en parallèle.
 
-    **Interface Utilisateur (UI) & Expérience (UX):**
-    7.  **Détail par Exercice:** Cliquer sur une carte de groupe pour voir les exercices contribuants et leur ELO/séries/poids.
-    8.  **Conseils Personnalisés:** Suggérer des actions si un groupe est en retard (ex: "Focus sur tes Rows avec bandes combinées !").
-    9.  **Visualisation Muscle Map:** Colorer une silhouette en fonction de l'ELO/progression.
-    10. **Personnalisation Objectifs:** Permettre de choisir/définir d'autres objectifs ELO.
-    11. **Tooltips d'Information:** Expliquer le calcul ELO, le % de progression, etc.
-    12. **Animation des Chiffres ELO:** Animer le compteur lors de la mise à jour.
-    13. **Feedback Visuel Progrès:** Changer la couleur de la barre/carte quand un objectif est atteint?
-
-    **Fonctionnalités & Intégration:**
-    14. ✅ **Lien vers l'Éditeur:** Fait (via header). On pourrait ajouter un bouton sur les cartes.
-    15. **Lien vers l'Historique:** Afficher la date du dernier entraînement Push/Pull/Legs (nécessite de charger l'historique ici aussi).
-    16. **Rappel Nutrition:** Note statique/conditionnelle.
-    17. **Prise en Compte du Temps:** Pour les exercices type gainage, l'ELO est très approximatif. Affiner le calcul basé sur `duration`, `duration_start`, `duration_target_max`.
-
-    **Technique:**
-    18. **Modularité du Code:** Séparer calcul ELO, mapping, UI update.
-    19. **Gestion Erreurs JSON:** Proposer réinitialisation si fichier corrompu.
-    20. **Tests Unitaires:** Pour valider la logique de calcul ELO complexe.
-    21. **Optimisation Chargement:** Charger les programmes en parallèle ? (Attention aux limites API Drive).
+    **Prochaines Étapes Potentielles:**
+    *   **Modularisation JS/CSS.**
+    *   **Affiner calcul ELO durée.**
+    *   **Implémenter la sélection d'objectif utilisateur.**
+    *   **Ajouter des tooltips explicatifs.**
+    *   **Améliorer la gestion/visualisation de l'historique (zoom, sélection groupes...).**
+    *   **Refactoriser les appels Drive (regrouper?).**
     */
 
 </script>
