@@ -844,15 +844,90 @@
     let gisCheckRetries = 0;
     let halfwayTimeoutId = null;
 
-    // --- Audio & Vibration ---
+        // --- Audio & Vibration ---
     let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
+    let audioContext = null; // Ajouter la déclaration de audioContext ici
 
-    function initSounds() { /* ... (code inchangé) ... */ }
-    function playSound(audioElement) { /* ... (code inchangé) ... */ }
-    function initAudioContext() { /* ... (code inchangé) ... */ }
+    function initSounds() {
+        try {
+            // Chemin vers les sons - Assurez-vous qu'ils sont corrects et accessibles
+            const basePath = "https://ironworkout.github.io/armorworkout/";
+            soundLaser = new Audio(basePath + 'laser.mp3');
+            sound5 = new Audio(basePath + '5.mp3');
+            sound4 = new Audio(basePath + '4.mp3');
+            sound3 = new Audio(basePath + '3.mp3');
+            sound2 = new Audio(basePath + '2.mp3');
+            sound1 = new Audio(basePath + '1.mp3');
+            // Ajouter les autres sons si nécessaire (ils étaient dans le code complet)
+            soundWindows = new Audio(basePath + 'windows.mp3'); // Exemple, adapter si URL différente
+            soundET = new Audio(basePath + 'et.mp3');         // Exemple, adapter si URL différente
+
+            // Précharger un peu pour améliorer la réactivité (optionnel)
+            [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(sound => {
+                if (sound) sound.preload = 'auto';
+            });
+            console.log("Sons initialisés.");
+        } catch (e) {
+            console.error("Erreur lors de l'initialisation des sons:", e);
+            showMessage("Impossible de charger les fichiers audio.", 5000, true);
+        }
+    }
+
+    function playSound(audioElement) {
+        if (!audioElement || !audioContext || audioContext.state !== 'running') {
+            // Ne pas essayer de jouer si l'audio n'est pas prêt ou l'AudioContext n'est pas actif
+            // console.log("playSound annulé: élément audio ou contexte non prêt."); // Décommenter pour debug
+            return;
+        }
+        // Remettre le son au début au cas où il serait déjà en cours
+        audioElement.currentTime = 0;
+        audioElement.play().catch(error => {
+            // Gérer les erreurs de lecture qui pourraient survenir
+            // (ex: interaction utilisateur pas encore détectée malgré initAudioContext)
+            console.warn(`Erreur lors de la lecture du son: ${error.name} - ${error.message}`);
+        });
+    }
+
+    function initAudioContext() {
+        if (audioContext && audioContext.state === 'running') {
+            return; // Déjà initialisé et actif
+        }
+        if (!audioContext) {
+            try {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (window.AudioContext) {
+                    audioContext = new AudioContext();
+                    console.log("AudioContext créé.");
+                } else {
+                    console.warn("AudioContext non supporté par ce navigateur.");
+                    return; // Ne rien faire si non supporté
+                }
+            } catch (e) {
+                console.error("Erreur lors de la création de l'AudioContext:", e);
+                return; // Ne rien faire si erreur
+            }
+        }
+        // Essayer de reprendre le contexte (nécessaire après interaction utilisateur)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                console.log("AudioContext repris avec succès.");
+            }).catch(e => {
+                console.error("Erreur lors de la reprise de l'AudioContext:", e);
+            });
+        }
+    }
+
     const playTransitionSound = () => playSound(soundLaser);
-    const vibrate = (pattern = [100]) => { if ('vibrate' in navigator) { try { navigator.vibrate(pattern); } catch (e) { /* Ignore vibration errors */ } } };
 
+    const vibrate = (pattern = [100]) => {
+        if ('vibrate' in navigator) {
+            try {
+                 navigator.vibrate(pattern);
+            } catch (e) { /* Ignore vibration errors */ }
+        }
+    };
+
+    // --- FIN Audio & Vibration ---
     // --- Google Identity Services (GIS) & Drive API ---
     // Fonction d'initialisation interne, appelée une fois que l'API Google est prête
     async function gisInitInternal() {
