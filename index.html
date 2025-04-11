@@ -74,13 +74,47 @@
         .container { max-width: 1100px; margin: 0 auto; padding: 30px 25px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
 
         /* --- En-tête --- */
-        header {
-            padding: 15px 0; border-bottom: 1px solid var(--border-color);
-            transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
-            position: sticky; top: 0; z-index: 1000;
-            background-color: rgba(var(--bg-color-dark-rgb), 0.8); /* Effet verre dépoli */
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
+        /* --- En-tête --- */
+header {
+    padding: 15px 0; border-bottom: 1px solid var(--border-color);
+    /* Ajoute/Modifie la ligne transition ici */
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0s linear 0.4s, /* Transition pour affichage/masquage */
+                border-color var(--transition-speed) ease,
+                background-color var(--transition-speed) ease;
+    position: sticky; top: 0; z-index: 1000;
+    background-color: rgba(var(--bg-color-dark-rgb), 0.8); /* Effet verre dépoli */
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    /* Assure-toi que la position initiale est correcte */
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ajoute cette nouvelle règle pour masquer le header */
+body.workout-active header {
+    transform: translateY(-100%); /* Fait glisser le header vers le haut */
+    opacity: 0;
+    visibility: hidden;
+    /* Ajuste la transition pour le masquage */
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0s linear 0s;
+}
+
+/* --- Contenu Principal --- */
+main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px; /* Garde un peu d'espace même quand header visible */
+    position: relative;
+    /* Ajoute une transition pour le padding si le header pousse le contenu */
+    transition: padding-top 0.4s ease-in-out;
+}
+
+/* Optionnel: Si le header caché ne doit pas laisser d'espace */
+body.workout-active main {
+    padding-top: 20px; 
+} 
         .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 25px; flex-wrap: wrap; gap: 15px 20px; }
         header h1 { font-size: 1.5em; color: var(--primary-text-color); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
         header h1 i { color: var(--neon-blue); animation: pulse 2s infinite ease-in-out; }
@@ -1937,15 +1971,52 @@
     function addEventListeners() {
         console.log("Début addEventListeners");
         // Utilisation de if(element) pour vérifier avant d'ajouter
-        if (startPauseBtn) {
-            startPauseBtn.addEventListener('click', () => {
-                initAudioContext(); // Toujours essayer d'activer l'audio
-                if (currentState === 'idle') setState('preparing');
-                else if (currentState === 'exercise') handleItemCompletion(false);
-                else if (currentState === 'break') setState('paused');
-                else if (currentState === 'paused') setState(currentWorkoutPlan[currentItemIndex]?.type === 'exercise' ? 'exercise' : 'break');
-            });
-        } else console.warn("Élément introuvable: start-pause-btn");
+        if (timerDisplayElement) {
+    timerDisplayElement.addEventListener('click', () => {
+        initAudioContext(); // Essayer d'activer l'audio
+
+        // Vérifier si l'entraînement est actif (et pas en préparation ou terminé)
+        // On permet maintenant de skipper même si en pause.
+        if (isWorkoutActive && currentState !== 'preparing' && currentState !== 'finished') {
+
+            // ---- NOUVELLE LOGIQUE ----
+            console.log("Timer cliqué : Passage à l'étape suivante.");
+            showMessage("Étape suivante...", 1000); // Message facultatif
+            handleItemCompletion(false); // false indique un passage manuel
+            // ---- FIN NOUVELLE LOGIQUE ----
+
+        } else if (currentState === 'idle' && startPauseBtn && !startPauseBtn.disabled) {
+             // Optionnel : Si on clique sur le timer quand il est inactif MAIS prêt à démarrer,
+             // on peut aussi démarrer l'entraînement.
+             console.log("Timer inactif cliqué : Démarrage entraînement...");
+             setState('preparing');
+        } else {
+            console.log("Timer cliqué, mais pas dans un état permettant de passer à l'étape suivante.");
+            // Ne rien faire si état 'idle' (non prêt), 'preparing', ou 'finished'
+        }
+    });
+} else {
+    console.warn("Élément introuvable: timer-display");
+}
+
+// Les écouteurs pour les boutons +/- de l'overlay restent inchangés
+if (repAdjustMinusBtn) repAdjustMinusBtn.addEventListener('click', handleRepAdjustClick);
+else console.warn("Élément introuvable: rep-adjust-minus");
+
+if (repAdjustPlusBtn) repAdjustPlusBtn.addEventListener('click', handleRepAdjustClick);
+else console.warn("Élément introuvable: rep-adjust-plus");
+
+// L'écouteur pour cacher l'overlay si on clique en dehors des boutons reste utile
+if (repAdjustmentOverlay) {
+    repAdjustmentOverlay.addEventListener('click', (e) => {
+        // Ne cache que si on clique sur le fond de l'overlay, pas les boutons etc.
+        if (e.target === repAdjustmentOverlay) {
+            hideRepAdjustmentOverlay();
+        }
+    });
+} else {
+    console.warn("Élément introuvable: rep-adjustment-overlay");
+}
 
         if (skipBtn) { skipBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive) handleItemCompletion(false); }); }
         else console.warn("Élément introuvable: skip-btn");
