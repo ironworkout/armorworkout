@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout - Évolution HPS (v7 Debug)</title>
+    <title>ArmorWorkout - Évolution HPS (v7.1 - Final Fix)</title>
     <!-- Font Awesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,7 +37,7 @@
             --bg-color: var(--bg-color-dark); --secondary-bg-color: var(--secondary-bg-color-dark); --primary-text-color: var(--primary-text-color-dark); --secondary-text-color: var(--secondary-text-color-dark); --border-color: var(--border-color-dark); --accent-border-color: var(--accent-border-color-dark); --input-bg: var(--input-bg-dark); --bg-color-rgb: var(--bg-color-dark-rgb); --secondary-bg-color-rgb: var(--secondary-bg-color-dark-rgb);
             /* Styles Spécifiques */
             --link-color: var(--neon-blue); --button-connect-color: var(--neon-green); --button-connect-glow: var(--glow-connect); --button-disconnect-color: var(--neon-red); --button-disconnect-glow: var(--glow-disconnect);
-            /* Barres Progression (Pour la barre de %) */
+            /* Barres Progression */
             --progress-bar-bg: rgba(var(--primary-text-color-rgb), 0.1);
             --progress-bar-fill: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
             /* Scrollbar */
@@ -319,8 +319,8 @@
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" };
     const EQUIPMENT_CONFIG_FILENAME = "armorworkout_exercise_config.json";
-    const LOCALSTORAGE_HPS_VALUES_KEY = "armorHPS_lastValues_v7"; // Clé unique pour v7
-    const LOCALSTORAGE_HPS_GLOBAL_KEY = "armorHPS_lastGlobal_v7"; // Clé unique pour v7
+    const LOCALSTORAGE_HPS_VALUES_KEY = "armorHPS_lastValues_v7";
+    const LOCALSTORAGE_HPS_GLOBAL_KEY = "armorHPS_lastGlobal_v7";
     const PROGRAM_TYPES = ['Push', 'Pull', 'Legs'];
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
@@ -331,24 +331,24 @@
     const HP_REFERENCE_GLOBAL = 2500;
     const K_LOG = 500;
 
-    // Efficacité relative (v6 - inchangée)
+    // Efficacité relative (v6)
     const EXERCISE_EFFICACY = { 'Pompes (Push-ups)': 1.15, 'Band Standing Chest Press': 0.80, 'Band Floor Press': 0.70, 'Overhead Press (Haltères)': 1.05, 'New Overhead Press (Haltères)': 1.05, 'Dumbbell Lateral Raises': 1.05, 'Overhead Triceps Extension (Band)': 1.15, 'Band Bent-over Row': 1.1, 'Band Kneeling Lat Pulldown': 1.10, 'Band Face Pull': 1.05, 'Curl Marteau (Hammer Curl)': 0.9, 'Concentration Curl (Band)': 1.0, 'Front Squat Combo': 1.20, 'Fentes Arrière (Alternées)': 1.1, 'Calf Raises (sur livre/marche)': 0.9, 'Hollow Body Hold': 0.7, 'Band Sit-up': 0.9, 'Leg Raises (Relevé de jambes)': 0.85, 'DEFAULT': 1.0 };
-    // Charge effective (v6 - inchangée)
+    // Charge effective (v6)
     const EFFECTIVE_LOAD = { 'Bodyweight': 50, 'Poids de corps': 50, 'Élastique 15kg': 30, 'Élastique 25kg': 50, 'Élastique 25kg ': 50, 'Élastique 15kg doublé': 45, 'Élastique 15+25kg': 65, 'Élastique 15+25kg + 1 haltère 5kg': 70, 'Élastique 15+25kg + 2x5kg haltères': 75, 'Haltères 5kg': 10, '1 haltère 5kg': 5, 'DEFAULT': 10 };
-    // Équipement configurable (inchangé)
+    // Équipement configurable
     const AVAILABLE_EQUIPMENT_CONFIG = [ 'Élastique 15kg', 'Élastique 25kg', '1 haltère 5kg' ];
-    // Facteurs d'effort (inchangé)
+    // Facteurs d'effort
     const EFFORT_FACTORS = { MID: 1.0, TARGET_MET: 1.2 };
-    // Poids HPS global (inchangé, utilise 'Abdos')
+    // Poids HPS global
     const WEIGHTS_GLOBAL_HPS = { Pectoraux: 0.15, Dos: 0.20, Épaules: 0.12, Biceps: 0.08, Triceps: 0.08, Abdos: 0.15, Legs: 0.22 };
 
-    // --- NIVEAUX - SEUILS HPS (inchangés) ---
+    // --- NIVEAUX - SEUILS HPS ---
     const TARGET_LEVELS = { 'L1_Bronze':  { name: "Bronze",   minHPS: 1,   description: "Point de départ validé...", celebrity_example: "...", colorVar: '--level-bronze-color',   bgVar: '--level-bronze-bg',   iconClass: 'fa-shield-halved' }, 'L2_Silver':  { name: "Argent",   minHPS: 150, description: "Physique athlétique naissant...", celebrity_example: "...", colorVar: '--level-silver-color',   bgVar: '--level-silver-bg',   iconClass: 'fa-shield' }, 'L3_Gold':    { name: "Or",       minHPS: 300, description: "Force confirmée et solide...", celebrity_example: "...", colorVar: '--level-gold-color',     bgVar: '--level-gold-bg',     iconClass: 'fa-trophy' }, 'L_Marvel':   { name: "Marvel",   targetHPS: 550, description: "Benchmark : Esthétique équilibrée...", celebrity_example: "...", colorVar: '--level-marvel-color', bgVar: '--level-marvel-bg', iconClass: 'fa-bolt-lightning' }, 'L4_Crystal': { name: "Crystal",  minHPS: 450, description: "Niveau avancé...", celebrity_example: "...", colorVar: '--level-crystal-color',  bgVar: '--level-crystal-bg',  iconClass: 'fa-gem' }, 'L5_Master':  { name: "Master",   minHPS: 600, description: "Maîtrise physique...", celebrity_example: "...", colorVar: '--level-master-color',   bgVar: '--level-master-bg',   iconClass: 'fa-chess-king' }, 'L6_Champion':{ name: "Champion", minHPS: 750, description: "Physique d'élite...", celebrity_example: "...", colorVar: '--level-champion-color', bgVar: '--level-champion-bg', iconClass: 'fa-crown' }, 'L7_Titan':   { name: "Titan",    minHPS: 900, description: "Force et masse colossales...", celebrity_example: "...", colorVar: '--level-titan-color',   bgVar: '--level-titan-bg',    iconClass: 'fa-mountain-sun' }, 'L8_Legende': { name: "Legende",  minHPS: 1100, description: "Statut quasi-mythique...", celebrity_example: "...", colorVar: '--level-legende-color',  bgVar: '--level-legende-bg',  iconClass: 'fa-meteor' } };
     const LEVEL_ORDER = ['L1_Bronze', 'L2_Silver', 'L3_Gold', 'L4_Crystal', 'L5_Master', 'L6_Champion', 'L7_Titan', 'L8_Legende'];
     const MARVEL_BENCHMARK_KEY = 'L_Marvel';
     const NUM_SUB_LEVELS = 3;
 
-    // --- Mapping Muscles V6 (inchangé) ---
+    // --- Mapping Muscles V6 ---
     const MUSCLE_GROUPS_DISPLAY_CONFIG = { "Pectoraux": { subtitle: "Poitrine", icon: 'fa-dot-circle' }, "Dos": { subtitle: "Dorsaux/Trapèzes", icon: 'fa-bars-staggered' }, "Épaules":{ subtitle: "Deltoïdes", icon: 'fa-atom' }, "Biceps": { subtitle: "Bras (Flex.)", icon: 'fa-link' }, "Triceps": { subtitle: "Bras (Ext.)", icon: 'fa-diamond' }, "Abdos": { subtitle: "Abdominaux", icon: 'fa-grip-lines' }, "Legs": { subtitle: "Jambes/Mollets", icon: 'fa-shoe-prints'} };
     const LOGIC_TO_DISPLAY_MAP = { Pectoraux: "Pectoraux", Dos: "Dos", Épaules: "Épaules", Biceps: "Biceps", Triceps: "Triceps", Abdos: "Abdos", Legs: "Legs" };
     const ALL_MUSCLE_GROUPS_CALCULATED = Object.keys(LOGIC_TO_DISPLAY_MAP);
@@ -385,20 +385,20 @@
     function mapExerciseToMuscleGroup(name) { if (!name) return []; const cleanedName = name.replace(/\s*\([\s\S]*?\)\s*$/i, '').trim(); const l = cleanedName.toLowerCase(); if (l.includes('squat') || l.includes('fentes') || l.includes('calf raises') || l.includes('mollets')) return [ { group: 'Legs', weight: 1.0 } ]; if (l.includes('pompes') || l.includes('push up') || l.includes('floor press') || l.includes('chest press') || l.includes('écarté')) return [ { group: 'Pectoraux', weight: 0.60 }, { group: 'Triceps', weight: 0.25 }, { group: 'Épaules', weight: 0.15 } ]; if (l.includes('overhead press') || l.includes('développé militaire') || l.includes('shoulder press') || l.includes('new overhead press')) return [ { group: 'Épaules', weight: 0.65 }, { group: 'Triceps', weight: 0.30 }, { group: 'Pectoraux', weight: 0.05 } ]; if (l.includes('lateral raises') || l.includes('élévations latérales')) return [{ group: 'Épaules', weight: 1.0 }]; if (l.includes('overhead triceps extension') || l.includes('triceps extension')) return [{ group: 'Triceps', weight: 1.0 }]; if (l.includes('rowing') || l.includes('bent-over row') || l.includes('tirage horizontal')) return [ { group: 'Dos', weight: 0.65 }, { group: 'Biceps', weight: 0.20 }, { group: 'Épaules', weight: 0.15 } ]; if (l.includes('lat pulldown') || l.includes('tirage vertical') || l.includes('tractions') || l.includes('pull up') || l.includes('chin up')) return [ { group: 'Dos', weight: 0.70 }, { group: 'Biceps', weight: 0.25 }, { group: 'Épaules', weight: 0.05 } ]; if (l.includes('face pull')) return [ { group: 'Épaules', weight: 0.60 }, { group: 'Dos', weight: 0.40 } ]; if (l.includes('curl') || l.includes('biceps')) return [{ group: 'Biceps', weight: 1.0 }]; if (l.includes('hollow body') || l.includes('gainage') || l.includes('planche')) return [{ group: 'Abdos', weight: 1.0 }]; if (l.includes('sit-up') || l.includes('crunch') || l.includes('abdos')) return [{ group: 'Abdos', weight: 1.0 }]; if (l.includes('leg raises') || l.includes('relevé de jambes')) return [{ group: 'Abdos', weight: 1.0 }]; console.warn(`Mapping muscle PONDÉRÉ v6 non trouvé pour: "${name}" (nettoyé en "${cleanedName}"). Aucun HP attribué.`); return []; }
     function analyzeProgramsAndCalculateHPS() {
         console.log("Analyse programmes & calcul HPS (v7)...");
-        // ** previousHPSValues EST MAINTENANT CHARGÉ AVANT CET APPEL **
+        // previousHPSValues et previousOverallAvgHPS sont chargés depuis localStorage ou initialisés avant cet appel
         const groupData = {};
         ALL_MUSCLE_GROUPS_CALCULATED.forEach(g => { groupData[g] = { totalHP: 0 }; });
-        currentHPSValues = {}; // Reset pour ce calcul
+        currentHPSValues = {};
 
         if (programsAnalysisStatus === 'error' || programsAnalysisStatus === 'pending' || configLoadStatus === 'error' || !loadedPrograms) {
             console.warn("Analyse HPS annulée - Données non prêtes.");
             ALL_MUSCLE_GROUPS_CALCULATED.forEach(g => { currentHPSValues[g] = HPS_BASE; });
             overallAvgHPS = HPS_BASE;
-            saveCurrentHPSToLocalStorage(); // Sauvegarder l'état 'vide' ou de base
+            saveCurrentHPSToLocalStorage(); // Sauvegarder l'état vide
             return;
         }
 
-        console.log("Starting HP calculation loops..."); // Log de début
+        console.log("Starting HP calculation loops...");
 
         PROGRAM_TYPES.forEach(type => {
             const program = loadedPrograms[type];
@@ -408,23 +408,19 @@
             function processCurrentBlock() {
                 if (currentBlock.stepRef && currentBlock.setCount > 0) {
                     const hpPerSet = calculateHPPerSet(currentBlock.stepRef);
-                    // Log HP/Set
-                    // console.log(`  [${currentBlock.stepRef.name}] HP/Set = ${hpPerSet.toFixed(1)} (Sets: ${currentBlock.setCount})`);
                     if (hpPerSet > 0) {
                         const muscleContributions = mapExerciseToMuscleGroup(currentBlock.stepRef.name);
                         if (muscleContributions.length > 0) {
-                            muscleContributions.forEach(contribution => {
+                             muscleContributions.forEach(contribution => {
                                 const groupName = contribution.group;
                                 const weight = contribution.weight;
                                 if (groupData[groupName] && weight > 0) {
                                     const weightedHpContribution = hpPerSet * weight;
                                     groupData[groupName].totalHP += weightedHpContribution * currentBlock.setCount;
-                                    // Log Accumulation
-                                    // console.log(`    -> Accumulating for ${groupName}: +${(weightedHpContribution * currentBlock.setCount).toFixed(1)}`);
                                 }
                             });
-                        } else { /* console.warn(`Aucun mapping trouvé pour: ${currentBlock.stepRef.name}.`); */ }
-                    } else { /* console.warn(`HP per Set = 0 pour ${currentBlock.stepRef.name}.`); */ }
+                        }
+                    }
                 }
                 currentBlock = { stepRef: null, setCount: 0 };
             }
@@ -442,18 +438,16 @@
                         currentBlock.setCount = 1;
                     }
                 } else {
-                    processCurrentBlock();
+                     processCurrentBlock();
                 }
-                if(index === program.length - 1) { // S'assurer que le dernier bloc est traité
+                if(index === program.length - 1) {
                     processCurrentBlock();
                 }
             });
         });
 
-        console.log("HP calculation loops finished. Finalizing scores..."); // Log de fin de boucle
-
+        console.log("HP calculation loops finished. Finalizing scores...");
         let totalWeightedHPSOverall = 0; let totalWeightOverall = 0;
-        // Ajout d'un log pour vérifier groupData avant le calcul final
         console.log("Final groupData before HPS calculation:", JSON.parse(JSON.stringify(groupData)));
 
         ALL_MUSCLE_GROUPS_CALCULATED.forEach(g => {
@@ -465,29 +459,36 @@
                 hps = kLogFactor * Math.log10(1 + ratioFactor);
             }
             currentHPSValues[g] = Math.round(Math.max(0, hps));
-             // Log plus détaillé ici
              console.log(` -> HPS Calcul FINAL [${g}]: TotalHP=${totalHP.toFixed(1)}, HPS=${currentHPSValues[g]}`);
+
+            if (MUSCLE_GROUPS_FOR_GLOBAL_HPS.includes(g)) {
+                const weight = WEIGHTS_GLOBAL_HPS[g] || 0;
+                if (weight > 0) {
+                    totalWeightedHPSOverall += currentHPSValues[g] * weight;
+                    totalWeightOverall += weight;
+                }
+            }
         });
         overallAvgHPS = totalWeightOverall > 0 ? Math.round(totalWeightedHPSOverall / totalWeightOverall) : HPS_BASE;
         overallAvgHPS = Math.max(0, overallAvgHPS);
         console.log(`HPS Global V7: ${overallAvgHPS} (Préc localStorage: ${previousOverallAvgHPS ?? 'N/A'})`);
         console.log("HPS Groupes V7 Actuels:", currentHPSValues);
         console.log("HPS Groupes Précédents (avant ce calcul):", previousHPSValues);
-        saveCurrentHPSToLocalStorage();
+        saveCurrentHPSToLocalStorage(); // Sauvegarde après calcul
     }
     function getHPSLevelKey(hpsScore) { for (let i = LEVEL_ORDER.length - 1; i >= 0; i--) { const key = LEVEL_ORDER[i]; if (TARGET_LEVELS[key] && hpsScore >= TARGET_LEVELS[key].minHPS) { return key; } } return LEVEL_ORDER[0]; }
     function getHPSLevelAndSubLevel(hpsScore) { const levelKey = getHPSLevelKey(hpsScore); const level = TARGET_LEVELS[levelKey]; const levelIndex = LEVEL_ORDER.indexOf(levelKey); let subLevelNumeral = ''; if (levelIndex < LEVEL_ORDER.length - 1) { const nextLevelKey = LEVEL_ORDER[levelIndex + 1]; const nextLevel = TARGET_LEVELS[nextLevelKey]; const minHPSCurrent = level.minHPS; const minHPSNext = nextLevel.minHPS; const range = minHPSNext - minHPSCurrent; if (range > 0) { const subLevelStep = range / NUM_SUB_LEVELS; const thresholdII = minHPSCurrent + subLevelStep; const thresholdIII = minHPSCurrent + 2 * subLevelStep; if (hpsScore >= thresholdIII) { subLevelNumeral = 'III'; } else if (hpsScore >= thresholdII) { subLevelNumeral = 'II'; } else { subLevelNumeral = 'I'; } } else { subLevelNumeral = 'I'; } } else { subLevelNumeral = ''; } return { levelKey, level, subLevelNumeral }; }
 
-    // --- Logique Affichage ---
-    function calculateAndDisplayProgression() { console.log("Mise à jour affichage progression (HPS V7 - SubLevels)..."); if (!evolutionTrackerArea || !overallHPSDisplayValue || !levelBadge || !targetHPSInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan) { console.error("DOM manquant affichage HPS."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur interne: DOM affichage manquant.</p>'; return; } if (programsAnalysisStatus !== 'pending' && configLoadStatus !== 'pending') { analyzeProgramsAndCalculateHPS(); } else { console.log("Attente chargement pour calcul HPS."); overallAvgHPS = previousOverallAvgHPS ?? HPS_BASE; currentHPSValues = previousHPSValues ?? {}; } const oldGlobalLevelKey = currentGlobalLevelKey; const { levelKey: newGlobalLevelKey, level: currentGlobalLevel, subLevelNumeral: globalSubLevelNumeral } = getHPSLevelAndSubLevel(overallAvgHPS); currentGlobalLevelKey = newGlobalLevelKey; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; const currentDisplayedHPS = parseFloat(overallHPSDisplayValue.textContent.replace(/[^0-9.]/g, '')) || HPS_BASE; animateValue(overallHPSDisplayValue, currentDisplayedHPS, overallAvgHPS, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.innerHTML = `${currentGlobalLevel.name} <span class="sub-level">${globalSubLevelNumeral}</span>`; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetHPSInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minHPS} HPS` : "MAX"; if (marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; const isMarvelAchieved = overallAvgHPS >= marvelBenchmark.targetHPS; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const mI = document.createElement('i'); mI.id = 'marvel-icon'; mI.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; mI.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetHPS} HPS) atteint !`); levelBadgeContainer.appendChild(mI); } } else { if (existingMarvelIcon) existingMarvelIcon.remove(); } } else { marvelTargetInfoSpan.style.display = 'none'; } if (previousOverallAvgHPS !== null && currentGlobalLevelKey !== oldGlobalLevelKey) { const currentLevelThreshold = TARGET_LEVELS[currentGlobalLevelKey].minHPS; if (overallAvgHPS >= currentLevelThreshold && previousOverallAvgHPS < currentLevelThreshold) { console.log(`NIVEAU GLOBAL ATTEINT ! ${oldGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } } muscleGroupsContainer.innerHTML = ''; let hasData = false; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentHPSValues[logicGroup] === undefined || !MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { console.warn(`Données manquantes ou config pour groupe affiché: ${displayGroup} (logique: ${logicGroup})`); return; } hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentHPS = currentHPSValues[logicGroup]; const { levelKey: muscleLevelKey, level: muscleLevel, subLevelNumeral: muscleSubLevelNumeral } = getHPSLevelAndSubLevel(currentHPS); const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_LEVELS[nextMuscleLevelKey] : null; const minHPSCurrent = muscleLevel.minHPS; const minHPSNext = nextMuscleLevel ? nextMuscleLevel.minHPS : minHPSCurrent; const range = minHPSNext - minHPSCurrent; let progress = 0; if (range > 0) { progress = ((currentHPS - minHPSCurrent) / range) * 100; } else if (currentHPS >= minHPSCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const targetDisplay = nextMuscleLevel ? minHPSNext : "MAX"; const card = renderMuscleGroupCard( logicGroup, displayGroup, config.subtitle, config.icon, currentHPS, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleSubLevelNumeral, muscleLevel.colorVar, muscleLevel.bgVar ); muscleGroupsContainer.appendChild(card); }); if (!hasData && (programsAnalysisStatus !== 'pending' || configLoadStatus !== 'pending')) { const msg = (programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'Erreur chargement données.' : 'Aucune donnée progression.'; muscleGroupsContainer.innerHTML = `<p class="${(programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'error' : 'loading'}-placeholder">${msg}</p>`; } console.log("Affichage progression V7 mis à jour."); }
+    // --- Logique Affichage (v7) ---
+    function calculateAndDisplayProgression() { console.log("Mise à jour affichage progression (HPS V7 - SubLevels)..."); if (!evolutionTrackerArea || !overallHPSDisplayValue || !levelBadge || !targetHPSInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan) { console.error("DOM manquant affichage HPS."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur interne: DOM affichage manquant.</p>'; return; } if (programsAnalysisStatus !== 'pending' && configLoadStatus !== 'pending') { analyzeProgramsAndCalculateHPS(); } else { console.log("Affichage basé sur les données précédentes (si dispo) car chargement incomplet/en cours."); overallAvgHPS = previousOverallAvgHPS ?? HPS_BASE; currentHPSValues = previousHPSValues ?? {}; } const oldGlobalLevelKey = currentGlobalLevelKey; const { levelKey: newGlobalLevelKey, level: currentGlobalLevel, subLevelNumeral: globalSubLevelNumeral } = getHPSLevelAndSubLevel(overallAvgHPS); currentGlobalLevelKey = newGlobalLevelKey; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; const currentDisplayedHPS = parseFloat(overallHPSDisplayValue.textContent.replace(/[^0-9.]/g, '')) || HPS_BASE; animateValue(overallHPSDisplayValue, currentDisplayedHPS, overallAvgHPS, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.innerHTML = `${currentGlobalLevel.name} <span class="sub-level">${globalSubLevelNumeral}</span>`; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetHPSInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minHPS} HPS` : "MAX"; if (marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; const isMarvelAchieved = overallAvgHPS >= marvelBenchmark.targetHPS; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const mI = document.createElement('i'); mI.id = 'marvel-icon'; mI.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; mI.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetHPS} HPS) atteint !`); levelBadgeContainer.appendChild(mI); } } else { if (existingMarvelIcon) existingMarvelIcon.remove(); } } else { marvelTargetInfoSpan.style.display = 'none'; } if (previousOverallAvgHPS !== null && currentGlobalLevelKey !== oldGlobalLevelKey) { const currentLevelThreshold = TARGET_LEVELS[currentGlobalLevelKey].minHPS; if (overallAvgHPS >= currentLevelThreshold && previousOverallAvgHPS < currentLevelThreshold) { console.log(`NIVEAU GLOBAL ATTEINT ! ${oldGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } } muscleGroupsContainer.innerHTML = ''; let hasData = false; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentHPSValues[logicGroup] === undefined || !MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { /* console.warn(`Données manquantes ou config pour groupe affiché: ${displayGroup} (logique: ${logicGroup})`); */ return; } hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentHPS = currentHPSValues[logicGroup]; const { levelKey: muscleLevelKey, level: muscleLevel, subLevelNumeral: muscleSubLevelNumeral } = getHPSLevelAndSubLevel(currentHPS); const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_LEVELS[nextMuscleLevelKey] : null; const minHPSCurrent = muscleLevel.minHPS; const minHPSNext = nextMuscleLevel ? nextMuscleLevel.minHPS : minHPSCurrent; const range = minHPSNext - minHPSCurrent; let progress = 0; if (range > 0) { progress = ((currentHPS - minHPSCurrent) / range) * 100; } else if (currentHPS >= minHPSCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const targetDisplay = nextMuscleLevel ? minHPSNext : "MAX"; const card = renderMuscleGroupCard( logicGroup, displayGroup, config.subtitle, config.icon, currentHPS, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleSubLevelNumeral, muscleLevel.colorVar, muscleLevel.bgVar ); muscleGroupsContainer.appendChild(card); }); if (!hasData && (programsAnalysisStatus !== 'pending' || configLoadStatus !== 'pending')) { const msg = (programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'Erreur chargement données.' : 'Aucune donnée progression.'; muscleGroupsContainer.innerHTML = `<p class="${(programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'error' : 'loading'}-placeholder">${msg}</p>`; } console.log("Affichage progression V7 mis à jour."); }
     function renderMuscleGroupCard(logicGroupKey, title, subtitle, iconClass, currentHPS, targetHPSNextMin, displayPercent, currentLevelKey, currentLevelName, currentSubLevelNumeral, currentLevelColorVar, currentLevelBgVar ) { const card = document.createElement('div'); card.className = 'muscle-group-card'; card.setAttribute('title', `${title} (${subtitle}) - Niveau: ${currentLevelName} ${currentSubLevelNumeral} - HPS: ${currentHPS} / ${targetHPSNextMin}. Progression: ${displayPercent}%.`); let levelProgressionHtml = '<div class="muscle-level-progression">'; let currentLevelFillWidth = '0%'; let currentLevelPosition = 0; LEVEL_ORDER.forEach((levelKey, index) => { const level = TARGET_LEVELS[levelKey]; if (!level) return; const basePosition = (index / (LEVEL_ORDER.length -1)) * 100; const adjustedPosition = 5 + (basePosition * 0.9); let indicatorClass = 'level-indicator'; let indicatorStyle = `left: ${adjustedPosition}%; border-color: var(${level.colorVar});`; let boxShadowStyle = `box-shadow: 0 0 10px var(${level.colorVar});`; if (levelKey === currentLevelKey) { indicatorClass += ' current'; indicatorStyle += boxShadowStyle; currentLevelPosition = adjustedPosition; const nextLevelIndex = index + 1; let endPos = 100; if (nextLevelIndex < LEVEL_ORDER.length) { const nextBasePos = (nextLevelIndex / (LEVEL_ORDER.length -1)) * 100; endPos = 5 + (nextBasePos * 0.9); } const segmentWidthPercent = endPos - currentLevelPosition; const fillWidthFromStart = currentLevelPosition + (segmentWidthPercent * (displayPercent / 100)); currentLevelFillWidth = `${fillWidthFromStart}%`; } levelProgressionHtml += `<div class="${indicatorClass}" style="${indicatorStyle}" data-level-key="${levelKey}" title="${level.name} (Min: ${level.minHPS} HPS)"><i class="fas ${level.iconClass}"></i></div>`; }); levelProgressionHtml = `<div class="current-level-fill" style="width: ${currentLevelFillWidth}; background-color: var(${currentLevelColorVar}); left: 0;"></div>` + levelProgressionHtml; levelProgressionHtml += '</div>'; const percentageBarHtml = ` <div class="percentage-progress-section"> <div class="percentage-bar-container" title="Progression vers ${targetHPSNextMin} HPS: ${displayPercent}%"> <div class="percentage-bar-fill" style="width: 0%;"></div> </div> <span class="percentage-value-text">${displayPercent}%</span> </div>`; card.innerHTML = ` <div class="card-header"> <div class="icon-container"><i class="fas ${iconClass}" aria-hidden="true"></i></div> <div class="title-container"> <div class="group-title">${title}</div> <div class="group-subtitle">${subtitle}</div> <div class="group-level-name" style="color: var(${currentLevelColorVar}); background-color: var(${currentLevelBgVar}); border-color: var(${currentLevelColorVar});"> ${currentLevelName} <span class="sub-level">${currentSubLevelNumeral}</span> </div> </div> <div class="hps-details" title="HPS Actuel / Seuil HPS Niveau Suivant"> <span class="current">${currentHPS}</span> / <span class="target">${targetHPSNextMin}</span> </div> </div> ${levelProgressionHtml} ${percentageBarHtml} `; requestAnimationFrame(() => { setTimeout(() => { const pbFill = card.querySelector('.percentage-bar-fill'); if (pbFill) { pbFill.style.width = `${displayPercent}%`; } }, 50); }); const indicators = card.querySelectorAll('.level-indicator'); indicators.forEach(indicator => { indicator.addEventListener('click', (e) => { e.stopPropagation(); const key = indicator.getAttribute('data-level-key'); if (key) openLevelInfoModal(key, title); }); }); return card; }
-    function resetProgressionDisplay() { console.log("Réinitialisation affichage HPS..."); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="loading-placeholder">${googleAccessToken ? 'Analyse...' : 'Connectez-vous...'}</p>`; } if (overallHPSDisplayValue) overallHPSDisplayValue.textContent = '--'; const firstLevelKey = LEVEL_ORDER[0]; const baseLevel = TARGET_LEVELS[firstLevelKey]; if (levelBadge && baseLevel) { levelBadgeIcon.className = `fas ${baseLevel.iconClass}`; levelBadgeText.innerHTML = `${baseLevel.name}`; levelBadge.style.color = `var(${baseLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${baseLevel.bgVar})`; levelBadge.style.borderColor = `var(${baseLevel.colorVar})`; levelBadge.setAttribute('data-level-key', firstLevelKey); } const secondLevelKey = LEVEL_ORDER.length > 1 ? LEVEL_ORDER[1] : null; const firstRealLevel = secondLevelKey ? TARGET_LEVELS[secondLevelKey] : null; if (targetHPSInfoStrong) targetHPSInfoStrong.textContent = firstRealLevel ? `${firstRealLevel.minHPS} HPS` : '-- HPS'; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; if (marvelTargetInfoSpan && marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; } else if (marvelTargetInfoSpan) { marvelTargetInfoSpan.style.display = 'none'; } const existingMarvelIcon = document.getElementById('marvel-icon'); if (existingMarvelIcon) { existingMarvelIcon.remove(); } currentGlobalLevelKey = LEVEL_ORDER[0]; // Ne pas reset les variables d'état ici (géré par chargement/déco) }
+    function resetProgressionDisplay() { console.log("Réinitialisation affichage HPS..."); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="loading-placeholder">${googleAccessToken ? 'Analyse...' : 'Connectez-vous...'}</p>`; } if (overallHPSDisplayValue) overallHPSDisplayValue.textContent = '--'; const firstLevelKey = LEVEL_ORDER[0]; const baseLevel = TARGET_LEVELS[firstLevelKey]; if (levelBadge && baseLevel) { levelBadgeIcon.className = `fas ${baseLevel.iconClass}`; levelBadgeText.innerHTML = `${baseLevel.name}`; levelBadge.style.color = `var(${baseLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${baseLevel.bgVar})`; levelBadge.style.borderColor = `var(${baseLevel.colorVar})`; levelBadge.setAttribute('data-level-key', firstLevelKey); } const secondLevelKey = LEVEL_ORDER.length > 1 ? LEVEL_ORDER[1] : null; const firstRealLevel = secondLevelKey ? TARGET_LEVELS[secondLevelKey] : null; if (targetHPSInfoStrong) targetHPSInfoStrong.textContent = firstRealLevel ? `${firstRealLevel.minHPS} HPS` : '-- HPS'; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; if (marvelTargetInfoSpan && marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; } else if (marvelTargetInfoSpan) { marvelTargetInfoSpan.style.display = 'none'; } const existingMarvelIcon = document.getElementById('marvel-icon'); if (existingMarvelIcon) { existingMarvelIcon.remove(); } currentGlobalLevelKey = LEVEL_ORDER[0]; }
 
     // --- Rendu UI Config Équipement ---
     function renderProgramConfigUI() { if (!programConfigContent) return; if (programsAnalysisStatus === 'pending' || programsAnalysisStatus === 'error') { programConfigContent.innerHTML = '<p class="loading-placeholder">Chargez d\'abord vos programmes.</p>'; if(saveConfigButton) saveConfigButton.disabled = true; return; } let html = ''; const uniqueExercises = new Set(); PROGRAM_TYPES.forEach(type => { const program = loadedPrograms[type]; if (program && program.length > 0) { program.forEach(step => { if (step.type === 'exercise' && step.name) { uniqueExercises.add(step.name); } }); } }); if (uniqueExercises.size === 0) { programConfigContent.innerHTML = '<p class="loading-placeholder">Aucun exercice trouvé dans les programmes.</p>'; if(saveConfigButton) saveConfigButton.disabled = true; return; } html += `<div class="program-config-section"><h3>Équipement Additionnel par Exercice</h3>`; [...uniqueExercises].sort().forEach(exerciseName => { html += `<div class="config-exercise-item"><span class="exercise-name">${exerciseName}</span><div class="config-equipment-options">`; AVAILABLE_EQUIPMENT_CONFIG.forEach(equipKey => { const isChecked = exerciseConfig[exerciseName]?.added_equipment?.includes(equipKey) || false; html += `<label><input type="checkbox" value="${equipKey}" data-exercise-name="${exerciseName}" ${isChecked ? 'checked' : ''}> ${equipKey}</label>`; }); html += `</div></div>`; }); html += `</div>`; if(saveConfigButton) saveConfigButton.disabled = !googleAccessToken; programConfigContent.innerHTML = html; }
     function resetConfigUI() { if (programConfigContent) { programConfigContent.innerHTML = '<p class="loading-placeholder">Connectez-vous.</p>'; } if(saveConfigButton) saveConfigButton.disabled = true; exerciseConfig = {}; }
 
-    // --- Logique Historique (Utilise previousHPSValues chargé depuis localStorage) ---
+    // --- Logique Historique ---
     function renderHistoryUI() { if (!historyMuscleGroupSelect || !historyDisplay) return; historyMuscleGroupSelect.innerHTML = '<option value="global">Global</option>'; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (logicGroup && MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { const option = document.createElement('option'); option.value = logicGroup; option.textContent = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup].subtitle || displayGroup; historyMuscleGroupSelect.appendChild(option); } }); historyMuscleGroupSelect.value = currentHistoryMuscleGroup; historyPeriodBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === currentHistoryPeriod); }); displayHistoryTrend(); }
     function displayHistoryTrend() { if (!historyDisplay) return; console.log(`Affichage historique V7 pour: ${currentHistoryMuscleGroup}, Période: ${currentHistoryPeriod}`); const muscleName = currentHistoryMuscleGroup === 'global' ? 'Global' : (MUSCLE_GROUPS_DISPLAY_CONFIG[currentHistoryMuscleGroup]?.subtitle || currentHistoryMuscleGroup); let periodText = 'depuis dernier calcul'; const currentVal = currentHistoryMuscleGroup === 'global' ? overallAvgHPS : currentHPSValues[currentHistoryMuscleGroup]; const previousVal = currentHistoryMuscleGroup === 'global' ? previousOverallAvgHPS : previousHPSValues[currentHistoryMuscleGroup]; if (previousVal === undefined || previousVal === null || currentVal === undefined) { historyDisplay.innerHTML = `<p>Tendance HPS pour <strong>${muscleName}</strong> (${periodText}) :</p><p style="margin-top: 10px;"><span class="trend-value trend-neutral">N/A</span></p><p style="font-size: 0.8em; margin-top: 15px;">(Calcul initial ou pas de données précédentes)</p>`; return; } const diffAbs = currentVal - previousVal; const diffPerc = previousVal !== 0 ? (diffAbs / previousVal) * 100 : (currentVal > 0 ? Infinity : 0); const trendClass = diffAbs > 0.5 ? 'trend-positive' : (diffAbs < -0.5 ? 'trend-negative' : 'trend-neutral'); const sign = diffAbs > 0.5 ? '+' : ''; const formattedDiffPerc = diffPerc === Infinity ? '∞' : diffPerc.toFixed(1); historyDisplay.innerHTML = ` <p>Tendance HPS pour <strong>${muscleName}</strong> (${periodText}) :</p> <p style="margin-top: 10px;"> <span class="trend-value ${trendClass}">${sign}${diffAbs.toFixed(0)} HPS</span> ${previousVal !== 0 ? `(<span class="trend-value ${trendClass}">${sign}${formattedDiffPerc}%</span>)` : ''} </p> <p style="font-size: 0.8em; margin-top: 15px;">(${previousVal ?? 'N/A'} HPS -> ${currentVal} HPS)</p> `; }
     function handleHistorySelectionChange() { currentHistoryMuscleGroup = historyMuscleGroupSelect.value; displayHistoryTrend(); }
@@ -500,26 +501,9 @@
     function closeLevelInfoModal() { if (levelInfoModal) levelInfoModal.classList.remove('visible'); }
 
     // --- Persistance Historique HPS (localStorage) ---
-    function saveCurrentHPSToLocalStorage() {
-        try {
-            localStorage.setItem(LOCALSTORAGE_HPS_VALUES_KEY, JSON.stringify(currentHPSValues));
-            localStorage.setItem(LOCALSTORAGE_HPS_GLOBAL_KEY, overallAvgHPS.toString());
-            console.log("Scores HPS actuels sauvegardés dans localStorage.");
-        } catch (e) { console.warn("Erreur sauvegarde HPS dans localStorage:", e); }
-    }
-    function loadPreviousHPSFromLocalStorage() {
-        try {
-            const savedValues = localStorage.getItem(LOCALSTORAGE_HPS_VALUES_KEY);
-            const savedGlobal = localStorage.getItem(LOCALSTORAGE_HPS_GLOBAL_KEY);
-            previousHPSValues = savedValues ? JSON.parse(savedValues) : {};
-            previousOverallAvgHPS = savedGlobal ? parseFloat(savedGlobal) : null;
-            if(isNaN(previousOverallAvgHPS)) previousOverallAvgHPS = null;
-        } catch (e) { console.error("Erreur lecture HPS depuis localStorage:", e); previousHPSValues = {}; previousOverallAvgHPS = null; }
-    }
-    function clearHPSLocalStorage() {
-         try { localStorage.removeItem(LOCALSTORAGE_HPS_VALUES_KEY); localStorage.removeItem(LOCALSTORAGE_HPS_GLOBAL_KEY); console.log("Scores HPS supprimés de localStorage."); }
-         catch (e) { console.warn("Erreur suppression HPS de localStorage:", e); }
-    }
+    function saveCurrentHPSToLocalStorage() { try { localStorage.setItem(LOCALSTORAGE_HPS_VALUES_KEY, JSON.stringify(currentHPSValues)); localStorage.setItem(LOCALSTORAGE_HPS_GLOBAL_KEY, overallAvgHPS.toString()); console.log("Scores HPS actuels sauvegardés dans localStorage."); } catch (e) { console.warn("Erreur sauvegarde HPS dans localStorage:", e); } }
+    function loadPreviousHPSFromLocalStorage() { try { const savedValues = localStorage.getItem(LOCALSTORAGE_HPS_VALUES_KEY); const savedGlobal = localStorage.getItem(LOCALSTORAGE_HPS_GLOBAL_KEY); previousHPSValues = savedValues ? JSON.parse(savedValues) : {}; previousOverallAvgHPS = savedGlobal ? parseFloat(savedGlobal) : null; if(isNaN(previousOverallAvgHPS)) previousOverallAvgHPS = null; } catch (e) { console.error("Erreur lecture HPS depuis localStorage:", e); previousHPSValues = {}; previousOverallAvgHPS = null; } }
+    function clearHPSLocalStorage() { try { localStorage.removeItem(LOCALSTORAGE_HPS_VALUES_KEY); localStorage.removeItem(LOCALSTORAGE_HPS_GLOBAL_KEY); console.log("Scores HPS supprimés de localStorage."); } catch (e) { console.warn("Erreur suppression HPS de localStorage:", e); } }
 
     // --- Animation & UI Update & Thème & Message ---
     function animateValue(el, start, end, duration) { if (!el) return; const fixedEnd = Math.round(end); const fixedStart = Math.round(start); if (fixedStart === fixedEnd) { el.textContent = fixedEnd; return; } const range = fixedEnd - fixedStart; if (range === 0) { el.textContent = fixedEnd; return; } let current = fixedStart; const increment = fixedEnd > fixedStart ? 1 : -1; const stepTime = Math.max(1, Math.min(50, Math.abs(Math.floor(duration / range)))); const timer = setInterval(() => { current += increment * Math.max(1, Math.round(Math.abs(fixedEnd - current) / 10)); if ((increment > 0 && current >= fixedEnd) || (increment < 0 && current <= fixedEnd)) { current = fixedEnd; clearInterval(timer); } el.textContent = current; }, stepTime); }
@@ -529,7 +513,24 @@
     function showMessage(msg, duration = 3000, type = 'info') { if (!messageArea) return; messageArea.textContent = msg; messageArea.className = `message-area ${type} visible`; if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); setTimeout(() => { if (!messageArea.classList.contains('visible')) { messageArea.className = 'message-area'; } }, 500); }, duration); }
 
     // --- Gestion Navigation ---
-    function switchTab(targetSectionId) { if (!targetSectionId) return; console.log("Switch tab to:", targetSectionId); appSections.forEach(section => { section.style.display = 'none'; }); const targetSection = document.getElementById(targetSectionId); if (targetSection) { targetSection.style.display = 'flex'; targetSection.style.flexDirection = 'column'; } else { console.error("Section cible non trouvée:", targetSectionId); } navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.section === targetSectionId); }); if (targetSectionId === 'program-config-area') { renderProgramConfigUI(); } else if (targetSectionId === 'history-area') { renderHistoryUI(); } }
+    function switchTab(targetSectionId) {
+        if (!targetSectionId) return;
+        console.log("Switch tab to:", targetSectionId);
+        appSections.forEach(section => { section.style.display = 'none'; });
+        const targetSection = document.getElementById(targetSectionId);
+        if (targetSection) {
+            targetSection.style.display = 'flex';
+            targetSection.style.flexDirection = 'column';
+        } else {
+            console.error("Section cible non trouvée:", targetSectionId);
+        }
+        navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.section === targetSectionId); });
+        if (targetSectionId === 'program-config-area') {
+            renderProgramConfigUI();
+        } else if (targetSectionId === 'history-area') {
+            renderHistoryUI();
+        }
+    }
 
     // --- Initialisation ---
     function initializeDOMReferences() { console.log("Init DOM Refs..."); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn'); signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt'); evolutionTrackerArea = document.getElementById('evolution-tracker-area'); overallHPSDisplayValue = document.querySelector('#overall-hps-display .value'); levelBadgeContainer = document.getElementById('level-badge-container'); levelBadge = document.getElementById('level-badge'); if (levelBadge) { levelBadgeIcon = levelBadge.querySelector('i'); levelBadgeText = levelBadge.querySelector('span'); } targetHPSInfoStrong = document.querySelector('#target-hps-info strong'); marvelTargetInfoSpan = document.querySelector('#marvel-target-info'); muscleGroupsContainer = document.getElementById('muscle-groups-container'); programConfigArea = document.getElementById('program-config-area'); programConfigContent = document.getElementById('program-config-content'); saveConfigButton = document.getElementById('save-config-button'); historyArea = document.getElementById('history-area'); historyMuscleGroupSelect = document.getElementById('history-muscle-group-select'); historyPeriodBtns = document.querySelectorAll('.history-period-btn'); historyDisplay = document.getElementById('history-display'); messageArea = document.getElementById('message-area'); levelInfoModal = document.getElementById('level-info-modal'); modalTitle = document.getElementById('modal-title'); modalIcon = document.getElementById('modal-icon'); modalLevelName = document.getElementById('modal-level-name'); modalBody = document.getElementById('modal-body'); modalCloseBtn = document.getElementById('modal-close-btn'); appNav = document.getElementById('app-nav'); navButtons = document.querySelectorAll('.nav-button'); appSections = document.querySelectorAll('.app-section'); const critical = [signInButton, signOutButton, themeToggleBtn, signInButtonPrompt, connectionPrompt, evolutionTrackerArea, overallHPSDisplayValue, levelBadgeContainer, levelBadge, levelBadgeIcon, levelBadgeText, targetHPSInfoStrong, marvelTargetInfoSpan, muscleGroupsContainer, programConfigArea, programConfigContent, saveConfigButton, historyArea, historyMuscleGroupSelect, historyPeriodBtns, historyDisplay, messageArea, levelInfoModal, modalTitle, modalIcon, modalLevelName, modalBody, modalCloseBtn, appNav, navButtons, appSections]; if (critical.some(el => !el || (NodeList.prototype.isPrototypeOf(el) && el.length === 0))) { console.error("DOM CRITIQUES MANQUANTS!", critical.map((el, i) => el ? `OK_${i}` : `FAIL_${i}`)); showMessage("Erreur critique: UI incomplète.", 10000, 'error'); document.body.innerHTML = '<p style="color:red; padding: 20px;">Erreur critique interface. Vérifiez la console.</p>'; return false; } console.log("DOM Refs OK."); return true; }
@@ -542,12 +543,11 @@
             if (!initializeDOMReferences()) return;
             addEventListeners();
             loadSavedTheme();
-            // Charge les valeurs précédentes AVANT la première mise à jour UI
-            loadPreviousHPSFromLocalStorage();
-            updateAuthUI(false); // Affiche l'état initial (déconnecté)
-            resetProgressionDisplay(); // Applique les valeurs chargées (ou --)
+            loadPreviousHPSFromLocalStorage(); // Charger avant la première UI update
+            updateAuthUI(false);
+            resetProgressionDisplay();
             resetConfigUI();
-            resetHistoryUI(); // Affiche N/A car pas de nouvelles données
+            resetHistoryUI(); // Affichera N/A initialement
             checkAndInitGis();
             console.log("Init terminée. Attente API Google & utilisateur...");
         } catch (error) {
