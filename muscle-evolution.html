@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout - Évolution HPS (v7.2 - JSON Sync)</title>
+    <title>ArmorWorkout - Évolution HPS (v7.3 - Diagnostic)</title>
     <!-- Font Awesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -326,8 +325,8 @@
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
 
-    // --- PARAMÈTRES HPS (v7.2 - Sync JSON) ---
-    console.log("HPS Algorithm Version: v7.2 - JSON Sync");
+    // --- PARAMÈTRES HPS (v7.3 - Diagnostic Logging) ---
+    console.log("HPS Algorithm Version: v7.3 - Diagnostic Logging");
     const HPS_BASE = 0;
     const HP_REFERENCE_GLOBAL = 2500;
     const K_LOG = 500;
@@ -345,37 +344,35 @@
         'Band Standing Hammer Curl (Élastique(s) sous les pieds)': 0.9,
         'Band Standing Biceps Curl (Élastique(s) sous les pieds)': 1.0,
         'Banded Goblet Squat': 1.20,
-        'Banded Romanian Deadlift (RDL)': 1.15, // Ajouté pour le nouveau JSON
+        'Banded Romanian Deadlift (RDL)': 1.15,
         'Alternating Reverse Lunges': 1.1,
         'Standing Calf Raises (Surélevé)': 0.9,
         'Hollow Body Hold / Rocks': 0.7,
         'Band Kneeling Crunch / Sit-up': 0.9,
         'Leg Raises (Relevé de jambes)': 0.85,
-        'DEFAULT': 1.0 // Garder un défaut
+        'DEFAULT': 1.0
     };
 
     // Charge effective (v7.2 - Sync avec JSON fourni + Composants)
-    // Contient les valeurs pour les équipements de BASE (lus depuis JSON)
-    // ET les valeurs pour les composants ADDITIONNELS (utilisés par la config)
     const EFFECTIVE_LOAD = {
         'Bodyweight': 50,
-        'Bodyweight (ou + Bandes)': 50, // Pour Push-ups
+        'Bodyweight (ou + Bandes)': 50,
         'Élastique 15kg': 30,
         'Élastique 25kg': 50,
-        'Élastique 15+25kg': 65, // Hypothèse d'addition
+        'Élastique 15+25kg': 65,
         '2x5kg Haltères': 10,
-        '1x5kg Haltère': 5, // Pour Goblet Squat base
-        'Élastique 15kg + 1x5kg Haltère': 35, // Base pour Banded Goblet Squat (30+5)
-        // Composants utilisables dans AVAILABLE_EQUIPMENT_CONFIG
-        '1 haltère 5kg': 5, // Valeur si ajouté via config
-        // Autres (potentiellement utiles pour progression non configurée)
+        '1x5kg Haltère': 5,
+        'Élastique 15kg + 1x5kg Haltère': 35,
+        // Composants pour config
+        '1 haltère 5kg': 5,
+        // Potentiellement utiles mais non directement dans les JSONs initiaux
         'Élastique 15kg doublé': 45,
         'Élastique 15+25kg + 1 haltère 5kg': 70,
         'Élastique 15+25kg + 2x5kg haltères': 75,
-        'DEFAULT': 0 // Mise à 0 par défaut pour éviter HPS inattendu
+        'DEFAULT': 0 // Défaut à 0 pour forcer la correspondance
     };
 
-    // Équipement configurable (ce qui apparaît comme checkbox)
+    // Équipement configurable
     const AVAILABLE_EQUIPMENT_CONFIG = [ 'Élastique 15kg', 'Élastique 25kg', '1 haltère 5kg' ];
 
     // Facteurs d'effort
@@ -418,49 +415,99 @@
     async function loadExerciseConfigFromDrive() { if (!googleAccessToken) return 'error'; console.log("Chargement config équipement..."); equipmentConfigFileId = await findFileId(EQUIPMENT_CONFIG_FILENAME); if (equipmentConfigFileId) { const content = await readFileContent(equipmentConfigFileId); if (content !== null) { try { const parsedConfig = JSON.parse(content || '{}'); exerciseConfig = typeof parsedConfig === 'object' && parsedConfig !== null ? parsedConfig : {}; console.log("Config équipement chargée depuis Drive:", exerciseConfig); return 'success'; } catch (e) { console.error("Erreur parsing JSON config:", e); showMessage("Erreur format JSON config équipement.", 4000, 'error'); playSound('error'); exerciseConfig = {}; return 'error'; } } else { console.warn("Lecture config échouée (contenu null)."); showMessage("Impossible lire config équipement (contenu null).", 4000, 'warning'); exerciseConfig = {}; return 'error'; } } else { console.warn(`Fichier config "${EQUIPMENT_CONFIG_FILENAME}" introuvable. Utilisation config vide.`); exerciseConfig = {}; return 'partial'; } }
     async function saveExerciseConfigToDrive() { if (!googleAccessToken || !saveConfigButton || isSavingConfig) return; console.log("Sauvegarde config équipement..."); isSavingConfig = true; saveConfigButton.disabled = true; saveConfigButton.classList.add('saving'); const currentConfig = {}; const checkboxes = programConfigContent.querySelectorAll('input[type="checkbox"]'); checkboxes.forEach(cb => { const exerciseName = cb.dataset.exerciseName; const equipmentName = cb.value; if (!exerciseName || !equipmentName) return; if (!currentConfig[exerciseName]) { currentConfig[exerciseName] = { added_equipment: [] }; } if (cb.checked) { currentConfig[exerciseName].added_equipment.push(equipmentName); } }); for (const exo in currentConfig) { if (currentConfig[exo].added_equipment.length === 0) { delete currentConfig[exo]; } } console.log("Config à sauvegarder:", currentConfig); const configJson = JSON.stringify(currentConfig, null, 2); try { let method = 'PATCH'; let url = `https://www.googleapis.com/upload/drive/v3/files/${equipmentConfigFileId}?uploadType=media`; let body = configJson; let headers = { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json; charset=UTF-8' }; if (!equipmentConfigFileId) { console.log("Aucun ID config, tentative création..."); method = 'POST'; url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'; const metadata = { name: EQUIPMENT_CONFIG_FILENAME, mimeType: 'application/json' }; const form = new FormData(); form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' })); form.append('file', new Blob([configJson], { type: 'application/json; charset=UTF-8' })); body = form; headers = { 'Authorization': `Bearer ${googleAccessToken}` }; } const response = await fetch(url, { method: method, headers: headers, body: body }); if (!response.ok) { if (response.status === 401 || response.status === 403) { handleSignoutClick(false); } const errorBody = await response.text(); console.error("Erreur sauvegarde fichier:", response.status, errorBody); throw new Error(`Erreur Drive ${response.status} (${method === 'POST' ? 'Création' : 'MàJ'})`); } const result = await response.json(); if (method === 'POST' && result.id) { equipmentConfigFileId = result.id; console.log("Fichier config créé avec ID:", equipmentConfigFileId); } console.log("Config équipement sauvegardée sur Drive."); exerciseConfig = currentConfig; showMessage("Configuration équipement sauvegardée !", 3000, 'success'); playSound('confirm'); calculateAndDisplayProgression(); } catch (error) { console.error("Erreur sauvegarde config:", error); showMessage(`Erreur sauvegarde config: ${error.message}`, 5000, 'error'); playSound('error'); } finally { saveConfigButton.disabled = false; saveConfigButton.classList.remove('saving'); isSavingConfig = false; } }
 
-    // --- Logique de Calcul HPS (v7.2 - Sync JSON) ---
+    // --- Logique de Calcul HPS (v7.3 - Diagnostic Logging) ---
     function getExerciseEfficacy(exerciseName) {
         if (!exerciseName) return EXERCISE_EFFICACY['DEFAULT'] || 1.0;
-        // Essayer le nom complet d'abord
         if (EXERCISE_EFFICACY[exerciseName]) return EXERCISE_EFFICACY[exerciseName];
-        // Essayer sans les parenthèses (pour d'éventuelles variations futures)
         const cleanedName = exerciseName.replace(/\s*\([\s\S]*?\)\s*$/i, '').trim();
         if (EXERCISE_EFFICACY[cleanedName]) return EXERCISE_EFFICACY[cleanedName];
         // Utiliser le défaut si rien ne correspond
-        console.warn(`Efficacité non trouvée pour "${exerciseName}", utilisation de DEFAULT.`);
+        // console.warn(`Efficacité non trouvée pour "${exerciseName}", utilisation de DEFAULT.`); // Keep this silent for now
         return EXERCISE_EFFICACY['DEFAULT'] || 1.0;
     }
+
+    // ** AJOUT DE LOGGING DIAGNOSTIC ICI **
     function getEffectiveLoad(baseEquipment, addedEquipmentList) {
         let normalizedBase = baseEquipment ? baseEquipment.trim() : 'DEFAULT';
-        // Récupérer la charge de base depuis la constante EFFECTIVE_LOAD
-        let baseLoad = EFFECTIVE_LOAD[normalizedBase] ?? EFFECTIVE_LOAD['DEFAULT'] ?? 0;
-        if (EFFECTIVE_LOAD[normalizedBase] === undefined) {
-            console.warn(`Charge de base non trouvée pour "${normalizedBase}", utilisation de DEFAULT (${EFFECTIVE_LOAD['DEFAULT'] ?? 0}).`);
+        let addedLoad = 0;
+        let baseLoadValue = EFFECTIVE_LOAD[normalizedBase]; // Get value directly
+
+        if (baseLoadValue === undefined) {
+            console.error(`!!!! ERREUR DIAGNOSTIC !!!! EFFECTIVE_LOAD key NOT FOUND for baseEquipment: "${normalizedBase}" (Original: "${baseEquipment}") - Using DEFAULT ${EFFECTIVE_LOAD['DEFAULT'] ?? 0}`);
+            baseLoadValue = EFFECTIVE_LOAD['DEFAULT'] ?? 0;
         }
 
-        let addedLoad = 0;
         if (addedEquipmentList && addedEquipmentList.length > 0) {
             addedEquipmentList.forEach(equipKey => {
                 let normalizedAdd = equipKey ? equipKey.trim() : '';
-                // Récupérer la charge ajoutée depuis la constante EFFECTIVE_LOAD (qui doit contenir les composants)
-                let componentLoad = EFFECTIVE_LOAD[normalizedAdd] ?? 0;
-                if (EFFECTIVE_LOAD[normalizedAdd] === undefined) {
-                     console.warn(`Charge ajoutée non trouvée pour composant "${normalizedAdd}", ajout de 0.`);
-                }
+                let componentLoad = EFFECTIVE_LOAD[normalizedAdd];
+                 if (componentLoad === undefined) {
+                    console.warn(`Charge ajoutée non trouvée pour composant "${normalizedAdd}", ajout de 0.`);
+                    componentLoad = 0;
+                 }
                 addedLoad += componentLoad;
             });
         }
-        return baseLoad + addedLoad;
+        // console.log(`  getEffectiveLoad: Base="${normalizedBase}" -> baseLoad=${baseLoadValue}, Added=${addedLoad}, Total=${baseLoadValue + addedLoad}`); // LOG RESULT
+        return baseLoadValue + addedLoad;
     }
+
     function getEffortFactor(step) { const isDuration = step.duration && parseInt(step.duration, 10) > 0; const currentValStr = isDuration ? step.duration : step.reps; const targetMaxStr = isDuration ? step.duration_target_max : step.reps_target_max; const currentVal = parseInt(currentValStr, 10); const targetMax = parseInt(targetMaxStr, 10); if (!isNaN(currentVal) && !isNaN(targetMax) && targetMax > 0 && currentVal >= targetMax) { return EFFORT_FACTORS.TARGET_MET; } return EFFORT_FACTORS.MID; }
-    function calculateHPPerSet(step) { if (!step || step.type !== 'exercise') return 0; const isDurationBased = step.duration && parseInt(step.duration, 10) > 0; const currentValueStr = isDurationBased ? step.duration : step.reps; const currentValue = parseInt(currentValueStr, 10); if (isNaN(currentValue) || currentValue <= 0) { return 0; } const exerciseName = step.name; const baseEquipment = step.equipment; }// Nom complet de l'équipement depuis le JSON const configForThisExo = exerciseConfig[exerciseName]; const addedEquipment = configForThisExo?.added_equipment || []; // Noms des composants cochés const efficacy = getExerciseEfficacy(exerciseName); const effectiveLoad = getEffectiveLoad(baseEquipment, addedEquipment); const effortFactor = getEffortFactor(step); let volumeFactor = 0; if (isDurationBased) { volumeFactor = Math.sqrt(currentValue); } else { volumeFactor = currentValue; } if (efficacy <= 0 || effectiveLoad <= 0 || volumeFactor <= 0 || effortFactor <= 0) { /* console.warn(`calculateHPPerSet: Facteur invalide pour ${step.name}. Efficacy: ${efficacy}, Load: ${effectiveLoad}, Volume: ${volumeFactor}, Effort: ${effortFactor}`); */ return 0; } const hp = efficacy * effectiveLoad * volumeFactor * effortFactor; /* console.log(`HP Set: ${exerciseName} (Eq:${baseEquipment}, Add:${addedEquipment}) -> Eff:${efficacy.toFixed(2)}, Load:${effectiveLoad}, Vol:${volumeFactor}, Effort:${effortFactor} = HP ${hp.toFixed(1)}`); */ return hp; }
+
+    // ** AJOUT DE LOGGING DIAGNOSTIC ICI **
+    function calculateHPPerSet(step) {
+        if (!step || step.type !== 'exercise') return 0;
+
+        const isDurationBased = step.duration && parseInt(step.duration, 10) > 0;
+        const currentValueStr = isDurationBased ? step.duration : step.reps;
+        const currentValue = parseInt(currentValueStr, 10);
+
+        if (isNaN(currentValue) || currentValue <= 0) {
+            // console.warn(`calculateHPPerSet: Valeur invalide ou nulle pour ${step.name}:`, currentValueStr);
+            return 0;
+        }
+
+        const exerciseName = step.name;
+        const baseEquipment = step.equipment; // Nom complet de l'équipement depuis le JSON
+        const configForThisExo = exerciseConfig[exerciseName];
+        const addedEquipment = configForThisExo?.added_equipment || []; // Noms des composants cochés
+
+        const efficacy = getExerciseEfficacy(exerciseName);
+        const effectiveLoad = getEffectiveLoad(baseEquipment, addedEquipment);
+        const effortFactor = getEffortFactor(step);
+
+        let volumeFactor = 0;
+        if (isDurationBased) {
+            volumeFactor = Math.sqrt(currentValue);
+        } else {
+            volumeFactor = currentValue;
+        }
+
+        // === Logging de Diagnostic Ajouté ===
+        console.log(`-- calculateHPPerSet Debug --`);
+        console.log(`  Step: ${exerciseName}`);
+        console.log(`  isDuration: ${isDurationBased}, currentValue: ${currentValue}`);
+        console.log(`  baseEq: "${baseEquipment}", addedEq: ${JSON.stringify(addedEquipment)}`);
+        console.log(`  Efficacy: ${efficacy}`);
+        console.log(`  EffectiveLoad: ${effectiveLoad}`); // <= Vérifiez cette valeur !
+        console.log(`  EffortFactor: ${effortFactor}`);
+        console.log(`  VolumeFactor: ${volumeFactor}`);
+        // =====================================
+
+        if (efficacy <= 0 || effectiveLoad <= 0 || volumeFactor <= 0 || effortFactor <= 0) {
+             console.warn(`!!!! FACTEUR INVALID OU ZERO !!!! calculateHPPerSet: Factor invalide pour ${step.name}. Efficacy: ${efficacy}, Load: ${effectiveLoad}, Volume: ${volumeFactor}, Effort: ${effortFactor}`);
+             return 0; // <-- Vérifiez si ce return est atteint
+        }
+        const hp = efficacy * effectiveLoad * volumeFactor * effortFactor;
+        console.log(`  ===> Calculated HP per Set: ${hp.toFixed(1)}`); // <-- Vérifiez cette valeur
+        return hp;
+    }
+
     function mapExerciseToMuscleGroup(name) {
         if (!name) return [];
-        // Nettoyage moins agressif pour garder les détails importants
         const cleanedName = name.trim();
         const l = cleanedName.toLowerCase();
-
-        // --- Mapping V7.2 (Priorité aux noms spécifiques) ---
+        // --- Mapping V7.2 ---
         if (l.includes('push-ups') || l.includes('push up') || l.includes('floor press') || l.includes('chest press') || l.includes('écarté')) return [ { group: 'Pectoraux', weight: 0.60 }, { group: 'Triceps', weight: 0.25 }, { group: 'Épaules', weight: 0.15 } ];
         if (l.includes('overhead press') || l.includes('développé militaire') || l.includes('shoulder press')) return [ { group: 'Épaules', weight: 0.65 }, { group: 'Triceps', weight: 0.30 }, { group: 'Pectoraux', weight: 0.05 } ];
         if (l.includes('lateral raises') || l.includes('élévations latérales')) return [{ group: 'Épaules', weight: 1.0 }];
@@ -468,21 +515,22 @@
         if (l.includes('rowing') || l.includes('bent-over row') || l.includes('tirage horizontal')) return [ { group: 'Dos', weight: 0.65 }, { group: 'Biceps', weight: 0.20 }, { group: 'Épaules', weight: 0.15 } ];
         if (l.includes('lat pulldown') || l.includes('tirage vertical') || l.includes('tractions') || l.includes('pull up') || l.includes('chin up')) return [ { group: 'Dos', weight: 0.70 }, { group: 'Biceps', weight: 0.25 }, { group: 'Épaules', weight: 0.05 } ];
         if (l.includes('face pull')) return [ { group: 'Épaules', weight: 0.60 }, { group: 'Dos', weight: 0.40 } ];
-        if (l.includes('hammer curl')) return [{ group: 'Biceps', weight: 1.0 }]; // Priorité Hammer
-        if (l.includes('biceps curl')) return [{ group: 'Biceps', weight: 1.0 }]; // Priorité Biceps
-        if (l.includes('goblet squat') || l.includes('front squat')) return [{ group: 'Legs', weight: 1.0 }]; // Focus Quad/Glutes
-        if (l.includes('romanian deadlift') || l.includes('rdl')) return [{ group: 'Legs', weight: 1.0 }]; // Focus Hamstrings/Glutes
-        if (l.includes('lunges') || l.includes('fentes')) return [{ group: 'Legs', weight: 1.0 }]; // Jambes globales
-        if (l.includes('calf raises') || l.includes('mollets')) return [{ group: 'Legs', weight: 1.0 }]; // Mollets -> Legs
+        if (l.includes('hammer curl')) return [{ group: 'Biceps', weight: 1.0 }];
+        if (l.includes('biceps curl')) return [{ group: 'Biceps', weight: 1.0 }];
+        if (l.includes('goblet squat') || l.includes('front squat')) return [{ group: 'Legs', weight: 1.0 }];
+        if (l.includes('romanian deadlift') || l.includes('rdl')) return [{ group: 'Legs', weight: 1.0 }];
+        if (l.includes('lunges') || l.includes('fentes')) return [{ group: 'Legs', weight: 1.0 }];
+        if (l.includes('calf raises') || l.includes('mollets')) return [{ group: 'Legs', weight: 1.0 }];
         if (l.includes('hollow body') || l.includes('gainage') || l.includes('planche')) return [{ group: 'Abdos', weight: 1.0 }];
         if (l.includes('crunch') || l.includes('sit-up') || l.includes('abdos')) return [{ group: 'Abdos', weight: 1.0 }];
         if (l.includes('leg raises') || l.includes('relevé de jambes')) return [{ group: 'Abdos', weight: 1.0 }];
-
-        console.warn(`Mapping muscle PONDÉRÉ v7.2 non trouvé pour: "${name}" (nettoyé en "${cleanedName}"). Aucun HP attribué.`);
+        // console.warn(`Mapping muscle PONDÉRÉ v7.3 non trouvé pour: "${name}" (nettoyé en "${cleanedName}"). Aucun HP attribué.`);
         return [];
     }
+
+    // ** AJOUT DE LOGGING DIAGNOSTIC ICI **
     function analyzeProgramsAndCalculateHPS() {
-        console.log("Analyse programmes & calcul HPS (v7.2)...");
+        console.log("Analyse programmes & calcul HPS (v7.3)...");
         const groupData = {};
         ALL_MUSCLE_GROUPS_CALCULATED.forEach(g => { groupData[g] = { totalHP: 0 }; });
         currentHPSValues = {};
@@ -499,12 +547,17 @@
 
         PROGRAM_TYPES.forEach(type => {
             const program = loadedPrograms[type];
-            if (!program || !Array.isArray(program) || program.length === 0) return;
+            if (!program || !Array.isArray(program) || program.length === 0) {
+                console.log(`Programme ${type} vide ou invalide, skip.`);
+                return;
+            }
+            console.log(`--- Analyse Programme: ${type} ---`);
             let currentBlock = { stepRef: null, setCount: 0 };
 
-            function processCurrentBlock() {
+            function processCurrentBlock() { // Defined INSIDE the loop - scope ok
                 if (currentBlock.stepRef && currentBlock.setCount > 0) {
-                    const hpPerSet = calculateHPPerSet(currentBlock.stepRef);
+                    console.log(`>>> Processing block: ${currentBlock.stepRef.name}, Sets: ${currentBlock.setCount}`); // LOG BLOC
+                    const hpPerSet = calculateHPPerSet(currentBlock.stepRef); // Appel avec logs internes
                     if (hpPerSet > 0) {
                         const muscleContributions = mapExerciseToMuscleGroup(currentBlock.stepRef.name);
                         if (muscleContributions.length > 0) {
@@ -513,42 +566,60 @@
                                 const weight = contribution.weight;
                                 if (groupData[groupName] && weight > 0) {
                                     const weightedHpContribution = hpPerSet * weight;
-                                    groupData[groupName].totalHP += weightedHpContribution * currentBlock.setCount;
+                                    const totalBlockContribution = weightedHpContribution * currentBlock.setCount;
+                                    console.log(`    -> Adding to ${groupName}: HP/Set=${hpPerSet.toFixed(1)}, Weight=${weight}, Sets=${currentBlock.setCount} => +${totalBlockContribution.toFixed(1)} TotalHP`); // LOG CONTRIBUTION
+                                    groupData[groupName].totalHP += totalBlockContribution;
                                 }
                             });
+                        } else {
+                            console.warn(`Pas de mapping muscle trouvé pour ${currentBlock.stepRef.name} dans processCurrentBlock.`);
                         }
+                    } else {
+                         console.warn(`HP per Set calculé à 0 pour ${currentBlock.stepRef.name}, aucune contribution ajoutée.`);
                     }
                 }
+                // Reset block for next exercise/break
                 currentBlock = { stepRef: null, setCount: 0 };
             }
 
+
             program.forEach((step, index) => {
-                // Regroupement des séries consécutives du *même exercice*
                 if (step.type === 'exercise' && step.name) {
-                    if (currentBlock.stepRef && step.name === currentBlock.stepRef.name) {
-                         currentBlock.setCount++;
-                         currentBlock.stepRef = step; // Utiliser les détails de la dernière série pour le calcul
+                     // Si le bloc courant est vide OU si le nom de l'exercice est différent
+                    if (!currentBlock.stepRef || step.name !== currentBlock.stepRef.name) {
+                        processCurrentBlock(); // Traiter le bloc précédent s'il existe
+                        currentBlock.stepRef = step; // Commencer un nouveau bloc
+                        currentBlock.setCount = 1;
+                        console.log(`    New block started: ${step.name}`);
                     } else {
-                         processCurrentBlock(); // Traiter le bloc précédent
-                         currentBlock.stepRef = step;
-                         currentBlock.setCount = 1; // Commencer un nouveau bloc
+                        // Même exercice, incrémenter le compteur de séries
+                        currentBlock.setCount++;
+                         currentBlock.stepRef = step; // Mettre à jour avec les détails de la dernière série (pour effort factor)
+                        console.log(`    Set ${currentBlock.setCount} for: ${step.name}`);
                     }
                 } else {
-                     processCurrentBlock(); // Traiter le bloc d'exercice avant un repos/autre
+                     // Si ce n'est pas un exercice (ex: repos), traiter le bloc d'exercice précédent
+                     processCurrentBlock();
+                     console.log(`    Processing break/other step: ${step.name || step.type}`);
                 }
+
+                // Traiter le tout dernier bloc à la fin du programme
                 if(index === program.length - 1) {
-                     processCurrentBlock(); // Traiter le dernier bloc
+                    console.log(`    End of program ${type}, processing final block.`);
+                    processCurrentBlock();
                 }
             });
+             console.log(`--- Fin Analyse Programme: ${type} ---`);
         });
 
 
         console.log("HP calculation loops finished. Finalizing scores...");
         let totalWeightedHPSOverall = 0; let totalWeightOverall = 0;
-        console.log("Final groupData before HPS calculation:", JSON.parse(JSON.stringify(groupData)));
+        // ** LOG AJOUTÉ ** : Afficher groupData AVANT la transformation log
+        console.log("!!! Final groupData AVANT transformation HPS:", JSON.parse(JSON.stringify(groupData)));
 
         ALL_MUSCLE_GROUPS_CALCULATED.forEach(g => {
-            const totalHP = groupData[g]?.totalHP || 0;
+            const totalHP = groupData[g]?.totalHP || 0; // Utiliser le totalHP accumulé
             let hps = HPS_BASE;
             const referenceHP = HP_REFERENCE_GLOBAL; const kLogFactor = K_LOG;
             if (totalHP > 0 && referenceHP > 0 && kLogFactor > 0) {
@@ -556,7 +627,7 @@
                 hps = kLogFactor * Math.log10(1 + ratioFactor);
             }
             currentHPSValues[g] = Math.round(Math.max(0, hps));
-            console.log(` -> HPS Calcul FINAL [${g}]: TotalHP=${totalHP.toFixed(1)}, HPS=${currentHPSValues[g]}`);
+            // console.log(` -> HPS Calcul FINAL [${g}]: TotalHP=${totalHP.toFixed(1)}, HPS=${currentHPSValues[g]}`);
 
             if (MUSCLE_GROUPS_FOR_GLOBAL_HPS.includes(g)) {
                 const weight = WEIGHTS_GLOBAL_HPS[g] || 0;
@@ -568,16 +639,16 @@
         });
         overallAvgHPS = totalWeightOverall > 0 ? Math.round(totalWeightedHPSOverall / totalWeightOverall) : HPS_BASE;
         overallAvgHPS = Math.max(0, overallAvgHPS);
-        console.log(`HPS Global V7.2: ${overallAvgHPS} (Préc localStorage: ${previousOverallAvgHPS ?? 'N/A'})`);
-        console.log("HPS Groupes V7.2 Actuels:", currentHPSValues);
+        console.log(`HPS Global V7.3: ${overallAvgHPS} (Préc localStorage: ${previousOverallAvgHPS ?? 'N/A'})`);
+        console.log("HPS Groupes V7.3 Actuels:", currentHPSValues);
         console.log("HPS Groupes Précédents (avant ce calcul):", previousHPSValues);
         saveCurrentHPSToLocalStorage(); // Sauvegarde après calcul
     }
     function getHPSLevelKey(hpsScore) { for (let i = LEVEL_ORDER.length - 1; i >= 0; i--) { const key = LEVEL_ORDER[i]; if (TARGET_LEVELS[key] && hpsScore >= TARGET_LEVELS[key].minHPS) { return key; } } return LEVEL_ORDER[0]; }
     function getHPSLevelAndSubLevel(hpsScore) { const levelKey = getHPSLevelKey(hpsScore); const level = TARGET_LEVELS[levelKey]; const levelIndex = LEVEL_ORDER.indexOf(levelKey); let subLevelNumeral = ''; if (levelIndex < LEVEL_ORDER.length - 1) { const nextLevelKey = LEVEL_ORDER[levelIndex + 1]; const nextLevel = TARGET_LEVELS[nextLevelKey]; const minHPSCurrent = level.minHPS; const minHPSNext = nextLevel.minHPS; const range = minHPSNext - minHPSCurrent; if (range > 0) { const subLevelStep = range / NUM_SUB_LEVELS; const thresholdII = minHPSCurrent + subLevelStep; const thresholdIII = minHPSCurrent + 2 * subLevelStep; if (hpsScore >= thresholdIII) { subLevelNumeral = 'III'; } else if (hpsScore >= thresholdII) { subLevelNumeral = 'II'; } else { subLevelNumeral = 'I'; } } else { subLevelNumeral = 'I'; } } else { subLevelNumeral = ''; } return { levelKey, level, subLevelNumeral }; }
 
-    // --- Logique Affichage (v7.2) ---
-    function calculateAndDisplayProgression() { console.log("Mise à jour affichage progression (HPS V7.2 - SubLevels)..."); if (!evolutionTrackerArea || !overallHPSDisplayValue || !levelBadge || !targetHPSInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan) { console.error("DOM manquant affichage HPS."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur interne: DOM affichage manquant.</p>'; return; } if (programsAnalysisStatus !== 'pending' && configLoadStatus !== 'pending') { analyzeProgramsAndCalculateHPS(); } else { console.log("Affichage basé sur les données précédentes (si dispo) car chargement incomplet/en cours."); overallAvgHPS = previousOverallAvgHPS ?? HPS_BASE; currentHPSValues = previousHPSValues ?? {}; } const oldGlobalLevelKey = currentGlobalLevelKey; const { levelKey: newGlobalLevelKey, level: currentGlobalLevel, subLevelNumeral: globalSubLevelNumeral } = getHPSLevelAndSubLevel(overallAvgHPS); currentGlobalLevelKey = newGlobalLevelKey; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; const currentDisplayedHPS = parseFloat(overallHPSDisplayValue.textContent.replace(/[^0-9.]/g, '')) || HPS_BASE; animateValue(overallHPSDisplayValue, currentDisplayedHPS, overallAvgHPS, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.innerHTML = `${currentGlobalLevel.name} <span class="sub-level">${globalSubLevelNumeral}</span>`; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetHPSInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minHPS} HPS` : "MAX"; if (marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; const isMarvelAchieved = overallAvgHPS >= marvelBenchmark.targetHPS; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const mI = document.createElement('i'); mI.id = 'marvel-icon'; mI.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; mI.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetHPS} HPS) atteint !`); levelBadgeContainer.appendChild(mI); } } else { if (existingMarvelIcon) existingMarvelIcon.remove(); } } else { marvelTargetInfoSpan.style.display = 'none'; } if (previousOverallAvgHPS !== null && currentGlobalLevelKey !== oldGlobalLevelKey) { const currentLevelThreshold = TARGET_LEVELS[currentGlobalLevelKey].minHPS; if (overallAvgHPS >= currentLevelThreshold && previousOverallAvgHPS < currentLevelThreshold) { console.log(`NIVEAU GLOBAL ATTEINT ! ${oldGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } } muscleGroupsContainer.innerHTML = ''; let hasData = false; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentHPSValues[logicGroup] === undefined || !MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { return; } hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentHPS = currentHPSValues[logicGroup]; const { levelKey: muscleLevelKey, level: muscleLevel, subLevelNumeral: muscleSubLevelNumeral } = getHPSLevelAndSubLevel(currentHPS); const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_LEVELS[nextMuscleLevelKey] : null; const minHPSCurrent = muscleLevel.minHPS; const minHPSNext = nextMuscleLevel ? nextMuscleLevel.minHPS : minHPSCurrent; const range = minHPSNext - minHPSCurrent; let progress = 0; if (range > 0) { progress = ((currentHPS - minHPSCurrent) / range) * 100; } else if (currentHPS >= minHPSCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const targetDisplay = nextMuscleLevel ? minHPSNext : "MAX"; const card = renderMuscleGroupCard( logicGroup, displayGroup, config.subtitle, config.icon, currentHPS, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleSubLevelNumeral, muscleLevel.colorVar, muscleLevel.bgVar ); muscleGroupsContainer.appendChild(card); }); if (!hasData && (programsAnalysisStatus !== 'pending' || configLoadStatus !== 'pending')) { const msg = (programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'Erreur chargement données.' : 'Aucune donnée progression.'; muscleGroupsContainer.innerHTML = `<p class="${(programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'error' : 'loading'}-placeholder">${msg}</p>`; } console.log("Affichage progression V7.2 mis à jour."); }
+    // --- Logique Affichage (v7.3) ---
+    function calculateAndDisplayProgression() { console.log("Mise à jour affichage progression (HPS V7.3)..."); if (!evolutionTrackerArea || !overallHPSDisplayValue || !levelBadge || !targetHPSInfoStrong || !muscleGroupsContainer || !levelBadgeContainer || !marvelTargetInfoSpan) { console.error("DOM manquant affichage HPS."); if(muscleGroupsContainer) muscleGroupsContainer.innerHTML = '<p class="error-placeholder">Erreur interne: DOM affichage manquant.</p>'; return; } if (programsAnalysisStatus !== 'pending' && configLoadStatus !== 'pending') { analyzeProgramsAndCalculateHPS(); } else { console.log("Affichage basé sur les données précédentes (si dispo) car chargement incomplet/en cours."); overallAvgHPS = previousOverallAvgHPS ?? HPS_BASE; currentHPSValues = previousHPSValues ?? {}; } const oldGlobalLevelKey = currentGlobalLevelKey; const { levelKey: newGlobalLevelKey, level: currentGlobalLevel, subLevelNumeral: globalSubLevelNumeral } = getHPSLevelAndSubLevel(overallAvgHPS); currentGlobalLevelKey = newGlobalLevelKey; const currentGlobalLevelIndex = LEVEL_ORDER.indexOf(currentGlobalLevelKey); const nextGlobalLevelKey = currentGlobalLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[currentGlobalLevelIndex + 1] : null; const nextGlobalLevel = nextGlobalLevelKey ? TARGET_LEVELS[nextGlobalLevelKey] : null; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; const currentDisplayedHPS = parseFloat(overallHPSDisplayValue.textContent.replace(/[^0-9.]/g, '')) || HPS_BASE; animateValue(overallHPSDisplayValue, currentDisplayedHPS, overallAvgHPS, 700); levelBadgeIcon.className = `fas ${currentGlobalLevel.iconClass}`; levelBadgeText.innerHTML = `${currentGlobalLevel.name} <span class="sub-level">${globalSubLevelNumeral}</span>`; levelBadge.style.color = `var(${currentGlobalLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${currentGlobalLevel.bgVar})`; levelBadge.style.borderColor = `var(${currentGlobalLevel.colorVar})`; levelBadge.setAttribute('data-level-key', currentGlobalLevelKey); targetHPSInfoStrong.textContent = nextGlobalLevel ? `${nextGlobalLevel.minHPS} HPS` : "MAX"; if (marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; const isMarvelAchieved = overallAvgHPS >= marvelBenchmark.targetHPS; const existingMarvelIcon = document.getElementById('marvel-icon'); if (isMarvelAchieved) { if (!existingMarvelIcon) { const mI = document.createElement('i'); mI.id = 'marvel-icon'; mI.className = `fas ${marvelBenchmark.iconClass} marvel-achieved-icon`; mI.setAttribute('title', `Benchmark "${marvelBenchmark.name}" (${marvelBenchmark.targetHPS} HPS) atteint !`); levelBadgeContainer.appendChild(mI); } } else { if (existingMarvelIcon) existingMarvelIcon.remove(); } } else { marvelTargetInfoSpan.style.display = 'none'; } if (previousOverallAvgHPS !== null && currentGlobalLevelKey !== oldGlobalLevelKey) { const currentLevelThreshold = TARGET_LEVELS[currentGlobalLevelKey].minHPS; if (overallAvgHPS >= currentLevelThreshold && previousOverallAvgHPS < currentLevelThreshold) { console.log(`NIVEAU GLOBAL ATTEINT ! ${oldGlobalLevelKey} -> ${currentGlobalLevelKey}`); showMessage(`Félicitations ! Niveau Global ${currentGlobalLevel.name} atteint !`, 5000, 'success'); playSound('level_up', 0.2); const card = document.querySelector('.global-stats-card'); if (card) { card.style.animation = 'levelUpGlow 1.5s ease-out'; setTimeout(() => { card.style.animation = ''; }, 1500); } } } muscleGroupsContainer.innerHTML = ''; let hasData = false; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (!logicGroup || currentHPSValues[logicGroup] === undefined || !MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { return; } hasData = true; const config = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]; const currentHPS = currentHPSValues[logicGroup]; const { levelKey: muscleLevelKey, level: muscleLevel, subLevelNumeral: muscleSubLevelNumeral } = getHPSLevelAndSubLevel(currentHPS); const muscleLevelIndex = LEVEL_ORDER.indexOf(muscleLevelKey); const nextMuscleLevelKey = muscleLevelIndex < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[muscleLevelIndex + 1] : null; const nextMuscleLevel = nextMuscleLevelKey ? TARGET_LEVELS[nextMuscleLevelKey] : null; const minHPSCurrent = muscleLevel.minHPS; const minHPSNext = nextMuscleLevel ? nextMuscleLevel.minHPS : minHPSCurrent; const range = minHPSNext - minHPSCurrent; let progress = 0; if (range > 0) { progress = ((currentHPS - minHPSCurrent) / range) * 100; } else if (currentHPS >= minHPSCurrent) { progress = 100; } const displayPercent = Math.max(0, Math.min(100, Math.round(progress))); const targetDisplay = nextMuscleLevel ? minHPSNext : "MAX"; const card = renderMuscleGroupCard( logicGroup, displayGroup, config.subtitle, config.icon, currentHPS, targetDisplay, displayPercent, muscleLevelKey, muscleLevel.name, muscleSubLevelNumeral, muscleLevel.colorVar, muscleLevel.bgVar ); muscleGroupsContainer.appendChild(card); }); if (!hasData && (programsAnalysisStatus !== 'pending' || configLoadStatus !== 'pending')) { const msg = (programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'Erreur chargement données.' : 'Aucune donnée progression.'; muscleGroupsContainer.innerHTML = `<p class="${(programsAnalysisStatus === 'error' || configLoadStatus === 'error') ? 'error' : 'loading'}-placeholder">${msg}</p>`; } console.log("Affichage progression V7.3 mis à jour."); }
     function renderMuscleGroupCard(logicGroupKey, title, subtitle, iconClass, currentHPS, targetHPSNextMin, displayPercent, currentLevelKey, currentLevelName, currentSubLevelNumeral, currentLevelColorVar, currentLevelBgVar ) { const card = document.createElement('div'); card.className = 'muscle-group-card'; card.setAttribute('title', `${title} (${subtitle}) - Niveau: ${currentLevelName} ${currentSubLevelNumeral} - HPS: ${currentHPS} / ${targetHPSNextMin}. Progression: ${displayPercent}%.`); let levelProgressionHtml = '<div class="muscle-level-progression">'; let currentLevelFillWidth = '0%'; let currentLevelPosition = 0; LEVEL_ORDER.forEach((levelKey, index) => { const level = TARGET_LEVELS[levelKey]; if (!level) return; const basePosition = (index / (LEVEL_ORDER.length -1)) * 100; const adjustedPosition = 5 + (basePosition * 0.9); let indicatorClass = 'level-indicator'; let indicatorStyle = `left: ${adjustedPosition}%; border-color: var(${level.colorVar});`; let boxShadowStyle = `box-shadow: 0 0 10px var(${level.colorVar});`; if (levelKey === currentLevelKey) { indicatorClass += ' current'; indicatorStyle += boxShadowStyle; currentLevelPosition = adjustedPosition; const nextLevelIndex = index + 1; let endPos = 100; if (nextLevelIndex < LEVEL_ORDER.length) { const nextBasePos = (nextLevelIndex / (LEVEL_ORDER.length -1)) * 100; endPos = 5 + (nextBasePos * 0.9); } const segmentWidthPercent = endPos - currentLevelPosition; const fillWidthFromStart = currentLevelPosition + (segmentWidthPercent * (displayPercent / 100)); currentLevelFillWidth = `${fillWidthFromStart}%`; } levelProgressionHtml += `<div class="${indicatorClass}" style="${indicatorStyle}" data-level-key="${levelKey}" title="${level.name} (Min: ${level.minHPS} HPS)"><i class="fas ${level.iconClass}"></i></div>`; }); levelProgressionHtml = `<div class="current-level-fill" style="width: ${currentLevelFillWidth}; background-color: var(${currentLevelColorVar}); left: 0;"></div>` + levelProgressionHtml; levelProgressionHtml += '</div>'; const percentageBarHtml = ` <div class="percentage-progress-section"> <div class="percentage-bar-container" title="Progression vers ${targetHPSNextMin} HPS: ${displayPercent}%"> <div class="percentage-bar-fill" style="width: 0%;"></div> </div> <span class="percentage-value-text">${displayPercent}%</span> </div>`; card.innerHTML = ` <div class="card-header"> <div class="icon-container"><i class="fas ${iconClass}" aria-hidden="true"></i></div> <div class="title-container"> <div class="group-title">${title}</div> <div class="group-subtitle">${subtitle}</div> <div class="group-level-name" style="color: var(${currentLevelColorVar}); background-color: var(${currentLevelBgVar}); border-color: var(${currentLevelColorVar});"> ${currentLevelName} <span class="sub-level">${currentSubLevelNumeral}</span> </div> </div> <div class="hps-details" title="HPS Actuel / Seuil HPS Niveau Suivant"> <span class="current">${currentHPS}</span> / <span class="target">${targetHPSNextMin}</span> </div> </div> ${levelProgressionHtml} ${percentageBarHtml} `; requestAnimationFrame(() => { setTimeout(() => { const pbFill = card.querySelector('.percentage-bar-fill'); if (pbFill) { pbFill.style.width = `${displayPercent}%`; } }, 50); }); const indicators = card.querySelectorAll('.level-indicator'); indicators.forEach(indicator => { indicator.addEventListener('click', (e) => { e.stopPropagation(); const key = indicator.getAttribute('data-level-key'); if (key) openLevelInfoModal(key, title); }); }); return card; }
     function resetProgressionDisplay() { console.log("Réinitialisation affichage HPS..."); if (muscleGroupsContainer) { muscleGroupsContainer.innerHTML = `<p class="loading-placeholder">${googleAccessToken ? 'Analyse...' : 'Connectez-vous...'}</p>`; } if (overallHPSDisplayValue) overallHPSDisplayValue.textContent = '--'; const firstLevelKey = LEVEL_ORDER[0]; const baseLevel = TARGET_LEVELS[firstLevelKey]; if (levelBadge && baseLevel) { levelBadgeIcon.className = `fas ${baseLevel.iconClass}`; levelBadgeText.innerHTML = `${baseLevel.name}`; levelBadge.style.color = `var(${baseLevel.colorVar})`; levelBadge.style.backgroundColor = `var(${baseLevel.bgVar})`; levelBadge.style.borderColor = `var(${baseLevel.colorVar})`; levelBadge.setAttribute('data-level-key', firstLevelKey); } const secondLevelKey = LEVEL_ORDER.length > 1 ? LEVEL_ORDER[1] : null; const firstRealLevel = secondLevelKey ? TARGET_LEVELS[secondLevelKey] : null; if (targetHPSInfoStrong) targetHPSInfoStrong.textContent = firstRealLevel ? `${firstRealLevel.minHPS} HPS` : '-- HPS'; const marvelBenchmark = TARGET_LEVELS[MARVEL_BENCHMARK_KEY]; if (marvelTargetInfoSpan && marvelBenchmark) { marvelTargetInfoSpan.innerHTML = ` | Benchmark <strong class="marvel-target">Marvel: ${marvelBenchmark.targetHPS} HPS</strong>`; marvelTargetInfoSpan.style.display = 'inline-block'; } else if (marvelTargetInfoSpan) { marvelTargetInfoSpan.style.display = 'none'; } const existingMarvelIcon = document.getElementById('marvel-icon'); if (existingMarvelIcon) { existingMarvelIcon.remove(); } currentGlobalLevelKey = LEVEL_ORDER[0]; }
 
@@ -587,11 +658,11 @@
 
     // --- Logique Historique ---
     function renderHistoryUI() { if (!historyMuscleGroupSelect || !historyDisplay) return; historyMuscleGroupSelect.innerHTML = '<option value="global">Global</option>'; const displayOrder = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Legs", "Abdos"]; displayOrder.forEach(displayGroup => { const logicGroup = ALL_MUSCLE_GROUPS_CALCULATED.find(key => LOGIC_TO_DISPLAY_MAP[key] === displayGroup); if (logicGroup && MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup]) { const option = document.createElement('option'); option.value = logicGroup; option.textContent = MUSCLE_GROUPS_DISPLAY_CONFIG[displayGroup].subtitle || displayGroup; historyMuscleGroupSelect.appendChild(option); } }); historyMuscleGroupSelect.value = currentHistoryMuscleGroup; historyPeriodBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.period === currentHistoryPeriod); }); displayHistoryTrend(); }
-    function displayHistoryTrend() { if (!historyDisplay) return; console.log(`Affichage historique V7.2 pour: ${currentHistoryMuscleGroup}, Période: ${currentHistoryPeriod}`); const muscleName = currentHistoryMuscleGroup === 'global' ? 'Global' : (MUSCLE_GROUPS_DISPLAY_CONFIG[currentHistoryMuscleGroup]?.subtitle || currentHistoryMuscleGroup); let periodText = 'depuis dernier calcul'; // Simplifié, car pas d'historique long terme
+    function displayHistoryTrend() { if (!historyDisplay) return; console.log(`Affichage historique V7.3 pour: ${currentHistoryMuscleGroup}, Période: ${currentHistoryPeriod}`); const muscleName = currentHistoryMuscleGroup === 'global' ? 'Global' : (MUSCLE_GROUPS_DISPLAY_CONFIG[currentHistoryMuscleGroup]?.subtitle || currentHistoryMuscleGroup); let periodText = 'depuis dernier calcul'; // Simplifié
         const currentVal = currentHistoryMuscleGroup === 'global' ? overallAvgHPS : (currentHPSValues[currentHistoryMuscleGroup] ?? undefined); const previousVal = currentHistoryMuscleGroup === 'global' ? previousOverallAvgHPS : (previousHPSValues[currentHistoryMuscleGroup] ?? undefined);
         if (previousVal === undefined || previousVal === null || currentVal === undefined) { historyDisplay.innerHTML = `<p>Tendance HPS pour <strong>${muscleName}</strong> (${periodText}) :</p><p style="margin-top: 10px;"><span class="trend-value trend-neutral">N/A</span></p><p style="font-size: 0.8em; margin-top: 15px;">(Calcul initial ou pas de données précédentes)</p>`; return; } const diffAbs = currentVal - previousVal; const diffPerc = previousVal !== 0 ? (diffAbs / previousVal) * 100 : (currentVal > 0 ? Infinity : 0); const trendClass = diffAbs > 0.5 ? 'trend-positive' : (diffAbs < -0.5 ? 'trend-negative' : 'trend-neutral'); const sign = diffAbs > 0.5 ? '+' : ''; const formattedDiffPerc = diffPerc === Infinity ? '∞' : diffPerc.toFixed(1); historyDisplay.innerHTML = ` <p>Tendance HPS pour <strong>${muscleName}</strong> (${periodText}) :</p> <p style="margin-top: 10px;"> <span class="trend-value ${trendClass}">${sign}${diffAbs.toFixed(0)} HPS</span> ${previousVal !== 0 ? `(<span class="trend-value ${trendClass}">${sign}${formattedDiffPerc}%</span>)` : ''} </p> <p style="font-size: 0.8em; margin-top: 15px;">(${previousVal ?? 'N/A'} HPS -> ${currentVal} HPS)</p> `; }
     function handleHistorySelectionChange() { currentHistoryMuscleGroup = historyMuscleGroupSelect.value; displayHistoryTrend(); }
-    function handleHistoryPeriodChange(event) { const targetButton = event.target.closest('.history-period-btn'); if (!targetButton) return; currentHistoryPeriod = targetButton.dataset.period; // Note: Cette période n'affecte pas le calcul actuel (simple diff)
+    function handleHistoryPeriodChange(event) { const targetButton = event.target.closest('.history-period-btn'); if (!targetButton) return; currentHistoryPeriod = targetButton.dataset.period;
         historyPeriodBtns.forEach(btn => btn.classList.remove('active')); targetButton.classList.add('active'); displayHistoryTrend(); }
     function resetHistoryUI() { if(historyDisplay) historyDisplay.innerHTML = '<p>Connectez-vous pour voir l\'historique.</p>'; if(historyMuscleGroupSelect) historyMuscleGroupSelect.innerHTML = '<option value="global">Global</option>'; currentHistoryMuscleGroup = 'global'; currentHistoryPeriod = 'week'; if(historyPeriodBtns) historyPeriodBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.period === currentHistoryPeriod)); }
 
@@ -609,17 +680,8 @@
     function animateValue(el, start, end, duration) { if (!el) return; const fixedEnd = Math.round(end); const fixedStart = Math.round(start); if (fixedStart === fixedEnd) { el.textContent = fixedEnd; return; } const range = fixedEnd - fixedStart; if (range === 0) { el.textContent = fixedEnd; return; } let current = fixedStart; const increment = fixedEnd > fixedStart ? 1 : -1; const stepTime = Math.max(1, Math.min(50, Math.abs(Math.floor(duration / range)))); const timer = setInterval(() => { current += increment * Math.max(1, Math.round(Math.abs(fixedEnd - current) / 10)); if ((increment > 0 && current >= fixedEnd) || (increment < 0 && current <= fixedEnd)) { current = fixedEnd; clearInterval(timer); } el.textContent = current; }, stepTime); }
     function updateAuthUI(isLoggedIn) { console.log(`Update UI - Connecté: ${isLoggedIn}, GIS prêt: ${!!tokenClient}`); const b = document.body; b.classList.toggle('logged-in', isLoggedIn); b.classList.toggle('logged-out', !isLoggedIn); if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; navButtons.forEach(btn => { btn.disabled = !isLoggedIn; if (isLoggedIn) { btn.style.display = 'inline-flex'; } else { btn.style.display = 'none'; }}); if (isLoggedIn) { switchTab(document.querySelector('.nav-button.active')?.dataset.section || 'evolution-tracker-area'); } else { appSections.forEach(sec => sec.style.display = 'none'); } if (!isLoggedIn) { programsAnalysisStatus = 'pending'; configLoadStatus = 'pending'; resetProgressionDisplay(); resetConfigUI(); resetHistoryUI(); } }
     function applyTheme(theme) { document.body.classList.remove('light-theme', 'dark-theme'); document.body.classList.add(theme + '-theme'); currentTheme = theme; localStorage.setItem('armorWorkoutTheme', theme); if (themeToggleBtn) { const i = themeToggleBtn.querySelector('i'); if (i) i.className = `fas fa-${theme === 'dark' ? 'sun' : 'moon'}`; themeToggleBtn.setAttribute('aria-label', `Passer au thème ${theme === 'dark' ? 'clair' : 'sombre'}`); } console.log(`Thème appliqué: ${theme}`); }
-    function toggleTheme() { // Forcer le thème sombre pour l'instant
-        applyTheme('dark');
-        showMessage("Thème clair non disponible pour le moment.", 2000, 'info');
-        // playSound('confirm'); // Optionnel
-    }
-    function loadSavedTheme() {
-        // Toujours forcer le thème sombre au chargement
-        applyTheme('dark');
-        // const savedTheme = localStorage.getItem('armorWorkoutTheme') || 'dark';
-        // applyTheme(savedTheme);
-    }
+    function toggleTheme() { applyTheme('dark'); showMessage("Thème clair non disponible pour le moment.", 2000, 'info'); }
+    function loadSavedTheme() { applyTheme('dark'); }
     function showMessage(msg, duration = 3000, type = 'info') { if (!messageArea) return; messageArea.textContent = msg; messageArea.className = `message-area ${type} visible`; if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); setTimeout(() => { if (!messageArea.classList.contains('visible')) { messageArea.className = 'message-area'; } }, 500); }, duration); }
 
     // --- Gestion Navigation ---
@@ -633,7 +695,6 @@
             targetSection.style.flexDirection = 'column';
         } else {
             console.error("Section cible non trouvée:", targetSectionId);
-            // Fallback vers la première section si la cible n'existe pas
             const firstSection = document.querySelector('.app-section');
              if(firstSection) {
                 firstSection.style.display = 'flex';
@@ -641,14 +702,11 @@
                 targetSectionId = firstSection.id;
              }
         }
-        // Mettre à jour l'état actif des boutons de navigation
         navButtons.forEach(btn => { btn.classList.toggle('active', btn.dataset.section === targetSectionId); });
-
-        // Actions spécifiques à l'onglet activé
         if (targetSectionId === 'program-config-area') {
-            renderProgramConfigUI(); // Mettre à jour l'UI de config si elle est affichée
+            renderProgramConfigUI();
         } else if (targetSectionId === 'history-area') {
-            renderHistoryUI(); // Mettre à jour l'UI de l'historique si elle est affichée
+            renderHistoryUI();
         }
     }
 
@@ -658,17 +716,17 @@
 
     // --- Point d'entrée ---
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM Chargé. Init HPS System v7.2...");
+        console.log("DOM Chargé. Init HPS System v7.3...");
         try {
             if (!initializeDOMReferences()) return;
             addEventListeners();
-            loadSavedTheme(); // Appliquer thème sombre
-            loadPreviousHPSFromLocalStorage(); // Charger avant la première UI update
-            updateAuthUI(false); // Init état déconnecté
-            resetProgressionDisplay(); // Afficher état initial HPS
-            resetConfigUI(); // Afficher état initial Config
-            resetHistoryUI(); // Afficher état initial Historique
-            checkAndInitGis(); // Lancer init Google
+            loadSavedTheme();
+            loadPreviousHPSFromLocalStorage();
+            updateAuthUI(false);
+            resetProgressionDisplay();
+            resetConfigUI();
+            resetHistoryUI();
+            checkAndInitGis();
             console.log("Init terminée. Attente API Google & utilisateur...");
         } catch (error) {
             console.error("Erreur Init DOMContentLoaded:", error);
