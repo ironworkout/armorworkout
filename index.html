@@ -22,6 +22,31 @@
             --neon-blue: #58a6ff; --neon-pink: #f778ba; --neon-red: #ff7b72; --neon-yellow: #facc15; --neon-green: #3fb950; --neon-purple: #bc8cff; --neon-orange: #f9a825; /* Ajout Orange */
             /* Glows (Thème Sombre) */
             --glow-blue: 0 0 12px rgba(88, 166, 255, 0.6); --glow-pink: 0 0 12px rgba(247, 120, 186, 0.6); --glow-red: 0 0 10px rgba(255, 123, 114, 0.6); --glow-yellow: 0 0 10px rgba(250, 204, 21, 0.5); --glow-green: 0 0 10px rgba(63, 185, 80, 0.6); --glow-purple: 0 0 12px rgba(188, 140, 255, 0.6); --glow-orange: 0 0 10px rgba(249, 168, 37, 0.6); /* Ajout Orange */
+            /* --- Variables CSS ajoutées --- */
+            /* Couleurs du réacteur Arc */
+            --reactor-glow: rgba(0, 200, 255, 0.8); /* Cyan glow principal */
+            --reactor-core: rgba(0, 229, 255, 1);   /* Cyan brillant pour le coeur */
+            --reactor-ring: rgba(0, 200, 255, 0.5);   /* Cyan semi-transparent pour anneaux */
+            --reactor-segment: rgba(0, 200, 255, 0.3); /* Cyan très transparent pour segments */
+
+            /* Couleurs par état (pour JS) */
+            --exercise-color-val: var(--neon-pink); /* Utilise les couleurs néon existantes */
+            --break-color-val: var(--neon-yellow);
+            --paused-color-val: var(--neon-purple);
+            --finished-color-val: var(--neon-green);
+            --preparing-color-val: var(--neon-yellow);
+            --idle-color-val: var(--neon-cyan); /* Cyan pour l'état idle */
+
+            /* Variables RGB pour les états (utilisées dans le JS pour text-shadow etc.) */
+            --exercise-color-rgb: var(--neon-pink-rgb);
+            --break-color-rgb: var(--neon-yellow-rgb);
+            --paused-color-rgb: var(--neon-purple-rgb);
+            --finished-color-rgb: var(--neon-green-rgb);
+            --preparing-color-rgb: var(--neon-yellow-rgb);
+            --idle-color-rgb: var(--neon-cyan-rgb);
+/* --- Fin des variables CSS ajoutées --- */
+
+            
             /* Couleurs spécifiques aux états/types */
             --color-exercise: var(--neon-pink); --glow-exercise: var(--glow-pink); --color-exercise-rgb: 247, 120, 186; --icon-exercise: "\f44b"; /* fa-dumbbell */
             --color-break: var(--neon-yellow); --glow-break: var(--glow-yellow); --color-break-rgb: 250, 204, 21; --icon-break: "\f252"; /* fa-hourglass-half */
@@ -251,41 +276,107 @@ body.workout-active main {
              border: none !important;
          }
 
+/* --- Nouveaux Styles CSS du Timer Réacteur --- */
 
-        /* --- Affichage Timer --- */
-        .timer-display { margin-bottom: 50px; position: relative; display: flex; justify-content: center; align-items: center; width: 320px; height: 320px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .timer-circle-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; pointer-events: none; }
-        #total-progress-circle, .timer-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 12px solid transparent; background-clip: padding-box; background-origin: border-box; box-sizing: border-box; }
-        #total-progress-circle {
-            border-color: var(--total-progress-bg);
-            background: var(--total-progress-gradient, var(--total-progress-bg)); /* Utilise la variable JS */
-            box-shadow: 0 0 25px rgba(var(--neon-blue-rgb), 0.3), 0 0 35px rgba(var(--neon-pink-rgb), 0.2), inset 0 0 20px rgba(var(--bg-color-dark-rgb), 0.5);
-            z-index: 1; transition: background 0.3s linear;
-        }
-        .timer-circle {
-            width: calc(100% - 48px); height: calc(100% - 48px); top: 24px; left: 24px;
-            border-color: var(--border-color);
-            background-image: conic-gradient(var(--current-step-color, var(--color-idle)) 0%, transparent 0%); /* Progression étape actuelle */
-            box-shadow: var(--current-step-glow, var(--glow-idle)), inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6);
-            z-index: 3; transition: background-image 0.15s linear, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
-            background-size: 100% 100%; background-repeat: no-repeat; background-position: center center;
-        }
-        .timer-circle::before { /* Cache interne pour masquer la progression */
-             content: ''; position: absolute; width: calc(100% - 24px); height: calc(100% - 24px); background-color: var(--bg-color); border-radius: 50%; z-index: 4; transition: background-color var(--transition-speed) ease;
-        }
-        .time-left { font-size: 5.5em; font-weight: 900; color: var(--primary-text-color); z-index: 5; transition: color var(--transition-speed) ease; font-variant-numeric: tabular-nums; position: relative; text-shadow: 0 0 10px rgba(var(--primary-text-color-dark-rgb), 0.3); }
+/* Assurez-vous que le conteneur principal centre bien */
+.timer-circle-container {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+}
 
-        .timer-state {
-            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); font-size: 0.9em; letter-spacing: 0.08em;
-            color: var(--current-step-color, var(--color-idle));
-            font-weight: 500; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease, color var(--transition-speed) ease;
-            background-color: transparent; padding: 0; box-shadow: none; z-index: 6;
-            text-shadow: 0 0 8px rgba(var(--bg-color-dark-rgb), 0.7);
-        }
-        .timer-state.visible { opacity: 0.9; }
-        .timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
-        @keyframes countdown-pulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; } 50% { transform: translateX(-50%) scale(1.05); opacity: 0.85; } }
+/* Progression Totale (Style peu changé, juste z-index et opacité) */
+#total-progress-circle {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+    padding: 6px; background: var(--total-progress-bg); background-clip: content-box;
+    border: 6px solid transparent;
+    background-image: conic-gradient(var(--total-progress-color) 0%, var(--total-progress-color) 0%, var(--total-progress-bg) 0%, var(--total-progress-bg) 100%);
+    background-origin: border-box;
+    box-shadow: inset 0 0 15px rgba(var(--bg-color-dark-rgb), 0.6), 0 0 20px rgba(var(--neon-blue-rgb), 0.3);
+    z-index: 0; /* Derrière le réacteur */
+    transition: background-image 0.3s linear;
+    opacity: 0.5; /* Moins visible */
+}
 
+/* Nouveau Style Réacteur Principal */
+.timer-circle {
+  position: relative;
+  width: 100%; height: 100%; border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(var(--idle-color-rgb, 34, 211, 238), 0.1) 0%, rgba(0, 0, 0, 0) 70%); /* Fond subtil basé sur idle */
+  /* L'ombre principale sera gérée par JS via --reactor-glow-current */
+  --reactor-glow-current: 0 0 60px var(--reactor-glow); /* Variable pour le glow actuel */
+  box-shadow: var(--reactor-glow-current);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1;
+  transition: box-shadow var(--transition-speed) ease;
+}
+
+/* Coeur */
+.reactor-core {
+    position: absolute; width: 25%; height: 25%;
+    background-color: var(--reactor-core);
+    border-radius: 50%;
+    box-shadow: 0 0 15px 5px var(--reactor-core), 0 0 30px 10px var(--reactor-glow);
+    animation: pulse-core 2s infinite ease-in-out;
+    z-index: 3;
+}
+@keyframes pulse-core { 0%, 100% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } }
+
+/* Anneaux */
+.reactor-ring {
+  position: absolute; border-radius: 50%;
+  border: 2px solid var(--reactor-ring);
+  /* Utilisation de la variable --reactor-ring pour l'ombre aussi */
+  box-shadow: 0 0 10px var(--reactor-ring);
+  z-index: 2;
+}
+
+/* Segments rotatifs */
+.reactor-segments {
+  position: absolute; width: 100%; height: 100%;
+  border-radius: 50%; overflow: hidden; z-index: 1;
+}
+.reactor-segments::before, .reactor-segments::after {
+    content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--reactor-segment); border-right-color: var(--reactor-segment);
+    box-shadow: 0 0 8px var(--reactor-segment);
+}
+.outer-segments::before, .outer-segments::after { top: -1px; left: -1px; width: calc(100% + 2px); height: calc(100% + 2px); }
+.inner-segments::before, .inner-segments::after { top: 12%; left: 12%; width: 76%; height: 76%; border-width: 2px; }
+.outer-segments::before { animation: rotateSegments 20s linear infinite; }
+.outer-segments::after { animation: rotateSegments 20s linear infinite; transform: rotate(180deg); }
+.inner-segments::before { animation: rotateSegments 15s linear infinite reverse; }
+.inner-segments::after { animation: rotateSegments 15s linear infinite reverse; transform: rotate(180deg); }
+@keyframes rotateSegments { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Affichage du temps (remplace .time-left) */
+.time-display {
+    font-family: var(--font-family-timer); font-size: 4.5em; font-weight: 700;
+    /* La couleur sera gérée par JS via --current-timer-color */
+    --current-timer-color: var(--idle-color-val); /* Couleur idle par défaut */
+    --current-timer-glow: 0 0 10px var(--idle-color-val); /* Glow idle par défaut */
+    color: var(--current-timer-color);
+    z-index: 4;
+    transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
+    text-shadow: var(--current-timer-glow);
+    position: relative; /* Nécessaire pour être au-dessus des couches */
+}
+
+/* État du timer (style peu changé, mais utilise couleur JS) */
+.timer-state {
+    position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); font-size: 0.9em; letter-spacing: 0.1em;
+    /* La couleur sera gérée par JS via --current-timer-color */
+    color: var(--current-timer-color);
+    font-weight: 500; text-transform: uppercase; opacity: 0; transition: opacity 0.3s ease, color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
+    background-color: transparent; padding: 0; box-shadow: none; z-index: 11;
+    /* Le text-shadow sera géré par JS via --current-timer-glow */
+    text-shadow: var(--current-timer-glow);
+}
+.timer-state.visible { opacity: 0.9; }
+.timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
+@keyframes countdown-pulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; } 50% { transform: translateX(-50%) scale(1.05); opacity: 0.85; } }
+
+/* --- Fin Nouveaux Styles CSS --- */
         /* --- Rep Adjustment Overlay --- */
         .rep-adjustment-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -680,13 +771,37 @@ body.workout-active main {
         <!-- Section Entraînement -->
         <div class="workout-section app-section" id="workout-section"> <!-- Ajout app-section -->
             <div class="timer-display" id="timer-display-clickable" aria-label="Affichage du timer - Cliquer pour ajuster les répétitions">
-                <div class="timer-circle-container">
-                    <div id="total-progress-circle" aria-hidden="true"></div>
-                    <div class="timer-circle" id="timer-circle" aria-hidden="true">
-                        <span class="time-left" id="time-left">00:00</span>
-                    </div>
-                </div>
-                <div class="timer-state" id="timer-state" aria-live="polite"></div>
+                <!-- CONTENU À INSÉRER À L'INTÉRIEUR DE <div class="timer-display" id="timer-display-clickable"> -->
+
+    <div class="timer-circle-container">
+        <!-- Progression totale (gardée, mais derrière) -->
+        <div id="total-progress-circle" aria-hidden="true"></div>
+        <!-- Structure principale du réacteur -->
+        <div class="timer-circle" id="timer-circle" aria-hidden="true">
+          <div class="reactor-core"></div>
+          <div class="reactor-ring" style="width: 80%; height: 80%;"></div>
+          <div class="reactor-ring" style="width: 65%; height: 65%;"></div>
+          <div class="reactor-ring" style="width: 50%; height: 50%;"></div>
+          <div class="reactor-segments outer-segments"></div>
+          <div class="reactor-segments inner-segments"></div>
+          <!-- Notez le changement de span à div pour le temps -->
+          <div class="time-display" id="time-left">00:00</div>
+        </div>
+    </div>
+    <div class="timer-state" id="timer-state" aria-live="polite">Prêt</div>
+
+    <!-- L'Overlay Ajustement Répétitions reste ici -->
+    <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
+        <div class="title">Ajuster Répétitions</div>
+        <div class="rep-adjustment-next-exercise" id="rep-adjustment-exercise-name">Exercice</div>
+        <div class="rep-adjustment-controls">
+            <button class="rep-adjustment-btn minus" id="rep-adjust-minus" aria-label="Diminuer répétitions">-</button>
+            <span class="current-reps" id="current-reps-display" aria-live="polite">12</span>
+            <button class="rep-adjustment-btn plus" id="rep-adjust-plus" aria-label="Augmenter répétitions">+</button>
+        </div>
+    </div>
+
+<!-- FIN DU CONTENU À INSÉRER -->
                 <!-- Overlay Ajustement Répétitions -->
                 <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
                     <div class="title">Ajuster Répétitions</div>
@@ -1132,12 +1247,81 @@ body.workout-active main {
     async function readFileContent(fileId) { if (!googleAccessToken || !fileId) { console.warn("readFileContent: Pas de token ou d'ID de fichier."); return null; } console.log(`Drive: Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}): Fichier non trouvé (404).`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}): ${await response.text()}`); } const content = await response.text(); console.log(`Drive: Contenu du fichier ${fileId} lu avec succès.`); return content; } catch (error) { console.error(`Erreur Drive (readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
     async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) { console.warn("updateFileContent: Pas de token ou d'ID de fichier."); return false; } if (isSavingDriveData) { showMessage("Sauvegarde Drive déjà en cours...", 1500); console.warn("Tentative d'écriture concurrente sur Drive annulée."); return false; } console.log(`Drive: Écriture dans le fichier ${fileId}...`); isSavingDriveData = true; if (historyDriveStatus) historyDriveStatus.textContent = 'Synchro...'; historyDriveStatus.className = 'syncing'; updateAuthUI(true); const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { console.warn(`updateFileContent(${fileId}): Erreur d'autorisation (${response.status}). Déconnexion.`); handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", 6000, true); } else { throw new Error(`Écriture échouée (${response.status}): ${await response.text()}`); } } else { console.log(`Drive: Fichier ${fileId} mis à jour avec succès.`); success = true; } } catch (error) { console.error(`Erreur Drive (updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, true); success = false; if (historyDriveStatus) historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.className = 'error'; } finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); console.log(`Drive: Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
 
+
+    // --- NOUVELLE Fonction pour MAJ apparence Réacteur ---
+function updateTimerAppearance(state) {
+  // Assurer que les éléments principaux existent
+  if (!timerCircle || !timeDisplayDiv || !timerStateDisplay) {
+      console.warn("Éléments du timer manquants pour updateTimerAppearance.");
+      return;
+  }
+
+  let stateColorVar = '--idle-color-val'; // Variable CSS contenant la couleur hex/nom
+  let stateGlowRgbVar = '--idle-color-rgb'; // Variable CSS contenant la valeur RGB pour le glow
+
+  switch(state) {
+    case 'exercise': stateColorVar = '--exercise-color-val'; stateGlowRgbVar = '--exercise-color-rgb'; break;
+    case 'break': stateColorVar = '--break-color-val'; stateGlowRgbVar = '--break-color-rgb'; break;
+    case 'paused': stateColorVar = '--paused-color-val'; stateGlowRgbVar = '--paused-color-rgb'; break;
+    case 'preparing': stateColorVar = '--preparing-color-val'; stateGlowRgbVar = '--preparing-color-rgb'; break;
+    case 'finished': stateColorVar = '--finished-color-val'; stateGlowRgbVar = '--finished-color-rgb'; break;
+    case 'idle': // Garde les valeurs par défaut définies ci-dessus
+    default: break;
+  }
+
+  // Récupérer les valeurs réelles des variables CSS
+  const rootStyle = getComputedStyle(document.documentElement);
+  const stateColor = rootStyle.getPropertyValue(stateColorVar).trim();
+  const stateGlowRgb = rootStyle.getPropertyValue(stateGlowRgbVar).trim();
+
+  // Calculer le glow CSS à partir de la valeur RGB
+  const glowValue = `0 0 60px rgba(${stateGlowRgb}, 0.8)`;
+  const textGlowValue = `0 0 10px rgba(${stateGlowRgb}, 0.7)`;
+
+  // Appliquer les styles
+  timerCircle.style.setProperty('--reactor-glow-current', glowValue); // Met à jour la variable CSS du glow
+  timeDisplayDiv.style.color = stateColor;
+  timeDisplayDiv.style.textShadow = textGlowValue;
+  timerStateDisplay.style.color = stateColor;
+  timerStateDisplay.style.textShadow = textGlowValue;
+
+  // Optionnel : Mettre à jour la variable --current-timer-color si utilisée ailleurs
+  document.documentElement.style.setProperty('--current-timer-color', stateColor);
+  document.documentElement.style.setProperty('--current-timer-glow', textGlowValue);
+
+}
+// --- Fin Nouvelle Fonction ---
+
+    
     // --- Fonctions Cœur du Timer ---
     function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
     function calculateTotalEstimatedTime(plan) { let totalSeconds = 0; plan.forEach(item => { let estimatedDuration = 0; if (item.type === 'break') { estimatedDuration = item.duration || 0; } else if (item.type === 'exercise') { estimatedDuration = item.duration || (item.reps || 0) * SECONDS_PER_REP; } item.estimatedDuration = estimatedDuration; totalSeconds += estimatedDuration; }); return totalSeconds; }
     function updateTotalProgressCircle() { if (!totalProgressCircle || totalWorkoutEstimatedSeconds <= 0 || !isWorkoutActive) { totalProgressCircle.style.setProperty('--total-progress-gradient', `var(--total-progress-bg)`); return; } let elapsedSeconds = 0; for (let i = 0; i < currentItemIndex; i++) { elapsedSeconds += currentWorkoutPlan[i]?.estimatedDuration || 0; } const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem) { if (currentState === 'break' && totalTime > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, currentItem.estimatedDuration || totalTime); elapsedSeconds += elapsedInBreak; } else if (currentState === 'preparing' && PREPARE_DURATION > 0) { const elapsedInPrepare = Math.min(PREPARE_DURATION - prepareTimeLeft, PREPARE_DURATION); } else if (currentState === 'paused') { if (currentItem.type === 'break' && totalTime > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, currentItem.estimatedDuration || totalTime); elapsedSeconds += elapsedInBreak; } } } if (currentState === 'finished') { elapsedSeconds = totalWorkoutEstimatedSeconds; } const percentage = totalWorkoutEstimatedSeconds > 0 ? Math.min(100, (elapsedSeconds / totalWorkoutEstimatedSeconds) * 100) : 0; const gradient = `conic-gradient( var(--neon-blue) ${percentage * 0.6}%, var(--neon-pink) ${percentage}%, var(--total-progress-bg) ${percentage}% )`; totalProgressCircle.style.setProperty('--total-progress-gradient', gradient); }
-    function updateTimerDisplay() { if (!timeLeftDisplay || !timerCircle || !timerStateDisplay) return; let percentage = 0; let timeString = "00:00"; let stepColorVar = '--color-idle'; let stepGlowVar = '--glow-idle'; let stateText = ''; const item = currentWorkoutPlan[currentItemIndex]; switch(currentState) { case 'exercise': timeString = "GO!"; stepColorVar = '--color-exercise'; stepGlowVar = '--glow-exercise'; stateText = item?.name || 'Exercice'; percentage = 100; break; case 'break': if (totalTime > 0) percentage = Math.min(100, ((totalTime - timeLeft) / totalTime) * 100); timeString = formatTime(timeLeft); stepColorVar = '--color-break'; stepGlowVar = '--glow-break'; stateText = 'Repos'; break; case 'paused': if (item?.type === 'break' && totalTime > 0) { percentage = Math.min(100, ((totalTime - timeLeft) / totalTime) * 100); timeString = formatTime(timeLeft); } else { percentage = item?.type === 'exercise' ? 100 : 0; timeString = "PAUSE"; } stepColorVar = '--color-paused'; stepGlowVar = '--glow-paused'; stateText = 'En Pause'; break; case 'preparing': percentage = Math.min(100, ((PREPARE_DURATION - prepareTimeLeft) / PREPARE_DURATION) * 100); timeString = formatTime(prepareTimeLeft); stepColorVar = '--color-prepare'; stepGlowVar = '--glow-prepare'; stateText = 'Préparation'; break; case 'finished': percentage = 100; timeString = "FINI !"; stepColorVar = '--color-finished'; stepGlowVar = '--glow-finished'; stateText = 'Terminé !'; break; default: percentage = 0; timeString = formatTime(0); stepColorVar = '--color-idle'; stepGlowVar = '--glow-idle'; stateText = ''; break; } timeLeftDisplay.textContent = timeString; timerCircle.style.setProperty('--current-step-color', `var(${stepColorVar})`); timerCircle.style.setProperty('--current-step-glow', `var(${stepGlowVar})`); timerCircle.style.backgroundImage = `conic-gradient(var(${stepColorVar}) ${percentage}%, transparent ${percentage}%)`; timerStateDisplay.textContent = stateText; timerStateDisplay.style.color = `var(${stepColorVar})`; updateTotalProgressCircle(); }
-    function findPreviousPerformance(exerciseName) { if (!workoutHistory || workoutHistory.length === 0) return null; for (let i = workoutHistory.length - 1; i >= 0; i--) { const entry = workoutHistory[i]; if (!entry.exercises) continue; const foundExercise = entry.exercises.find(ex => ex.name === exerciseName); if (foundExercise) { return { reps: foundExercise.actualReps ?? foundExercise.reps, weight: foundExercise.actualWeight ?? foundExercise.weight, date: new Date(entry.date) }; } } return null; }
+    function updateTimerDisplay() {
+        // Vérifier seulement les éléments textuels et la progression totale
+        if (!timeDisplayDiv || !timerStateDisplay || !totalProgressCircle) {
+             console.warn("Éléments manquants pour updateTimerDisplay");
+             return;
+        }
+        let timeString = "00:00";
+        let stateText = '';
+        const item = currentWorkoutPlan[currentItemIndex];
+
+        switch(currentState) {
+            case 'exercise': timeString = "GO!"; stateText = item?.name || 'Exercice'; break;
+            case 'break': timeString = formatTime(timeLeft); stateText = 'Repos'; break;
+            case 'paused': timeString = (item?.type === 'break') ? formatTime(timeLeft) : "PAUSE"; stateText = 'En Pause'; break;
+            case 'preparing': timeString = formatTime(prepareTimeLeft); stateText = 'Préparation'; break;
+            case 'finished': timeString = "FINI!"; stateText = 'Terminé !'; break;
+            default: timeString = formatTime(0); stateText = 'Prêt'; break;
+        }
+        // Mise à jour UNIQUEMENT du texte
+        timeDisplayDiv.textContent = timeString;
+        timerStateDisplay.textContent = stateText;
+
+        // Garder la mise à jour de la progression totale
+        updateTotalProgressCircle();
+    }    function findPreviousPerformance(exerciseName) { if (!workoutHistory || workoutHistory.length === 0) return null; for (let i = workoutHistory.length - 1; i >= 0; i--) { const entry = workoutHistory[i]; if (!entry.exercises) continue; const foundExercise = entry.exercises.find(ex => ex.name === exerciseName); if (foundExercise) { return { reps: foundExercise.actualReps ?? foundExercise.reps, weight: foundExercise.actualWeight ?? foundExercise.weight, date: new Date(entry.date) }; } } return null; }
     function updateWorkoutInfo() { if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea) { console.error("updateWorkoutInfo: Éléments DOM manquants."); return; } const item = currentWorkoutPlan[currentItemIndex]; let infoHtml = ''; let exerciseName = ''; let progressText = ''; const body = document.body; switch (currentState) { case 'idle': exerciseName = "ArmorWorkout"; if (!googleAccessToken) { progressText = "Connectez-vous à Google Drive"; infoHtml = `<div class="idle-message"><i class="fas fa-sign-in-alt"></i> ${progressText} pour commencer.</div>`; } else if (!programsLoaded) { progressText = "Chargement des programmes..."; infoHtml = `<div class="idle-message"><i class="fas fa-spinner fa-spin"></i> ${progressText}</div>`; } else if (!currentWorkoutType) { progressText = "Sélectionnez un entraînement (Push/Pull/Legs)"; infoHtml = `<div class="idle-message"><i class="fas fa-hand-pointer"></i> ${progressText}</div>`; } else { progressText = `Prêt: ${currentWorkoutType}`; infoHtml = `<div class="idle-message"><i class="fas fa-play-circle"></i> Appuyez sur Démarrer pour commencer "${currentWorkoutType}".</div>`; } break; case 'finished': const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; exerciseName = 'Entraînement Terminé !'; infoHtml = `<div class="exercise-details"> <span><i class="fas ${getIconForState('finished')}"></i> Bravo ! Séance finie.</span> ${durationSeconds > 0 ? `<span><i class="fas fa-stopwatch"></i> Durée: <strong>${formatTime(durationSeconds)}</strong></span>` : ''} </div>`; progressText = `Fini (${originalCompletedWorkoutPlan.length}/${originalCompletedWorkoutPlan.length})`; break; case 'preparing': const nextItem = currentWorkoutPlan[0]; exerciseName = `Préparation...`; infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"> <i class="fas ${getIconForState('preparing')} fa-spin"></i> <span>Prêt pour <strong>${nextItem?.name || '?'}</strong> dans ${prepareTimeLeft}s...</span> </div>`; progressText = `Prépa... (1/${currentWorkoutPlan.length})`; break; case 'exercise': case 'paused': case 'break': if (!item) { exerciseName = 'Erreur'; infoHtml = '<p>Erreur : Étape inconnue.</p>'; progressText = `Étape ?/${currentWorkoutPlan.length}`; break; } exerciseName = `${item.name || (item.type === 'break' ? 'Repos' : 'Étape inconnue')}`; progressText = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`; if (item.type === 'exercise') { const reps = (item.actualReps !== undefined ? item.actualReps : item.reps) ?? '-'; const weight = (item.actualWeight !== undefined ? item.actualWeight : item.weight) ?? '-'; const details = item.details || ''; infoHtml = `<div class="exercise-details"> <span><i class="fas ${getIconForType('exercise')}"></i> Reps: <strong>${reps}</strong></span> <span><i class="fas fa-weight-hanging"></i> Poids: <strong>${weight}${weight !== '-' ? ' kg' : ''}</strong></span> ${details ? `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>` : ''} </div>`; const prevPerf = findPreviousPerformance(item.name); if (prevPerf) { const dateStr = prevPerf.date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }); const prevReps = prevPerf.reps ?? '-'; const prevWeight = prevPerf.weight ?? '-'; infoHtml += `<div class="previous-performance"> <i class="fas fa-history"></i> <span>Dernière fois (${dateStr}): <strong>${prevReps} reps</strong> à <strong>${prevWeight}${prevWeight !== '-' ? ' kg' : ''}</strong></span> </div>`; } } else if (item.type === 'break') { infoHtml = `<div class="break-info"> <i class="fas ${getIconForType('break')}"></i> <span>Pause: ${formatTime(item.duration || 0)}</span> </div>`; const nextExerciseIndex = currentItemIndex + 1; if (nextExerciseIndex < currentWorkoutPlan.length && currentWorkoutPlan[nextExerciseIndex].type === 'exercise') { const nextEx = currentWorkoutPlan[nextExerciseIndex]; const nextReps = nextEx.reps ?? '-'; const nextWeight = nextEx.weight ?? '-'; infoHtml += `<div class="break-info" style="margin-top: 8px; opacity: 0.8;"> <i class="fas fa-arrow-right"></i> <span>Suivant: ${nextEx.name || '?'} (${nextReps} reps @ ${nextWeight}${nextWeight !== '-' ? 'kg' : ''})</span> </div>`; } } break; default: exerciseName = 'Inconnu'; infoHtml = '<p>État inconnu.</p>'; progressText = ''; break; } if(currentExerciseNameDisplay) currentExerciseNameDisplay.textContent = exerciseName; if(currentExerciseContainer) currentExerciseContainer.innerHTML = infoHtml; if(progressTextArea) progressTextArea.textContent = progressText; const stateClassPrefix = 'state-'; body.className = Array.from(body.classList) .filter(cls => !cls.startsWith(stateClassPrefix)) .join(' ') + ` ${stateClassPrefix}${currentState}`; body.classList.toggle('workout-active', !['idle', 'finished'].includes(currentState)); }
     function getIconForState(state){ switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'preparing': return 'fa-spinner'; case 'paused': return 'fa-pause-circle'; case 'finished': return 'fa-check-circle'; case 'idle': return 'fa-play-circle'; default: return 'fa-question-circle'; }}
     function getIconForType(type){ return type === 'exercise' ? 'fa-dumbbell' : 'fa-hourglass-half'; }
@@ -1145,7 +1329,7 @@ body.workout-active main {
         if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } if(timerDisplayElement) timerDisplayElement.classList.remove('finished-animation'); const stateClassPrefix = 'state-'; document.body.className = Array.from(document.body.classList) .filter(cls => !cls.startsWith(stateClassPrefix)) .join(' ') + ` ${stateClassPrefix}${currentState}`; document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState)); if(startPauseBtn) startPauseBtn.className = ''; if(startPauseBtn) startPauseBtn.disabled = true; if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; /* Désactiver Précédent par défaut */ if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(newState); navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !googleAccessToken || isTimerActive; hideRepAdjustmentOverlay(); switch (newState) { case 'idle': isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; timeLeft=0; totalTime=0;
              const isLoggedInIdle = !!googleAccessToken; const hasWorkoutTypeIdle = !!currentWorkoutType; const planIsValidIdle = !!currentWorkoutPlan && Array.isArray(currentWorkoutPlan) && currentWorkoutPlan.length > 0; const canStartIdle = isLoggedInIdle && programsLoaded && hasWorkoutTypeIdle && planIsValidIdle; console.log(`setState('idle'): Check start -> isLoggedIn: ${isLoggedInIdle}, programsLoaded: ${programsLoaded}, hasWorkoutType: ${hasWorkoutTypeIdle}, planIsValid: ${planIsValidIdle}, Result(canStart): ${canStartIdle}`);
              if(startPauseBtn) startPauseBtn.disabled = !canStartIdle;
-             if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`; startPauseBtn.className = 'start-btn'; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; break; case 'preparing': isWorkoutActive=true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.className = 'preparing-btn'; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; if(prevBtn) prevBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); break; case 'exercise': isWorkoutActive=true; isTimerRunning = false; timeLeft=0; totalTime=0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForType('exercise')}"></i> Fait`; startPauseBtn.className='done-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } findNextExerciseForAdjustment(); break; case 'break': isTimerRunning=true; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('paused')}"></i> Pause`; startPauseBtn.className='pause-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } startBreakTimer(); findNextExerciseForAdjustment(); break; case 'paused': isTimerRunning=false; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas fa-play"></i> Reprendre`; startPauseBtn.className='resume-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } break; case 'finished': isWorkoutActive=false; isTimerRunning = false; workoutFinished=true; wasFinishedState=true; timeLeft=0; totalTime=0; elapsedWorkoutEstimatedSeconds=totalWorkoutEstimatedSeconds; if(startPauseBtn) { startPauseBtn.disabled=true; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('finished')}"></i> Terminé`; startPauseBtn.className='finished-btn'; } if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); playSound(soundET); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); if(timerDisplayElement) timerDisplayElement.classList.add('finished-animation'); setTimeout(populateAndShowSummary, 500); break; default: console.error("État inconnu rencontré:", newState); currentState = 'idle'; updateAuthUI(!!googleAccessToken); break; } updateTimerDisplay(); updateWorkoutInfo(); }
+             if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`; startPauseBtn.className = 'start-btn'; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; break; case 'preparing': isWorkoutActive=true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.className = 'preparing-btn'; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; if(prevBtn) prevBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); break; case 'exercise': isWorkoutActive=true; isTimerRunning = false; timeLeft=0; totalTime=0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForType('exercise')}"></i> Fait`; startPauseBtn.className='done-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } findNextExerciseForAdjustment(); break; case 'break': isTimerRunning=true; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('paused')}"></i> Pause`; startPauseBtn.className='pause-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } startBreakTimer(); findNextExerciseForAdjustment(); break; case 'paused': isTimerRunning=false; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas fa-play"></i> Reprendre`; startPauseBtn.className='resume-btn'; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } break; case 'finished': isWorkoutActive=false; isTimerRunning = false; workoutFinished=true; wasFinishedState=true; timeLeft=0; totalTime=0; elapsedWorkoutEstimatedSeconds=totalWorkoutEstimatedSeconds; if(startPauseBtn) { startPauseBtn.disabled=true; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('finished')}"></i> Terminé`; startPauseBtn.className='finished-btn'; } if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); playSound(soundET); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); if(timerDisplayElement) timerDisplayElement.classList.add('finished-animation'); setTimeout(populateAndShowSummary, 500); break; default: console.error("État inconnu rencontré:", newState); currentState = 'idle'; updateAuthUI(!!googleAccessToken); break; } updateTimerDisplay(); updateWorkoutInfo();updateTimerAppearance(newState); }
     function startPrepareCountdown() { if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); prepareTimeLeft = PREPARE_DURATION; updateTimerDisplay(); updateWorkoutInfo(); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; updateTimerDisplay(); updateWorkoutInfo(); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); playTransitionSound(); vibrate(); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { resetCurrentWorkout(); return; } const nextState = firstItem.type === 'exercise' ? 'exercise' : 'break'; setState(nextState); if (nextState === 'break') { totalTime = firstItem.duration || 0; timeLeft = totalTime; } saveInProgressState(); } }, 1000); }
     function startBreakTimer() {
         if (timerInterval) clearInterval(timerInterval);
