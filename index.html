@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout - Réacteur Parfaitement Centré</title>
+    <title>ArmorWorkout - Réacteur Parfaitement Centré v2</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- Chart.js Time Adapter (NÉCESSAIRE pour l'axe X de progression) -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/dist/date-fns.min.js"></script> <!-- Dépendance pour l'adaptateur -->
+    <script src="https://cdn.jsdelivr.net/npm/date-fns/locale/fr/index.js"></script> <!-- Locale FR pour date-fns -->
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,27 +89,29 @@
         @keyframes rotate-left { from { transform: rotate(360deg); } to { transform: rotate(0); } }
         @-webkit-keyframes rotate-right { from { transform: rotate(0); } to { transform: rotate(360deg); } }
         @keyframes rotate-right { from { transform: rotate(0); } to { transform: rotate(360deg); } }
-        @-webkit-keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0); } 30% { transform: translate(-50%, -50%) rotate(360deg); } 50% { transform: translate(-50%, -50%) rotate(0); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
-        @keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0); } 30% { transform: translate(-50%, -50%) rotate(360deg); } 50% { transform: translate(-50%, -50%) rotate(0); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        /* Animation combinée pour certains cercles */
+        @-webkit-keyframes rotate-left-right { 0%, 50% { transform: translate(-50%, -50%) rotate(0); } 30%, 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes rotate-left-right { 0%, 50% { transform: translate(-50%, -50%) rotate(0); } 30%, 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
         /* Conteneur global */
         .timer-display { margin-bottom: 25px; position: relative; display: flex; justify-content: center; align-items: center; width: 200px; height: 200px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         /* Conteneur Réacteur - Référence de positionnement */
-        .reactor { position: relative; width: 100%; height: 100%; }
+        .reactor { position: relative; width: 100%; height: 100%; overflow: hidden; /* Empêche les flous de déborder visuellement trop loin */ }
 
-        /* --- Styles des Éléments du Réacteur (Absolu + Centrage) --- */
+        /* --- Styles des Éléments du Réacteur (Absolu + Centrage Unifié) --- */
         .triangle, .circle-1, .circle-2, .circle-3, .circle-4, .circle-5, .circle-6, .circle-7, .circle-8 {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%); /* Centrage de base */
+            top: 50%; left: 50%;
+            /* Centrage de base - sera complété si besoin */
+            transform: translate(-50%, -50%);
         }
 
         .triangle {
             z-index: 99; width: 155px; aspect-ratio: 1; background-color: #69f1f1;
             -webkit-clip-path: polygon(50% 88%, 0 0, 100% 0); clip-path: polygon(50% 88%, 0 0, 100% 0);
-            transform: translate(-50%, calc(-50% + 32px)); /* Ajustement Y + Centrage X */
+             /* Ajustement Y pour correspondre à l'original + Animation */
+            transform: translate(-50%, calc(-50% + 32px));
             animation: rotate-right 15s linear infinite;
         }
         .triangle::after {
@@ -115,23 +120,23 @@
             background-color: var(--primary-bg);
             -webkit-clip-path: polygon(50% 90%, 0 0, 100% 0); clip-path: polygon(50% 90%, 0 0, 100% 0);
         }
-        .circle-1 {
+        .circle-1 { /* Anneau extérieur + flous */
             width: 200px; height: 200px; border-radius: 50%; z-index: 1;
             background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8));
             animation: rotate-right 2s linear infinite;
         }
         .circle-1::before { /* Masque intérieur */
-            content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; /* Inset 10px */
+            content: ''; position: absolute; inset: 10px; /* Raccourci pour top/left/right/bottom */
             z-index: 2; border-radius: 50%; background-color: var(--primary-bg);
         }
-        .circle-1 span { /* Flous */
-            position: absolute; width: 100%; height: 100%; border-radius: 50%; z-index: 0;
+        .circle-1 span { /* Spans pour les effets de flou */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 0;
             background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8));
         }
         .circle-1 span:nth-child(1) { filter: blur(5px); }
-        .circle-1 span:nth-child(2) { filter: blur(10px); } /* Augmenté un peu */
+        .circle-1 span:nth-child(2) { filter: blur(10px); }
         .circle-1 span:nth-child(3) { filter: blur(20px); }
-        .circle-1 span:nth-child(4) { filter: blur(60px); } /* Réduit un peu */
+        .circle-1 span:nth-child(4) { filter: blur(60px); }
 
         .circle-2 { /* Anneau principal avec coupures */
             width: 140px; height: 140px; border-radius: 50%; z-index: 9;
@@ -141,35 +146,42 @@
         }
         .circle-2 span { /* Coupures */
             position: absolute; top: 50%; left: 50%;
-            width: calc(100% + 20px); height: 10px; background-color: var(--primary-bg);
+            /* Taille légèrement plus grande pour couper la bordure */
+            width: calc(100% + 22px); /* 140px + 2*10px border + marge */
+            height: 10px; background-color: var(--primary-bg);
         }
+        /* Applique la rotation à chaque coupure (transform-origin est au centre par défaut) */
         .circle-2 span:nth-child(1) { transform: translate(-50%, -50%) rotate(90deg); }
         .circle-2 span:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg); }
         .circle-2 span:nth-child(3) { transform: translate(-50%, -50%) rotate(-45deg); }
         .circle-2 span:nth-child(4) { transform: translate(-50%, -50%) rotate(30deg); }
         .circle-2 span:nth-child(5) { transform: translate(-50%, -50%) rotate(-30deg); }
         .circle-2 span:nth-child(6) { transform: translate(-50%, -50%) rotate(0deg); }
-        .circle-2 span:nth-child(7) { transform: translate(-50%, -50%) rotate(55deg); height: 5px; }
-        .circle-2 span:nth-child(8) { transform: translate(-50%, -50%) rotate(125deg); height: 5px; }
+        .circle-2 span:nth-child(7) { transform: translate(-50%, -50%) rotate(55deg); height: 5px; width: calc(100% + 24px); } /* Ajuster largeur si besoin */
+        .circle-2 span:nth-child(8) { transform: translate(-50%, -50%) rotate(125deg); height: 5px; width: calc(100% + 24px); }
 
         .circle-3 { /* Conteneur pour ::after pointillé */
              width: 115px; height: 115px; border-radius: 50%; z-index: 10;
              box-shadow: 0 0 8px 8px rgba(105, 241, 241, 0.15);
+             /* Le translate est déjà appliqué par la règle commune */
         }
         .circle-3::after { /* Cercle pointillé */
              content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
              border-radius: 50%; border: 3px dotted rgba(105, 241, 241, 0.8);
              animation: rotate-right 10s linear infinite;
+             box-sizing: border-box; /* Inclure la bordure dans la taille */
         }
         .circle-4 { /* Conteneur pour arcs fins */
             width: 100px; height: 100px; border-radius: 50%; z-index: 11;
             box-shadow: 0 0 8px 8px rgba(105, 241, 241, 0.1);
             animation: rotate-left-right 20s infinite ease-in;
-             /* Le transform de base translate(-50%, -50%) est déjà appliqué */
+            /* Translate appliqué par règle commune */
         }
         .circle-4 span { /* Arcs fins */
             position: absolute; top: 50%; left: 50%; width: 100%; height: 100%;
             border-radius: 50%; border: 3px solid; border-color: #69f1f1 transparent transparent;
+            box-sizing: border-box;
+            /* Rotation appliquée via transform */
         }
         .circle-4 span:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg); }
         .circle-4 span:nth-child(2) { transform: translate(-50%, -50%) rotate(-75deg); }
@@ -184,6 +196,8 @@
         .circle-5 span { /* Arcs épais */
              position: absolute; top: 50%; left: 50%; width: 54px; height: 54px;
              border-radius: 50%; border: 5px solid; border-color: #69f1f1 transparent transparent;
+             box-sizing: border-box;
+             /* Rotation appliquée via transform */
         }
         .circle-5 span:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg); }
         .circle-5 span:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg); }
@@ -196,6 +210,7 @@
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%; border: 3px dashed #69f1f1;
             animation: rotate-left 5s infinite ease-in;
+            box-sizing: border-box;
         }
         .circle-7 { /* Conteneur pour ::after noyau */
             width: 27px; height: 27px; border-radius: 50%; z-index: 14;
@@ -204,7 +219,7 @@
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%; background-color: #69f1f1;
             box-shadow: 0 0 5px 3px rgba(105, 241, 241, 0.3);
-            /* animation: rotate-left 5s infinite ease-in; */ /* Animation statique ? */
+            /* animation: rotate-left 5s infinite ease-in; */
         }
         .circle-8 { /* Conteneur pour petits arcs */
             width: 15px; height: 15px; border-radius: 50%; z-index: 15;
@@ -213,6 +228,8 @@
         .circle-8 span { /* Petits arcs */
             position: absolute; top: 50%; left: 50%; width: 13px; height: 13px;
             border-radius: 50%; border: 1px solid; border-color: var(--primary-bg) transparent transparent;
+            box-sizing: border-box;
+            /* Rotation appliquée via transform */
         }
         .circle-8 span:nth-child(1) { transform: translate(-50%, -50%) rotate(120deg); }
         .circle-8 span:nth-child(2) { transform: translate(-50%, -50%) rotate(240deg); }
@@ -221,7 +238,7 @@
         /* Temps - Centré au dessus de tout */
         #time-left {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 100; /* Au dessus de tous les cercles */
+            z-index: 100;
             font-family: var(--font-family-display); font-size: 2.5rem; font-weight: 700;
             color: white; text-shadow: 0 0 10px rgba(105, 241, 241, 0.8);
             transition: text-shadow var(--transition-speed) ease;
@@ -235,18 +252,13 @@
              transition: background-image 0.3s linear; pointer-events: none;
         }
         /* État texte sous le timer */
-        #timer-state {
-            font-family: var(--font-family-display); margin-top: 1.2rem; font-size: 1rem; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 1px; opacity: 0;
-            transition: color 0.3s ease, opacity 0.3s ease, text-shadow 0.3s ease;
-            color: var(--idle-color); text-shadow: 0 0 6px var(--idle-color);
-        }
+        #timer-state { font-family: var(--font-family-display); margin-top: 1.2rem; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0; transition: color 0.3s ease, opacity 0.3s ease, text-shadow 0.3s ease; color: var(--idle-color); text-shadow: 0 0 6px var(--idle-color); }
         #timer-state.visible { opacity: 0.9; }
         #timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
         @keyframes countdown-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
 
-        /* --- Infos Workout / Contrôles / Tracker / Histo / Progress / Modal / Footer / Responsive / Overlay Reps --- */
-        /* Styles identiques aux sections précédentes, légèrement ajustés pour la cohérence */
+        /* --- Autres Styles (Infos Workout / Contrôles / Tracker / Histo / Progress / Modal / Footer / Responsive / Overlay Reps) --- */
+        /* Ces styles restent identiques ou très similaires aux versions précédentes */
         #workout-info { text-align: center; margin-bottom: 1.5rem; }
         #current-exercise-name-display { font-size: 1.7rem; margin-bottom: 0.8rem; font-family: var(--font-family-display); color: var(--primary-text); }
         #current-exercise-container .workout-prompt { border-style: dashed !important; cursor: default !important; font-size: 0.9rem; color: var(--secondary-text); background: none; border: 1px solid var(--border-color); border-radius: 999px; padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; }
@@ -318,7 +330,7 @@
         .summary-item { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); } .summary-item:last-child { border-bottom: none; }
         .summary-item .exercise-name { color: var(--primary-text); font-weight: 500; font-size: 0.95em;} .summary-item .exercise-name i { color: var(--exercise-color); margin-right: 6px; font-size: 0.9em; } .summary-item .exercise-name small { color: var(--secondary-text); margin-left: 6px; font-size: 0.9em;}
         .summary-item .input-container { display: flex; align-items: center; gap: 6px; justify-self: end; } .summary-item label { display: none; }
-        .summary-item input[type="number"] { background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text); border-radius: var(--border-radius-md); padding: 5px 8px; font-size: 0.9em; width: 60px; text-align: center; transition: all var(--transition-speed) ease; -moz-appearance: textfield; } /* Improve number input style */
+        .summary-item input[type="number"] { background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text); border-radius: var(--border-radius-md); padding: 5px 8px; font-size: 0.9em; width: 60px; text-align: center; transition: all var(--transition-speed) ease; appearance: textfield; -moz-appearance: textfield; }
         .summary-item input[type="number"]::-webkit-outer-spin-button, .summary-item input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .summary-item input:focus { border-color: var(--accent-color); background-color: var(--secondary-bg); outline: none; box-shadow: 0 0 0 2px var(--accent-dim); }
         .summary-controls { padding: 15px 20px; display: flex; justify-content: center; gap: 12px; border-top: 1px solid var(--border-color); background-color: rgba(10, 15, 26, 0.5); }
@@ -361,6 +373,7 @@
              .post-workout-summary-content { max-width: 95%; } .message-area { font-size: 0.85em; padding: 8px 15px; } .rep-adjustment-overlay { width: 230px; padding: 15px; gap: 10px;}
              .rep-adjustment-btn { width: 35px; height: 35px; font-size: 1.2em;} .current-reps { font-size: 1.8em; } .chart-container { height: 220px; }
         }
+
     </style>
 </head>
 <body class="logged-out"> <!-- Start logged-out -->
@@ -459,9 +472,12 @@
         const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com"; const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file'; const HISTORY_FILENAME = "armorworkout_history.json"; const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" }; const PROGRAM_TYPES = ['Push', 'Pull', 'Legs']; const PREPARE_DURATION = 3; const SECONDS_PER_REP = 2.5; const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress'; const GIS_CHECK_INTERVAL = 100; const GIS_MAX_RETRIES = 50;
 
         // --- DONNÉES PAR DÉFAUT ---
-        // !!!!!!!!!! ATTENTION !!!!!!!!!!!
-        // VÉRIFIEZ TRÈS ATTENTIVEMENT LA SYNTAXE DE CET OBJET JSON.
-        // L'ERREUR "missing : after property id" VIENT SÛREMENT D'UNE VIRGULE (,) OU D'UN DEUX-POINTS (:) MANQUANT/EN TROP ICI.
+        // !!!!!!!!!! EXTREMEMENT IMPORTANT !!!!!!!!!!
+        // VÉRIFIEZ SCRUPULEUSEMENT LA SYNTAXE JSON CI-DESSOUS.
+        // L'ERREUR "missing } after property list" VIENT PRESQUE CERTAINEMENT D'ICI.
+        // CHAQUE { DOIT AVOIR UN }, CHAQUE [ DOIT AVOIR UN ].
+        // LES PROPRIÉTÉS ("cle": valeur) SONT SÉPARÉES PAR UNE VIRGULE (,),
+        // SAUF LA DERNIÈRE PROPRIÉTÉ DANS UN OBJET {} OU LE DERNIER ÉLÉMENT DANS UN TABLEAU [].
         const defaultWorkouts = { Push: [ {"type":"exercise","name":"Pompes (Push-ups)","reps":15,"weight":0,"details":"Poids de corps (adapter difficulté: genoux, mains/pieds surélevés)","equipment":"Bodyweight","reps_start":8,"reps_target_max":20,"progression_note":"Quand 20 reps faciles: Augmenter difficulté (pieds plus hauts, tempo lent). Ou passer aux Pompes Déclinées. Ensuite ajouter elastiques 15 kg, 25 kg ..."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Dips (Banc ou Chaise)","reps":12,"weight":0,"details":"Poids de corps","equipment":"Bench or Chair","reps_start":10,"reps_target_max":20,"progression_note":"Quand 20 reps faciles: Ajouter poids (haltère sur les genoux) ou passer à Dips sur barres parallèles."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Élévations Latérales (Haltères)","reps":15,"weight":5,"details":"Haltères 2x5kg","equipment":"Dumbbells","reps_start":12,"reps_target_max":25,"progression_note":"Quand 25 reps: Augmenter poids (+1 ou +2kg par haltère)."}, {"type":"break","duration":60,"name":"Repos"}, {"type":"exercise","name":"Développé Épaules (Haltères Assis)","reps":12,"weight":7,"details":"Haltères 2x7kg","equipment":"Dumbbells + Bench","reps_start":10,"reps_target_max":15,"progression_note":"Quand 15 reps: Augmenter poids (+1 ou +2kg par haltère)."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Extensions Triceps (Haltère au front)","reps":15,"weight":7,"details":"1 Haltère 7kg","equipment":"Dumbbell","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps: Augmenter poids (+1 ou +2kg)."} ], Pull: [ {"type":"exercise","name":"Rowing Haltère Unilatéral","reps":12,"weight":15,"details":"1 Haltère 15kg (chaque côté)","equipment":"Dumbbell + Bench","reps_start":10,"reps_target_max":15,"progression_note":"Quand 15 reps: Augmenter poids (+2 ou +3kg)."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Tirage Vertical Élastique","reps":15,"weight":25,"details":"Élastique 25kg","equipment":"Resistance Band","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps: Utiliser élastique plus résistant ou ajouter un élastique fin."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Face Pulls Élastique","reps":20,"weight":15,"details":"Élastique 15kg","equipment":"Resistance Band","reps_start":15,"reps_target_max":30,"progression_note":"Quand 30 reps: Utiliser élastique plus résistant ou augmenter la tension."}, {"type":"break","duration":60,"name":"Repos"}, {"type":"exercise","name":"Curl Biceps (Haltères)","reps":12,"weight":7,"details":"Haltères 2x7kg","equipment":"Dumbbells","reps_start":10,"reps_target_max":15,"progression_note":"Quand 15 reps: Augmenter poids (+1 ou +2kg par haltère)."}, {"type":"break","duration":60,"name":"Repos"}, {"type":"exercise","name":"Shrugs (Haussements d'épaules Haltères)","reps":15,"weight":15,"details":"Haltères 2x15kg","equipment":"Dumbbells","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps: Augmenter poids (+2 ou +3kg par haltère)."} ], Legs: [ {"type":"exercise","name":"Front Squat Combo","reps":12,"weight":15,"details":"Élastique 15+25kg + 1 haltère 5kg","equipment":"Élastique 15+25kg + 1 haltère 5kg","reps_start":12,"reps_target_max":15,"progression_note":"Quand 15 reps: Pause Squat (Pause 1-2s en bas). Recommence à 12 reps."}, {"type":"break","duration":90,"name":"Repos"}, {"type":"exercise","name":"Fentes Arrières (Haltères)","reps":10,"weight":7,"details":"Haltères 2x7kg (par jambe)","equipment":"Dumbbells","reps_start":8,"reps_target_max":12,"progression_note":"Quand 12 reps par jambe: Augmenter poids (+1 ou +2kg par haltère)."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Soulevé de Terre Roumain (Haltères)","reps":15,"weight":10,"details":"Haltères 2x10kg","equipment":"Dumbbells","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps: Augmenter poids (+2kg par haltère)."}, {"type":"break","duration":75,"name":"Repos"}, {"type":"exercise","name":"Extensions Mollets Debout (Haltère)","reps":20,"weight":15,"details":"1 Haltère 15kg (alterner main)","equipment":"Dumbbell + Step/Support","reps_start":15,"reps_target_max":30,"progression_note":"Quand 30 reps: Augmenter poids (+2 ou +3kg)."}, {"type":"break","duration":60,"name":"Repos"}, {"type":"exercise","name":"Leg Raises (Relevé de jambes)","reps":12,"weight":0,"details":"Poids de corps","equipment":"Bodyweight","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps jambes tendues: Weighted Leg Raises (Tenir haltère 5kg entre les pieds). Recommence à 12 reps."} ] };
         // --- Éléments DOM (Cache) ---
         const domElements = {};
@@ -469,18 +485,7 @@
         let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = []; let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null; let totalTime = 0, timeLeft = 0, prepareTimeLeft = 0; let totalWorkoutEstimatedSeconds = 0, elapsedWorkoutEstimatedSeconds = 0; let isTimerRunning = false, isWorkoutActive = false, workoutFinished = false; let currentState = 'idle'; let workoutStartTime = null, workoutHistory = []; let currentHistoryPeriod = 'week'; let historyChartInstance = null, exercisePerfChartInstance = null; let googleAccessToken = null, tokenClient = null; let historyFileId = null, programFileIds = { Push: null, Pull: null, Legs: null }; let programsLoaded = false, loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); let isSavingDriveData = false; let messageTimeoutId = null; let audioContext = null; let nextExerciseIndexForAdjustment = -1, currentRepAdjustment = 0, isRepAdjustmentVisible = false; let gisCheckRetries = 0; let halfwayTimeoutId = null; const sounds = {};
 
         // --- Initialisation DOM ---
-        function initializeDOMReferences() {
-            const ids = [ 'time-left', 'reactor-container', 'timer-state', 'current-exercise-container', 'current-exercise-name-display', 'progress-tracker', 'progress-text-area', 'start-pause-btn', 'skip-btn', 'finish-btn', 'reset-btn', 'prev-btn', 'message-area', 'workout-section', 'history-section', 'progress-section', 'history-list', 'stats-display', 'history-chart-canvas', 'exercise-progress-chart', 'signin-button', 'signout-button', 'export-button', 'drive-status', 'drive-status-text', 'settings-icon', 'post-workout-summary', 'summary-title', 'summary-items-list', 'finish-summary-btn', 'history-drive-status', 'total-progress-circle', 'drive-connection-status-main', 'drive-connection-text', 'exercise-select', 'period-select', 'history-chart-placeholder', 'exercise-progress-placeholder', 'progress-chart-title', 'rep-adjustment-overlay', 'rep-adjust-minus', 'rep-adjust-plus', 'current-reps-display', 'rep-adjustment-exercise-name', 'nav-push', 'nav-pull', 'nav-legs', 'nav-history', 'nav-progress' ];
-            ids.forEach(id => domElements[id.replace(/-([a-z])/g, g => g[1].toUpperCase())] = document.getElementById(id)); // Convertit kebab-case en camelCase pour clés
-            // Cache certains éléments par classe ou querySelector plus complexe
-            domElements.timerDisplayClickable = document.getElementById('timer-display-clickable'); // Assurez-vous que l'ID existe
-            domElements.statsContentWrapper = domElements.statsDisplay?.querySelector('.content-wrapper');
-            domElements.historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button'));
-            domElements.historyActionsContainer = document.querySelector('.history-actions');
-            // Regroupe les boutons de nav workout
-            domElements.navButtons = [ domElements.navPush, domElements.navPull, domElements.navLegs ];
-            console.log("DOM References Initialized.");
-        }
+        function initializeDOMReferences() { const ids = [ 'time-left', 'reactor-container', 'timer-state', 'current-exercise-container', 'current-exercise-name-display', 'progress-tracker', 'progress-text-area', 'start-pause-btn', 'skip-btn', 'finish-btn', 'reset-btn', 'prev-btn', 'message-area', 'workout-section', 'history-section', 'progress-section', 'history-list', 'stats-display', 'history-chart-canvas', 'exercise-progress-chart', 'signin-button', 'signout-button', 'export-button', 'drive-status', 'drive-status-text', 'settings-icon', 'post-workout-summary', 'summary-title', 'summary-items-list', 'finish-summary-btn', 'history-drive-status', 'total-progress-circle', 'drive-connection-status-main', 'drive-connection-text', 'exercise-select', 'period-select', 'history-chart-placeholder', 'exercise-progress-placeholder', 'progress-chart-title', 'rep-adjustment-overlay', 'rep-adjust-minus', 'rep-adjust-plus', 'current-reps-display', 'rep-adjustment-exercise-name', 'nav-push', 'nav-pull', 'nav-legs', 'nav-history', 'nav-progress' ]; ids.forEach(id => domElements[id.replace(/-([a-z])/g, g => g[1].toUpperCase())] = document.getElementById(id)); domElements.timerDisplayClickable = document.getElementById('timer-display-clickable'); domElements.statsContentWrapper = domElements.statsDisplay?.querySelector('.content-wrapper'); domElements.historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button')); domElements.historyActionsContainer = document.querySelector('.history-actions'); domElements.navButtons = [ domElements.navPush, domElements.navPull, domElements.navLegs ]; console.log("DOM References Initialized."); }
 
         // --- Audio & Vibration ---
         function initSounds() { try { const basePath = "https://ironworkout.github.io/armorworkout/"; const soundFiles = { laser: 'laser.mp3', s5: '5.mp3', s4: '4.mp3', s3: '3.mp3', s2: '2.mp3', s1: '1.mp3', windows: 'windows.mp3', et: 'e-t.mp3' }; for (const key in soundFiles) { sounds[key] = new Audio(basePath + soundFiles[key]); sounds[key].preload = 'auto'; } console.log("Sounds initialized"); } catch (e) { console.error("Error initializing sounds:", e); } }
@@ -490,7 +495,6 @@
         const vibrate = (pattern = [100]) => { if ('vibrate' in navigator) { try { navigator.vibrate(pattern); } catch (e) {} } };
 
         // --- Google Identity Services (GIS) & Drive API ---
-        // (Fonctions gisInitInternal, checkAndInitGis, handleTokenError, tokenCallback, handleAuthClick, handleSignoutClick, updateDriveStatusUI, updateAuthUI, findOrCreateFile, readFileContent, updateFileContent - IDENTIQUES à la version précédente)
         async function gisInitInternal() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); if (domElements.signInButton) domElements.signInButton.disabled = false; console.log("Google Token Client Initialized."); } catch (error) { console.error("Error initializing Google Token Client:", error); updateAuthUI(false); if (domElements.signInButton) domElements.signInButton.disabled = true; } } else { console.warn("Google Identity Services structure not found as expected."); if (domElements.signInButton) domElements.signInButton.disabled = true; } }
         function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Google Identity Services failed to load after ${GIS_MAX_RETRIES} retries.`); showMessage("Impossible de charger l'API Google. Vérifiez votre connexion/bloqueur.", 6000, true); if (domElements.signInButton) domElements.signInButton.disabled = true; updateAuthUI(false); } }
         function handleTokenError(error) { console.error("Google Token Error:", error); let userMessage = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}.`; if (error.type === 'popup_closed_by_user') { userMessage = "Connexion annulée."; } else if (error.type === 'access_denied') { userMessage = "Accès refusé. Autorisation Drive nécessaire."; } else if (error.type === 'popup_failed_to_open') { userMessage = "Impossible d'ouvrir la fenêtre de connexion. Vérifiez les pop-ups."; } updateDriveStatusUI('error', 'Erreur Auth'); showMessage(userMessage, 6000, true); updateAuthUI(false); }
@@ -504,7 +508,7 @@
         async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) return false; if (isSavingDriveData) { console.warn("Drive save already in progress, request ignored for fileId:", fileId); showMessage("Sauvegarde Drive en cours...", 1500); return false; } isSavingDriveData = true; updateDriveStatusUI('syncing', 'Synchro...'); const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { console.warn("Invalid token detected (updateFileContent). Signing out."); handleSignoutClick(false); } else { let errorBody = null; try { errorBody = await response.json(); } catch(e) {} console.error(`Write failed: ${response.status} for fileId ${fileId}. Response:`, errorBody); throw new Error(`Write failed: ${response.status}`); } } else { console.log("Drive content updated successfully for fileId:", fileId); success = true; } } catch (error) { console.error(`Drive Error (updateFileContent for ${fileId}):`, error); showMessage("Erreur sauvegarde Drive.", 5000, true); updateDriveStatusUI('error', 'Err Synchro'); } finally { isSavingDriveData = false; if(!domElements.driveStatusElement?.classList.contains('error')) { updateDriveStatusUI(googleAccessToken ? 'success' : null, googleAccessToken ? 'Connecté' : null); } } return success; }
 
         // --- Timer Core Functions ---
-        // (formatTime, calculateTotalEstimatedTime, updateTotalProgressCircle, updateTimerDisplay, updateTimerAppearance - IDENTIQUES à la version précédente)
+        // (formatTime, calculateTotalEstimatedTime, updateTotalProgressCircle, updateTimerDisplay, updateTimerAppearance - IDENTIQUES)
         function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
         function calculateTotalEstimatedTime(plan) { let totalSeconds = 0; plan.forEach(item => { let estimatedDuration = 0; if (item.type === 'break') { estimatedDuration = item.duration || 0; } else if (item.type === 'exercise') { estimatedDuration = item.duration || (item.reps || 0) * SECONDS_PER_REP; } item.estimatedDuration = estimatedDuration; totalSeconds += estimatedDuration; }); return totalSeconds; }
         function updateTotalProgressCircle() { if (!domElements.totalProgressCircle || totalWorkoutEstimatedSeconds <= 0 || !isWorkoutActive) { if(domElements.totalProgressCircle) domElements.totalProgressCircle.style.backgroundImage = `conic-gradient(transparent 0%, transparent 100%)`; return; } let elapsedSeconds = 0; for (let i = 0; i < currentItemIndex; i++) { elapsedSeconds += currentWorkoutPlan[i]?.estimatedDuration || 0; } const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem) { const itemEstimatedDuration = currentItem.estimatedDuration || (currentItem.type === 'break' ? totalTime : 0); if (currentState === 'break' && totalTime > 0 && itemEstimatedDuration > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, itemEstimatedDuration); elapsedSeconds += elapsedInBreak; } else if (currentState === 'paused' && currentItem.type === 'break' && totalTime > 0 && itemEstimatedDuration > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, itemEstimatedDuration); elapsedSeconds += elapsedInBreak; } } if (currentState === 'finished') { elapsedSeconds = totalWorkoutEstimatedSeconds; } const percentage = totalWorkoutEstimatedSeconds > 0 ? Math.min(100, (elapsedSeconds / totalWorkoutEstimatedSeconds) * 100) : 0; const gradient = `conic-gradient(var(--total-progress-color) ${percentage}%, transparent ${percentage}%)`; domElements.totalProgressCircle.style.backgroundImage = gradient; }
@@ -512,7 +516,7 @@
         function updateTimerAppearance(state) { if (!domElements.timeDisplayDiv || !domElements.timerStateDisplay) return; let stateColorVar = '--idle-color'; let textGlowBaseColor = 'rgba(var(--idle-color-rgb), 0.7)'; switch(state) { case 'exercise': stateColorVar = '--exercise-color'; textGlowBaseColor = `rgba(var(--exercise-color-rgb), 0.8)`; break; case 'break': stateColorVar = '--break-color'; textGlowBaseColor = `rgba(var(--break-color-rgb), 0.8)`; break; case 'paused': stateColorVar = '--paused-color'; textGlowBaseColor = `rgba(var(--paused-color-rgb), 0.8)`; break; case 'preparing': stateColorVar = '--preparing-color'; textGlowBaseColor = `rgba(var(--preparing-color-rgb), 0.8)`; break; case 'finished': stateColorVar = '--finished-color'; textGlowBaseColor = `rgba(var(--finished-color-rgb), 0.9)`; break; } const stateColor = getComputedStyle(document.documentElement).getPropertyValue(stateColorVar).trim(); const textGlowValue = `0 0 6px ${stateColor}`; const timeGlowValue = `0 0 10px ${textGlowBaseColor}`; domElements.timeDisplayDiv.style.textShadow = timeGlowValue; domElements.timerStateDisplay.style.color = stateColor; domElements.timerStateDisplay.style.textShadow = textGlowValue; }
 
         // --- Workout State Logic ---
-        // (findPreviousPerformance, updateWorkoutInfo, getIconForState, getIconForType, setState, startPrepareCountdown, startBreakTimer, handleItemCompletion, handlePreviousClick, forceFinishWorkout, loadWorkout, resetCurrentWorkout, showMessage - IDENTIQUES à la version précédente, utilisant domElements)
+        // (findPreviousPerformance, updateWorkoutInfo, getIconForState, getIconForType, setState, startPrepareCountdown, startBreakTimer, handleItemCompletion, handlePreviousClick, forceFinishWorkout, loadWorkout, resetCurrentWorkout, showMessage - IDENTIQUES, utilisant domElements)
         function findPreviousPerformance(exerciseName) { if (!workoutHistory || workoutHistory.length === 0) return null; for (let i = workoutHistory.length - 1; i >= 0; i--) { const entry = workoutHistory[i]; if (!entry.exercises) continue; const foundExercise = entry.exercises.find(ex => ex.name === exerciseName); if (foundExercise) { return { reps: foundExercise.actualReps ?? foundExercise.reps, weight: foundExercise.actualWeight ?? foundExercise.weight, date: new Date(entry.date) }; } } return null; }
         function updateWorkoutInfo() { if (!domElements.currentExerciseContainer || !domElements.currentExerciseNameDisplay || !domElements.progressTracker || !domElements.progressTextArea) return; const item = currentWorkoutPlan[currentItemIndex]; let infoHtml = ''; let exerciseName = ''; let progressText = ''; switch (currentState) { case 'idle': exerciseName = "ArmorWorkout"; const loginMsg = `<div class="workout-prompt"><i class="fas fa-sign-in-alt mr-2"></i><span>Connectez-vous.</span></div>`; const loadingMsg = `<div class="workout-prompt"><i class="fas fa-spinner fa-spin mr-2"></i><span>Chargement Drive...</span></div>`; const selectMsg = `<div class="workout-prompt"><i class="fas fa-hand-pointer mr-2"></i><span>Sélectionnez Push/Pull/Legs</span></div>`; const readyMsg = `<div class="workout-prompt"><i class="fas fa-play-circle mr-2"></i><span>Prêt: ${currentWorkoutType}. Cliquez pour démarrer.</span></div>`; if (!googleAccessToken) { progressText = "Connectez-vous"; infoHtml = loginMsg; } else if (!programsLoaded) { progressText = "Chargement..."; infoHtml = loadingMsg; } else if (!currentWorkoutType) { progressText = "Sélectionnez P/P/L"; infoHtml = selectMsg; } else { progressText = `Prêt: ${currentWorkoutType}`; infoHtml = readyMsg; } break; case 'finished': const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; exerciseName = 'Entraînement Terminé !'; infoHtml = `<div class="flex items-center justify-center text-green-400"><i class="fas ${getIconForState('finished')} mr-2 text-xl"></i><span class="font-semibold">Bravo ! ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}</span></div>`; progressText = `Fini (${originalCompletedWorkoutPlan.length}/${originalCompletedWorkoutPlan.length})`; break; case 'preparing': const nextItem = currentWorkoutPlan[0]; exerciseName = `Préparation...`; infoHtml = `<div class="flex items-center justify-center text-yellow-400"><i class="fas ${getIconForState('preparing')} fa-spin mr-2"></i><span>Prêt pour <strong>${nextItem?.name || '?'}</strong> (${formatTime(prepareTimeLeft)})...</span></div>`; progressText = `Prépa... (1/${currentWorkoutPlan.length})`; break; case 'exercise': case 'paused': case 'break': if (!item) { exerciseName = 'Erreur - Étape Invalide'; infoHtml = '<p class="text-red-500">Erreur: Impossible de charger l\'étape actuelle.</p>'; progressText = `Étape ?/${currentWorkoutPlan.length}`; break; } exerciseName = `${item.name || (item.type === 'break' ? 'Repos' : 'Exercice Inconnu')}`; progressText = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`; if (item.type === 'exercise') { const reps = (item.actualReps !== undefined ? item.actualReps : item.reps) ?? '-'; const weight = (item.actualWeight !== undefined ? item.actualWeight : item.weight); const weightDisplay = (weight === null || weight === undefined || weight === 0) ? 'PDC' : `${weight}kg`; const details = item.details || ''; const prevPerf = findPreviousPerformance(item.name); const prevPerfHtml = prevPerf ? `<span class="details-info w-full"><i class="fas fa-history mr-1"></i> Préc: ${prevPerf.reps ?? '?'}r @ ${prevPerf.weight === 0 ? 'PDC' : (prevPerf.weight ?? '?') + 'kg'} (${prevPerf.date.toLocaleDateString('fr-FR',{day:'2-digit', month:'short'})})</span>` : ''; infoHtml = `<div class="exercise-info-static"><div class="flex justify-center gap-4 mb-2"><span class="reps-info"><i class="fas ${getIconForType('exercise')}"></i> ${reps} Répétitions</span><span class="weight-info"><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span></div>${details ? `<span class="details-info w-full"><i class="fas fa-info-circle"></i> ${details}</span>` : ''}${prevPerfHtml}</div>`; } else if (item.type === 'break') { const nextExerciseIndex = currentItemIndex + 1; let nextExerciseInfoHtml = ''; if (nextExerciseIndex < currentWorkoutPlan.length && currentWorkoutPlan[nextExerciseIndex].type === 'exercise') { const nextEx = currentWorkoutPlan[nextExerciseIndex]; const nextReps = nextEx.reps ?? '-'; const nextWeight = nextEx.weight; const nextWeightDisplay = (nextWeight === null || nextWeight === undefined || nextWeight === 0) ? 'PDC' : `${nextWeight}kg`; nextExerciseInfoHtml = `<div class="next-exercise-info"><i class="fas fa-arrow-right"></i><span> Suivant: ${nextEx.name || '?'} (${nextReps}r @ ${nextWeightDisplay})</span></div>`; } infoHtml = `<div class="break-info-static"><div class="duration-info"><i class="fas ${getIconForType('break')}"></i><span> Pause : ${formatTime(item.duration || 0)}</span></div>${nextExerciseInfoHtml}</div>`; } break; default: exerciseName = 'État Inconnu'; infoHtml = '<p>?</p>'; progressText = ''; break; } if (domElements.currentExerciseNameDisplay) domElements.currentExerciseNameDisplay.textContent = exerciseName; if (domElements.currentExerciseContainer) domElements.currentExerciseContainer.innerHTML = infoHtml; if (domElements.progressTextArea) domElements.progressTextArea.textContent = progressText; }
         function getIconForState(state){ switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'preparing': return 'fa-spinner'; case 'paused': return 'fa-pause-circle'; case 'finished': return 'fa-check-circle'; case 'idle': return 'fa-play-circle'; default: return 'fa-question-circle'; }}
@@ -528,12 +532,12 @@
         function showMessage(msg, duration = 3000, isError = false) { if (!domElements.messageArea) return; domElements.messageArea.textContent = msg; domElements.messageArea.classList.toggle('error-message', isError); domElements.messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { domElements.messageArea.classList.remove('visible'); setTimeout(() => domElements.messageArea.classList.remove('error-message'), 500); }, duration); }
 
         // --- UI Section Management ---
-        // (showSection, setActiveWorkoutNav - IDENTIQUES à la version précédente, utilisant domElements)
+        // (showSection, setActiveWorkoutNav - IDENTIQUES)
         function showSection(sectionId) { const sections = { 'workout-section': domElements.workoutSection, 'history-section': domElements.historySection, 'progress-section': domElements.progressSection }; Object.values(sections).forEach(section => section?.classList.add('section-hidden')); document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active')); const sectionToShow = sections[sectionId]; if (sectionToShow) { sectionToShow.classList.remove('section-hidden'); } const navLinks = { 'workout-section': domElements.navButtons, 'history-section': [domElements.navHistoryBtn], 'progress-section': [domElements.navProgressBtn] }; const linksToActivate = navLinks[sectionId]; if (linksToActivate) { if (sectionId === 'workout-section') { const workoutBtn = domElements.navButtons?.find(btn => btn && btn.dataset.workout === currentWorkoutType); if (workoutBtn) workoutBtn.classList.add('active'); } else { linksToActivate.forEach(btn => btn?.classList.add('active')); } } }
         function setActiveWorkoutNav(type) { domElements.navButtons?.forEach(btn => { const isActive = btn && btn.dataset.workout === type; if(btn) btn.classList.toggle('active', isActive); }); }
 
         // --- History & Stats Functions ---
-        // (displayHistory, filterHistoryByPeriod, renderHistoryList, calculateAndDisplayStats, aggregateChartData, getChartXAxisTitle, renderHistoryChart, updateChartColors, clearCharts, setChartPlaceholder - IDENTIQUES à la version précédente, utilisant domElements)
+        // (displayHistory, filterHistoryByPeriod, renderHistoryList, calculateAndDisplayStats, aggregateChartData, getChartXAxisTitle, renderHistoryChart, updateChartColors, clearCharts, setChartPlaceholder - IDENTIQUES)
         function displayHistory(period = 'week') { if (!domElements.historyList || !domElements.statsDisplay || !domElements.historyChartCanvasEl || !domElements.statsContentWrapper) return; if (!googleAccessToken) { domElements.historyList.innerHTML = '<li class="no-history">Connectez-vous pour voir l\'historique.</li>'; domElements.statsContentWrapper.innerHTML = '<p><i class="fas fa-sign-in-alt"></i> Connectez-vous.</p>'; if(domElements.statsDisplay.querySelector('.motivational-message')) domElements.statsDisplay.querySelector('.motivational-message').textContent = ''; clearCharts(); setChartPlaceholder('history-chart-canvas', "Connectez-vous."); return; } currentHistoryPeriod = period; domElements.historyFilterBtns?.forEach(btn => btn.classList.toggle('active', btn.dataset.period === period)); const filteredHistory = filterHistoryByPeriod(workoutHistory, period); renderHistoryList(filteredHistory); calculateAndDisplayStats(filteredHistory); renderHistoryChart(filteredHistory); }
         function filterHistoryByPeriod(history, period) { const now = new Date(); let startDate = new Date(); startDate.setHours(0, 0, 0, 0); switch (period) { case 'week': const dayOfWeek = now.getDay(); const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); startDate.setDate(diff); break; case 'month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); break; case 'year': startDate = new Date(now.getFullYear(), 0, 1); break; case 'all': return history; default: console.warn("Invalid history period:", period, "Defaulting to 'week'"); const dayOfWeekDef = now.getDay(); const diffDef = now.getDate() - dayOfWeekDef + (dayOfWeekDef === 0 ? -6 : 1); startDate.setDate(diffDef); break; } return history.filter(entry => new Date(entry.date) >= startDate); }
         function renderHistoryList(filteredHistory) { if (!domElements.historyList) return; if (filteredHistory.length === 0) { domElements.historyList.innerHTML = '<li class="no-history">Aucun entraînement enregistré pour cette période.</li>'; return; } domElements.historyList.innerHTML = filteredHistory .sort((a, b) => new Date(b.date) - new Date(a.date)) .map(entry => { const date = new Date(entry.date); const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' }); const formattedTime = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationSeconds = entry.durationSeconds || 0; const formattedDuration = durationSeconds > 0 ? formatTime(durationSeconds) : 'N/A'; const type = entry.type || 'Inconnu'; const totalReps = entry.totalReps ?? '?'; return `<li><span class="history-item-date">${formattedDate} <small>(${formattedTime})</small></span><span class="history-item-type">${type}</span><span class="history-item-reps"><i class="fas fa-hashtag"></i> ${totalReps}</span><span class="history-item-duration">${formattedDuration}</span></li>`; }).join(''); }
@@ -546,12 +550,12 @@
         function setChartPlaceholder(canvasId, message, show = true) { const placeholderId = canvasId.replace('-canvas', '-placeholder'); const placeholder = document.getElementById(placeholderId); const canvasEl = document.getElementById(canvasId); if (placeholder && canvasEl) { placeholder.textContent = message; placeholder.style.display = show ? 'block' : 'none'; canvasEl.style.opacity = show ? '0.3' : '1'; canvasEl.style.display = show ? 'none' : 'block'; } }
 
         // --- Progress Section Functions ---
-        // (populateExerciseSelect, displayExerciseProgress - IDENTIQUES à la version précédente, utilisant domElements)
+        // (populateExerciseSelect, displayExerciseProgress - IDENTIQUES)
         function populateExerciseSelect() { if (!domElements.exerciseSelect || !workoutHistory) return; const uniqueExercises = new Set(); workoutHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.type === 'exercise' && ex.name) { uniqueExercises.add(ex.name); } }); }); const sortedExercises = Array.from(uniqueExercises).sort((a, b) => a.localeCompare(b)); const currentVal = domElements.exerciseSelect.value; domElements.exerciseSelect.innerHTML = '<option value="all">Tous (Total Reps)</option>'; sortedExercises.forEach(exName => { const option = document.createElement('option'); option.value = exName; option.textContent = exName; domElements.exerciseSelect.appendChild(option); }); if (sortedExercises.includes(currentVal)) { domElements.exerciseSelect.value = currentVal; } else { domElements.exerciseSelect.value = 'all'; } console.log("Exercise select populated."); }
-        function displayExerciseProgress() { if (!domElements.exerciseProgressChartCanvasEl) return; const ctx = domElements.exerciseProgressChartCanvasEl.getContext('2d'); if (!ctx) return; if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const selectedExercise = domElements.exerciseSelect.value; const selectedPeriod = domElements.periodSelect.value; if(domElements.progressChartTitle) domElements.progressChartTitle.textContent = `Progression ${selectedExercise === 'all' ? '(Total Répétitions)' : `(${selectedExercise})`}`; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); let chartData; let chartOptions; let chartType = 'line'; if (selectedExercise === 'all') { const { labels, data } = aggregateChartData(filteredHistory, selectedPeriod, 'totalReps'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour cette sélection."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--action-color').trim(); const primColorRgb = '167, 139, 250'; const gridColor = styles.getPropertyValue('--border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text').trim(); const tooltipBg = `rgba(17, 24, 39, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text').trim(); chartData = { labels, datasets: [{ label: 'Total Répétitions par Séance', data: data, borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.5)`, tension: 0.1, fill: true, pointRadius: 2, pointBackgroundColor: primColor }] }; chartOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: { display: true, text: getChartXAxisTitle(selectedPeriod), color: textColor } }, y: { beginAtZero: true, title: { display: true, text: 'Total Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0]?.label || '', label: (context) => `Total Reps: ${context.parsed.y}` } } } }; chartType = 'line'; } else { const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { const reps = ex.actualReps ?? ex.reps; if (reps !== undefined && reps !== null) { exerciseData.push({ date: new Date(entry.date), reps: reps }); } } }); }); exerciseData.sort((a, b) => a.date - b.date); if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', `Aucune donnée pour "${selectedExercise}" sur cette période.`); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const labels = exerciseData.map(d => d.date.toISOString()); // Utilise ISO string pour l'adaptateur temps const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--info-color').trim(); const primColorRgb = '96, 165, 250'; const gridColor = styles.getPropertyValue('--border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text').trim(); const tooltipBg = `rgba(17, 24, 39, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text').trim(); chartData = { labels, datasets: [{ label: 'Répétitions', data: exerciseData.map(d => ({ x: d.date.toISOString(), y: d.reps })), borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.2)`, tension: 0.3, fill: false, pointRadius: 3, pointBackgroundColor: primColor, pointBorderColor: primColor, pointHoverRadius: 5, yAxisID: 'yMetric' }] }; chartOptions = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd MMM yyyy', displayFormats: { day: 'dd/MM' } }, adapters: { date: { locale: 'fr-FR' } }, ticks: { color: textColor, source: 'auto' }, grid: { display: false }, title: { display: true, text: 'Date', color: textColor } }, yMetric: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0] ? new Date(tooltipItems[0].parsed.x).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '', label: (context) => `${context.dataset.label}: ${context.parsed.y}` } } } }; chartType = 'line'; } try { if (exercisePerfChartInstance) { if (exercisePerfChartInstance.config.type !== chartType || exercisePerfChartInstance.options.scales.x.type !== chartOptions.scales.x.type) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } else { exercisePerfChartInstance.data = chartData; exercisePerfChartInstance.options = chartOptions; exercisePerfChartInstance.update(); } } else { exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } } catch (e) { console.error("Error creating/updating progress chart:", e); setChartPlaceholder('exercise-progress-chart', "Erreur affichage graphique."); } }
+        function displayExerciseProgress() { if (!domElements.exerciseProgressChartCanvasEl) return; const ctx = domElements.exerciseProgressChartCanvasEl.getContext('2d'); if (!ctx) return; if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const selectedExercise = domElements.exerciseSelect.value; const selectedPeriod = domElements.periodSelect.value; if(domElements.progressChartTitle) domElements.progressChartTitle.textContent = `Progression ${selectedExercise === 'all' ? '(Total Répétitions)' : `(${selectedExercise})`}`; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); let chartData; let chartOptions; let chartType = 'line'; if (selectedExercise === 'all') { const { labels, data } = aggregateChartData(filteredHistory, selectedPeriod, 'totalReps'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour cette sélection."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--action-color').trim(); const primColorRgb = '167, 139, 250'; const gridColor = styles.getPropertyValue('--border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text').trim(); const tooltipBg = `rgba(17, 24, 39, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text').trim(); chartData = { labels, datasets: [{ label: 'Total Répétitions par Séance', data: data, borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.5)`, tension: 0.1, fill: true, pointRadius: 2, pointBackgroundColor: primColor }] }; chartOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: { display: true, text: getChartXAxisTitle(selectedPeriod), color: textColor } }, y: { beginAtZero: true, title: { display: true, text: 'Total Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0]?.label || '', label: (context) => `Total Reps: ${context.parsed.y}` } } } }; chartType = 'line'; } else { const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { const reps = ex.actualReps ?? ex.reps; if (reps !== undefined && reps !== null) { exerciseData.push({ date: new Date(entry.date), reps: reps }); } } }); }); exerciseData.sort((a, b) => a.date - b.date); if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', `Aucune donnée pour "${selectedExercise}" sur cette période.`); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const labels = exerciseData.map(d => d.date.toISOString()); const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--info-color').trim(); const primColorRgb = '96, 165, 250'; const gridColor = styles.getPropertyValue('--border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text').trim(); const tooltipBg = `rgba(17, 24, 39, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text').trim(); chartData = { labels, datasets: [{ label: 'Répétitions', data: exerciseData.map(d => ({ x: d.date.toISOString(), y: d.reps })), borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.2)`, tension: 0.3, fill: false, pointRadius: 3, pointBackgroundColor: primColor, pointBorderColor: primColor, pointHoverRadius: 5, yAxisID: 'yMetric' }] }; chartOptions = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd MMM yyyy', displayFormats: { day: 'dd/MM' } }, adapters: { date: { locale: dateFns.locale.fr } }, ticks: { color: textColor, source: 'auto' }, grid: { display: false }, title: { display: true, text: 'Date', color: textColor } }, yMetric: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0] ? new Date(tooltipItems[0].parsed.x).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '', label: (context) => `${context.dataset.label}: ${context.parsed.y}` } } } }; chartType = 'line'; } try { if (exercisePerfChartInstance) { if (exercisePerfChartInstance.config.type !== chartType || exercisePerfChartInstance.options.scales.x.type !== chartOptions.scales.x.type) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } else { exercisePerfChartInstance.data = chartData; exercisePerfChartInstance.options = chartOptions; exercisePerfChartInstance.update(); } } else { exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } } catch (e) { console.error("Error creating/updating progress chart:", e); setChartPlaceholder('exercise-progress-chart', "Erreur affichage graphique."); } }
 
         // --- Summary & Rep Adjustment Functions ---
-        // (populateAndShowSummary, finishSummary, closeSummary, showRepAdjustmentOverlay, hideRepAdjustmentOverlay, handleRepAdjustClick, findNextExerciseForAdjustment - IDENTIQUES à la version précédente, utilisant domElements)
+        // (populateAndShowSummary, finishSummary, closeSummary, showRepAdjustmentOverlay, hideRepAdjustmentOverlay, handleRepAdjustClick, findNextExerciseForAdjustment - IDENTIQUES)
         function populateAndShowSummary() { if (!domElements.postWorkoutSummary || !domElements.summaryItemsList || !domElements.finishSummaryBtn) return; const planToSummarize = originalCompletedWorkoutPlan; if (!planToSummarize || planToSummarize.length === 0) { console.warn("Attempting to show summary without a completed plan."); return; } if(domElements.summaryTitle) domElements.summaryTitle.textContent = `Résumé & Objectifs (${currentWorkoutType || '?'})`; if(domElements.summaryItemsList) { domElements.summaryItemsList.innerHTML = ''; planToSummarize.forEach((item, index) => { if (item.type === 'exercise') { const li = document.createElement('li'); li.classList.add('summary-item'); li.dataset.originalIndex = index; const performedReps = item.actualReps ?? item.reps ?? '?'; const nextTargetReps = item.reps ?? 0; let contentHtml = `<div class="exercise-name"><i class="fas ${getIconForType(item.type)}" style="color:var(--exercise-color)"></i> ${item.name || 'Exercice'} <small>(${performedReps} fait)</small></div><div class="input-container"><label for="next-reps-${index}">Objectif:</label><input type="number" id="next-reps-${index}" value="${nextTargetReps}" min="0" step="1" placeholder="Reps"></div>`; li.innerHTML = contentHtml; domElements.summaryItemsList.appendChild(li); } }); } if(domElements.finishSummaryBtn) domElements.finishSummaryBtn.disabled = false; if(domElements.postWorkoutSummary) domElements.postWorkoutSummary.classList.add('visible'); }
         async function finishSummary() { if (!googleAccessToken || !currentWorkoutType || !programFileIds[currentWorkoutType]) { showMessage("Erreur sauvegarde objectifs: Connexion ou programme manquant.", 4000, true); closeSummary(false); resetCurrentWorkout(); return; } if (isSavingDriveData) { showMessage("Sauvegarde Drive déjà en cours...", 2000); return; } let changesMade = false; const programToUpdate = loadedWorkouts[currentWorkoutType]; if (!programToUpdate) { showMessage(`Erreur: Programme local "${currentWorkoutType}" non trouvé.`, 4000, true); closeSummary(false); resetCurrentWorkout(); return; } domElements.summaryItemsList.querySelectorAll('.summary-item[data-original-index]').forEach(li => { const index = parseInt(li.dataset.originalIndex, 10); const input = li.querySelector(`#next-reps-${index}`); if (programToUpdate[index] && programToUpdate[index].type === 'exercise' && input) { const nextRepsRaw = input.value.trim(); const nextReps = nextRepsRaw === '' ? (programToUpdate[index].reps ?? null) : parseInt(nextRepsRaw, 10); if (nextReps !== null && !isNaN(nextReps) && nextReps >= 0) { if (programToUpdate[index].reps !== nextReps) { programToUpdate[index].reps = nextReps; changesMade = true; console.log(`Objectif màj pour ${programToUpdate[index].name}: ${nextReps} reps`); } } else if (nextRepsRaw !== '') { console.warn(`Valeur invalide pour reps de ${programToUpdate[index].name}: ${nextRepsRaw}. Objectif non modifié.`); } } }); if (changesMade) { if(domElements.finishSummaryBtn) { domElements.finishSummaryBtn.disabled = true; domElements.finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } console.log(`Sauvegarde des objectifs pour "${currentWorkoutType}" sur Drive...`); const success = await updateFileContent(programFileIds[currentWorkoutType], programToUpdate); if (success) showMessage(`Objectifs "${currentWorkoutType}" mis à jour sur Drive !`, 2500); else showMessage(`Échec sauvegarde objectifs sur Drive.`, 5000, true); resetCurrentWorkout(false); } else { showMessage("Aucun objectif modifié.", 2000); resetCurrentWorkout(false); } }
         function closeSummary(updateUI = true) { if(domElements.postWorkoutSummary) domElements.postWorkoutSummary.classList.remove('visible'); if (updateUI && currentState === 'finished') { resetCurrentWorkout(false); } }
@@ -561,7 +565,7 @@
         function findNextExerciseForAdjustment() { nextExerciseIndexForAdjustment = -1; if (!currentWorkoutPlan) return; for (let i = currentItemIndex + 1; i < currentWorkoutPlan.length; i++) { if (currentWorkoutPlan[i].type === 'exercise') { nextExerciseIndexForAdjustment = i; return; } } }
 
         // --- Persistence Functions ---
-        // (saveHistoryToDrive, loadHistoryFromDrive, saveProgramsToDrive, loadProgramsFromDrive, saveInProgressState, loadInProgressState, clearInProgressState, saveWorkoutToHistory, exportHistory - IDENTIQUES à la version précédente)
+        // (saveHistoryToDrive, loadHistoryFromDrive, saveProgramsToDrive, loadProgramsFromDrive, saveInProgressState, loadInProgressState, clearInProgressState, saveWorkoutToHistory, exportHistory - IDENTIQUES)
         async function saveHistoryToDrive() { if (!googleAccessToken || isSavingDriveData) return; if (!historyFileId) { console.log("ID fichier historique inconnu, tentative de recherche/création..."); historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); } if (historyFileId) { console.log("Sauvegarde de l'historique sur Drive..."); await updateFileContent(historyFileId, workoutHistory); } else { console.error("Impossible de trouver ou créer le fichier d'historique sur Drive."); showMessage("Erreur sauvegarde historique.", 5000, true); } }
         async function loadHistoryFromDrive() { if (!googleAccessToken) return; console.log("Chargement de l'historique depuis Drive..."); historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); if (historyFileId) { const content = await readFileContent(historyFileId); if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); console.log(`Historique chargé: ${workoutHistory.length} entrées.`); } catch (e) { console.error("Erreur parsing historique JSON:", e, "Contenu:", content); workoutHistory = []; showMessage("Erreur lecture historique (format invalide).", 5000, true); } } else { workoutHistory = []; console.warn("Impossible de lire le contenu du fichier historique."); showMessage("Erreur lecture historique.", 5000, true); } } else { workoutHistory = []; console.error("Impossible de trouver ou créer le fichier historique sur Drive."); showMessage("Erreur accès fichier historique.", 5000, true); } displayHistory(currentHistoryPeriod); }
         async function saveProgramsToDrive() { if (!googleAccessToken || isSavingDriveData) return; console.log("Sauvegarde des programmes sur Drive (si modifiés)..."); let allSaved = true; for (const type of PROGRAM_TYPES) { if (!programFileIds[type]) { const defaultProgContent = defaultWorkouts[type] ? JSON.stringify(defaultWorkouts[type], null, 2) : '[]'; programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultProgContent); } if (programFileIds[type] && loadedWorkouts[type]) { const success = await updateFileContent(programFileIds[type], loadedWorkouts[type]); if (!success) allSaved = false; } else { console.warn(`Programme ${type} non trouvé localement ou ID Drive manquant, non sauvegardé.`); allSaved = false; } } return allSaved; }
@@ -570,148 +574,159 @@
         function loadInProgressState() { if (typeof localStorage === 'undefined' || !googleAccessToken || !programsLoaded) return; try { const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) return; const savedState = JSON.parse(savedStateJSON); const maxAge = 24 * 60 * 60 * 1000; if (!savedState.timestamp || Date.now() - savedState.timestamp > maxAge) { console.log("État sauvegardé trop ancien, suppression."); clearInProgressState(); return; } if (!loadedWorkouts[savedState.currentWorkoutType] || loadedWorkouts[savedState.currentWorkoutType].length !== savedState.currentWorkoutPlan.length) { console.warn("Le plan sauvegardé ne correspond pas au plan Drive actuel. Reprise annulée."); clearInProgressState(); return; } if (confirm(`Un entraînement "${savedState.currentWorkoutType}" (état: ${savedState.currentState}) était en cours. Voulez-vous reprendre ?`)) { console.log("Reprise de l'état:", savedState.currentState); currentWorkoutType = savedState.currentWorkoutType; currentItemIndex = savedState.currentItemIndex; workoutStartTime = savedState.workoutStartTime; currentWorkoutPlan = savedState.currentWorkoutPlan; totalWorkoutEstimatedSeconds = savedState.totalWorkoutEstimatedSeconds; elapsedWorkoutEstimatedSeconds = savedState.elapsedWorkoutEstimatedSeconds; const itemAtSavedIndex = currentWorkoutPlan[currentItemIndex]; if (savedState.currentState === 'break' || (savedState.currentState === 'paused' && itemAtSavedIndex?.type === 'break')) { totalTime = itemAtSavedIndex?.duration || 0; timeLeft = Math.max(0, Math.min(savedState.timeLeft, totalTime)); } else { timeLeft = 0; totalTime = 0; } setActiveWorkoutNav(currentWorkoutType); showSection('workout-section'); setState(savedState.currentState); showMessage(`Entraînement "${currentWorkoutType}" repris.`, 3000); } else { console.log("Reprise refusée par l'utilisateur."); clearInProgressState(); } } catch (e) { console.error("Erreur chargement état en cours:", e); clearInProgressState(); } }
         function clearInProgressState() { if (typeof localStorage === 'undefined') return; try { localStorage.removeItem(IN_PROGRESS_KEY); console.log("État en cours effacé."); } catch (e) {} }
         function saveWorkoutToHistory() { if (!googleAccessToken || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return; const endTime = Date.now(); const durationSeconds = workoutStartTime ? (endTime - workoutStartTime) / 1000 : 0; let totalReps = 0; originalCompletedWorkoutPlan.forEach(item => { if (item.type === 'exercise') totalReps += item.actualReps ?? item.reps ?? 0; }); const historyEntry = { date: new Date(workoutStartTime || endTime).toISOString(), type: currentWorkoutType || 'Inconnu', durationSeconds: Math.round(durationSeconds), totalReps: totalReps, exercises: originalCompletedWorkoutPlan.map(item => ({ name: item.name, type: item.type, ...(item.type === 'exercise' ? { reps: item.reps, actualReps: item.actualReps ?? item.reps, weight: item.weight, actualWeight: item.actualWeight ?? item.weight } : { duration: item.duration }) })) }; workoutHistory.unshift(historyEntry); saveHistoryToDrive(); displayHistory(currentHistoryPeriod); populateExerciseSelect(); displayExerciseProgress(); }
-        function exportHistory() { if (!googleAccessToken) { showMessage("Connectez-vous pour exporter.", 3000, true); return; } if (workoutHistory.length === 0) { showMessage("L'historique est vide, rien à exporter.", 3000); return; } try { const jsonData = JSON.stringify(workoutHistory, null, 2); const blob = new Blob([jsonData], { type: 'application/json' // (Suite de la fonction exportHistory)
+        function exportHistory() { if (!googleAccessToken) { showMessage("Connectez-vous pour exporter.", 3000, true); return; } if (workoutHistory.length === 0) { showMessage("L'historique est vide, rien à exporter.", 3000); return; } try { const jsonData = JSON.stringify(workoutHistory, null, 2);
+        // (Suite et fin de la fonction exportHistory)
             const blob = new Blob([jsonData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             const dateStr = new Date().toISOString().split('T')[0];
-            a.download = `armorworkout_history_${dateStr}.json`; // Nom du fichier
-            document.body.appendChild(a); // Ajoute le lien temporaire au DOM
-            a.click(); // Simule le clic pour démarrer le téléchargement
-            document.body.removeChild(a); // Nettoie le DOM
-            URL.revokeObjectURL(url); // Libère l'URL objet
+            a.download = `armorworkout_history_${dateStr}.json`; // Nom du fichier de téléchargement
+            document.body.appendChild(a); // Ajoute temporairement le lien au document
+            a.click(); // Simule un clic pour démarrer le téléchargement
+            document.body.removeChild(a); // Supprime le lien temporaire
+            URL.revokeObjectURL(url); // Libère la mémoire associée à l'URL objet
             showMessage("Historique exporté avec succès.", 2500);
         } catch (e) {
             showMessage("Erreur lors de l'exportation de l'historique.", 4000, true);
-            console.error("Erreur export:", e);
+            console.error("Export error:", e);
         }
     }
 
     // --- Event Listeners Setup ---
     function addEventListeners() {
-        // Timer Interaction (Click)
+        // Timer Interaction (Click) - Gère l'overlay d'ajustement ou démarre le workout
         if (domElements.timerDisplayClickable) domElements.timerDisplayClickable.addEventListener('click', () => {
-            initAudioContext(); // Ensure audio context is active
+            initAudioContext(); // S'assure que le contexte audio est prêt
             if (isRepAdjustmentVisible) {
-                hideRepAdjustmentOverlay(); // Click outside rep adjustment closes it
+                hideRepAdjustmentOverlay(); // Clique en dehors = ferme l'overlay
             } else if (currentState === 'exercise' || currentState === 'break') {
-                showRepAdjustmentOverlay(); // Show rep adjustment if in exercise/break
+                showRepAdjustmentOverlay(); // Affiche l'overlay si en exercice ou pause
             } else if (currentState === 'idle' && domElements.startPauseBtn && !domElements.startPauseBtn.disabled) {
-                playSound('laser');
-                setState('preparing'); // Start workout on click if idle and ready
+                playSound('laser'); // Son de démarrage
+                setState('preparing'); // Démarre le workout
             } else if (currentState === 'paused') {
-                 playSound('laser');
+                 playSound('laser'); // Son de reprise
                 const item = currentWorkoutPlan[currentItemIndex];
-                setState(item?.type === 'exercise' ? 'exercise' : 'break'); // Resume workout
+                setState(item?.type === 'exercise' ? 'exercise' : 'break'); // Reprend le workout
             }
         });
 
-        // Control Buttons
+        // Boutons de Contrôle Principaux
         if (domElements.startPauseBtn) domElements.startPauseBtn.addEventListener('click', () => {
             initAudioContext(); playSound('laser');
             if (currentState === 'idle') { setState('preparing'); }
-            else if (currentState === 'exercise') { handleItemCompletion(false); } // Mark exercise done
-            else if (currentState === 'break') { setState('paused'); } // Pause during break
-            else if (currentState === 'paused') { const item = currentWorkoutPlan[currentItemIndex]; setState(item?.type === 'exercise' ? 'exercise' : 'break'); } // Resume
+            else if (currentState === 'exercise') { handleItemCompletion(false); } // Marque l'exercice comme fait
+            else if (currentState === 'break') { setState('paused'); } // Met en pause pendant le repos
+            else if (currentState === 'paused') { const item = currentWorkoutPlan[currentItemIndex]; setState(item?.type === 'exercise' ? 'exercise' : 'break'); } // Reprend
         });
         if (domElements.skipBtn) domElements.skipBtn.addEventListener('click', () => {
             initAudioContext(); playSound('laser');
-            if (isWorkoutActive && !['preparing', 'finished'].includes(currentState)) handleItemCompletion(false); // Skip current item
+            // Peut passer l'étape si le workout est actif et pas en préparation ou terminé
+            if (isWorkoutActive && !['preparing', 'finished'].includes(currentState)) handleItemCompletion(false);
         });
         if (domElements.prevBtn) domElements.prevBtn.addEventListener('click', () => {
-            initAudioContext(); playSound('laser');
-            handlePreviousClick(); // Go to previous item
+            initAudioContext(); playSound('laser'); handlePreviousClick(); // Revient à l'étape précédente
         });
         if (domElements.finishBtn) domElements.finishBtn.addEventListener('click', () => {
-            initAudioContext(); playSound('laser');
-            forceFinishWorkout(); // Ask to finish early
+            initAudioContext(); playSound('laser'); forceFinishWorkout(); // Propose de terminer plus tôt
         });
         if (domElements.resetBtn) domElements.resetBtn.addEventListener('click', () => {
             initAudioContext(); playSound('laser');
-            if (confirm("Réinitialiser l'entraînement actuel ou la sélection ?")) resetCurrentWorkout(); // Confirm reset
+            if (confirm("Réinitialiser l'entraînement actuel ou la sélection ?")) resetCurrentWorkout(); // Demande confirmation
         });
 
-        // Navigation Buttons
+        // Boutons de Navigation (PPL, Histo, Progrès)
         domElements.navButtons?.forEach(btn => {
             if (btn) btn.addEventListener('click', () => { initAudioContext(); playSound('laser'); loadWorkout(btn.dataset.workout); });
         });
         if(domElements.navHistoryBtn) domElements.navHistoryBtn.addEventListener('click', () => {
-            initAudioContext(); playSound('laser'); showSection('history-section'); displayHistory(currentHistoryPeriod); // Refresh history on show
+            initAudioContext(); playSound('laser'); showSection('history-section'); displayHistory(currentHistoryPeriod); // Rafraîchit l'historique à l'affichage
         });
         if(domElements.navProgressBtn) domElements.navProgressBtn.addEventListener('click', () => {
-            initAudioContext(); playSound('laser'); showSection('progress-section'); displayExerciseProgress(); // Refresh progress on show
+            initAudioContext(); playSound('laser'); showSection('progress-section'); displayExerciseProgress(); // Rafraîchit la progression à l'affichage
         });
 
-        // Filter Buttons (History & Progress)
+        // Boutons de Filtres (Historique & Progrès)
         domElements.historyFilterBtns?.forEach(btn => {
             if(btn) btn.addEventListener('click', () => { initAudioContext(); playSound('laser'); displayHistory(btn.dataset.period); });
         });
         if(domElements.exerciseSelect) domElements.exerciseSelect.addEventListener('change', () => { displayExerciseProgress(); });
         if(domElements.periodSelect) domElements.periodSelect.addEventListener('change', () => { displayExerciseProgress(); });
 
-        // Auth & Settings Buttons
+        // Boutons d'Authentification & Paramètres
         if(domElements.settingsIcon) domElements.settingsIcon.addEventListener('click', () => {
-            playSound('laser'); showMessage("Paramètres non implémentés.", 2000); /* TODO */
+            playSound('laser'); showMessage("Paramètres non implémentés.", 2000); // Placeholder
         });
         if(domElements.signInButton) domElements.signInButton.addEventListener('click', () => {
-            playSound('laser'); handleAuthClick();
+            playSound('laser'); handleAuthClick(); // Lance la connexion Google
         });
         if(domElements.signOutButton) domElements.signOutButton.addEventListener('click', () => {
-            playSound('laser'); if (confirm("Se déconnecter de Google Drive ?")) handleSignoutClick();
+            playSound('laser'); if (confirm("Se déconnecter de Google Drive ?")) handleSignoutClick(); // Demande confirmation
         });
         if(domElements.exportButton) domElements.exportButton.addEventListener('click', () => {
-            playSound('laser'); exportHistory();
+            playSound('laser'); exportHistory(); // Exporte l'historique
         });
 
-        // Summary Modal Buttons
+        // Boutons & Interactions du Modal Résumé
         if(domElements.finishSummaryBtn) domElements.finishSummaryBtn.addEventListener('click', () => {
-            playSound('laser'); finishSummary();
+            playSound('laser'); finishSummary(); // Finalise et sauvegarde les objectifs
         });
         if(domElements.postWorkoutSummary) domElements.postWorkoutSummary.addEventListener('click', (e) => {
-            if (e.target === domElements.postWorkoutSummary) { // Click on backdrop only
+            // Ferme le modal si on clique sur le fond semi-transparent
+            if (e.target === domElements.postWorkoutSummary) {
                 playSound('laser'); closeSummary();
             }
         });
 
-        // Rep Adjustment Overlay Buttons
+        // Boutons de l'Overlay d'Ajustement des Reps
         if(domElements.repAdjustMinusBtn) domElements.repAdjustMinusBtn.addEventListener('click', handleRepAdjustClick);
         if(domElements.repAdjustPlusBtn) domElements.repAdjustPlusBtn.addEventListener('click', handleRepAdjustClick);
         if(domElements.repAdjustmentOverlay) domElements.repAdjustmentOverlay.addEventListener('click', (e) => {
-            if (e.target === domElements.repAdjustmentOverlay) hideRepAdjustmentOverlay(); // Click on overlay background closes it
+            // Ferme l'overlay si on clique sur son fond
+            if (e.target === domElements.repAdjustmentOverlay) hideRepAdjustmentOverlay();
         });
 
-        // Window/Document Events
+        // Événements de la Fenêtre/Document (pour sauvegarde état)
         document.addEventListener('visibilitychange', () => {
+            // Sauvegarde l'état si l'onglet devient inactif pendant un workout
             if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState();
         });
         window.addEventListener('beforeunload', () => {
+            // Sauvegarde l'état avant que l'utilisateur ne quitte la page pendant un workout
             if (isWorkoutActive) saveInProgressState();
-            // Note: Cannot reliably prevent unload here with custom messages anymore
+            // Note: Il n'est plus possible d'afficher un message personnalisé ici de manière fiable.
         });
 
         console.log("Event Listeners Added.");
     } // --- Fin de addEventListeners ---
 
 
-    // --- App Initialization ---
+    // --- Initialisation de l'Application ---
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOM Loaded. Initializing ArmorWorkout...");
-        initializeDOMReferences(); // Cache DOM elements
-        initSounds(); // Preload audio files
-        addEventListeners(); // Setup interactions
-        // loadSavedTheme(); // Currently no theme switching implemented
+        initializeDOMReferences(); // Met en cache les éléments DOM
+        initSounds(); // Précharge les sons
+        addEventListeners(); // Attache tous les écouteurs d'événements
 
-        // Initial UI State
-        setState('idle'); // Start in idle state
-        updateAuthUI(false); // Set initial UI for logged-out state
-        showSection('workout-section'); // Show workout timer section by default
+        // Définit l'état initial de l'interface utilisateur
+        setState('idle'); // Commence en état 'idle'
+        updateAuthUI(false); // Met à jour l'UI pour l'état déconnecté
+        showSection('workout-section'); // Affiche la section du timer par défaut
 
-        // Initial Chart Placeholders
+        // Initialise les placeholders des graphiques
         setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
         setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression.");
 
-        // Initialize Google Sign-In
+        // Configure Chart.js pour utiliser la locale française si date-fns est chargé
+        if (window.dateFns && window.dateFns.locale && window.dateFns.locale.fr) {
+             Chart.defaults.locale = 'fr-FR'; // Met la locale par défaut de Chart.js en français
+             console.log("Chart.js locale set to fr-FR.");
+        } else {
+             console.warn("date-fns French locale not found (fr.js). Chart.js dates might use default locale.");
+        }
+
+        // Lance la vérification et l'initialisation de Google Sign-In
         checkAndInitGis();
 
         console.log("ArmorWorkout Initialized and Ready.");
