@@ -3,7 +3,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ArmorWorkout - Timer Réacteur Arc</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -19,28 +20,34 @@
         :root {
             /* Thème Sombre */
             --primary-bg: #0A0F1A; --secondary-bg: #111827; --primary-text: #E5E7EB; --secondary-text: #9CA3AF; --border-color: #374151; --input-bg: #1F2937;
-            /* Couleurs Accent & Réacteur V1 (Cahier des Charges) */
+            /* Couleurs Accent & Réacteur V1 */
             --accent-color: #00d0ff;
             --reactor-glow: rgba(0, 200, 255, 0.8);
             --reactor-core: rgba(0, 229, 255, 1);
             --reactor-ring: rgba(0, 200, 255, 0.5);
-            --reactor-segment: rgba(0, 200, 255, 0.3); /* Peut être utilisé pour des détails */
-            /* Couleurs par état (du cahier des charges) */
-            --exercise-color: #00e5ff; --break-color: #ff8800; --paused-color: #ff004c; --finished-color: #00ff85; --idle-color: var(--accent-color); --preparing-color: var(--break-color); /* Utilise break pour preparing */
-            /* RGB pour JS (Basé sur les couleurs d'état) */
+            --reactor-segment: rgba(0, 200, 255, 0.3);
+            --accent-glow: 0 0 10px rgba(0, 208, 255, 0.7);
+            --accent-glow-strong: 0 0 15px rgba(0, 208, 255, 1), 0 0 30px rgba(0, 208, 255, 0.5);
+            --accent-border: 1px solid rgba(0, 208, 255, 0.3);
+            /* Couleurs par état (Cahier des Charges) */
+            --exercise-color: #00e5ff; --break-color: #ff8800; --paused-color: #ff004c; --finished-color: #00ff85; --idle-color: var(--accent-color); --preparing-color: var(--break-color);
+            /* RGB pour JS (Basé sur couleurs état) */
             --exercise-color-rgb: 0, 229, 255; --break-color-rgb: 255, 136, 0; --paused-color-rgb: 255, 0, 76; --finished-color-rgb: 0, 255, 133; --idle-color-rgb: 0, 208, 255; --preparing-color-rgb: 255, 136, 0;
-            /* Boutons & Autres (Style V3 gardé pour cohérence hors timer) */
-            --danger-color: #ff4757; --success-color: #2ed573; --info-color: #60A5FA; --action-color: #A78BFA;
+            /* Autres couleurs */
+            --danger-color: #ff4757; --success-color: #2ed573;
+            /* Boutons */
             --btn-bg: rgba(6, 20, 37, 0.3); --btn-border: 1px solid #2c3a4e; --btn-hover-bg: rgba(17, 24, 39, 0.5); --btn-hover-border: var(--secondary-text); --btn-hover-text: var(--primary-text); --btn-disabled-opacity: 0.5;
+            /* Autres */
             --font-family-main: 'Inter', sans-serif; --font-family-display: 'Rajdhani', sans-serif; --border-radius-md: 6px; --transition-speed: 0.2s; --section-transition-speed: 0.3s;
-            --total-progress-color: var(--accent-color); --total-progress-bg: rgba(17, 24, 39, 0.5);
+            /* Progression totale */
+             --total-progress-color: var(--accent-color); --total-progress-bg: rgba(17, 24, 39, 0.5);
         }
         /* --- Styles Globaux --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; font-size: 16px; }
         body { background-color: var(--primary-bg); font-family: var(--font-family-main); color: var(--primary-text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         .container { max-width: 1280px; margin: 0 auto; width: 100%; flex-grow: 1; display: flex; flex-direction: column; padding: 0 2rem; }
-        /* --- Header (Style V3 gardé) --- */
+        /* --- Header --- */
         header { padding: 10px 0; border-bottom: 1px solid var(--border-color); background-color: var(--primary-bg); width: 100%; transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0s linear 0.4s; }
         body.workout-active header { transform: translateY(-100%); opacity: 0; visibility: hidden; }
         .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0 2rem; }
@@ -53,14 +60,14 @@
         nav button:not(:disabled):hover { color: var(--primary-text); }
         nav button.active { color: var(--primary-text); font-weight: 600; border-bottom-color: var(--accent-color); }
         nav button i { margin-right: 5px; }
-        #nav-history.active { border-bottom-color: var(--exercise-color); } /* Utilise couleur état */
-        #nav-progress.active { border-bottom-color: var(--finished-color); } /* Utilise couleur état */
-        /* --- Boutons Style App (Style V3 gardé) --- */
+        #nav-history.active { border-bottom-color: var(--exercise-color); }
+        #nav-progress.active { border-bottom-color: var(--success-color); }
+        /* --- Boutons Style App --- */
         .app-button { background-color: var(--btn-bg); border: var(--btn-border); color: var(--accent-color); text-shadow: 0 0 5px rgba(0, 208, 255, 0.7); transition: all 0.3s ease; font-family: var(--font-family-display); letter-spacing: 1px; font-weight: 600; padding: 0.5rem 1.5rem; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9rem; }
-        .app-button:hover:not(:disabled) { box-shadow: 0 0 10px rgba(0, 208, 255, 0.7); background-color: rgba(0, 208, 255, 0.1); }
+        .app-button:hover:not(:disabled) { box-shadow: var(--accent-glow); background-color: rgba(0, 208, 255, 0.1); }
         .app-button.danger { color: var(--danger-color); border-color: rgba(255, 71, 87, 0.5); text-shadow: 0 0 5px rgba(255, 71, 87, 0.7); }
         .app-button.danger:hover:not(:disabled) { box-shadow: 0 0 10px rgba(255, 71, 87, 0.7); background-color: rgba(255, 71, 87, 0.1); }
-        .app-button.active { background-color: rgba(0, 208, 255, 0.2); box-shadow: 0 0 10px rgba(0, 208, 255, 0.7); }
+        .app-button.active { background-color: rgba(0, 208, 255, 0.2); box-shadow: var(--accent-glow); }
         .app-button:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(6, 20, 37, 0.6); border-color: rgba(0, 208, 255, 0.15); color: rgba(0, 208, 255, 0.4); text-shadow: none; box-shadow: none; }
         .center-button { min-width: 120px; }
         /* Statut Drive et Settings Icon */
@@ -82,63 +89,73 @@
         .section-hidden { opacity: 0; max-height: 0 !important; padding: 0 !important; margin-bottom: 0 !important; border-width: 0 !important; visibility: hidden; transition: opacity var(--section-transition-speed) ease-in-out, visibility 0s linear var(--section-transition-speed), max-height 0s linear var(--section-transition-speed), padding var(--section-transition-speed) ease-out, margin var(--section-transition-speed) ease-out, border-width var(--section-transition-speed) ease-out; }
 
         /* --- Timer Réacteur Arc V1 --- */
-        .timer-display { margin-bottom: 30px; position: relative; display: flex; justify-content: center; align-items: center; width: 300px; height: 300px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .timer-circle-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        /* Progression totale reste discrète */
-        #total-progress-circle { position: absolute; inset: 0; border-radius: 50%; z-index: 0; opacity: 0.3; border: 4px solid transparent; background-clip: padding-box; background-origin: border-box; background-image: conic-gradient(var(--accent-color) 0%, var(--accent-color) 0%, transparent 0%, transparent 100%); transition: background-image 0.3s linear; }
-        /* Style principal du timer V1 */
-        .timer-circle {
-          position: relative; width: 300px; height: 300px; border-radius: 50%;
-          background: radial-gradient(circle at center, rgba(0, 200, 255, 0.15) 0%, rgba(10, 15, 26, 0) 70%); /* Utilise --primary-bg transparent */
-          box-shadow: 0 0 50px rgba(0, 200, 255, 0.5); /* Glow de base */
-          display: flex; justify-content: center; align-items: center;
-          z-index: 1;
-          transition: box-shadow var(--transition-speed) ease;
+        /* Keyframes */
+        @keyframes rotate-left { from { transform: rotate(360deg); } to { transform: rotate(0); } }
+        @keyframes rotate-right { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+        @keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0); } 30% { transform: translate(-50%, -50%) rotate(360deg); } 50% { transform: translate(-50%, -50%) rotate(0); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        .timer-display { /* Conteneur global */
+            margin-bottom: 30px; position: relative; display: flex; justify-content: center; align-items: center; width: 300px; /* Taille fixe du design V1 */ height: 300px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
         }
-        /* Anneaux concentriques V1 */
-        .reactor-ring {
-          position: absolute; border-radius: 50%;
-          border: 2px solid rgba(0, 200, 255, 0.4); /* Couleur/opacité ajustée */
-          box-shadow: 0 0 15px rgba(0, 200, 255, 0.6); /* Glow ajusté */
-          /* Tailles via style inline HTML */
-          z-index: 1; /* Sous le noyau */
-        }
-        /* Segments rotatifs V1 */
-        .reactor-segments {
-          position: absolute; width: 100%; height: 100%;
-          border-radius: 50%; overflow: hidden;
-          animation: rotateSegments 60s linear infinite;
-          z-index: 0; /* Derrière les anneaux */
-          pointer-events: none; /* Important */
-        }
-        /* Style de base pour les segments (générés par JS) */
-        .segment {
-            position: absolute; top: 50%; left: 50%; width: 3px; background-color: rgba(0, 200, 255, 0.6); transform-origin: center 135px; /* Ajuster rayon ~ (300px/2 - offset) */ opacity: 0.7; border-radius: 1px;
-        }
-        @keyframes rotateSegments { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        /* Noyau central V1 */
-        .reactor-core {
-            position: absolute; width: 45%; height: 45%; /* Légèrement plus petit */
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--reactor-core) 10%, rgba(0, 200, 255, 0.3) 50%, transparent 70%);
-            box-shadow: 0 0 25px 8px var(--reactor-core), 0 0 40px 15px rgba(0, 200, 255, 0.5); /* Glow ajusté */
-            z-index: 2;
-        }
-        /* Affichage du temps V1 */
-        .time-display {
-            font-family: var(--font-family-display); font-size: 3.5rem; font-weight: 700;
-            z-index: 10; position: relative;
-            --current-timer-color: var(--idle-color);
-            --current-timer-glow: var(--accent-glow);
-            color: var(--current-timer-color);
-            text-shadow: var(--current-timer-glow);
+        /* Conteneur interne pour positionnement relatif */
+        .reactor { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+
+        /* Progression totale (discrète) */
+        #total-progress-circle { position: absolute; inset: -5px; /* Légèrement plus grand */ border-radius: 50%; z-index: 0; opacity: 0.2; border: 3px solid transparent; background-clip: padding-box; background-origin: border-box; background-image: conic-gradient(var(--accent-color) 0%, var(--accent-color) 0%, transparent 0%, transparent 100%); transition: background-image 0.3s linear; }
+
+        /* Triangle central */
+        .triangle { position: absolute; top: 50%; left: 50%; z-index: 99; transform: translate(-50%, -50%); width: 155px; aspect-ratio: 1; background-color: var(--accent-color); clip-path: polygon(50% 88%, 0 0, 100% 0); }
+        .triangle::after { content: ''; display: block; position: absolute; top: 45%; left: 50%; z-index: 999; width: 120px; height: 120px; transform: translate(-50%, -50%); background-color: var(--primary-bg); /* Masque avec fond */ clip-path: polygon(50% 90%, 0 0, 100% 0); }
+
+        /* Cercle principal (lueur et fond) */
+        .circle-1 { position: relative; width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8)); animation: rotate-right 2s linear infinite; }
+        .circle-1::before { content: ''; position: absolute; z-index: 1; inset: 10px; border-radius: 50%; background-color: var(--primary-bg); /* Trou central */ }
+        .circle-1 span { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8)); }
+        .circle-1 span:nth-child(1) { filter: blur(5px); } .circle-1 span:nth-child(2) { filter: blur(5px); } .circle-1 span:nth-child(3) { filter: blur(15px); } .circle-1 span:nth-child(4) { filter: blur(75px); }
+
+        /* Anneau épais avec segments noirs */
+        .circle-2 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 60px); height: calc(100% - 60px); border-radius: 50%; border: 10px solid var(--accent-color); box-shadow: 0 0 30px 5px rgba(105, 241, 241, 0.3); z-index: 9; animation: rotate-left 4s linear infinite; }
+        .circle-2 span { position: absolute; top: 50%; left: 50%; width: calc(100% + 20px); height: 10px; background-color: var(--primary-bg); /* Segments noirs */ }
+        .circle-2 span:nth-child(1) { transform: translate(-50%, -50%) rotate(90deg); } .circle-2 span:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg); } .circle-2 span:nth-child(3) { transform: translate(-50%, -50%) rotate(-45deg); } .circle-2 span:nth-child(4) { transform: translate(-50%, -50%) rotate(30deg); } .circle-2 span:nth-child(5) { transform: translate(-50%, -50%) rotate(-30deg); } .circle-2 span:nth-child(6) { transform: translate(-50%, -50%) rotate(0deg); } .circle-2 span:nth-child(7) { transform: translate(-50%, -50%) rotate(55deg); height: 5px; } .circle-2 span:nth-child(8) { transform: translate(-50%, -50%) rotate(125deg); height: 5px; }
+
+        /* Anneau pointillé */
+        .circle-3 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; border-radius: 50%; box-shadow: 0 0 10px 10px rgba(105, 241, 241, 0.2); }
+        .circle-3::after { content: ''; display: block; width: 115px; height: 115px; border-radius: 50%; border: 3px dotted rgba(105, 241, 241, 0.8); animation: rotate-right 10s linear infinite; }
+
+        /* Anneau avec 3 segments lumineux */
+        .circle-4 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; width: 100px; height: 100px; border-radius: 50%; box-shadow: 0 0 10px 10px rgba(105, 241, 241, 0.1); animation: rotate-left-right 20s infinite ease-in; }
+        .circle-4 span { position: absolute; top: 50%; left: 50%; width: 100%; height: 100%; border-radius: 50%; border: 3px solid; border-color: var(--accent-color) transparent transparent; }
+        .circle-4 span:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg); } .circle-4 span:nth-child(2) { transform: translate(-50%, -50%) rotate(-75deg); } .circle-4 span:nth-child(3) { transform: translate(-50%, -50%) rotate(165deg); }
+
+        /* Noyau central - partie externe */
+        .circle-5 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; width: 64px; height: 64px; border-radius: 50%; animation: rotate-left-right 10s infinite ease-in; background-color: rgba(105, 241, 241, 0.2); box-shadow: 0 0 20px 20px rgba(105, 241, 241, 0.2); }
+        .circle-5 span { position: absolute; inset: 0; z-index: 99; width: 54px; height: 54px; border-radius: 50%; border: 5px solid; border-color: var(--accent-color) transparent transparent; }
+        .circle-5 span:nth-child(1) { transform: rotate(0deg); } .circle-5 span:nth-child(2) { transform: rotate(120deg); } .circle-5 span:nth-child(3) { transform: rotate(240deg); }
+
+        /* Noyau central - anneau pointillé interne */
+        .circle-6 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; }
+        .circle-6::after { content: ''; display: block; width: 40px; height: 40px; border-radius: 50%; border: 3px dashed var(--accent-color); animation: rotate-left 5s infinite ease-in; }
+
+        /* Noyau central - coeur lumineux */
+        .circle-7 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; }
+        .circle-7::after { content: ''; display: block; width: 27px; height: 27px; border-radius: 50%; background-color: var(--accent-color); animation: rotate-left 5s infinite ease-in; box-shadow: 0 0 5px 5px rgba(105, 241, 241, 0.2); }
+
+        /* Noyau central - détails rotatifs internes */
+        .circle-8 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99; width: 15px; height: 15px; border-radius: 50%; animation: rotate-left-right 5s infinite ease-in; }
+        .circle-8 span { position: absolute; inset: 0; z-index: 99; width: 13px; height: 13px; border-radius: 50%; border: 1px solid; border-color: #000 transparent transparent; }
+        .circle-8 span:nth-child(1) { transform: rotate(120deg); } .circle-8 span:nth-child(2) { transform: rotate(240deg); }
+
+        /* Affichage du temps pour V1 */
+        #time-left {
+            position: absolute; /* Positionné au centre */
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: var(--font-family-display); font-size: 2.8rem; /* Ajuster taille */
+            font-weight: 700; letter-spacing: 1px; z-index: 100; /* Au dessus de tout */
+            /* Couleur et glow gérés par JS via updateTimerAppearance */
+            color: var(--idle-color);
+            text-shadow: 0 0 10px var(--idle-color);
             transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
         }
-        /* État du timer */
-        #timer-state { font-family: var(--font-family-display); position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0; transition: color 0.3s ease, opacity 0.3s ease, text-shadow 0.3s ease; color: var(--current-timer-color); text-shadow: var(--current-timer-glow); z-index: 11; }
-        #timer-state.visible { opacity: 0.9; }
-        #timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
-        @keyframes countdown-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
         /* --- FIN Styles Timer --- */
 
         /* --- Infos Workout (Style V3 gardé) --- */
@@ -151,11 +168,13 @@
         #current-exercise-container .exercise-details span, #current-exercise-container .break-info span { display: inline-flex; align-items: center; gap: 0.3rem; }
         #current-exercise-container .exercise-details i { color: var(--exercise-color); }
         #current-exercise-container .break-info i { color: var(--break-color-val); }
+
         /* --- Contrôles Principaux (Style V3 gardé) --- */
         .controls { width: 100%; max-width: 640px; display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; padding: 0 1rem; }
         .controls .app-button { flex-grow: 0; }
         #start-pause-btn:not(:disabled) { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--accent-color); text-shadow: none; }
         #start-pause-btn:not(:disabled):hover { background-color: var(--accent-color); filter: brightness(1.1); box-shadow: var(--accent-glow); }
+
         /* --- Tracker Inférieur (Style V3 gardé) --- */
         #progress-tracker { color: rgba(255, 255, 255, 0.7); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; gap: 1rem; }
         #drive-connection-status-main { display: inline-flex; align-items: center; gap: 6px; }
@@ -164,53 +183,91 @@
         #drive-connection-status-main.loading .status-indicator { background-color: var(--warning-color); box-shadow: 0 0 8px var(--warning-color); animation: pulse-yellow 1.5s infinite ease-in-out; }
         @keyframes pulse-yellow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         #drive-connection-text { font-weight: 500; }
-        /* --- Sections Histo/Progress (styles internes inchangés) --- */
-        /* ... */
-        /* --- Modal (styles internes inchangés) --- */
-        /* ... */
-        /* --- Animation Fin (ajustée pour V1) --- */
+
+        /* --- Sections Histo/Progress (styles internes V3 gardés) --- */
+        .history-section h2, .progress-section h2 { font-family: var(--font-family-display); color: var(--primary-text); }
+        .history-controls, .progress-controls { padding-bottom: 20px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .history-filters, .progress-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+        .history-filters button { /* Appliquer style app-button ici */ background-color: var(--btn-bg); border: var(--btn-border); color: var(--secondary-text); padding: 0.4rem 1rem; font-size: 0.85rem; font-family: var(--font-family-display); }
+        .history-filters button:hover:not(:disabled) { box-shadow: var(--accent-glow); background-color: rgba(0, 208, 255, 0.1); color: var(--accent-color); border-color: var(--accent-border); }
+        .history-filters button.active { border-color: var(--accent-color); color: var(--accent-color); background-color: var(--accent-dim); box-shadow: var(--accent-glow); }
+        /* ... reste styles histo/progress ... */
+
+        /* --- Modal (styles internes V3 gardés) --- */
+        .post-workout-summary { position: fixed; inset: 0; background-color: rgba(10, 15, 26, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        /* ... reste styles modal ... */
+        #finish-summary-btn { /* Appliquer style app-button */ background-color: var(--success-color) !important; border-color: var(--success-color) !important; color: var(--primary-bg) !important; text-shadow: none !important; }
+        #finish-summary-btn:hover:not(:disabled) { filter: brightness(1.1); box-shadow: 0 0 10px var(--success-color); }
+
+        /* --- Animation Fin (Ajustée pour V1) --- */
         .finished-animation .timer-circle { box-shadow: 0 0 70px rgba(var(--finished-color-rgb), 0.9), 0 0 40px rgba(var(--finished-color-rgb), 0.6); }
-        .finished-animation .reactor-ring, .finished-animation .reactor-core { border-color: var(--finished-color); box-shadow: 0 0 20px var(--finished-color); }
+        .finished-animation .reactor-ring, .finished-animation .reactor-core, .finished-animation .triangle { border-color: var(--finished-color); box-shadow: 0 0 20px var(--finished-color); }
+        .finished-animation .triangle { background-color: var(--finished-color); }
+
         /* --- Message Flottant (inchangé) --- */
-        /* ... */
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: var(--primary-text); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: all 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
+        .message-area.error-message { background-color: rgba(255, 71, 87, 0.8); color: #fff; border-color: var(--danger-color); text-shadow: 0 0 5px rgba(0,0,0,0.5); }
         /* --- Footer (inchangé) --- */
+        footer { width: 100%; text-align: center; font-size: 0.75rem; color: rgb(107 114 128); margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        footer a:hover { color: var(--accent-color); }
+        footer i.fa-google-drive { color: var(--success-color); }
+        /* --- Responsive (styles V3 gardés, peuvent nécessiter ajustement) --- */
         /* ... */
-        /* --- Responsive (inchangé) --- */
+        /* --- Rep Adjustment Overlay (styles V3 gardés) --- */
         /* ... */
-        /* --- Rep Adjustment Overlay (inchangé) --- */
-        /* ... */
+
     </style>
 </head>
 <body class="flex flex-col items-center justify-between py-8 px-4">
 
     <!-- Header (Structure V3 gardée) -->
-    <header> <div class="header-content"> <div class="header-actions-left"> <button id="signout-button" class="app-button danger" disabled><i class="fas fa-sign-out-alt mr-2"></i> Déconnecter</button> <button id="export-button" class="app-button" disabled><i class="fas fa-file-export mr-2"></i> Exporter</button> <div id="drive-status" style="display: none;"> <span id="drive-status-text" class="app-button">Connecté</span> <i id="settings-icon" class="fas fa-cog"></i> </div> <button id="signin-button" class="app-button" disabled><i class="fab fa-google mr-2"></i> Connecter Drive</button> </div> <h1 class="app-title"><i class="fas fa-shield-alt"></i>ArmorWorkout</h1> <nav class="header-actions-right"> <button id="nav-push" data-workout="Push" disabled>Push</button> <button id="nav-pull" data-workout="Pull" disabled>Pull</button> <button id="nav-legs" data-workout="Legs" disabled>Legs</button> <button id="nav-history"><i class="fas fa-history mr-1"></i> Historique</button> <button id="nav-progress" disabled><i class="fas fa-chart-line mr-1"></i> Progression</button> </nav> </div> </header>
+    <header>
+        <div class="header-content">
+            <div class="header-actions-left">
+                 <button id="signout-button" class="app-button danger" disabled><i class="fas fa-sign-out-alt mr-2"></i> Déconnecter</button>
+                 <button id="export-button" class="app-button" disabled><i class="fas fa-file-export mr-2"></i> Exporter</button>
+                 <div id="drive-status" style="display: none;">
+                    <span id="drive-status-text" class="app-button">Connecté</span>
+                    <i id="settings-icon" class="fas fa-cog"></i>
+                 </div>
+                 <button id="signin-button" class="app-button" disabled><i class="fab fa-google mr-2"></i> Connecter Drive</button>
+            </div>
+            <h1 class="app-title"><i class="fas fa-shield-alt"></i>ArmorWorkout</h1>
+            <nav class="header-actions-right">
+                 <button id="nav-push" data-workout="Push" disabled>Push</button>
+                 <button id="nav-pull" data-workout="Pull" disabled>Pull</button>
+                 <button id="nav-legs" data-workout="Legs" disabled>Legs</button>
+                 <button id="nav-history"><i class="fas fa-history mr-1"></i> Historique</button>
+                 <button id="nav-progress" disabled><i class="fas fa-chart-line mr-1"></i> Progression</button>
+             </nav>
+        </div>
+    </header>
 
     <!-- Main Content -->
     <main class="container flex-grow flex flex-col items-center justify-center relative">
         <div class="workout-section w-full" id="workout-section">
              <!-- Timer Réacteur Arc V1 -->
             <div class="timer-display" id="timer-display-clickable">
-              <div class="timer-circle-container">
-                <div class="total-progress-circle" id="total-progress-circle"></div>
-                <div class="timer-circle" id="timer-circle"> <!-- Style principal V1 -->
-                  <div class="reactor-core"></div>
-                  <div class="reactor-ring" style="width: 80%; height: 80%;"></div>
-                  <div class="reactor-ring" style="width: 65%; height: 65%;"></div>
-                  <div class="reactor-ring" style="width: 50%; height: 50%;"></div>
-                  <div class="reactor-segments outer-segments" id="outerSegments"></div> <!-- Segments JS -->
-                  <div class="reactor-segments inner-segments" id="innerSegments"></div> <!-- Segments JS -->
-                  <div class="time-display" id="time-left">00:00</div>
+                <div class="reactor" id="timer-circle"> <!-- ID changé pour JS, classe pour style -->
+                    <div class="triangle"></div>
+                    <div class="circle-1"><span></span><span></span><span></span><span></span></div>
+                    <div class="circle-2"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="circle-3"></div>
+                    <div class="circle-4"><span></span><span></span><span></span></div>
+                    <div class="circle-5"><span></span><span></span><span></span></div>
+                    <div class="circle-6"></div>
+                    <div class="circle-7"></div>
+                    <div class="circle-8"><span></span><span></span><span></span></div>
+                    <!-- Progression Totale (discrète) -->
+                    <div id="total-progress-circle" style="/* styles appliqués via CSS */"></div>
+                     <!-- Affichage du temps -->
+                     <div id="time-left" class="arc-reactor-time">00:00</div>
                 </div>
-              </div>
-               <p id="timer-state" class="timer-state-display text-center mb-8 visible">Prêt</p>
-               <!-- Overlay Ajustement Reps -->
-               <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
-                  <div class="title">Ajuster Répétitions</div> <div class="rep-adjustment-next-exercise" id="rep-adjustment-exercise-name">Exercice</div> <div class="rep-adjustment-controls"> <button class="rep-adjustment-btn minus" id="rep-adjust-minus">-</button> <span class="current-reps" id="current-reps-display">12</span> <button class="rep-adjustment-btn plus" id="rep-adjust-plus">+</button> </div>
-               </div>
             </div>
+             <p id="timer-state" class="timer-state-display text-center mb-8 visible">Prêt</p>
 
-             <!-- Infos Exercice / Prompt (Structure V3 gardée) -->
+             <!-- Infos Exercice / Prompt -->
              <div id="workout-info" class="text-center mb-8">
                   <h2 id="current-exercise-name-display" class="app-title text-3xl font-bold text-white mb-4">ArmorWorkout</h2>
                   <div id="current-exercise-container" class="flex justify-center">
@@ -220,7 +277,7 @@
                   </div>
              </div>
 
-             <!-- Boutons de Contrôle (Structure V3 gardée) -->
+             <!-- Boutons de Contrôle -->
              <div class="controls w-full max-w-xl flex justify-center gap-4 px-4 mb-8">
                  <button id="prev-btn" class="app-button" disabled><i class="fas fa-backward-step mr-2"></i> Précédent</button>
                  <button id="start-pause-btn" class="app-button center-button" disabled>Démarrer</button>
@@ -229,7 +286,7 @@
                  <button id="reset-btn" class="app-button danger" disabled><i class="fas fa-redo mr-2"></i> Reset</button>
              </div>
 
-             <!-- Statut Tracker Inférieur (Structure V3 gardée) -->
+             <!-- Statut Tracker Inférieur -->
              <div id="progress-tracker" class="text-white/70 flex items-center justify-center text-sm">
                 <span id="progress-text-area">Sélectionnez un entraînement</span>
                  <span id="drive-connection-status-main" class="ml-4 items-center" style="display: none;">
@@ -237,6 +294,11 @@
                     <span id="drive-connection-text">Connecté</span>
                 </span>
              </div>
+
+              <!-- Overlay Ajustement Reps -->
+              <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
+                 <div class="title">Ajuster Répétitions</div> <div class="rep-adjustment-next-exercise" id="rep-adjustment-exercise-name">Exercice</div> <div class="rep-adjustment-controls"> <button class="rep-adjustment-btn minus" id="rep-adjust-minus">-</button> <span class="current-reps" id="current-reps-display">12</span> <button class="rep-adjustment-btn plus" id="rep-adjust-plus">+</button> </div>
+              </div>
         </div>
 
         <!-- Sections Historique / Progression (Structure V3 gardée) -->
@@ -274,7 +336,7 @@
         // --- DONNÉES PAR DÉFAUT ---
         const defaultWorkouts = { Push: [{"type":"exercise","name":"Pompes (Push-ups)","reps":15, "weight":0, "details":"Poids de corps (adapter difficulté: genoux, mains/pieds surélevés)","equipment":"Bodyweight","reps_start":8,"reps_target_max":20,"progression_note":"Quand 20 reps faciles: Augmenter difficulté (pieds plus hauts, tempo lent). Ou passer aux Pompes Déclinées. Ensuite ajouter elastiques 15 kg, 25 kg ..."},{"type":"break","duration":75,"name":"Repos"} /* ... */], Pull: [{/* ... */}], Legs: [{"type":"exercise","name":"Front Squat Combo","reps":12,"weight":15,"details":"Élastique 15+25kg + 1 haltère 5kg","equipment":"Élastique 15+25kg + 1 haltère 5kg","reps_start":12,"reps_target_max":15,"progression_note":"Quand 15 reps: Pause Squat (Pause 1-2s en bas). Recommence à 12 reps."},{"type":"break","duration":90,"name":"Repos"},{"type":"exercise","name":"Leg Raises (Relevé de jambes)","reps":12,"weight":null,"details":"Poids de corps","equipment":"Poids de corps","reps_start":12,"reps_target_max":20,"progression_note":"Quand 20 reps jambes tendues: Weighted Leg Raises (Tenir haltère 5kg entre les pieds). Recommence à 12 reps."}] };
         // --- Éléments DOM ---
-        let timeDisplayDiv, timerCircle, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, navButtons = [], navHistoryBtn, navProgressBtn, signInButton, signOutButton, exportButton, driveStatusElement, driveStatusTextElement, settingsIcon, postWorkoutSummary, summaryTitle, summaryItemsList, finishSummaryBtn, historyDriveStatus, totalProgressCircle, currentExerciseNameDisplay, driveConnectionStatusMain, driveConnectionText, timerDisplayElement, chartPlaceholder, progressTextArea, historyActionsContainer, exerciseSelect, metricSelect, periodSelect, exerciseChartPlaceholder, repAdjustmentOverlay, repAdjustMinusBtn, repAdjustPlusBtn, currentRepsDisplay, repAdjustmentExerciseName, historyChartCanvasEl, exerciseProgressChartCanvasEl, prevBtn, messageArea, outerSegmentsContainer, innerSegmentsContainer; // Ajout segments V1
+        let timeDisplayDiv, timerCircle, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, navButtons = [], navHistoryBtn, navProgressBtn, signInButton, signOutButton, exportButton, driveStatusElement, driveStatusTextElement, settingsIcon, postWorkoutSummary, summaryTitle, summaryItemsList, finishSummaryBtn, historyDriveStatus, totalProgressCircle, currentExerciseNameDisplay, driveConnectionStatusMain, driveConnectionText, timerDisplayElement, chartPlaceholder, progressTextArea, historyActionsContainer, exerciseSelect, metricSelect, periodSelect, exerciseChartPlaceholder, repAdjustmentOverlay, repAdjustMinusBtn, repAdjustPlusBtn, currentRepsDisplay, repAdjustmentExerciseName, historyChartCanvasEl, exerciseProgressChartCanvasEl, prevBtn, messageArea, /* arcSegmentsContainer retiré */;
         // --- Variables d'État ---
         let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = []; let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null; let totalTime = 0, timeLeft = 0, prepareTimeLeft = 0; let totalWorkoutEstimatedSeconds = 0, elapsedWorkoutEstimatedSeconds = 0; let isTimerRunning = false, isWorkoutActive = false, workoutFinished = false, wasFinishedState = false; let currentState = 'idle'; let workoutStartTime = null, workoutHistory = []; let currentHistoryPeriod = 'week'; let historyChartInstance = null, exercisePerfChartInstance = null; let googleAccessToken = null, tokenClient = null; let historyFileId = null, programFileIds = { Push: null, Pull: null, Legs: null }; let programsLoaded = false, loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); let isSavingDriveData = false; let currentTheme = 'dark', messageTimeoutId = null; let audioContext = null; let nextExerciseIndexForAdjustment = -1, currentRepAdjustment = 0, isRepAdjustmentVisible = false; let gisCheckRetries = 0; let halfwayTimeoutId = null; let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
         // --- Audio & Vibration ---
@@ -298,23 +360,21 @@
         function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
         function calculateTotalEstimatedTime(plan) { let totalSeconds = 0; plan.forEach(item => { let estimatedDuration = 0; if (item.type === 'break') estimatedDuration = item.duration || 0; else if (item.type === 'exercise') estimatedDuration = item.duration || (item.reps || 0) * SECONDS_PER_REP; item.estimatedDuration = estimatedDuration; totalSeconds += estimatedDuration; }); return totalSeconds; }
         function updateTotalProgressCircle() { if (!totalProgressCircle || totalWorkoutEstimatedSeconds <= 0 || !isWorkoutActive) { totalProgressCircle.style.backgroundImage = `conic-gradient(transparent 0%, transparent 100%)`; return; } let elapsedSeconds = 0; for (let i = 0; i < currentItemIndex; i++) { elapsedSeconds += currentWorkoutPlan[i]?.estimatedDuration || 0; } const currentItem = currentWorkoutPlan[currentItemIndex]; if (currentItem) { if (currentState === 'break' && totalTime > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, currentItem.estimatedDuration || totalTime); elapsedSeconds += elapsedInBreak; } else if (currentState === 'paused' && currentItem.type === 'break' && totalTime > 0) { const elapsedInBreak = Math.min(totalTime - timeLeft, currentItem.estimatedDuration || totalTime); elapsedSeconds += elapsedInBreak; } } if (currentState === 'finished') elapsedSeconds = totalWorkoutEstimatedSeconds; const percentage = totalWorkoutEstimatedSeconds > 0 ? Math.min(100, (elapsedSeconds / totalWorkoutEstimatedSeconds) * 100) : 0; const gradient = `conic-gradient(var(--total-progress-color) ${percentage}%, transparent ${percentage}%)`; totalProgressCircle.style.backgroundImage = gradient; }
-        // --- updateTimerDisplay (Simplifiée) ---
         function updateTimerDisplay() { if (!timeDisplayDiv || !timerStateDisplay) return; let timeString = "00:00"; let stateText = ''; const item = currentWorkoutPlan[currentItemIndex]; switch(currentState) { case 'exercise': timeString = "GO!"; stateText = item?.name || 'Exercice'; break; case 'break': timeString = formatTime(timeLeft); stateText = 'Repos'; break; case 'paused': timeString = (item?.type === 'break') ? formatTime(timeLeft) : "PAUSE"; stateText = 'En Pause'; break; case 'preparing': timeString = formatTime(prepareTimeLeft); stateText = 'Préparation'; break; case 'finished': timeString = "FINI!"; stateText = 'Terminé !'; break; default: timeString = formatTime(0); stateText = 'Prêt'; break; } timeDisplayDiv.textContent = timeString; timerStateDisplay.textContent = stateText; updateTotalProgressCircle(); }
         // --- MAJ Apparence Timer (V1 - Cahier des Charges) ---
         function updateTimerAppearance(state) {
-            if (!timerCircle || !timeDisplayDiv) { console.warn("Timer elements missing for appearance update."); return; }
-            let stateColor = 'var(--idle-color)'; let glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--idle-color-rgb')}, 0.6)`;
-            switch(state) {
-                case 'exercise': stateColor = 'var(--exercise-color)'; glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--exercise-color-rgb')}, 0.8)`; break;
-                case 'break': stateColor = 'var(--break-color)'; glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--break-color-rgb')}, 0.8)`; break;
-                case 'paused': stateColor = 'var(--paused-color)'; glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--paused-color-rgb')}, 0.8)`; break;
-                case 'preparing': stateColor = 'var(--preparing-color)'; glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--preparing-color-rgb')}, 0.8)`; break;
-                case 'finished': stateColor = 'var(--finished-color)'; glowValue = `0 0 60px rgba(${getComputedStyle(document.documentElement).getPropertyValue('--finished-color-rgb')}, 0.8)`; break;
-            }
-            timerCircle.style.boxShadow = glowValue;
-            timeDisplayDiv.style.color = `var(${stateColor})`;
-            timeDisplayDiv.style.textShadow = glowValue.replace('60px','10px').replace('0.8','0.7');
-            if(timerStateDisplay) { timerStateDisplay.style.color = `var(${stateColor})`; timerStateDisplay.style.textShadow = glowValue.replace('60px','8px').replace('0.8','0.6'); }
+          if (!timerCircle || !timeDisplayDiv) { console.warn("Timer elements missing for appearance update."); return; }
+          let stateColorVar = '--idle-color'; let glowRgbVar = '--idle-color-rgb';
+          switch(state) { case 'exercise': stateColorVar = '--exercise-color'; glowRgbVar = '--exercise-color-rgb'; break; case 'break': stateColorVar = '--break-color'; glowRgbVar = '--break-color-rgb'; break; case 'paused': stateColorVar = '--paused-color'; glowRgbVar = '--paused-color-rgb'; break; case 'preparing': stateColorVar = '--preparing-color'; glowRgbVar = '--preparing-color-rgb'; break; case 'finished': stateColorVar = '--finished-color'; glowRgbVar = '--finished-color-rgb'; break; default: break; }
+          const stateColor = getComputedStyle(document.documentElement).getPropertyValue(stateColorVar).trim();
+          const glowRgb = getComputedStyle(document.documentElement).getPropertyValue(glowRgbVar).trim();
+          const glowValue = `0 0 60px rgba(${glowRgb}, 0.8)`;
+          const textGlowValue = `0 0 10px rgba(${glowRgb}, 0.7)`;
+          timerCircle.style.boxShadow = glowValue;
+          timeDisplayDiv.style.color = stateColor;
+          timeDisplayDiv.style.textShadow = textGlowValue;
+          if (timerStateDisplay) { timerStateDisplay.style.color = stateColor; timerStateDisplay.style.textShadow = textGlowValue.replace('10px', '8px'); }
+          // Pas de mise à jour des anneaux/core car le style V1 est plus statique
         }
         // --- Reste des fonctions ---
         function findPreviousPerformance(exerciseName) { if (!workoutHistory || workoutHistory.length === 0) return null; for (let i = workoutHistory.length - 1; i >= 0; i--) { const entry = workoutHistory[i]; if (!entry.exercises) continue; const foundExercise = entry.exercises.find(ex => ex.name === exerciseName); if (foundExercise) { return { reps: foundExercise.actualReps ?? foundExercise.reps, weight: foundExercise.actualWeight ?? foundExercise.weight, date: new Date(entry.date) }; } } return null; }
@@ -362,43 +422,28 @@
         function hideRepAdjustmentOverlay() { if (isRepAdjustmentVisible && repAdjustmentOverlay) { repAdjustmentOverlay.classList.remove('visible'); isRepAdjustmentVisible = false; } }
         function handleRepAdjustClick(event) { const adjustment = event.target.id === 'rep-adjust-plus' ? 1 : -1; currentRepAdjustment += adjustment; const itemForAdjustment = currentWorkoutPlan[nextExerciseIndexForAdjustment]; if (itemForAdjustment && currentRepsDisplay) { const baseReps = itemForAdjustment.reps || 0; currentRepsDisplay.textContent = Math.max(0, baseReps + currentRepAdjustment); } }
         function findNextExerciseForAdjustment() { nextExerciseIndexForAdjustment = -1; if (!currentWorkoutPlan) return; for (let i = currentItemIndex + 1; i < currentWorkoutPlan.length; i++) { if (currentWorkoutPlan[i].type === 'exercise') { nextExerciseIndexForAdjustment = i; return; } } }
-        // --- Fonction Segments Réacteur (Inutilisée pour V1) ---
+        // --- Fonction Segments Réacteur V1 (Inutilisée) ---
         // function createArcSegments() { /* ... */ }
 
         // --- Initialisation Générale ---
         function initializeDOMReferences() { try {
-            timeDisplayDiv = document.getElementById('time-left'); timerCircle = document.getElementById('timer-circle'); /* Classe du cercle V1 */ timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); prevBtn = document.getElementById('prev-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); progressSection = document.getElementById('progress-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay?.querySelector('.content-wrapper'); historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button')); historyChartCanvasEl = document.getElementById('history-chart-canvas'); exerciseProgressChartCanvasEl = document.getElementById('exercise-progress-chart'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); exportButton = document.getElementById('export-button'); driveStatusElement = document.getElementById('drive-status'); driveStatusTextElement = document.getElementById('drive-status-text'); settingsIcon = document.getElementById('settings-icon'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); finishSummaryBtn = document.getElementById('finish-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); totalProgressCircle = document.getElementById('total-progress-circle'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.querySelector('.timer-display'); /* Conteneur global */ progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions'); exerciseSelect = document.getElementById('exercise-select'); metricSelect = document.getElementById('metric-select'); periodSelect = document.getElementById('period-select'); exerciseChartPlaceholder = document.getElementById('exercise-progress-placeholder'); repAdjustmentOverlay = document.getElementById('rep-adjustment-overlay'); repAdjustMinusBtn = document.getElementById('rep-adjust-minus'); repAdjustPlusBtn = document.getElementById('rep-adjust-plus'); currentRepsDisplay = document.getElementById('current-reps-display'); repAdjustmentExerciseName = document.getElementById('rep-adjustment-exercise-name'); navHistoryBtn = document.getElementById('nav-history'); navProgressBtn = document.getElementById('nav-progress'); navButtons = [ document.getElementById('nav-push'), document.getElementById('nav-pull'), document.getElementById('nav-legs') ];
-            // Pas besoin de outer/innerSegmentsContainer pour V1
+            timeDisplayDiv = document.getElementById('time-left'); timerCircle = document.getElementById('timer-circle'); /* Sélectionne le cercle V1 */ timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); prevBtn = document.getElementById('prev-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); progressSection = document.getElementById('progress-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay?.querySelector('.content-wrapper'); historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button')); historyChartCanvasEl = document.getElementById('history-chart-canvas'); exerciseProgressChartCanvasEl = document.getElementById('exercise-progress-chart'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); exportButton = document.getElementById('export-button'); driveStatusElement = document.getElementById('drive-status'); driveStatusTextElement = document.getElementById('drive-status-text'); settingsIcon = document.getElementById('settings-icon'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); finishSummaryBtn = document.getElementById('finish-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); totalProgressCircle = document.getElementById('total-progress-circle'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.querySelector('.timer-display'); /* Conteneur global */ progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions'); exerciseSelect = document.getElementById('exercise-select'); metricSelect = document.getElementById('metric-select'); periodSelect = document.getElementById('period-select'); exerciseChartPlaceholder = document.getElementById('exercise-progress-placeholder'); repAdjustmentOverlay = document.getElementById('rep-adjustment-overlay'); repAdjustMinusBtn = document.getElementById('rep-adjust-minus'); repAdjustPlusBtn = document.getElementById('rep-adjust-plus'); currentRepsDisplay = document.getElementById('current-reps-display'); repAdjustmentExerciseName = document.getElementById('rep-adjustment-exercise-name'); navHistoryBtn = document.getElementById('nav-history'); navProgressBtn = document.getElementById('nav-progress'); navButtons = [ document.getElementById('nav-push'), document.getElementById('nav-pull'), document.getElementById('nav-legs') ];
+            // outerSegmentsContainer, innerSegmentsContainer retirés
         } catch (e) { console.error("Erreur init DOM:", e); } }
 
-        // --- updateTimerAppearance V1 (Cahier des Charges) ---
+        // --- updateTimerAppearance V1 ---
         function updateTimerAppearance(state) {
-          if (!timerCircle || !timeDisplayDiv) { console.warn("Éléments Timer V1 manquants"); return; }
+          if (!timerCircle || !timeDisplayDiv) return;
           let stateColorVar = '--idle-color'; let glowRgbVar = '--idle-color-rgb';
-          switch(state) {
-            case 'exercise': stateColorVar = '--exercise-color'; glowRgbVar = '--exercise-color-rgb'; break;
-            case 'break': stateColorVar = '--break-color'; glowRgbVar = '--break-color-rgb'; break;
-            case 'paused': stateColorVar = '--paused-color'; glowRgbVar = '--paused-color-rgb'; break;
-            case 'preparing': stateColorVar = '--preparing-color'; glowRgbVar = '--preparing-color-rgb'; break;
-            case 'finished': stateColorVar = '--finished-color'; glowRgbVar = '--finished-color-rgb'; break;
-          }
+          switch(state) { case 'exercise': stateColorVar = '--exercise-color'; glowRgbVar = '--exercise-color-rgb'; break; case 'break': stateColorVar = '--break-color'; glowRgbVar = '--break-color-rgb'; break; case 'paused': stateColorVar = '--paused-color'; glowRgbVar = '--paused-color-rgb'; break; case 'preparing': stateColorVar = '--preparing-color'; glowRgbVar = '--preparing-color-rgb'; break; case 'finished': stateColorVar = '--finished-color'; glowRgbVar = '--finished-color-rgb'; break; }
           const stateColor = getComputedStyle(document.documentElement).getPropertyValue(stateColorVar).trim();
           const glowRgb = getComputedStyle(document.documentElement).getPropertyValue(glowRgbVar).trim();
-          const glowValue = `0 0 60px rgba(${glowRgb}, 0.8)`; // Glow principal
-          const textGlowValue = `0 0 10px rgba(${glowRgb}, 0.7)`; // Glow texte
-
+          const glowValue = `0 0 60px rgba(${glowRgb}, 0.8)`;
+          const textGlowValue = `0 0 10px rgba(${glowRgb}, 0.7)`;
           timerCircle.style.boxShadow = glowValue;
           timeDisplayDiv.style.color = stateColor;
           timeDisplayDiv.style.textShadow = textGlowValue;
-          if (timerStateDisplay) { // Mettre à jour état texte si présent
-              timerStateDisplay.style.color = stateColor;
-              timerStateDisplay.style.textShadow = textGlowValue.replace('10px', '8px'); // Glow plus subtil
-          }
-          // Optionnel: Mettre à jour les anneaux si besoin
-          const rings = document.querySelectorAll('.reactor-ring');
-          rings.forEach(ring => ring.style.borderColor = `rgba(${glowRgb}, 0.5)`); // Couleur des anneaux
-          const core = document.querySelector('.reactor-core');
-          if(core) core.style.borderColor = `var(${stateColorVar})`;
+          if(timerStateDisplay) { timerStateDisplay.style.color = stateColor; timerStateDisplay.style.textShadow = textGlowValue.replace('10px','8px'); }
         }
 
         function addEventListeners() { /* (Logique V3 gardée, s'assure que les sons fonctionnent) */
@@ -430,7 +475,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis();
             setChartPlaceholder('history-chart-canvas', "Connectez-vous."); setChartPlaceholder('exercise-progress-chart', "Connectez-vous.");
-            // createArcSegments(); // Appel retiré
+            // createArcSegments(); // Appel retiré car segments V1 sont fixes ou inutiles ici
             console.log("ArmorWorkout Initialisé.");
         });
     </script>
