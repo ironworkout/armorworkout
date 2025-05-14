@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArmorWorkout - Timer</title>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
     <style>
-        /* --- Variables Globales & Thème Techno Sportif --- */
         :root {
             --bg-color-dark: #000000; --secondary-bg-color-dark: #111827; --primary-text-color-dark: #E5E7EB; --secondary-text-color-dark: #9CA3AF; --border-color-dark: #374151; --accent-border-color-dark: rgba(96, 165, 250, 0.3); --input-bg-dark: #1F2937;
             --neon-cyan: #22d3ee; --neon-blue: #60A5FA; --neon-pink: #F472B6; --neon-red: #F87171; --neon-yellow: #FBBF24; --neon-green: #34D399; --neon-purple: #A78BFA; --neon-orange: #FB923C;
@@ -47,11 +43,11 @@
         #nav-progress.active { border-bottom-color: var(--neon-green); }
         .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .auth-controls { display: flex; gap: 10px; align-items: center; }
-        #signout-button, #export-button, #drive-status-text, #signin-button { background-color: transparent; border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark); padding: 5px 12px; border-radius: 6px; font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 5px; }
+        #signout-button, #export-button, #drive-status-text, #signin-button { background-color: transparent; border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark); padding: 5px 12px; border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 5px; }
         #signout-button:disabled, #export-button:disabled, #signin-button:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--border-color-dark) !important; color: var(--secondary-text-color-dark) !important; background-color: transparent !important; box-shadow: none !important; text-shadow: none !important; pointer-events: auto; }
         #signout-button:not(:disabled):hover, #export-button:not(:disabled):hover, #signin-button:not(:disabled):hover { border-color: var(--primary-text-color-dark); color: var(--primary-text-color-dark); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); }
-        #signout-button { border-color: var(--neon-red); color: var(--neon-red); } #signout-button:not(:disabled):hover { background-color: rgba(248, 113, 113, 0.1); border-color: var(--neon-red); color: var(--neon-red); }
-        #export-button { border-color: var(--neon-blue); color: var(--neon-blue); } #export-button:not(:disabled):hover { background-color: rgba(96, 165, 250, 0.1); border-color: var(--neon-blue); color: var(--neon-blue); }
+        #signout-button { border-color: var(--neon-red); color: var(--neon-red); } #signout-button:not(:disabled):hover { background-color: rgba(var(--neon-red-rgb), 0.1); border-color: var(--neon-red); color: var(--neon-red); }
+        #export-button { border-color: var(--neon-blue); color: var(--neon-blue); } #export-button:not(:disabled):hover { background-color: rgba(var(--neon-blue-rgb), 0.1); border-color: var(--neon-blue); color: var(--neon-blue); }
         #drive-status-text { border-color: var(--neon-green); color: var(--neon-green); cursor: default; } #drive-status-text:hover { background-color: transparent; border-color: var(--neon-green); color: var(--neon-green); }
         #signin-button { border-color: var(--button-connect-color); color: var(--button-connect-color); }
         #drive-status { display: inline-flex; align-items: center; gap: 10px; margin-left: 10px; padding: 0; background: none; border: none; font-size: 1em; color: inherit; }
@@ -63,7 +59,7 @@
         body.workout-active main { padding-top: 20px; }
         .app-section { background-color: transparent; padding: 0; border: none; width: 100%; margin-bottom: 40px; transition: opacity var(--section-transition-speed) ease-in-out, visibility 0s linear var(--section-transition-speed); max-height: 5000px; opacity: 1; visibility: visible; overflow: hidden; }
         .workout-section { max-width: 600px; text-align: center; }
-        .history-section, .progress-section { max-width: 850px; text-align: left; background-color: rgba(17, 24, 39, 0.5); padding: 30px; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color-dark); }
+        .history-section, .progress-section { max-width: 850px; text-align: left; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); padding: 30px; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color-dark); }
         .section-hidden { opacity: 0; max-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; margin-bottom: 0 !important; border-width: 0 !important; visibility: hidden; transition: opacity var(--section-transition-speed) ease-in-out, visibility 0s linear var(--section-transition-speed), max-height 0s linear var(--section-transition-speed), padding var(--section-transition-speed) ease-out, margin var(--section-transition-speed) ease-out, border-width var(--section-transition-speed) ease-out; }
 
         @-webkit-keyframes rotate-left { from { transform: rotate(360deg); } to { transform: rotate(0); } }
@@ -76,28 +72,29 @@
         .timer-display { margin-bottom: 30px; position: relative; display: flex; justify-content: center; align-items: center; width: 320px; height: 250px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
         .reactor {
             position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;
-            background-size: contain;
+            background-size: contain; /* Ou 'cover' selon l'effet désiré */
             background-position: center;
             background-repeat: no-repeat;
-            transition: background-image 0.5s ease-in-out;
-            border-radius: 50%; /* Assurer que l'overlay est rond si l'image de fond est ronde */
+            transition: background-image 0.3s ease-in-out;
+            border-radius: 50%;
+            overflow: hidden; /* Important pour que l'overlay ::before reste dans les limites */
         }
         .reactor::before { /* Overlay pour lisibilité sur image */
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.45); /* Noir semi-transparent, ajuster opacité */
-            z-index: 0; /* Derrière les cercles et le texte mais au-dessus du bg-image du .reactor */
+            background-color: rgba(0, 0, 0, 0.35); /* Noir semi-transparent, ajuster opacité */
+            z-index: 1; /* Au-dessus du background-image, mais sous les cercles */
             border-radius: 50%;
             transition: background-color 0.3s ease;
         }
-        .state-paused .reactor::before { background-color: rgba(var(--paused-color-rgb), 0.2); }
-        .state-exercise .reactor::before { background-color: rgba(var(--exercise-color-rgb), 0.1); }
-        .state-break .reactor::before { background-color: rgba(var(--break-color-rgb), 0.1); }
+        .state-paused .reactor::before { background-color: rgba(var(--paused-color-rgb), 0.25); }
+        .state-exercise .reactor::before { background-color: rgba(var(--exercise-color-rgb), 0.15); }
+        .state-break .reactor::before { background-color: rgba(var(--break-color-rgb), 0.15); }
 
         .triangle { position: absolute; top: 66%; left: 50%; z-index: 5; transform: translate(-50%, -50%); width: 155px; aspect-ratio: 1; background-color: #69f1f1; -webkit-clip-path: polygon(50% 88%, 0 0, 100% 0); clip-path: polygon(50% 88%, 0 0, 100% 0); transition: transform 0.5s ease-out; }
         .triangle::after { content: ''; display: block; position: absolute; top: 45%; left: 50%; z-index: 6; width: 120px; height: 120px; transform: translate(-50%, -50%); background-color: var(--bg-color); -webkit-clip-path: polygon(50% 90%, 0 0, 100% 0); clip-path: polygon(50% 90%, 0 0, 100% 0); }
-        .circle-1 { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8)); animation: rotate-right 2s linear infinite; z-index: 1; }
+        .circle-1 { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8)); animation: rotate-right 2s linear infinite; z-index: 2; } /* z-index ajusté */
         .circle-1::before { content: ''; position: absolute; z-index: 1; inset: 10px; border-radius: 50%; background-color: var(--bg-color); }
         .circle-1 span { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(rgba(105, 241, 241, 0.8), rgba(99, 193, 223, 0.8)); top: 0; left: 0; }
         .circle-1 span:nth-child(1) { filter: blur(15px); } .circle-1 span:nth-child(2) { filter: blur(15px); } .circle-1 span:nth-child(3) { filter: blur(15px); } .circle-1 span:nth-child(4) { filter: blur(75px); }
@@ -119,10 +116,10 @@
         .circle-8 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 13; width: 15px; height: 15px; border-radius: 50%; animation: rotate-left-right 5s infinite ease-in; }
         .circle-8 span { position: absolute; inset: 0; z-index: 14; width: 13px; height: 13px; border-radius: 50%; border: 1px solid; border-color: var(--bg-color) transparent transparent; margin: auto; }
         .circle-8 span:nth-child(1) { transform: rotate(120deg); } .circle-8 span:nth-child(2) { transform: rotate(240deg); }
-        @keyframes pulsePausedGlow { 0%, 100% { box-shadow: 0 0 5px 5px rgba(var(--paused-color-rgb, 167, 139, 250), 0.2); transform: scale(1); } 50% { box-shadow: 0 0 10px 10px rgba(var(--paused-color-rgb, 167, 139, 250), 0.4); transform: scale(1.1); } }
-        @keyframes pulsePausedRing { 0%, 100% { box-shadow: 0 0 20px 20px rgba(var(--paused-color-rgb, 167, 139, 250), 0.2); opacity: 1; } 50% { box-shadow: 0 0 25px 25px rgba(var(--paused-color-rgb, 167, 139, 250), 0.3); opacity: 0.8; } }
+        @keyframes pulsePausedGlow { 0%, 100% { box-shadow: 0 0 5px 5px rgba(var(--paused-color-rgb), 0.2); transform: scale(1); } 50% { box-shadow: 0 0 10px 10px rgba(var(--paused-color-rgb), 0.4); transform: scale(1.1); } }
+        @keyframes pulsePausedRing { 0%, 100% { box-shadow: 0 0 20px 20px rgba(var(--paused-color-rgb), 0.2); opacity: 1; } 50% { box-shadow: 0 0 25px 25px rgba(var(--paused-color-rgb), 0.3); opacity: 0.8; } }
         .state-paused .circle-7::after { animation: pulsePausedGlow 1.5s infinite ease-in-out; }
-        .state-paused .circle-5 { animation: pulsePausedRing 1.5s infinite ease-in-out; background-color: rgba(var(--paused-color-rgb, 167, 139, 250), 0.3); }
+        .state-paused .circle-5 { animation: pulsePausedRing 1.5s infinite ease-in-out; background-color: rgba(var(--paused-color-rgb), 0.3); }
         @keyframes rotateSlow { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes spinOnce { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
         .state-preparing .triangle { animation: rotateSlow 5s linear infinite; }
@@ -137,9 +134,9 @@
         #current-exercise-name-display { display: block; font-size: 1.4em; font-weight: 600; color: var(--primary-text-color); margin-bottom: 10px; padding: 0 10px; min-height: 1.4em; transition: color 0.3s ease; }
         body.state-exercise #current-exercise-name-display { color: var(--color-exercise); } body.state-break #current-exercise-name-display { color: var(--color-break); }
         #current-exercise-container { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 1em; color: var(--secondary-text-color); min-height: 2.5em; width: 100%; }
-        .workout-prompt { display: inline-flex; align-items: center; gap: 10px; border: 1px dashed var(--border-color-dark); padding: 10px 20px; border-radius: 8px; color: var(--secondary-text-color-dark); font-size: 1em; margin-top: 0; cursor: default; }
+        .workout-prompt { display: inline-flex; align-items: center; gap: 10px; border: 1px dashed var(--border-color-dark); padding: 10px 20px; border-radius: var(--border-radius-md); color: var(--secondary-text-color-dark); font-size: 1em; margin-top: 0; cursor: default; }
         .workout-prompt i { color: var(--neon-blue); }
-        #current-exercise-container .exercise-details, #current-exercise-container .break-info { display: flex; flex-direction: column; /* Afficher les infos en colonne */ flex-wrap: nowrap; /* Éviter le retour à la ligne des spans internes */ justify-content: center; align-items: center; gap: 8px; /* Réduire le gap entre les lignes */ background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); padding: 10px 15px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); width: fit-content; max-width: 90%; transition: background-color 0.3s ease, border-color 0.3s ease; font-size: 0.95em;}
+        #current-exercise-container .exercise-details, #current-exercise-container .break-info { display: flex; flex-direction: column; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3); padding: 10px 15px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); width: fit-content; max-width: 90%; transition: background-color 0.3s ease, border-color 0.3s ease; font-size: 0.95em;}
         #current-exercise-container .exercise-details span, #current-exercise-container .break-info span { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         #current-exercise-container .exercise-details span i { color: var(--color-exercise); } #current-exercise-container .break-info i { color: var(--color-break); }
         .sets-info-text, .details-text { font-size: 0.9em; opacity: 0.85; text-align: center; width: 100%;}
@@ -147,9 +144,9 @@
         .details-text i { color: var(--neon-yellow); }
 
         .controls { display: flex; justify-content: center; gap: 10px; margin-top: 25px; flex-wrap: wrap; }
-        .controls button { background-color: rgba(17, 24, 39, 0.2); border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark); padding: 8px 16px; border-radius: 8px; font-size: 0.95em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 110px; }
-        .controls button:disabled { opacity: 0.6; cursor: not-allowed; background-color: rgba(17, 24, 39, 0.2); border-color: var(--border-color-dark); color: var(--secondary-text-color-dark); box-shadow: none !important; transform: none !important; text-shadow: none !important; pointer-events: auto; }
-        .controls button:not(:disabled):hover { border-color: var(--primary-text-color-dark); color: var(--primary-text-color-dark); background-color: rgba(17, 24, 39, 0.4); }
+        .controls button { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.2); border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark); padding: 8px 16px; border-radius: var(--border-radius-md); font-size: 0.95em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 110px; }
+        .controls button:disabled { opacity: 0.6; cursor: not-allowed; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.2); border-color: var(--border-color-dark); color: var(--secondary-text-color-dark); box-shadow: none !important; transform: none !important; text-shadow: none !important; pointer-events: auto; }
+        .controls button:not(:disabled):hover { border-color: var(--primary-text-color-dark); color: var(--primary-text-color-dark); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.4); }
         .controls button i { font-size: 1em; margin-right: 4px; opacity: 0.7; transition: opacity var(--transition-speed) ease; }
         .controls button:not(:disabled):hover i { opacity: 1; }
         .progress-tracker { font-size: 0.9em; color: var(--secondary-text-color-dark); margin-top: 20px; opacity: 0.8; font-weight: 500; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 15px; min-height: 1.2em; }
@@ -158,27 +155,27 @@
         #drive-connection-status-main.error { color: var(--neon-red); }
         #drive-connection-status-main.loading { color: var(--neon-yellow); }
         #progress-text-area { font-weight: 500; }
-        .rep-adjustment-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background-color: rgba(0, 0, 0, 0.85); padding: 20px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: none; flex-direction: column; align-items: center; gap: 15px; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); width: 280px; }
+        .rep-adjustment-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background-color: rgba(var(--bg-color-dark-rgb), 0.85); padding: 20px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: none; flex-direction: column; align-items: center; gap: 15px; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); width: 280px; }
         .rep-adjustment-overlay.visible { display: flex; animation: fadeInScale 0.3s ease-out forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         .rep-adjustment-overlay .title { font-size: 1.1em; font-weight: 700; color: var(--primary-text-color); text-align: center; margin-bottom: 5px;}
         .rep-adjustment-controls { display: flex; align-items: center; gap: 15px; }
-        .rep-adjustment-btn { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 700; background-color: rgba(17, 24, 39, 0.9); border: 1px solid var(--border-color); color: var(--primary-text-color); cursor: pointer; transition: all var(--transition-speed) ease; }
-        .rep-adjustment-btn.minus { border-color: var(--neon-red); color: var(--neon-red); } .rep-adjustment-btn.minus:hover { background-color: rgba(248, 113, 113, 0.15); box-shadow: var(--glow-red); }
-        .rep-adjustment-btn.plus { border-color: var(--neon-green); color: var(--neon-green); } .rep-adjustment-btn.plus:hover { background-color: rgba(52, 211, 153, 0.15); box-shadow: var(--glow-green); }
+        .rep-adjustment-btn { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 700; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); border: 1px solid var(--border-color); color: var(--primary-text-color); cursor: pointer; transition: all var(--transition-speed) ease; }
+        .rep-adjustment-btn.minus { border-color: var(--neon-red); color: var(--neon-red); } .rep-adjustment-btn.minus:hover { background-color: rgba(var(--neon-red-rgb), 0.15); box-shadow: var(--glow-red); }
+        .rep-adjustment-btn.plus { border-color: var(--neon-green); color: var(--neon-green); } .rep-adjustment-btn.plus:hover { background-color: rgba(var(--neon-green-rgb), 0.15); box-shadow: var(--glow-green); }
         .rep-adjustment-btn:active { transform: scale(0.95); }
         .current-reps { font-size: 2.2em; font-weight: 900; color: var(--primary-text-color); font-variant-numeric: tabular-nums; min-width: 60px; text-align: center; }
         .rep-adjustment-next-exercise { font-size: 0.95em; color: var(--color-exercise); font-weight: 500; text-align: center; margin-top: 5px; }
         .history-section h2, .progress-section h2 { color: var(--primary-text-color); margin-bottom: 25px; text-align: center; font-family: var(--font-family-timer); }
         .chart-container, .stats-display, .history-list, .progress-filters select, .exercise-chart-container { border-color: var(--border-color-dark); background-color: transparent; }
-        .history-filters button.active, .progress-filters button.active { border-color: var(--neon-cyan); color: var(--neon-cyan); background-color: rgba(34, 211, 238, 0.1); box-shadow: 0 0 8px rgba(34, 211, 238,0.4); text-shadow: 0 0 5px var(--neon-cyan); }
+        .history-filters button.active, .progress-filters button.active { border-color: var(--neon-cyan); color: var(--neon-cyan); background-color: rgba(var(--neon-cyan-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--neon-cyan-rgb),0.4); text-shadow: 0 0 5px var(--neon-cyan); }
         .stats-display .motivational-message { background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-        .history-list li:nth-child(even) { background-color: rgba(17, 24, 39, 0.2); } .history-list li:hover { background-color: rgba(34, 211, 238, 0.05); }
-        .history-item-type { color: var(--neon-pink); background-color: rgba(244, 114, 182, 0.1); } .history-item-reps { color: var(--neon-purple); } .history-item-duration { color: var(--neon-blue); }
-        .progress-filters select:hover { border-color: var(--neon-cyan); } .progress-filters select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.3); }
+        .history-list li:nth-child(even) { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.2); } .history-list li:hover { background-color: rgba(var(--neon-cyan-rgb), 0.05); }
+        .history-item-type { color: var(--neon-pink); background-color: rgba(var(--neon-pink-rgb), 0.1); } .history-item-reps { color: var(--neon-purple); } .history-item-duration { color: var(--neon-blue); }
+        .progress-filters select:hover { border-color: var(--neon-cyan); } .progress-filters select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 2px rgba(var(--neon-cyan-rgb), 0.3); }
         .history-controls, .progress-controls { padding-bottom: 20px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .history-filters, .progress-filters { display: flex; gap: 10px; flex-wrap: wrap; }
-        .history-actions { display: flex; gap: 15px; align-items: center; color: var(--secondary-text-color-dark); } #history-drive-status { font-size: 0.8em; padding: 3px 6px; background-color: rgba(17, 24, 39, 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color-dark); transition: color 0.3s ease, border-color 0.3s ease; } #history-drive-status.syncing { color: var(--neon-yellow); border-color: var(--neon-yellow); } #history-drive-status.error { color: var(--neon-red); border-color: var(--neon-red); } #history-drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
+        .history-actions { display: flex; gap: 15px; align-items: center; color: var(--secondary-text-color-dark); } #history-drive-status { font-size: 0.8em; padding: 3px 6px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color-dark); transition: color 0.3s ease, border-color 0.3s ease; } #history-drive-status.syncing { color: var(--neon-yellow); border-color: var(--neon-yellow); } #history-drive-status.error { color: var(--neon-red); border-color: var(--neon-red); } #history-drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
         .chart-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--secondary-text-color-dark); font-style: italic; text-align: center; padding: 0 10px; transition: opacity 0.3s ease; } #history-chart-canvas, #exercise-progress-chart { display: block; width: 100% !important; height: 100% !important; transition: opacity 0.3s ease; }
         .stats-display h3, .exercise-progress-container h3 { color: var(--primary-text-color); font-size: 1.15em; margin-bottom: 15px; }
         .stats-display .content-wrapper p { margin-bottom: 8px; display: flex; align-items: center; gap: 8px;} .stats-display .content-wrapper p i { width: 16px; text-align: center; color: var(--neon-cyan); opacity: 0.8;} .stats-display .content-wrapper p strong { color: var(--primary-text-color); font-weight: 500; }
@@ -188,37 +185,37 @@
         .history-list { list-style: none; border: 1px solid var(--border-color-dark); border-radius: var(--border-radius-md); background-color: transparent; box-shadow: none; max-height: 400px; overflow-y: auto; transition: border-color var(--transition-speed) ease; }
         .history-list li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color-dark); transition: background-color 0.2s ease, border-color var(--transition-speed) ease; gap: 10px 15px; }
         .history-list li:last-child { border-bottom: none; }
-        .history-list li:nth-child(even) { background-color: rgba(17, 24, 39, 0.2); }
-        .history-list li:hover { background-color: rgba(34, 211, 238, 0.05); }
+        .history-list li:nth-child(even) { background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.2); }
+        .history-list li:hover { background-color: rgba(var(--neon-cyan-rgb), 0.05); }
         .history-item-date { color: var(--primary-text-color); font-size: 0.9em; grid-column: 1 / 2; }
         .history-item-date small { color: var(--secondary-text-color); font-size: 0.9em;}
-        .history-item-type { color: var(--neon-pink); background-color: rgba(244, 114, 182, 0.1); border-radius: var(--border-radius-sm); padding: 3px 8px; font-size: 0.85em; font-weight: 500; text-align: center; grid-column: 2 / 3; justify-self: start; }
+        .history-item-type { color: var(--neon-pink); background-color: rgba(var(--neon-pink-rgb), 0.1); border-radius: var(--border-radius-sm); padding: 3px 8px; font-size: 0.85em; font-weight: 500; text-align: center; grid-column: 2 / 3; justify-self: start; }
         .history-item-reps { color: var(--neon-purple); font-weight: 500; font-size: 0.9em; grid-column: 3 / 4; justify-self: end; }
         .history-item-reps i { margin-right: 4px; }
         .history-item-duration { color: var(--neon-blue); font-weight: 500; font-variant-numeric: tabular-nums; grid-column: 4 / 5; justify-self: end; }
         .history-list .no-history { grid-column: 1 / -1; color: var(--secondary-text-color); text-align: center; padding: 30px 15px; font-style: italic; border: none; background: none !important; }
-        .post-workout-summary { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .post-workout-summary { position: fixed; inset: 0; background-color: rgba(var(--bg-color-dark-rgb), 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
         .post-workout-summary.visible { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.3s ease, visibility 0s linear 0s; }
-        .post-workout-summary-content { background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 20px rgba(34, 211, 238, 0.1); width: 100%; max-width: 550px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
+        .post-workout-summary-content { background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 20px rgba(var(--neon-cyan-rgb), 0.1); width: 100%; max-width: 550px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
         .post-workout-summary.visible .post-workout-summary-content { transform: scale(1); }
-        .post-workout-summary h2 { color: var(--neon-cyan); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; text-align: center; background-color: rgba(0, 0, 0, 0.2); transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; text-shadow: 0 0 5px var(--neon-cyan); }
+        .post-workout-summary h2 { color: var(--neon-cyan); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; text-align: center; background-color: rgba(var(--bg-color-dark-rgb), 0.2); transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; text-shadow: 0 0 5px var(--neon-cyan); }
         .summary-items-list { list-style: none; padding: 15px 25px; overflow-y: auto; flex-grow: 1; background: var(--bg-color); border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
         .summary-item { display: grid; grid-template-columns: 1fr auto; gap: 10px 15px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); } .summary-item:last-child { border-bottom: none; }
         .summary-item .exercise-name { color: var(--primary-text-color); font-weight: 500; font-size: 1em; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .summary-item .exercise-name i { color: var(--color-exercise); margin-right: 8px; opacity: 0.9; } .summary-item .exercise-name small { font-size: 0.8em; color: var(--secondary-text-color); margin-left: 8px; display: block; }
         .summary-item .input-container { display: flex; align-items: center; gap: 8px; justify-self: end; } .summary-item label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         .summary-item input[type="number"] { background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text-color); border-radius: var(--border-radius-sm); padding: 6px 10px; font-size: 0.95em; width: 70px; text-align: center; transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, color var(--transition-speed) ease; -moz-appearance: textfield; }
         .summary-item input[type="number"]::-webkit-outer-spin-button, .summary-item input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .summary-item input:focus { border-color: var(--neon-cyan); background-color: var(--secondary-bg-color); outline: none; box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.3); }
-        .summary-controls { padding: 20px 25px; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(0, 0, 0, 0.2); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; }
+        .summary-item input:focus { border-color: var(--neon-cyan); background-color: var(--secondary-bg-color); outline: none; box-shadow: 0 0 0 3px rgba(var(--neon-cyan-rgb), 0.3); }
+        .summary-controls { padding: 20px 25px; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(var(--bg-color-dark-rgb), 0.2); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; }
         .summary-controls button { border: none; color: #fff; min-width: 160px; padding: 10px 22px; border-radius: var(--border-radius-md); font-size: 1em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.05em; }
         .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; background-color: var(--secondary-text-color) !important; filter: grayscale(50%); }
         .summary-controls button:not(:disabled):hover { filter: brightness(1.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3), 0 0 10px var(--button-finish-glow); transform: translateY(-1px); }
         .summary-controls button:not(:disabled):active { filter: brightness(0.95); transform: translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         #finish-summary-btn { background-color: var(--neon-green); --button-finish-glow: var(--glow-green); } #finish-summary-btn:not(:disabled):hover { text-shadow: 0 0 5px rgba(255,255,255,0.5); }
-        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: all 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px rgba(34, 211, 238, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
+        .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: all 0.5s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px rgba(var(--neon-cyan-rgb), 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
         .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
-        .message-area.error-message { background-color: rgba(248, 113, 113, 0.8); color: #fff; border-color: var(--neon-red); text-shadow: 0 0 5px rgba(0,0,0,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px var(--glow-red); }
-        footer { padding: 20px 25px; text-align: center; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid var(--border-color); margin-top: 40px; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
+        .message-area.error-message { background-color: rgba(var(--neon-red-rgb), 0.8); color: #fff; border-color: var(--neon-red); text-shadow: 0 0 5px rgba(0,0,0,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px var(--glow-red); }
+        footer { padding: 20px 25px; text-align: center; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid var(--border-color); margin-top: 40px; background-color: rgba(var(--bg-color-dark-rgb), 0.7); backdrop-filter: blur(3px); }
         footer p { margin-bottom: 8px; } footer a { color: var(--link-color); text-decoration: none; transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease; } footer a:hover { color: var(--primary-text-color); text-decoration: underline; text-shadow: 0 0 5px var(--link-color); }
         footer .fab.fa-google-drive { color: var(--neon-green); } footer .fab.fa-github { color: var(--neon-purple); }
 
@@ -297,7 +294,7 @@
     <main>
         <div class="workout-section app-section" id="workout-section">
             <div class="timer-display" id="timer-display-clickable" aria-label="Affichage du timer Arc Reactor">
-                <div class="reactor">
+                <div class="reactor"> {/* L'image de fond sera appliquée ici via JS */}
                     <div class="triangle"></div>
                     <div class="circle-1"><span></span><span></span><span></span><span></span></div>
                     <div class="circle-2"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -380,19 +377,14 @@
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const HISTORY_FILENAME = "armorworkout_history.json";
-    const PROGRAM_FILENAMES = {
-        Push: "armorworkout_push_program_v4.json", // Nom de fichier mis à jour
-        Pull: "armorworkout_pull_program_v5_2.json", // Nom de fichier mis à jour
-        Legs: "armorworkout_legs_program_v1_7.json"  // Nom de fichier mis à jour
-    };
+    const PROGRAM_FILENAMES = { Push: "armorworkout_push_program_v4.json", Pull: "armorworkout_pull_program_v5_2.json", Legs: "armorworkout_legs_program_v1_7.json" };
     const PROGRAM_TYPES = ['Push', 'Pull', 'Legs'];
     const PREPARE_DURATION = 3;
     const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
 
-    // --- NOUVEAUX PROGRAMMES JSON ---
-    const defaultWorkouts = {
+    const defaultWorkouts = { /* ... (Identique à la version précédente) ... */
       Push: {
         "routine_name": "PUSH V4 - Hypertrophie Élite (Format App)",
         "description": "Séance PUSH optimisée pour hypertrophie avec matériel limité. Focus pecs, épaules, triceps.",
@@ -409,7 +401,7 @@
           { "type": "break", "duration": 15, "name": "Transition Superset (15s)" },
           { "type": "exercise", "name": "Pompes avec Pieds Surélevés (Pré-Épuisement Superset 2/2) - Série 3", "sets_info": "Partie 2/2 du Superset - Total 3 Supersets", "reps_text": "AMRAP", "weight": 0, "weight_unit": "Poids de corps", "details": "Option: + Élastique(s) sur le dos.", "equipment": "Poids de corps, Option: Élastiques 15kg/25kg", "reps_start_text": "AMRAP", "reps_target_max_text": "AMRAP", "progression_note": "Donne tout sur cette dernière série du superset !" },
           { "type": "break", "duration": 90, "name": "Repos après Superset" },
-          { "type": "exercise_myo_reps", "name": "Floor Press (Combo Haltères + Élastique) - MYO-REPS", "sets_info": "1 Série d'Activation + 3-4 Mini-Séries", "activation_reps_start": 10, "activation_reps_target_max": 15, "mini_sets_count": "3-4", "mini_reps_start": 3, "mini_reps_target_max": 5, "weight_details": "2x5kg Haltères + Élastique(s) 15kg/25kg/combinés", "details": "Combo: Haltères tenus avec élastique(s) passé(s) dans le dos.", "equipment": "Haltères 5kg, Élastiques 15kg/25kg, Tapis de sol", "progression_note": "Activ: Quand 15 reps (RIR 1), augmenter résistance élastique. Mini-Séries: Viser 4 mini-séries ou plus de reps dans les mini-séries.", "rest_between_mini_sets": 15, "rest_after_exercise": 90, "reps_text": "MYO", "weight_text":"Combo" }, // Added reps_text, weight_text for MYO display
+          { "type": "exercise_myo_reps", "name": "Floor Press (Combo Haltères + Élastique) - MYO-REPS", "sets_info": "1 Série d'Activation + 3-4 Mini-Séries", "activation_reps_start": 10, "activation_reps_target_max": 15, "mini_sets_count": "3-4", "mini_reps_start": 3, "mini_reps_target_max": 5, "weight_details": "2x5kg Haltères + Élastique(s) 15kg/25kg/combinés", "details": "Combo: Haltères tenus avec élastique(s) passé(s) dans le dos.", "equipment": "Haltères 5kg, Élastiques 15kg/25kg, Tapis de sol", "progression_note": "Activ: Quand 15 reps (RIR 1), augmenter résistance élastique. Mini-Séries: Viser 4 mini-séries ou plus de reps dans les mini-séries.", "rest_between_mini_sets": 15, "rest_after_exercise": 90, "reps_text": "MYO", "weight_text":"Combo" },
           { "type": "break", "duration": 90, "name": "Repos après Myo-Reps" },
           { "type": "exercise", "name": "Pike Push-ups", "reps": 6, "weight": 0, "weight_unit": "Poids de corps", "details": "Pompes piquées, focus épaules.", "equipment": "Poids de corps, Tapis de sol", "reps_start": 6, "reps_target_max": 12, "progression_note": "Quand 12 reps (RIR 1-2) maîtrisées, surélever les pieds progressivement." },
           { "type": "break", "duration": 75, "name": "Repos" },
@@ -524,8 +516,7 @@
       }
     };
 
-    // --- MAPPING IMAGES EXERCICES ---
-    const exerciseImageMapping = {
+    const exerciseImageMapping = { /* ... (Identique à la version précédente) ... */
         "Dumbbell Floor Flyes": "https://ironworkout.github.io/armorworkout/superhero_dumbbell_floor_flyes.png",
         "Pompes avec Pieds Surélevés": "https://ironworkout.github.io/armorworkout/superhero_elevated_pushups_band.png",
         "Floor Press (Combo Haltères + Élastique) - MYO-REPS": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
@@ -535,7 +526,7 @@
         "Band Kneeling Lat Pulldown (Avec Pauses Iso & Excentrique Lente)": "https://ironworkout.github.io/armorworkout/superhero_band_kneeling_lat_pulldown.png",
         "Band Bent-Over Row Unilatéral - MYO-REPS": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
         "Band Face Pull": "https://ironworkout.github.io/armorworkout/superhero_band_face_pull.png",
-        "Curls Marteau avec Haltères": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png", // Nom normalisé pour Myo-reps aussi
+        "Curls Marteau avec Haltères": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
         "Concentration Curl avec UN Haltère": "https://ironworkout.github.io/armorworkout/superhero_concentration_curl.png",
         "Band Scapular Retractions": "https://ironworkout.github.io/armorworkout/superhero_band_scapular_retractions.png",
         "Front Squat Combo (Avec Pause en Bas 2-3s)": "https://ironworkout.github.io/armorworkout/superhero_front_squat_combo.png",
@@ -545,13 +536,9 @@
         "Crunch sur Swiss Ball avec Élastique 15kg": "https://ironworkout.github.io/armorworkout/superhero_swiss_ball_crunch_band.png",
         "Reverse Crunches au Sol (Contrôle excentrique)": "https://ironworkout.github.io/armorworkout/superhero_reverse_crunches.png",
         "Planche sur Swiss Ball (Coudes sur le ballon)": "https://ironworkout.github.io/armorworkout/superhero_swiss_ball_plank.png",
-        // Ajoutez d'autres si nécessaire, en utilisant le nom normalisé comme clé
     };
 
-    // --- Éléments DOM ---
     let timeDisplayDiv, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, navButtons = [], navHistoryBtn, navProgressBtn, signInButton, signOutButton, exportButton, driveStatusElement, postWorkoutSummary, summaryTitle, summaryItemsList, finishSummaryBtn, historyDriveStatus, currentExerciseNameDisplay, driveConnectionStatusMain, driveConnectionText, timerDisplayElement, chartPlaceholder, progressTextArea, historyActionsContainer, exerciseSelect, metricSelect, periodSelect, exerciseChartPlaceholder, repAdjustmentOverlay, repAdjustMinusBtn, repAdjustPlusBtn, currentRepsDisplay, repAdjustmentExerciseName, historyChartCanvasEl, exerciseProgressChartCanvasEl, prevBtn, settingsIcon, driveStatusTextElement, messageArea, workoutSection, historySection, progressSection, statsDisplay, statsContentWrapper, historyFilterBtns, reactorElement;
-
-    // --- Variables d'État ---
     let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = [];
     let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null;
     let totalTime = 0, timeLeft = 0, prepareTimeLeft = 0;
@@ -562,7 +549,7 @@
     let historyChartInstance = null, exercisePerfChartInstance = null;
     let googleAccessToken = null, tokenClient = null;
     let historyFileId = null, programFileIds = { Push: null, Pull: null, Legs: null };
-    let programsLoaded = false, loadedWorkouts = {}; // Sera initialisé par copie de defaultWorkouts
+    let programsLoaded = false, loadedWorkouts = {};
     let isSavingDriveData = false;
     let currentTheme = 'dark', messageTimeoutId = null;
     let audioContext = null;
@@ -572,8 +559,7 @@
     let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
     let triangleSpinTimeoutId = null;
 
-    // --- Fonctions Utilitaires ---
-    function normalizeExerciseName(name) {
+    function normalizeExerciseName(name) { /* ... (Identique) ... */
         if (!name) return "";
         let baseName = name;
         baseName = baseName.replace(/ - Série \d+/i, '');
@@ -581,68 +567,114 @@
         baseName = baseName.replace(/\s*\(Superset Mécanique \d\/\d\)/i, '');
         baseName = baseName.replace(/\s*\(Optionnel \d+ème série\)/i, '');
         baseName = baseName.replace(/\s*\(Optionnel\)/i, '');
-        // Cas spécifique pour Curls Marteau (Myo-Reps...)
-        if (baseName.startsWith("Curls Marteau avec Haltères (Myo-Reps")) {
-            return "Curls Marteau avec Haltères";
-        }
+        if (baseName.startsWith("Curls Marteau avec Haltères (Myo-Reps")) { return "Curls Marteau avec Haltères"; }
         return baseName.trim();
     }
-
-    function triggerTriangleSpin() {
+    function triggerTriangleSpin() { /* ... (Identique) ... */
         const triangle = document.querySelector('.reactor .triangle');
         if (!triangle) return;
         if (triangleSpinTimeoutId) { clearTimeout(triangleSpinTimeoutId); }
-        triangle.classList.remove('spin-transition');
-        void triangle.offsetWidth;
-        triangle.classList.add('spin-transition');
-        triangleSpinTimeoutId = setTimeout(() => {
-            triangle.classList.remove('spin-transition');
-            triangleSpinTimeoutId = null;
-        }, 600);
+        triangle.classList.remove('spin-transition'); void triangle.offsetWidth; triangle.classList.add('spin-transition');
+        triangleSpinTimeoutId = setTimeout(() => { triangle.classList.remove('spin-transition'); triangleSpinTimeoutId = null; }, 600);
+    }
+    function initSounds() { /* ... (Identique) ... */
+        try { const basePath = "https://ironworkout.github.io/armorworkout/"; soundLaser = new Audio(basePath + 'laser.mp3'); sound5 = new Audio(basePath + '5.mp3'); sound4 = new Audio(basePath + '4.mp3'); sound3 = new Audio(basePath + '3.mp3'); sound2 = new Audio(basePath + '2.mp3'); sound1 = new Audio(basePath + '1.mp3'); soundWindows = new Audio(basePath + 'windows.mp3'); soundET = new Audio(basePath + 'e-t.mp3'); [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(sound => { if (sound) sound.preload = 'auto'; }); } catch (e) { showMessage("Erreur chargement sons.", 5000, true); }
+    }
+    function playSound(audioElement) { /* ... (Identique) ... */
+        if (!audioElement || !audioContext || audioContext.state !== 'running') return; audioElement.currentTime = 0; audioElement.play().catch(e => {});
+    }
+    function initAudioContext() { /* ... (Identique) ... */
+        if (audioContext && audioContext.state === 'running') return; if (!audioContext) { try { window.AudioContext = window.AudioContext || window.webkitAudioContext; if (window.AudioContext) audioContext = new AudioContext(); else return; } catch (e) { return; } } if (audioContext.state === 'suspended') audioContext.resume().catch(e => {});
+    }
+    const playTransitionSound = () => playSound(soundLaser);
+    const vibrate = (pattern = [100]) => { /* ... (Identique) ... */
+        if ('vibrate' in navigator) try { navigator.vibrate(pattern); } catch (e) {}
+    };
+
+    async function gisInitInternal() {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: GOOGLE_DRIVE_SCOPES,
+                    callback: tokenCallback, // Ce callback sera appelé si le token est obtenu (silencieusement ou par prompt)
+                    error_callback: handleTokenError,
+                    // prompt: '' // Omis ici, on le mettra dans requestAccessToken pour la tentative silencieuse
+                });
+
+                if (tokenClient) {
+                    // Tenter une récupération de token silencieuse au chargement de la page
+                    tokenClient.requestAccessToken({ prompt: '' });
+                    console.log("Tentative de récupération de token silencieuse...");
+                }
+                 if (signInButton) signInButton.disabled = false; // Activer le bouton au cas où la tentative silencieuse échoue
+
+            } catch (error) {
+                console.error("Erreur initTokenClient:", error);
+                showMessage("Erreur initialisation Google.", 5000, true);
+                updateAuthUI(false);
+                if(signInButton) signInButton.disabled = true;
+            }
+        } else {
+            console.error("API Google non chargée lors de gisInitInternal.");
+            if(signInButton) signInButton.disabled = true;
+        }
+    }
+    function checkAndInitGis() { /* ... (Identique) ... */
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error("Échec détection API Google après plusieurs tentatives."); showMessage("Erreur chargement API Google.", 10000, true); if(signInButton) signInButton.disabled = true; }
+    }
+    function handleTokenError(error) { /* ... (Identique) ... */
+        console.error("Erreur Google Token:", error); let userMessage = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`; if (error.type === 'popup_closed_by_user' || error.error === 'popup_closed_by_user') { userMessage = "Connexion annulée."; console.log("Popup de connexion Google fermée par l'utilisateur."); } else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') { userMessage = "Accès refusé par l'utilisateur."; } else { console.warn("Détail erreur token:", error); } let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.className = 'error'; driveStatusElement.style.display = 'inline-flex'; } showMessage(userMessage, 6000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = statusText; updateAuthUI(false);
+    }
+    async function tokenCallback(tokenResponse) { /* ... (Identique, mais le flux de chargement est important) ... */
+        if (driveStatusElement) driveStatusElement.className = ''; if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { googleAccessToken = tokenResponse.access_token; console.log("Token Google obtenu avec succès."); showMessage("Connecté ! Chargement des données...", 2500); if (driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex';} if(driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...'; let historyLoaded = false; let programsSuccess = false; try { await loadHistoryFromDrive(); historyLoaded = true; programsSuccess = await loadProgramsFromDrive(); programsLoaded = programsSuccess; if (programsLoaded) { showMessage("Données prêtes.", 3000); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success');} if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté'; } else { showMessage("Erreur chargement des programmes depuis Drive.", 5000, true); if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Progs'; programsLoaded = true; } } catch (error) { console.error("Erreur majeure chargement données Drive:", error); showMessage("Erreur majeure lors du chargement depuis Drive.", 6000, true); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données'; programsLoaded = false; } finally { updateAuthUI(true); if (programsLoaded) { populateExerciseSelect(); displayHistory(currentHistoryPeriod); displayExerciseProgress(); loadInProgressState(); } } } else { handleTokenError({ error: "Réponse invalide du token" }); }
+    }
+    function handleAuthClick() { /* ... (Maintenant, on force le prompt: 'consent' ici) ... */
+        initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts. Veuillez patienter.", 3000); return; } if (driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-flex'; } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connexion...'; tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+    function handleSignoutClick(showMessages = true) { /* ... (Identique) ... */
+        const token = googleAccessToken; if (!token) return; if (showMessages && driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; } if(showMessages && driveStatusTextElement) driveStatusTextElement.textContent = 'Déconnexion...'; google.accounts.oauth2.revoke(token, () => { googleAccessToken = null; historyFileId = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; workoutHistory = []; loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); clearInProgressState(); if (isWorkoutActive || currentState !== 'idle') resetCurrentWorkout(); else updateAuthUI(false); if (showMessages) showMessage("Déconnecté.", 3000); if (driveStatusElement) { driveStatusElement.style.display = 'none'; driveStatusElement.className = ''; } displayHistory(currentHistoryPeriod); clearCharts(); populateExerciseSelect(); });
+    }
+    function updateAuthUI(isLoggedIn) { /* ... (Identique) ... */
+        const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-flex' : 'none'; if (!isLoggedIn) driveStatusElement.className = ''; else { if (!driveStatusElement.classList.contains('loading') && !driveStatusElement.classList.contains('error')) driveStatusElement.classList.add('success'); } } if (driveConnectionStatusMain && driveConnectionText) { driveConnectionStatusMain.style.display = isLoggedIn ? 'inline-flex' : 'none'; const dsClass = driveStatusElement?.className || ''; driveConnectionStatusMain.className = dsClass; if (isLoggedIn) { if (dsClass.includes('loading')) driveConnectionText.textContent = "Chargement..."; else if (dsClass.includes('error')) driveConnectionText.textContent = `Erreur Drive`; else driveConnectionText.textContent = "Connecté"; } } if (historyDriveStatus && historyActionsContainer) { historyActionsContainer.style.display = isLoggedIn ? 'flex' : 'none'; if (isLoggedIn) { historyDriveStatus.className = ''; if (isSavingDriveData) { historyDriveStatus.textContent = 'Synchro...'; historyDriveStatus.classList.add('syncing'); } else if (driveStatusElement?.classList.contains('loading')) { historyDriveStatus.textContent = 'Chargement...'; historyDriveStatus.classList.add('syncing'); } else if (driveStatusElement?.classList.contains('error')) { historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.classList.add('error'); } else { historyDriveStatus.textContent = 'Synchro OK'; historyDriveStatus.classList.add('success'); } } } if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(exportButton) exportButton.disabled = !isLoggedIn; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(currentState); navButtons.forEach(btn => { if(btn) btn.disabled = !(isLoggedIn && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !isLoggedIn || isTimerActive; if (currentState === 'idle') { const canStartWorkout = isLoggedIn && programsLoaded && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartWorkout; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.className = ''; } } else if (startPauseBtn) { startPauseBtn.disabled = ['preparing', 'finished'].includes(currentState); } if(prevBtn) prevBtn.disabled = !(isTimerActive && currentItemIndex > 0); if(finishBtn) finishBtn.disabled = !isTimerActive; if(resetBtn) resetBtn.disabled = !isTimerActive && !isLoggedIn; updateWorkoutInfo(); displayHistory(currentHistoryPeriod);
+    }
+    async function findOrCreateFile(filename, defaultContent = "", mimeType = 'application/json') { /* ... (Identique) ... */
+        if (!googleAccessToken) return null; const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); return null; } throw new Error(`Recherche fichier ${searchRes.status}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) return searchData.files[0].id; const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) throw new Error(`Création fichier ${createRes.status}`); const createData = await createRes.json(); const newFileId = createData.id; const writeSuccess = await updateFileContent(newFileId, defaultContent); return writeSuccess ? newFileId : null; } catch (error) { console.error(`Erreur findOrCreateFile pour ${filename}:`, error); showMessage(`Erreur gestion fichier ${filename}.`, 5000, true); return null; }
+    }
+    async function readFileContent(fileId) { /* ... (Identique) ... */
+        if (!googleAccessToken || !fileId) return null; const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) return ""; if (response.status === 401 || response.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); return null; } throw new Error(`Lecture fichier ${response.status}`); } return await response.text(); } catch (error) { console.error(`Erreur readFileContent pour ${fileId}:`, error); showMessage(`Erreur lecture fichier Drive.`, 5000, true); return null; }
+    }
+    async function updateFileContent(fileId, content) { /* ... (Identique) ... */
+        if (!googleAccessToken || !fileId) return false; if (isSavingDriveData) { console.warn("Sauvegarde Drive déjà en cours, requête ignorée."); return false; } isSavingDriveData = true; if (historyDriveStatus) { historyDriveStatus.textContent = 'Synchro...'; historyDriveStatus.className = 'syncing'; } updateAuthUI(!!googleAccessToken); const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); } else { throw new Error(`Écriture fichier ${response.status}`); } } else { success = true; } } catch (error) { console.error(`Erreur updateFileContent pour ${fileId}:`, error); if (historyDriveStatus) { historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.className = 'error'; } showMessage(`Erreur sauvegarde fichier Drive.`, 5000, true); } finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); } return success;
     }
 
-    function initSounds() { try { const basePath = "https://ironworkout.github.io/armorworkout/"; soundLaser = new Audio(basePath + 'laser.mp3'); sound5 = new Audio(basePath + '5.mp3'); sound4 = new Audio(basePath + '4.mp3'); sound3 = new Audio(basePath + '3.mp3'); sound2 = new Audio(basePath + '2.mp3'); sound1 = new Audio(basePath + '1.mp3'); soundWindows = new Audio(basePath + 'windows.mp3'); soundET = new Audio(basePath + 'e-t.mp3'); [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(sound => { if (sound) sound.preload = 'auto'; }); } catch (e) { showMessage("Erreur chargement sons.", 5000, true); } }
-    function playSound(audioElement) { if (!audioElement || !audioContext || audioContext.state !== 'running') return; audioElement.currentTime = 0; audioElement.play().catch(e => {}); }
-    function initAudioContext() { if (audioContext && audioContext.state === 'running') return; if (!audioContext) { try { window.AudioContext = window.AudioContext || window.webkitAudioContext; if (window.AudioContext) audioContext = new AudioContext(); else return; } catch (e) { return; } } if (audioContext.state === 'suspended') audioContext.resume().catch(e => {}); }
-    const playTransitionSound = () => playSound(soundLaser);
-    const vibrate = (pattern = [100]) => { if ('vibrate' in navigator) try { navigator.vibrate(pattern); } catch (e) {} };
-
-    // --- Google Identity Services (GIS) & Drive API ---
-    async function gisInitInternal() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); if (signInButton) signInButton.disabled = false; } catch (error) { console.error("Erreur initTokenClient:", error); showMessage("Erreur initialisation Google.", 5000, true); updateAuthUI(false); if(signInButton) signInButton.disabled = true; } } else { console.error("API Google non chargée."); if(signInButton) signInButton.disabled = true; } }
-    function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error("Échec détection API Google après plusieurs tentatives."); showMessage("Erreur chargement API Google.", 10000, true); if(signInButton) signInButton.disabled = true; } }
-    function handleTokenError(error) { console.error("Erreur Google Token:", error); let userMessage = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.className = 'error'; driveStatusElement.style.display = 'inline-flex'; } showMessage(userMessage, 6000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = statusText; updateAuthUI(false); }
-    async function tokenCallback(tokenResponse) { if (driveStatusElement) driveStatusElement.className = ''; if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement des données...", 2500); if (driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex';} if(driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...'; let historyLoaded = false; let programsSuccess = false; try { await loadHistoryFromDrive(); historyLoaded = true; programsSuccess = await loadProgramsFromDrive(); programsLoaded = programsSuccess; if (programsLoaded) { showMessage("Données prêtes.", 3000); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success');} if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté'; } else { showMessage("Erreur chargement des programmes depuis Drive.", 5000, true); if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Progs'; programsLoaded = true; } } catch (error) { console.error("Erreur majeure chargement données Drive:", error); showMessage("Erreur majeure lors du chargement depuis Drive.", 6000, true); if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données'; programsLoaded = false; } finally { updateAuthUI(true); if (programsLoaded) { populateExerciseSelect(); displayHistory(currentHistoryPeriod); displayExerciseProgress(); loadInProgressState(); } } } else { handleTokenError({ error: "Réponse invalide du token" }); } }
-    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts. Veuillez patienter.", 3000); return; } if (driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-flex'; } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connexion...'; tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) return; if (showMessages && driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; } if(showMessages && driveStatusTextElement) driveStatusTextElement.textContent = 'Déconnexion...'; google.accounts.oauth2.revoke(token, () => { googleAccessToken = null; historyFileId = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; workoutHistory = []; loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); clearInProgressState(); if (isWorkoutActive || currentState !== 'idle') resetCurrentWorkout(); else updateAuthUI(false); if (showMessages) showMessage("Déconnecté.", 3000); if (driveStatusElement) { driveStatusElement.style.display = 'none'; driveStatusElement.className = ''; } displayHistory(currentHistoryPeriod); clearCharts(); populateExerciseSelect(); }); }
-    function updateAuthUI(isLoggedIn) { const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-flex' : 'none'; if (!isLoggedIn) driveStatusElement.className = ''; else { if (!driveStatusElement.classList.contains('loading') && !driveStatusElement.classList.contains('error')) driveStatusElement.classList.add('success'); } } if (driveConnectionStatusMain && driveConnectionText) { driveConnectionStatusMain.style.display = isLoggedIn ? 'inline-flex' : 'none'; const dsClass = driveStatusElement?.className || ''; driveConnectionStatusMain.className = dsClass; if (isLoggedIn) { if (dsClass.includes('loading')) driveConnectionText.textContent = "Chargement..."; else if (dsClass.includes('error')) driveConnectionText.textContent = `Erreur Drive`; else driveConnectionText.textContent = "Connecté"; } } if (historyDriveStatus && historyActionsContainer) { historyActionsContainer.style.display = isLoggedIn ? 'flex' : 'none'; if (isLoggedIn) { historyDriveStatus.className = ''; if (isSavingDriveData) { historyDriveStatus.textContent = 'Synchro...'; historyDriveStatus.classList.add('syncing'); } else if (driveStatusElement?.classList.contains('loading')) { historyDriveStatus.textContent = 'Chargement...'; historyDriveStatus.classList.add('syncing'); } else if (driveStatusElement?.classList.contains('error')) { historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.classList.add('error'); } else { historyDriveStatus.textContent = 'Synchro OK'; historyDriveStatus.classList.add('success'); } } } if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(exportButton) exportButton.disabled = !isLoggedIn; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(currentState); navButtons.forEach(btn => { if(btn) btn.disabled = !(isLoggedIn && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !isLoggedIn || isTimerActive; if (currentState === 'idle') { const canStartWorkout = isLoggedIn && programsLoaded && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartWorkout; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.className = ''; } } else if (startPauseBtn) { startPauseBtn.disabled = ['preparing', 'finished'].includes(currentState); } if(prevBtn) prevBtn.disabled = !(isTimerActive && currentItemIndex > 0); if(finishBtn) finishBtn.disabled = !isTimerActive; if(resetBtn) resetBtn.disabled = !isTimerActive && !isLoggedIn; updateWorkoutInfo(); displayHistory(currentHistoryPeriod); }
-    async function findOrCreateFile(filename, defaultContent = "", mimeType = 'application/json') { if (!googleAccessToken) return null; const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); return null; } throw new Error(`Recherche fichier ${searchRes.status}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) return searchData.files[0].id; const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) throw new Error(`Création fichier ${createRes.status}`); const createData = await createRes.json(); const newFileId = createData.id; const writeSuccess = await updateFileContent(newFileId, defaultContent); return writeSuccess ? newFileId : null; } catch (error) { console.error(`Erreur findOrCreateFile pour ${filename}:`, error); showMessage(`Erreur gestion fichier ${filename}.`, 5000, true); return null; } }
-    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) return null; const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) return ""; if (response.status === 401 || response.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); return null; } throw new Error(`Lecture fichier ${response.status}`); } return await response.text(); } catch (error) { console.error(`Erreur readFileContent pour ${fileId}:`, error); showMessage(`Erreur lecture fichier Drive.`, 5000, true); return null; } }
-    async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) return false; if (isSavingDriveData) { console.warn("Sauvegarde Drive déjà en cours, requête ignorée."); return false; } isSavingDriveData = true; if (historyDriveStatus) { historyDriveStatus.textContent = 'Synchro...'; historyDriveStatus.className = 'syncing'; } updateAuthUI(!!googleAccessToken); const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { showMessage("Session expirée. Veuillez vous reconnecter.", 5000, true); handleSignoutClick(false); } else { throw new Error(`Écriture fichier ${response.status}`); } } else { success = true; } } catch (error) { console.error(`Erreur updateFileContent pour ${fileId}:`, error); if (historyDriveStatus) { historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.className = 'error'; } showMessage(`Erreur sauvegarde fichier Drive.`, 5000, true); } finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); } return success; }
-
-    // --- Fonctions Cœur du Timer ---
-    function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
-    function updateTimerDisplay() { if (!timeDisplayDiv || !timerStateDisplay) return; let timeString = "00:00"; let stateText = ''; let stateClass = ''; const item = currentWorkoutPlan[currentItemIndex]; const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; switch(currentState) { case 'exercise': timeString = "GO!"; stateText = item?.name || 'Exercice'; break; case 'break': timeString = formatTime(timeLeft); stateText = item?.name || 'Repos'; break; case 'paused': timeString = (item?.type === 'break') ? formatTime(timeLeft) : "PAUSE"; stateText = 'En Pause'; break; case 'preparing': timeString = formatTime(prepareTimeLeft); stateText = 'Préparation'; break; case 'finished': timeString = "FINI!"; stateText = `Terminé (${formatTime(durationSeconds)})`; stateClass = 'finished-state'; break; default: timeString = formatTime(0); stateText = 'Prêt'; break; } timeDisplayDiv.textContent = timeString; timerStateDisplay.textContent = stateText; timerStateDisplay.className = 'timer-state'; if (currentState !== 'idle') timerStateDisplay.classList.add('visible'); if (stateClass) timerStateDisplay.classList.add(stateClass); if (currentState === 'preparing') timerStateDisplay.classList.add('preparing'); }
-    function updateTimerVisuals(state) { if (!timeDisplayDiv || !timerStateDisplay) return; let stateColorVar = '--idle-color-val'; let stateGlowRgbVar = '--idle-color-rgb'; switch(state) { case 'exercise': stateColorVar = '--exercise-color-val'; stateGlowRgbVar = '--exercise-color-rgb'; break; case 'break': stateColorVar = '--break-color-val'; stateGlowRgbVar = '--break-color-rgb'; break; case 'paused': stateColorVar = '--paused-color-val'; stateGlowRgbVar = '--paused-color-rgb'; break; case 'preparing': stateColorVar = '--preparing-color-val'; stateGlowRgbVar = '--preparing-color-rgb'; break; case 'finished': stateColorVar = '--finished-color-val'; stateGlowRgbVar = '--finished-color-rgb'; break; default: break; } const rootStyle = getComputedStyle(document.documentElement); const stateColor = rootStyle.getPropertyValue(stateColorVar).trim(); const stateGlowRgb = rootStyle.getPropertyValue(stateGlowRgbVar).trim(); const textGlowValue = `0 0 10px rgba(${stateGlowRgb}, 0.7)`; timeDisplayDiv.style.color = stateColor; timeDisplayDiv.style.textShadow = textGlowValue; timerStateDisplay.style.color = stateColor; timerStateDisplay.style.textShadow = textGlowValue; document.documentElement.style.setProperty('--current-timer-color', stateColor); document.documentElement.style.setProperty('--current-timer-glow', textGlowValue); }
-    function updateWorkoutInfo() {
+    function formatTime(seconds) { /* ... (Identique) ... */
+        const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    function updateTimerDisplay() { /* ... (Identique) ... */
+        if (!timeDisplayDiv || !timerStateDisplay) return; let timeString = "00:00"; let stateText = ''; let stateClass = ''; const item = currentWorkoutPlan[currentItemIndex]; const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; switch(currentState) { case 'exercise': timeString = "GO!"; stateText = item?.name || 'Exercice'; break; case 'break': timeString = formatTime(timeLeft); stateText = item?.name || 'Repos'; break; case 'paused': timeString = (item?.type === 'break') ? formatTime(timeLeft) : "PAUSE"; stateText = 'En Pause'; break; case 'preparing': timeString = formatTime(prepareTimeLeft); stateText = 'Préparation'; break; case 'finished': timeString = "FINI!"; stateText = `Terminé (${formatTime(durationSeconds)})`; stateClass = 'finished-state'; break; default: timeString = formatTime(0); stateText = 'Prêt'; break; } timeDisplayDiv.textContent = timeString; timerStateDisplay.textContent = stateText; timerStateDisplay.className = 'timer-state'; if (currentState !== 'idle') timerStateDisplay.classList.add('visible'); if (stateClass) timerStateDisplay.classList.add(stateClass); if (currentState === 'preparing') timerStateDisplay.classList.add('preparing');
+    }
+    function updateTimerVisuals(state) { /* ... (Identique) ... */
+        if (!timeDisplayDiv || !timerStateDisplay) return; let stateColorVar = '--idle-color-val'; let stateGlowRgbVar = '--idle-color-rgb'; switch(state) { case 'exercise': stateColorVar = '--exercise-color-val'; stateGlowRgbVar = '--exercise-color-rgb'; break; case 'break': stateColorVar = '--break-color-val'; stateGlowRgbVar = '--break-color-rgb'; break; case 'paused': stateColorVar = '--paused-color-val'; stateGlowRgbVar = '--paused-color-rgb'; break; case 'preparing': stateColorVar = '--preparing-color-val'; stateGlowRgbVar = '--preparing-color-rgb'; break; case 'finished': stateColorVar = '--finished-color-val'; stateGlowRgbVar = '--finished-color-rgb'; break; default: break; } const rootStyle = getComputedStyle(document.documentElement); const stateColor = rootStyle.getPropertyValue(stateColorVar).trim(); const stateGlowRgb = rootStyle.getPropertyValue(stateGlowRgbVar).trim(); const textGlowValue = `0 0 10px rgba(${stateGlowRgb}, 0.7)`; timeDisplayDiv.style.color = stateColor; timeDisplayDiv.style.textShadow = textGlowValue; timerStateDisplay.style.color = stateColor; timerStateDisplay.style.textShadow = textGlowValue; document.documentElement.style.setProperty('--current-timer-color', stateColor); document.documentElement.style.setProperty('--current-timer-glow', textGlowValue);
+    }
+    function updateWorkoutInfo() { /* ... (Identique à la version précédente, avec les logs pour images) ... */
         if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea || !reactorElement) return;
         const item = currentWorkoutPlan[currentItemIndex];
-        let infoHtml = '';
-        let exerciseName = '';
-        let progressText = '';
-        const body = document.body;
+        let infoHtml = ''; let exerciseName = ''; let progressText = ''; const body = document.body;
 
-        // Gestion de l'image de fond du réacteur
-        if (item && item.type === 'exercise') {
+        if (item && (item.type === 'exercise' || item.type?.startsWith('exercise_'))) {
             const normalizedName = normalizeExerciseName(item.name);
             const imageUrl = exerciseImageMapping[normalizedName];
             if (imageUrl) {
                 reactorElement.style.backgroundImage = `url('${imageUrl}')`;
+                // console.log(`Image chargée pour ${item.name}: ${imageUrl}`);
             } else {
                 reactorElement.style.backgroundImage = 'none';
-                console.warn(`Image non trouvée pour: ${item.name} (normalisé: ${normalizedName})`);
+                console.warn(`Image non trouvée pour: "${item.name}" (normalisé: "${normalizedName}")`);
             }
         } else {
-             reactorElement.style.backgroundImage = 'none'; // Pas d'image pour les pauses, prépa, etc.
+             reactorElement.style.backgroundImage = 'none';
+             // console.log("Aucune image à afficher (pas un exercice ou item indéfini)");
         }
 
         switch (currentState) {
@@ -662,105 +694,112 @@
                 exerciseName = 'Entraînement Terminé !';
                 infoHtml = `<div class="exercise-details" style="border-color: var(--color-finished);"><i class="fas ${getIconForState('finished')}" style="color: var(--color-finished)"></i><span>Bravo ! ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}</span></div>`;
                 progressText = `Fini (${originalCompletedWorkoutPlan.length}/${originalCompletedWorkoutPlan.length})`;
-                reactorElement.style.backgroundImage = 'none'; // Pas d'image d'exo à la fin
+                if (reactorElement) reactorElement.style.backgroundImage = 'none';
                 break;
             case 'preparing':
                 const nextItem = currentWorkoutPlan[0];
                 exerciseName = `Préparation...`;
                 infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"><i class="fas ${getIconForState('preparing')} fa-spin" style="color: var(--color-prepare)"></i><span>Prêt pour <strong>${nextItem?.name || 'Exercice'}</strong> (${formatTime(prepareTimeLeft)})...</span></div>`;
                 progressText = `Prépa... (1/${currentWorkoutPlan.length})`;
-                if (nextItem && nextItem.type === 'exercise') { // Précharger l'image du premier exo
-                    const normalizedName = normalizeExerciseName(nextItem.name);
-                    const imageUrl = exerciseImageMapping[normalizedName];
-                    if (imageUrl) reactorElement.style.backgroundImage = `url('${imageUrl}')`;
-                    else reactorElement.style.backgroundImage = 'none';
-                } else {
-                    reactorElement.style.backgroundImage = 'none';
+                if (reactorElement) {
+                    if (nextItem && (nextItem.type === 'exercise' || nextItem.type?.startsWith('exercise_'))) {
+                        const normalizedName = normalizeExerciseName(nextItem.name);
+                        const imageUrl = exerciseImageMapping[normalizedName];
+                        if (imageUrl) reactorElement.style.backgroundImage = `url('${imageUrl}')`;
+                        else reactorElement.style.backgroundImage = 'none';
+                    } else { reactorElement.style.backgroundImage = 'none'; }
                 }
                 break;
-            case 'exercise':
-            case 'paused':
-            case 'break':
+            case 'exercise': case 'paused': case 'break':
                 if (!item) { exerciseName = 'Erreur'; infoHtml = '<p>Erreur de chargement.</p>'; progressText = `Étape ?/${currentWorkoutPlan.length}`; break; }
                 exerciseName = `${item.name || (item.type === 'break' ? 'Repos' : 'Exercice Inconnu')}`;
                 progressText = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`;
-
-                if (item.type === 'exercise' || item.type?.startsWith('exercise_')) { // Gère aussi les types Myo-Reps etc.
+                if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
                     const repsDisplay = item.reps_text || (item.reps_start !== undefined ? item.reps_start : item.reps) || '-';
                     let weightDisplay = '-';
                     if (item.weight_text) weightDisplay = item.weight_text;
-                    else if (item.weight_details) weightDisplay = item.weight_details; // Pour Myo-Reps
+                    else if (item.weight_details) weightDisplay = item.weight_details;
                     else if (item.weight !== undefined && item.weight_unit) weightDisplay = `${item.weight} ${item.weight_unit}`;
                     else if (item.weight !== undefined && item.weight > 0) weightDisplay = `${item.weight} kg`;
                     else if (item.weight_unit === "Poids de corps") weightDisplay = "Poids de corps";
-
-                    const details = item.details || '';
-                    const setsInfo = item.sets_info || '';
-                    const repsUnit = item.reps_unit ? ` ${item.reps_unit}` : '';
-
-
+                    const details = item.details || ''; const setsInfo = item.sets_info || ''; const repsUnit = item.reps_unit ? ` ${item.reps_unit}` : '';
                     infoHtml = `<div class="exercise-details" style="border-color: var(--color-exercise);">`;
                     if (setsInfo) infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${setsInfo}</span>`;
-                    infoHtml += `<span><i class="fas ${getIconForType('exercise')}" style="color: var(--color-exercise)"></i> ${repsDisplay}${repsUnit}</span>`;
+                    infoHtml += `<span><i class="fas ${getIconForType(item.type)}" style="color: var(--color-exercise)"></i> ${repsDisplay}${repsUnit}</span>`;
                     if (weightDisplay !== '-') infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span>`;
                     if (details) infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`;
                     infoHtml += `</div>`;
-
                 } else if (item.type === 'break') {
                     infoHtml = `<div class="break-info" style="border-color: var(--color-break);"><i class="fas ${getIconForType('break')}" style="color: var(--color-break)"></i><span>${item.name || `Pause: ${formatTime(item.duration || 0)}`}</span></div>`;
                     const nextExerciseIndex = currentItemIndex + 1;
                     if (nextExerciseIndex < currentWorkoutPlan.length && (currentWorkoutPlan[nextExerciseIndex].type === 'exercise' || currentWorkoutPlan[nextExerciseIndex].type?.startsWith('exercise_'))) {
-                        const nextEx = currentWorkoutPlan[nextExerciseIndex];
-                        const nextReps = nextEx.reps_text || (nextEx.reps_start !== undefined ? nextEx.reps_start : nextEx.reps) || '-';
-                        let nextWeight = '-';
-                        if (nextEx.weight_text) nextWeight = nextEx.weight_text;
-                        else if (nextEx.weight_details) nextWeight = nextEx.weight_details;
-                        else if (nextEx.weight !== undefined && nextEx.weight_unit) nextWeight = `${nextEx.weight} ${nextEx.weight_unit}`;
-                        else if (nextEx.weight !== undefined && nextEx.weight > 0) nextWeight = `${nextEx.weight} kg`;
-                        else if (nextEx.weight_unit === "Poids de corps") nextWeight = "Poids de corps";
+                        const nextEx = currentWorkoutPlan[nextExerciseIndex]; const nextReps = nextEx.reps_text || (nextEx.reps_start !== undefined ? nextEx.reps_start : nextEx.reps) || '-';
+                        let nextWeight = '-'; if (nextEx.weight_text) nextWeight = nextEx.weight_text; else if (nextEx.weight_details) nextWeight = nextEx.weight_details; else if (nextEx.weight !== undefined && nextEx.weight_unit) nextWeight = `${nextEx.weight} ${nextEx.weight_unit}`; else if (nextEx.weight !== undefined && nextEx.weight > 0) nextWeight = `${nextEx.weight} kg`; else if (nextEx.weight_unit === "Poids de corps") nextWeight = "Poids de corps";
                         const nextRepsUnit = nextEx.reps_unit ? ` ${nextEx.reps_unit}` : '';
-
                         infoHtml += `<div class="break-info" style="margin-top: 8px; opacity: 0.8; border-color: var(--color-exercise);"><i class="fas fa-arrow-right"></i><span>Suiv: ${nextEx.name || '?'} (${nextReps}${nextRepsUnit}${nextWeight !== '-' ? '@' + nextWeight : ''})</span></div>`;
                     }
                 }
                 break;
-            default:
-                exerciseName = '?'; infoHtml = '<p>État inconnu.</p>'; progressText = ''; break;
+            default: exerciseName = '?'; infoHtml = '<p>État inconnu.</p>'; progressText = ''; break;
         }
         if(currentExerciseNameDisplay) currentExerciseNameDisplay.textContent = exerciseName;
         if(currentExerciseContainer) currentExerciseContainer.innerHTML = infoHtml;
         if(progressTextArea) progressTextArea.textContent = progressText;
-
         body.className = Array.from(body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`;
         body.classList.toggle('workout-active', !['idle', 'finished'].includes(currentState));
     }
-    function getIconForState(state){ switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'preparing': return 'fa-spinner'; case 'paused': return 'fa-pause-circle'; case 'finished': return 'fa-check-circle'; case 'idle': return 'fa-play-circle'; default: return 'fa-question-circle'; }}
-    function getIconForType(type){ return (type === 'exercise' || type?.startsWith('exercise_')) ? 'fa-dumbbell' : 'fa-hourglass-half'; }
-    function setState(newState) { if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return; const previousState = currentState; if (previousState === newState && newState !== 'idle') return; currentState = newState; clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId); if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } document.body.className = Array.from(document.body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`; document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState)); if(startPauseBtn) startPauseBtn.className = ''; if(startPauseBtn) startPauseBtn.disabled = true; if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(newState); navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !googleAccessToken || isTimerActive; hideRepAdjustmentOverlay(); updateWorkoutInfo(); /* Appel AVANT la logique de switch pour l'image */ switch (newState) { case 'idle': isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; timeLeft=0; totalTime=0; const canStartIdle = googleAccessToken && programsLoaded && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; finishBtn.disabled = true; break; case 'preparing': isWorkoutActive=true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); break; case 'exercise': isWorkoutActive=true; isTimerRunning = false; timeLeft=0; totalTime=0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForType('exercise')}"></i> Fait`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } findNextExerciseForAdjustment(); break; case 'break': isTimerRunning=true; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('paused')}"></i> Pause`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } startBreakTimer(); findNextExerciseForAdjustment(); break; case 'paused': isTimerRunning=false; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas fa-play"></i> Reprendre`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } break; case 'finished': isWorkoutActive=false; isTimerRunning = false; workoutFinished=true; wasFinishedState=true; timeLeft=0; totalTime=0; if(startPauseBtn) { startPauseBtn.disabled=true; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('finished')}"></i> Terminé`; } if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); playSound(soundET); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); triggerTriangleSpin(); setTimeout(populateAndShowSummary, 500); break; default: currentState = 'idle'; updateAuthUI(!!googleAccessToken); break; } updateTimerVisuals(newState); updateTimerDisplay(); /* updateWorkoutInfo(); // Déjà appelé au début de setState */ }
-    function startPrepareCountdown() { if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); prepareTimeLeft = PREPARE_DURATION; updateTimerVisuals('preparing'); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; updateTimerDisplay(); if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); playTransitionSound(); vibrate(); triggerTriangleSpin(); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { resetCurrentWorkout(); return; } const nextState = (firstItem.type === 'exercise' || firstItem.type?.startsWith('exercise_')) ? 'exercise' : 'break'; setState(nextState); if (nextState === 'break') { totalTime = firstItem.duration || 0; timeLeft = totalTime; } saveInProgressState(); } else if (prepareTimeLeft === 1) playSound(sound1); else if (prepareTimeLeft === 2) playSound(sound2); else if (prepareTimeLeft === 3) playSound(sound3); }, 1000); }
-    function startBreakTimer() {
+    function getIconForState(state){ /* ... (Identique) ... */
+        switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'preparing': return 'fa-spinner'; case 'paused': return 'fa-pause-circle'; case 'finished': return 'fa-check-circle'; case 'idle': return 'fa-play-circle'; default: return 'fa-question-circle'; }
+    }
+    function getIconForType(type){ /* ... (Identique) ... */
+        return (type === 'exercise' || type?.startsWith('exercise_')) ? 'fa-dumbbell' : 'fa-hourglass-half';
+    }
+    function setState(newState) { /* ... (Appel à updateWorkoutInfo() en premier) ... */
+        if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return; const previousState = currentState; if (previousState === newState && newState !== 'idle') return; currentState = newState; clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId); if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); }
+        updateWorkoutInfo(); // Appelée ici pour mettre à jour l'image AVANT la logique du switch
+        document.body.className = Array.from(document.body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`; document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState)); if(startPauseBtn) startPauseBtn.className = ''; if(startPauseBtn) startPauseBtn.disabled = true; if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true; const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(newState); navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive); }); if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive; if(navProgressBtn) navProgressBtn.disabled = !googleAccessToken || isTimerActive; hideRepAdjustmentOverlay();
+        switch (newState) {
+            case 'idle': isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; timeLeft=0; totalTime=0; const canStartIdle = googleAccessToken && programsLoaded && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('idle')}"></i> Démarrer`; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; finishBtn.disabled = true; break;
+            case 'preparing': isWorkoutActive=true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); break;
+            case 'exercise': isWorkoutActive=true; isTimerRunning = false; timeLeft=0; totalTime=0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForType('exercise')}"></i> Fait`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } findNextExerciseForAdjustment(); break;
+            case 'break': isTimerRunning=true; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('paused')}"></i> Pause`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } startBreakTimer(); findNextExerciseForAdjustment(); break;
+            case 'paused': isTimerRunning=false; isWorkoutActive=true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled=false; startPauseBtn.innerHTML=`<i class="fas fa-play"></i> Reprendre`; } if(skipBtn) skipBtn.disabled=false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; } break;
+            case 'finished': isWorkoutActive=false; isTimerRunning = false; workoutFinished=true; wasFinishedState=true; timeLeft=0; totalTime=0; if(startPauseBtn) { startPauseBtn.disabled=true; startPauseBtn.innerHTML=`<i class="fas ${getIconForState('finished')}"></i> Terminé`; } if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); playSound(soundET); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); triggerTriangleSpin(); setTimeout(populateAndShowSummary, 500); break;
+            default: currentState = 'idle'; updateAuthUI(!!googleAccessToken); break;
+        }
+        updateTimerVisuals(newState); updateTimerDisplay();
+    }
+    function startPrepareCountdown() { /* ... (Identique) ... */
+        if (prepareCountdownInterval) clearInterval(prepareCountdownInterval); prepareTimeLeft = PREPARE_DURATION; updateTimerVisuals('preparing'); if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; if(timerStateDisplay) timerStateDisplay.textContent = `PRÊT DANS ${prepareTimeLeft}`; updateTimerDisplay(); if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); playTransitionSound(); vibrate(); triggerTriangleSpin(); const firstItem = currentWorkoutPlan[0]; if (!firstItem) { resetCurrentWorkout(); return; } const nextState = (firstItem.type === 'exercise' || firstItem.type?.startsWith('exercise_')) ? 'exercise' : 'break'; // Correction ici
+          if (nextState === 'break') { totalTime = firstItem.duration || 0; timeLeft = totalTime; } setState(nextState); saveInProgressState(); } else if (prepareTimeLeft === 1) playSound(sound1); else if (prepareTimeLeft === 2) playSound(sound2); else if (prepareTimeLeft === 3) playSound(sound3); }, 1000);
+    }
+    function startBreakTimer() { /* ... (Identique à la version précédente avec logs) ... */
         if (timerInterval) clearInterval(timerInterval);
         updateTimerDisplay(); updateTimerVisuals('break');
         clearTimeout(halfwayTimeoutId);
 
-        console.log(`startBreakTimer: totalTime=${totalTime}, timeLeft=${timeLeft}`);
+        console.log(`Début startBreakTimer: totalTime=${totalTime}, timeLeft=${timeLeft}`);
 
-        if (totalTime >= 10) {
+        if (totalTime >= 10) { // Assurez-vous que la pause est assez longue
             const halfwayPointSeconds = Math.floor(totalTime / 2);
             if (timeLeft > halfwayPointSeconds) {
                 const delayToHalfway = (timeLeft - halfwayPointSeconds) * 1000;
-                console.log(`Son "windows" programmé dans ${delayToHalfway / 1000}s (pour timeLeft = ${halfwayPointSeconds})`);
-                halfwayTimeoutId = setTimeout(() => {
-                    playSound(soundWindows);
-                    console.log("Son 'windows' joué (mi-parcours).");
-                }, delayToHalfway);
-            } else { console.log("Moins de la moitié du temps restant pour la pause, pas de son 'windows'."); }
-        } else { console.log("Pause trop courte pour le son 'windows'."); }
+                if (delayToHalfway >=0) { // Vérifie que le délai n'est pas négatif
+                    console.log(`Son "windows" programmé dans ${delayToHalfway / 1000}s (pour timeLeft = ${halfwayPointSeconds})`);
+                    halfwayTimeoutId = setTimeout(() => {
+                        playSound(soundWindows);
+                        console.log("Son 'windows' joué (mi-parcours).");
+                    }, delayToHalfway);
+                } else {
+                     console.log(`Délai pour son 'windows' serait négatif (${delayToHalfway}ms). Non programmé.`);
+                }
+            } else { console.log(`Moins de la moitié du temps restant pour la pause (timeLeft=${timeLeft}, halfway=${halfwayPointSeconds}), pas de son 'windows'.`); }
+        } else { console.log(`Pause trop courte (totalTime=${totalTime}) pour le son 'windows'.`); }
 
         timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
-                updateTimerDisplay(); /* updateTimerVisuals('break'); // Pas nécessaire ici, déjà fait au début et géré par setState */
+                updateTimerDisplay();
                 saveInProgressState();
                 if (timeLeft === 5) playSound(sound5); else if (timeLeft === 4) playSound(sound4); else if (timeLeft === 3) playSound(sound3); else if (timeLeft === 2) playSound(sound2); else if (timeLeft === 1) playSound(sound1);
             } else {
@@ -769,237 +808,185 @@
             }
         }, 1000);
     }
-    function handleItemCompletion(naturalEnd = false) { clearTimeout(halfwayTimeoutId); if (!['exercise', 'break', 'paused'].includes(currentState) && !currentState.startsWith('exercise_')) return; playTransitionSound(); triggerTriangleSpin(); const completedItemIndex = currentItemIndex; const completedItem = currentWorkoutPlan[completedItemIndex]; if ((completedItem?.type === 'exercise' || completedItem?.type?.startsWith('exercise_')) && currentRepAdjustment !== 0) { const baseReps = completedItem.reps_start ?? completedItem.reps ?? 0; completedItem.actualReps = Math.max(0, baseReps + currentRepAdjustment); currentRepAdjustment = 0; } if (naturalEnd && currentState === 'break') vibrate(); currentItemIndex++; saveInProgressState(); if (currentItemIndex >= currentWorkoutPlan.length) setState('finished'); else { const nextItem = currentWorkoutPlan[currentItemIndex]; if (!nextItem) { setState('finished'); return; } const nextState = (nextItem.type === 'exercise' || nextItem.type?.startsWith('exercise_')) ? 'exercise' : 'break'; setState(nextState); if (nextState === 'break') { totalTime = nextItem.duration || 0; timeLeft = totalTime; } } }
-    function handlePreviousClick() { if (!isWorkoutActive || currentItemIndex <= 0) return; clearTimeout(halfwayTimeoutId); triggerTriangleSpin(); currentItemIndex--; const previousItemReturningTo = currentWorkoutPlan[currentItemIndex]; const previousState = (previousItemReturningTo.type === 'exercise' || previousItemReturningTo.type?.startsWith('exercise_')) ? 'exercise' : 'break'; if (previousState === 'break') { totalTime = previousItemReturningTo.duration || 0; timeLeft = totalTime; } else { timeLeft = 0; totalTime = 0; } currentRepAdjustment = 0; setState(previousState); saveInProgressState(); showMessage("Retour à l'étape précédente.", 1500); playTransitionSound(); vibrate([50,50,50]); }
-    function forceFinishWorkout() { if (!isWorkoutActive || workoutFinished || currentState === 'preparing') return; if (confirm("Voulez-vous vraiment terminer l'entraînement maintenant ?")) { clearTimeout(halfwayTimeoutId); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); setState('finished'); showMessage("Entraînement terminé manuellement.", 2500); } }
-    function loadWorkout(type) {
+    function handleItemCompletion(naturalEnd = false) { /* ... (CORRECTION pour initialiser totalTime/timeLeft AVANT setState) ... */
+        clearTimeout(halfwayTimeoutId);
+        if (!['exercise', 'break', 'paused'].includes(currentState) && !currentState.startsWith('exercise_')) return;
+        playTransitionSound(); triggerTriangleSpin();
+
+        const completedItemIndex = currentItemIndex;
+        const completedItem = currentWorkoutPlan[completedItemIndex];
+        if ((completedItem?.type === 'exercise' || completedItem?.type?.startsWith('exercise_')) && currentRepAdjustment !== 0) {
+            const baseReps = completedItem.reps_start ?? completedItem.reps ?? 0;
+            completedItem.actualReps = Math.max(0, baseReps + currentRepAdjustment);
+            currentRepAdjustment = 0;
+        }
+        if (naturalEnd && currentState === 'break') vibrate();
+
+        currentItemIndex++;
+        saveInProgressState();
+
+        if (currentItemIndex >= currentWorkoutPlan.length) {
+            setState('finished');
+        } else {
+            const nextItem = currentWorkoutPlan[currentItemIndex];
+            if (!nextItem) { setState('finished'); return; }
+
+            const nextState = (nextItem.type === 'exercise' || nextItem.type?.startsWith('exercise_')) ? 'exercise' : 'break';
+            if (nextState === 'break') { // Initialiser AVANT setState
+                totalTime = nextItem.duration || 0;
+                timeLeft = totalTime;
+                console.log(`Préparation pour pause: totalTime=${totalTime}, timeLeft=${timeLeft}`);
+            } else {
+                totalTime = 0;
+                timeLeft = 0;
+            }
+            setState(nextState);
+        }
+    }
+    function handlePreviousClick() { /* ... (CORRECTION pour initialiser totalTime/timeLeft AVANT setState) ... */
+        if (!isWorkoutActive || currentItemIndex <= 0) return;
+        clearTimeout(halfwayTimeoutId); triggerTriangleSpin();
+        currentItemIndex--;
+        const previousItemReturningTo = currentWorkoutPlan[currentItemIndex];
+        const previousState = (previousItemReturningTo.type === 'exercise' || previousItemReturningTo.type?.startsWith('exercise_')) ? 'exercise' : 'break';
+
+        if (previousState === 'break') { // Initialiser AVANT setState
+            totalTime = previousItemReturningTo.duration || 0;
+            timeLeft = totalTime;
+        } else {
+            totalTime = 0;
+            timeLeft = 0;
+        }
+        currentRepAdjustment = 0;
+        setState(previousState); // totalTime et timeLeft sont maintenant corrects pour startBreakTimer si c'est une pause
+        saveInProgressState();
+        showMessage("Retour à l'étape précédente.", 1500); playTransitionSound(); vibrate([50,50,50]);
+    }
+    function forceFinishWorkout() { /* ... (Identique) ... */
+        if (!isWorkoutActive || workoutFinished || currentState === 'preparing') return; if (confirm("Voulez-vous vraiment terminer l'entraînement maintenant ?")) { clearTimeout(halfwayTimeoutId); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); setState('finished'); showMessage("Entraînement terminé manuellement.", 2500); }
+    }
+    function loadWorkout(type) { /* ... (Identique à la version précédente) ... */
         if (!googleAccessToken) { showMessage("Veuillez vous connecter pour charger un entraînement.", 3000, true); return; }
         if (!programsLoaded) { showMessage("Les programmes ne sont pas encore prêts. Veuillez patienter.", 3000, true); return; }
-
-        const programData = loadedWorkouts[type]; // C'est un objet { routine_name, description, workout_data }
-        if (!programData || !Array.isArray(programData.workout_data)) {
-            showMessage(`Erreur: Programme "${type}" invalide ou corrompu.`, 4000, true);
-            currentWorkoutType = null; setActiveWorkoutNav(null); setState('idle'); return;
-        }
-        if (programData.workout_data.length === 0) {
-            showMessage(`Attention: Programme "${type}" est vide.`, 4000, true);
-            currentWorkoutType = type; setActiveWorkoutNav(type); currentWorkoutPlan = []; setState('idle'); return;
-        }
-
-        if (isWorkoutActive && currentWorkoutType !== type) {
-            if (!confirm(`Un entraînement "${currentWorkoutType}" est en cours. Voulez-vous l'arrêter et charger "${type}" ?`)) {
-                setActiveWorkoutNav(currentWorkoutType); return;
-            }
-            resetCurrentWorkout();
-        } else if (currentState === 'finished' && currentWorkoutType !== type) {
-            resetCurrentWorkout();
-        } else if (currentWorkoutType === type && (isWorkoutActive || currentState === 'idle' || currentState === 'finished')) {
-            showMessage(`Le programme "${type}" est déjà ${currentState === 'idle' ? 'sélectionné' : (currentState === 'finished' ? 'terminé' : 'en cours')}.`, 3000);
-            showSection('workout-section'); setActiveWorkoutNav(type); return;
-        }
-
-        currentWorkoutType = type;
-        currentWorkoutPlan = JSON.parse(JSON.stringify(programData.workout_data)); // On utilise workout_data
-        currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; currentRepAdjustment = 0;
-        setActiveWorkoutNav(type); showSection('workout-section'); closeSummary(false);
-        setState('idle');
-        showMessage(`Programme "${programData.routine_name || type}" chargé. Prêt à démarrer !`, 2500);
+        const programData = loadedWorkouts[type];
+        if (!programData || !Array.isArray(programData.workout_data)) { showMessage(`Erreur: Programme "${type}" invalide ou corrompu.`, 4000, true); currentWorkoutType = null; setActiveWorkoutNav(null); setState('idle'); return; }
+        if (programData.workout_data.length === 0) { showMessage(`Attention: Programme "${type}" est vide.`, 4000, true); currentWorkoutType = type; setActiveWorkoutNav(type); currentWorkoutPlan = []; setState('idle'); return; }
+        if (isWorkoutActive && currentWorkoutType !== type) { if (!confirm(`Un entraînement "${currentWorkoutType}" est en cours. Voulez-vous l'arrêter et charger "${type}" ?`)) { setActiveWorkoutNav(currentWorkoutType); return; } resetCurrentWorkout(); }
+        else if (currentState === 'finished' && currentWorkoutType !== type) { resetCurrentWorkout(); }
+        else if (currentWorkoutType === type && (isWorkoutActive || currentState === 'idle' || currentState === 'finished')) { showMessage(`Le programme "${type}" est déjà ${currentState === 'idle' ? 'sélectionné' : (currentState === 'finished' ? 'terminé' : 'en cours')}.`, 3000); showSection('workout-section'); setActiveWorkoutNav(type); return; }
+        currentWorkoutType = type; currentWorkoutPlan = JSON.parse(JSON.stringify(programData.workout_data)); currentItemIndex = 0; workoutStartTime = null; isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; currentRepAdjustment = 0; setActiveWorkoutNav(type); showSection('workout-section'); closeSummary(false); setState('idle'); showMessage(`Programme "${programData.routine_name || type}" chargé. Prêt à démarrer !`, 2500);
     }
-    function resetCurrentWorkout() { clearTimeout(halfwayTimeoutId); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); const typeReset = currentWorkoutType; currentWorkoutType=null; currentWorkoutPlan=[]; originalCompletedWorkoutPlan=[]; currentItemIndex=0; workoutStartTime=null; isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; wasFinishedState=false; timeLeft=0; totalTime=0; prepareTimeLeft=0; currentRepAdjustment=0; clearInProgressState(); closeSummary(false); setActiveWorkoutNav(null); showSection('workout-section'); setState('idle'); if (typeReset) showMessage(`Programme "${typeReset}" réinitialisé.`, 2000); }
-    function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.classList.toggle('error-message', isError); messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageArea.classList.remove('error-message'); }, duration); }
-
-    // --- Gestion Thème ---
-    function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); try { localStorage.setItem('theme', theme); } catch (e) {} updateChartColors(); }
-    function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) {} applyTheme(savedTheme); }
-
-    // --- Navigation & Affichage Sections ---
-    function showSection(sectionId) { const sections = [workoutSection, historySection, progressSection]; const navLinks = { 'workout-section': [...navButtons], 'history-section': [navHistoryBtn], 'progress-section': [navProgressBtn] }; sections.forEach(section => section?.classList.add('section-hidden')); Object.values(navLinks).flat().forEach(btn => btn?.classList.remove('active')); const sectionToShow = document.getElementById(sectionId); if (sectionToShow) { sectionToShow.classList.remove('section-hidden'); const linksToActivate = navLinks[sectionId]; if (linksToActivate) { if (sectionId === 'workout-section' && currentWorkoutType) { const activeWorkoutBtn = document.getElementById(`nav-${currentWorkoutType.toLowerCase()}`); activeWorkoutBtn?.classList.add('active'); } else { linksToActivate.forEach(btn => btn?.classList.add('active')); } } } }
-    function setActiveWorkoutNav(type) { navButtons.forEach(btn => { if(btn) btn.classList.toggle('active', btn.dataset.workout === type); }); if (type) showSection('workout-section'); }
-
-    // --- Gestion Historique & Stats & Graphiques ---
-    function displayHistory(period = 'week') { if (!historyList || !statsDisplay || !historyChartCanvasEl) return; if (!googleAccessToken) { historyList.innerHTML = '<li class="no-history">Connectez-vous pour voir l\'historique.</li>'; if(statsContentWrapper) statsContentWrapper.innerHTML = '<p>Connectez-vous pour voir les statistiques.</p>'; clearCharts(); setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir le graphique."); return; } currentHistoryPeriod = period; historyFilterBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.period === period)); const filteredHistory = filterHistoryByPeriod(workoutHistory, period); renderHistoryList(filteredHistory); calculateAndDisplayStats(filteredHistory); renderHistoryChart(filteredHistory); }
-    function filterHistoryByPeriod(history, period) { const now = new Date(); let startDate = new Date(); switch (period) { case 'week': startDate.setDate(now.getDate() - 7); break; case 'month': startDate.setMonth(now.getMonth() - 1); break; case 'year': startDate.setFullYear(now.getFullYear() - 1); break; case 'all': return history; default: startDate.setDate(now.getDate() - 7); } startDate.setHours(0, 0, 0, 0); return history.filter(entry => new Date(entry.date) >= startDate); }
-    function renderHistoryList(filteredHistory) { if (!historyList) return; if (filteredHistory.length === 0) { historyList.innerHTML = '<li class="no-history">Aucun entraînement enregistré pour cette période.</li>'; return; } historyList.innerHTML = filteredHistory.sort((a, b) => new Date(b.date) - new Date(a.date)).map(entry => { const date = new Date(entry.date); const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' }); const formattedTime = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationSeconds = entry.durationSeconds || 0; const formattedDuration = durationSeconds > 0 ? formatTime(durationSeconds) : 'N/A'; const type = entry.type || 'Inconnu'; const totalReps = entry.totalReps ?? '?'; return `<li><span class="history-item-date">${formattedDate} <small>(${formattedTime})</small></span><span class="history-item-type">${type}</span><span class="history-item-reps"><i class="fas fa-hashtag"></i> ${totalReps}</span><span class="history-item-duration">${formattedDuration}</span></li>`; }).join(''); }
-    function calculateAndDisplayStats(filteredHistory) { if (!statsContentWrapper || !statsDisplay) return; const numWorkouts = filteredHistory.length; let totalDuration = 0; let workoutTypes = {}; let totalRepsSum = 0; filteredHistory.forEach(entry => { totalDuration += entry.durationSeconds || 0; const type = entry.type || 'Inconnu'; workoutTypes[type] = (workoutTypes[type] || 0) + 1; totalRepsSum += entry.totalReps || 0; }); const avgDuration = numWorkouts > 0 ? totalDuration / numWorkouts : 0; const avgReps = numWorkouts > 0 ? Math.round(totalRepsSum / numWorkouts) : 0; const formattedAvgDuration = formatTime(avgDuration); let statsHtml = `<p><i class="fas fa-calendar-check"></i> Séances: <strong>${numWorkouts}</strong></p>`; if (numWorkouts > 0) { statsHtml += `<p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(totalDuration)}</strong></p>`; statsHtml += `<p><i class="fas fa-clock"></i> Durée moyenne: <strong>${formattedAvgDuration}</strong></p>`; statsHtml += `<p><i class="fas fa-hashtag"></i> Reps totales: <strong>${totalRepsSum}</strong> (Moy: ${avgReps})</p>`; statsHtml += `<p><i class="fas fa-tags"></i> Répartition:</p><ul>`; for (const type in workoutTypes) { statsHtml += `<li style="margin-left: 25px; font-size: 0.95em;">- ${type}: ${workoutTypes[type]}</li>`; } statsHtml += `</ul>`; } else { statsHtml += '<p>Aucune donnée à afficher pour cette période.</p>'; } statsContentWrapper.innerHTML = statsHtml; const motivationalMessage = statsDisplay.querySelector('.motivational-message'); if (motivationalMessage) { if (numWorkouts > 5) motivationalMessage.textContent = "Super régularité ! Continuez comme ça 💪"; else if (numWorkouts > 0) motivationalMessage.textContent = "Chaque séance compte ! Bien joué."; else motivationalMessage.textContent = "Prêt à commencer votre première séance ?"; } }
-    function aggregateChartData(hist, period, metric = 'durationSeconds') { const agg = new Map(); let labels = []; switch (period) { case 'week': labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; labels.forEach(l => agg.set(l, 0)); const nowW = new Date(); const todayW = new Date(nowW.getFullYear(), nowW.getMonth(), nowW.getDate()); const wd = todayW.getDay(); const diff = todayW.getDate() - wd + (wd === 0 ? -6 : 1); const startW = new Date(nowW.getFullYear(), nowW.getMonth(), diff); startW.setHours(0, 0, 0, 0); hist.forEach(e => { const d = new Date(e.date); if (d >= startW) { let dayIndex = d.getDay(); dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[dayIndex], (agg.get(labels[dayIndex]) || 0) + value); } }); break; case 'month': labels = ['S1-7', 'S8-14', 'S15-21', 'S22-28', 'S29+']; labels.forEach(l => agg.set(l, 0)); const curM = new Date().getMonth(); const curY = new Date().getFullYear(); hist.forEach(e => { const d = new Date(e.date); if (d.getMonth() === curM && d.getFullYear() === curY) { const dayOfMonth = d.getDate(); let weekIndex = 0; if (dayOfMonth <= 7) weekIndex = 0; else if (dayOfMonth <= 14) weekIndex = 1; else if (dayOfMonth <= 21) weekIndex = 2; else if (dayOfMonth <= 28) weekIndex = 3; else weekIndex = 4; const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[weekIndex], (agg.get(labels[weekIndex]) || 0) + value); } }); break; case 'year': labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; labels.forEach(l => agg.set(l, 0)); const curY2 = new Date().getFullYear(); hist.forEach(e => { const d = new Date(e.date); if (d.getFullYear() === curY2) { const monthIndex = d.getMonth(); const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[monthIndex], (agg.get(labels[monthIndex]) || 0) + value); } }); break; default: const yearData = {}; hist.forEach(e => { const y = new Date(e.date).getFullYear(); if (!isNaN(y)) { const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); yearData[y] = (yearData[y] || 0) + value; } }); labels = Object.keys(yearData).map(Number).sort((a, b) => a - b).map(String); labels.forEach(y => agg.set(y, yearData[y])); break; } return { labels, data: labels.map(l => agg.get(l) || 0) }; }
-    function getChartXAxisTitle(period){ switch(period){ case 'week': return 'Jour'; case 'month': return 'Semaine'; case 'year': return 'Mois'; default: return 'Année'; }}
-    function renderHistoryChart(filteredHistory) { if (!historyChartCanvasEl) return; const ctx = historyChartCanvasEl.getContext('2d'); if (!ctx) return; const { labels, data } = aggregateChartData(filteredHistory, currentHistoryPeriod, 'durationSeconds'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('history-chart-canvas', "Aucune donnée à afficher pour le graphique."); if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; } return; } else { setChartPlaceholder('history-chart-canvas', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-blue').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').split(',').map(s => s.trim()).join(','); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').split(',').map(s => s.trim()).join(',')}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); const chartData = { labels, datasets: [{ label: 'Durée (min)', data: data.map(d => Math.round(d / 60)), backgroundColor: `rgba(${primColorRgb}, 0.6)`, borderColor: primColor, borderWidth: 1, borderRadius: 3, hoverBackgroundColor: `rgba(${primColorRgb}, 0.8)`, hoverBorderColor: primColor }] }; const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutes', color: textColor }, ticks: { color: textColor, callback: v => v + 'm' }, grid: { color: gridColor } }, x: { title: { display: true, text: getChartXAxisTitle(currentHistoryPeriod), color: textColor }, ticks: { color: textColor }, grid: { display: false } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { label: ctx => `Durée: ${formatTime(data[ctx.dataIndex] || 0)}` } } } }; if (historyChartInstance) { historyChartInstance.data = chartData; historyChartInstance.options = chartOptions; historyChartInstance.update(); } else { historyChartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions }); } }
-    function updateChartColors() { const styles = getComputedStyle(document.documentElement); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').split(',').map(s => s.trim()).join(',')}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); const primColor = styles.getPropertyValue('--neon-blue').trim(); const secColor = styles.getPropertyValue('--neon-purple').trim(); const terColor = styles.getPropertyValue('--neon-pink').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').split(',').map(s => s.trim()).join(','); const secColorRgb = styles.getPropertyValue('--neon-purple-rgb').split(',').map(s => s.trim()).join(','); const terColorRgb = styles.getPropertyValue('--neon-pink-rgb').split(',').map(s => s.trim()).join(','); [historyChartInstance, exercisePerfChartInstance].forEach(chartInstance => { if (chartInstance) { try { chartInstance.options.scales.x.ticks.color = textColor; chartInstance.options.scales.x.grid.color = gridColor; if (chartInstance.options.scales.x.title) chartInstance.options.scales.x.title.color = textColor; chartInstance.options.scales.y.ticks.color = textColor; chartInstance.options.scales.y.grid.color = gridColor; if (chartInstance.options.scales.y.title) chartInstance.options.scales.y.title.color = textColor; if(chartInstance.options.scales.yMetric) { chartInstance.options.scales.yMetric.ticks.color = textColor; chartInstance.options.scales.yMetric.grid.color = gridColor; if (chartInstance.options.scales.yMetric.title) chartInstance.options.scales.yMetric.title.color = textColor; } chartInstance.options.plugins.tooltip.backgroundColor = tooltipBg; chartInstance.options.plugins.tooltip.titleColor = tooltipText; chartInstance.options.plugins.tooltip.bodyColor = tooltipText; chartInstance.data.datasets.forEach((dataset, i) => { let mainColor = primColor; let mainColorRgb = primColorRgb; if (chartInstance === exercisePerfChartInstance) { mainColor = (dataset.label === 'Total Répétitions par Séance') ? secColor : primColor; mainColorRgb = (dataset.label === 'Total Répétitions par Séance') ? secColorRgb : primColorRgb; if(i === 1) { mainColor = terColor; mainColorRgb = terColorRgb; } } else if (chartInstance === historyChartInstance) { mainColor = primColor; mainColorRgb = primColorRgb; } dataset.borderColor = mainColor; dataset.backgroundColor = `rgba(${mainColorRgb}, ${chartInstance.config.type === 'bar' || dataset.fill ? 0.6 : 0.2})`; if(dataset.pointBackgroundColor) dataset.pointBackgroundColor = mainColor; if(dataset.pointBorderColor) dataset.pointBorderColor = mainColor; if(dataset.hoverBackgroundColor) dataset.hoverBackgroundColor = `rgba(${mainColorRgb}, 0.8)`; if(dataset.hoverBorderColor) dataset.hoverBorderColor = mainColor; }); chartInstance.update('none'); } catch(e) {console.error("Erreur mise à jour couleurs chart:", e)} } }); }
-    function clearCharts() { [historyChartInstance, exercisePerfChartInstance].forEach(chart => chart?.destroy()); historyChartInstance = null; exercisePerfChartInstance = null; setChartPlaceholder('history-chart-canvas', ''); setChartPlaceholder('exercise-progress-chart', ''); }
-    function setChartPlaceholder(canvasId, message, show = true) { const placeholderId = canvasId.replace('-canvas', '-placeholder'); const placeholder = document.getElementById(placeholderId); const canvasEl = document.getElementById(canvasId); if (placeholder && canvasEl) { placeholder.textContent = message; placeholder.style.display = show ? 'block' : 'none'; canvasEl.style.opacity = show ? '0.3' : '1'; canvasEl.style.display = show ? 'none' : 'block'; } }
-
-    // --- Gestion Progression ---
-    function populateExerciseSelect() { if (!exerciseSelect || !workoutHistory) return; const uniqueExercises = new Set(); workoutHistory.forEach(entry => { entry.exercises?.forEach(ex => uniqueExercises.add(ex.name)); }); const sortedExercises = Array.from(uniqueExercises).sort(); exerciseSelect.innerHTML = '<option value="all">Tous les exercices (Total Reps)</option>'; sortedExercises.forEach(exName => { const option = document.createElement('option'); option.value = exName; option.textContent = exName; exerciseSelect.appendChild(option); }); displayExerciseProgress(); }
-    function displayExerciseProgress() { if (!exerciseProgressChartCanvasEl) return; const ctx = exerciseProgressChartCanvasEl.getContext('2d'); if (!ctx) return; if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const selectedExercise = exerciseSelect.value; const selectedPeriod = periodSelect.value; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); let chartData; let chartOptions; let chartType = 'line'; if (selectedExercise === 'all') { const { labels, data } = aggregateChartData(filteredHistory, selectedPeriod, 'totalReps'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour afficher la progression totale des reps."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-purple').trim(); const primColorRgb = styles.getPropertyValue('--neon-purple-rgb').split(',').map(s => s.trim()).join(','); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').split(',').map(s => s.trim()).join(',')}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); chartData = { labels, datasets: [{ label: 'Total Répétitions par Séance', data: data, borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.5)`, tension: 0.1, fill: true, pointRadius: 2, pointBackgroundColor: primColor }] }; chartOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: {display: true, text: getChartXAxisTitle(selectedPeriod), color: textColor} }, y: { beginAtZero: true, title: { display: true, text: 'Total Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0]?.label || '', label: (context) => `Total Reps: ${context.parsed.y}` } } } }; chartType = 'line'; } else { const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { exerciseData.push({ date: new Date(entry.date), reps: ex.actualReps ?? ex.reps ?? ex.reps_start ?? 0 }); } }); }); exerciseData.sort((a, b) => a.date - b.date); if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', `Aucune donnée pour l'exercice "${selectedExercise}".`); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const labels = exerciseData.map(d => d.date.toLocaleDateString('fr-CA')); const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-blue').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').split(',').map(s => s.trim()).join(','); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').split(',').map(s => s.trim()).join(',')}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); chartData = { labels, datasets: [{ label: 'Répétitions', data: exerciseData.map(d => d.reps), borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.2)`, tension: 0.3, fill: false, pointRadius: 3, pointBackgroundColor: primColor, pointBorderColor: primColor, pointHoverRadius: 5, yAxisID: 'yMetric' }] }; chartOptions = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: {display: true, text: 'Date', color: textColor} }, yMetric: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0] ? new Date(tooltipItems[0].label).toLocaleDateString('fr-FR') : '', label: (context) => `${context.dataset.label}: ${context.parsed.y}` } } } }; chartType = 'line'; } if (exercisePerfChartInstance) { if (exercisePerfChartInstance.config.type !== chartType) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } else { exercisePerfChartInstance.data = chartData; exercisePerfChartInstance.options = chartOptions; exercisePerfChartInstance.update(); } } else { exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } }
-
-    // --- Résumé Post-Workout (Modal) ---
-    function populateAndShowSummary() {
+    function resetCurrentWorkout() { /* ... (Identique) ... */
+        clearTimeout(halfwayTimeoutId); clearInterval(timerInterval); clearInterval(prepareCountdownInterval); const typeReset = currentWorkoutType; currentWorkoutType=null; currentWorkoutPlan=[]; originalCompletedWorkoutPlan=[]; currentItemIndex=0; workoutStartTime=null; isTimerRunning=false; isWorkoutActive=false; workoutFinished=false; wasFinishedState=false; timeLeft=0; totalTime=0; prepareTimeLeft=0; currentRepAdjustment=0; clearInProgressState(); closeSummary(false); setActiveWorkoutNav(null); showSection('workout-section'); setState('idle'); if (typeReset) showMessage(`Programme "${typeReset}" réinitialisé.`, 2000);
+    }
+    function showMessage(msg, duration = 3000, isError = false) { /* ... (Identique) ... */
+        if (!messageArea) return; messageArea.textContent = msg; messageArea.classList.toggle('error-message', isError); messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); messageArea.classList.remove('error-message'); }, duration);
+    }
+    function applyTheme(theme) { /* ... (Identique) ... */
+        const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); try { localStorage.setItem('theme', theme); } catch (e) {} updateChartColors();
+    }
+    function loadSavedTheme() { /* ... (Identique) ... */
+        let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) {} applyTheme(savedTheme);
+    }
+    function showSection(sectionId) { /* ... (Identique) ... */
+        const sections = [workoutSection, historySection, progressSection]; const navLinks = { 'workout-section': [...navButtons], 'history-section': [navHistoryBtn], 'progress-section': [navProgressBtn] }; sections.forEach(section => section?.classList.add('section-hidden')); Object.values(navLinks).flat().forEach(btn => btn?.classList.remove('active')); const sectionToShow = document.getElementById(sectionId); if (sectionToShow) { sectionToShow.classList.remove('section-hidden'); const linksToActivate = navLinks[sectionId]; if (linksToActivate) { if (sectionId === 'workout-section' && currentWorkoutType) { const activeWorkoutBtn = document.getElementById(`nav-${currentWorkoutType.toLowerCase()}`); activeWorkoutBtn?.classList.add('active'); } else { linksToActivate.forEach(btn => btn?.classList.add('active')); } } }
+    }
+    function setActiveWorkoutNav(type) { /* ... (Identique) ... */
+        navButtons.forEach(btn => { if(btn) btn.classList.toggle('active', btn.dataset.workout === type); }); if (type) showSection('workout-section');
+    }
+    function displayHistory(period = 'week') { /* ... (Identique) ... */
+        if (!historyList || !statsDisplay || !historyChartCanvasEl) return; if (!googleAccessToken) { historyList.innerHTML = '<li class="no-history">Connectez-vous pour voir l\'historique.</li>'; if(statsContentWrapper) statsContentWrapper.innerHTML = '<p>Connectez-vous pour voir les statistiques.</p>'; clearCharts(); setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir le graphique."); return; } currentHistoryPeriod = period; historyFilterBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.period === period)); const filteredHistory = filterHistoryByPeriod(workoutHistory, period); renderHistoryList(filteredHistory); calculateAndDisplayStats(filteredHistory); renderHistoryChart(filteredHistory);
+    }
+    function filterHistoryByPeriod(history, period) { /* ... (Identique) ... */
+        const now = new Date(); let startDate = new Date(); switch (period) { case 'week': startDate.setDate(now.getDate() - 7); break; case 'month': startDate.setMonth(now.getMonth() - 1); break; case 'year': startDate.setFullYear(now.getFullYear() - 1); break; case 'all': return history; default: startDate.setDate(now.getDate() - 7); } startDate.setHours(0, 0, 0, 0); return history.filter(entry => new Date(entry.date) >= startDate);
+    }
+    function renderHistoryList(filteredHistory) { /* ... (Identique) ... */
+        if (!historyList) return; if (filteredHistory.length === 0) { historyList.innerHTML = '<li class="no-history">Aucun entraînement enregistré pour cette période.</li>'; return; } historyList.innerHTML = filteredHistory.sort((a, b) => new Date(b.date) - new Date(a.date)).map(entry => { const date = new Date(entry.date); const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' }); const formattedTime = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); const durationSeconds = entry.durationSeconds || 0; const formattedDuration = durationSeconds > 0 ? formatTime(durationSeconds) : 'N/A'; const type = entry.type || 'Inconnu'; const totalReps = entry.totalReps ?? '?'; return `<li><span class="history-item-date">${formattedDate} <small>(${formattedTime})</small></span><span class="history-item-type">${type}</span><span class="history-item-reps"><i class="fas fa-hashtag"></i> ${totalReps}</span><span class="history-item-duration">${formattedDuration}</span></li>`; }).join('');
+    }
+    function calculateAndDisplayStats(filteredHistory) { /* ... (Identique) ... */
+        if (!statsContentWrapper || !statsDisplay) return; const numWorkouts = filteredHistory.length; let totalDuration = 0; let workoutTypes = {}; let totalRepsSum = 0; filteredHistory.forEach(entry => { totalDuration += entry.durationSeconds || 0; const type = entry.type || 'Inconnu'; workoutTypes[type] = (workoutTypes[type] || 0) + 1; totalRepsSum += entry.totalReps || 0; }); const avgDuration = numWorkouts > 0 ? totalDuration / numWorkouts : 0; const avgReps = numWorkouts > 0 ? Math.round(totalRepsSum / numWorkouts) : 0; const formattedAvgDuration = formatTime(avgDuration); let statsHtml = `<p><i class="fas fa-calendar-check"></i> Séances: <strong>${numWorkouts}</strong></p>`; if (numWorkouts > 0) { statsHtml += `<p><i class="fas fa-stopwatch"></i> Durée totale: <strong>${formatTime(totalDuration)}</strong></p>`; statsHtml += `<p><i class="fas fa-clock"></i> Durée moyenne: <strong>${formattedAvgDuration}</strong></p>`; statsHtml += `<p><i class="fas fa-hashtag"></i> Reps totales: <strong>${totalRepsSum}</strong> (Moy: ${avgReps})</p>`; statsHtml += `<p><i class="fas fa-tags"></i> Répartition:</p><ul>`; for (const type in workoutTypes) { statsHtml += `<li style="margin-left: 25px; font-size: 0.95em;">- ${type}: ${workoutTypes[type]}</li>`; } statsHtml += `</ul>`; } else { statsHtml += '<p>Aucune donnée à afficher pour cette période.</p>'; } statsContentWrapper.innerHTML = statsHtml; const motivationalMessage = statsDisplay.querySelector('.motivational-message'); if (motivationalMessage) { if (numWorkouts > 5) motivationalMessage.textContent = "Super régularité ! Continuez comme ça 💪"; else if (numWorkouts > 0) motivationalMessage.textContent = "Chaque séance compte ! Bien joué."; else motivationalMessage.textContent = "Prêt à commencer votre première séance ?"; }
+    }
+    function aggregateChartData(hist, period, metric = 'durationSeconds') { /* ... (Identique) ... */
+        const agg = new Map(); let labels = []; switch (period) { case 'week': labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; labels.forEach(l => agg.set(l, 0)); const nowW = new Date(); const todayW = new Date(nowW.getFullYear(), nowW.getMonth(), nowW.getDate()); const wd = todayW.getDay(); const diff = todayW.getDate() - wd + (wd === 0 ? -6 : 1); const startW = new Date(nowW.getFullYear(), nowW.getMonth(), diff); startW.setHours(0, 0, 0, 0); hist.forEach(e => { const d = new Date(e.date); if (d >= startW) { let dayIndex = d.getDay(); dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[dayIndex], (agg.get(labels[dayIndex]) || 0) + value); } }); break; case 'month': labels = ['S1-7', 'S8-14', 'S15-21', 'S22-28', 'S29+']; labels.forEach(l => agg.set(l, 0)); const curM = new Date().getMonth(); const curY = new Date().getFullYear(); hist.forEach(e => { const d = new Date(e.date); if (d.getMonth() === curM && d.getFullYear() === curY) { const dayOfMonth = d.getDate(); let weekIndex = 0; if (dayOfMonth <= 7) weekIndex = 0; else if (dayOfMonth <= 14) weekIndex = 1; else if (dayOfMonth <= 21) weekIndex = 2; else if (dayOfMonth <= 28) weekIndex = 3; else weekIndex = 4; const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[weekIndex], (agg.get(labels[weekIndex]) || 0) + value); } }); break; case 'year': labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']; labels.forEach(l => agg.set(l, 0)); const curY2 = new Date().getFullYear(); hist.forEach(e => { const d = new Date(e.date); if (d.getFullYear() === curY2) { const monthIndex = d.getMonth(); const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); agg.set(labels[monthIndex], (agg.get(labels[monthIndex]) || 0) + value); } }); break; default: const yearData = {}; hist.forEach(e => { const y = new Date(e.date).getFullYear(); if (!isNaN(y)) { const value = metric === 'durationSeconds' ? (e.durationSeconds || 0) : (e.totalReps || 0); yearData[y] = (yearData[y] || 0) + value; } }); labels = Object.keys(yearData).map(Number).sort((a, b) => a - b).map(String); labels.forEach(y => agg.set(y, yearData[y])); break; } return { labels, data: labels.map(l => agg.get(l) || 0) };
+    }
+    function getChartXAxisTitle(period){ /* ... (Identique) ... */
+        switch(period){ case 'week': return 'Jour'; case 'month': return 'Semaine'; case 'year': return 'Mois'; default: return 'Année'; }
+    }
+    function renderHistoryChart(filteredHistory) { /* ... (Identique, s'assurer que les variables RGB sont bien formatées) ... */
+        if (!historyChartCanvasEl) return; const ctx = historyChartCanvasEl.getContext('2d'); if (!ctx) return; const { labels, data } = aggregateChartData(filteredHistory, currentHistoryPeriod, 'durationSeconds'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('history-chart-canvas', "Aucune donnée à afficher pour le graphique."); if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; } return; } else { setChartPlaceholder('history-chart-canvas', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-blue').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').trim(); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').trim()}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); const chartData = { labels, datasets: [{ label: 'Durée (min)', data: data.map(d => Math.round(d / 60)), backgroundColor: `rgba(${primColorRgb}, 0.6)`, borderColor: primColor, borderWidth: 1, borderRadius: 3, hoverBackgroundColor: `rgba(${primColorRgb}, 0.8)`, hoverBorderColor: primColor }] }; const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutes', color: textColor }, ticks: { color: textColor, callback: v => v + 'm' }, grid: { color: gridColor } }, x: { title: { display: true, text: getChartXAxisTitle(currentHistoryPeriod), color: textColor }, ticks: { color: textColor }, grid: { display: false } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { label: ctx => `Durée: ${formatTime(data[ctx.dataIndex] || 0)}` } } } }; if (historyChartInstance) { historyChartInstance.data = chartData; historyChartInstance.options = chartOptions; historyChartInstance.update(); } else { historyChartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions }); }
+    }
+    function updateChartColors() { /* ... (Identique, s'assurer que les variables RGB sont bien formatées) ... */
+        const styles = getComputedStyle(document.documentElement); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').trim()}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); const primColor = styles.getPropertyValue('--neon-blue').trim(); const secColor = styles.getPropertyValue('--neon-purple').trim(); const terColor = styles.getPropertyValue('--neon-pink').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').trim(); const secColorRgb = styles.getPropertyValue('--neon-purple-rgb').trim(); const terColorRgb = styles.getPropertyValue('--neon-pink-rgb').trim(); [historyChartInstance, exercisePerfChartInstance].forEach(chartInstance => { if (chartInstance) { try { chartInstance.options.scales.x.ticks.color = textColor; chartInstance.options.scales.x.grid.color = gridColor; if (chartInstance.options.scales.x.title) chartInstance.options.scales.x.title.color = textColor; chartInstance.options.scales.y.ticks.color = textColor; chartInstance.options.scales.y.grid.color = gridColor; if (chartInstance.options.scales.y.title) chartInstance.options.scales.y.title.color = textColor; if(chartInstance.options.scales.yMetric) { chartInstance.options.scales.yMetric.ticks.color = textColor; chartInstance.options.scales.yMetric.grid.color = gridColor; if (chartInstance.options.scales.yMetric.title) chartInstance.options.scales.yMetric.title.color = textColor; } chartInstance.options.plugins.tooltip.backgroundColor = tooltipBg; chartInstance.options.plugins.tooltip.titleColor = tooltipText; chartInstance.options.plugins.tooltip.bodyColor = tooltipText; chartInstance.data.datasets.forEach((dataset, i) => { let mainColor = primColor; let mainColorRgb = primColorRgb; if (chartInstance === exercisePerfChartInstance) { mainColor = (dataset.label === 'Total Répétitions par Séance') ? secColor : primColor; mainColorRgb = (dataset.label === 'Total Répétitions par Séance') ? secColorRgb : primColorRgb; if(i === 1) { mainColor = terColor; mainColorRgb = terColorRgb; } } else if (chartInstance === historyChartInstance) { mainColor = primColor; mainColorRgb = primColorRgb; } dataset.borderColor = mainColor; dataset.backgroundColor = `rgba(${mainColorRgb}, ${chartInstance.config.type === 'bar' || dataset.fill ? 0.6 : 0.2})`; if(dataset.pointBackgroundColor) dataset.pointBackgroundColor = mainColor; if(dataset.pointBorderColor) dataset.pointBorderColor = mainColor; if(dataset.hoverBackgroundColor) dataset.hoverBackgroundColor = `rgba(${mainColorRgb}, 0.8)`; if(dataset.hoverBorderColor) dataset.hoverBorderColor = mainColor; }); chartInstance.update('none'); } catch(e) {console.error("Erreur mise à jour couleurs chart:", e)} } });
+    }
+    function clearCharts() { /* ... (Identique) ... */
+        [historyChartInstance, exercisePerfChartInstance].forEach(chart => chart?.destroy()); historyChartInstance = null; exercisePerfChartInstance = null; setChartPlaceholder('history-chart-canvas', ''); setChartPlaceholder('exercise-progress-chart', '');
+    }
+    function setChartPlaceholder(canvasId, message, show = true) { /* ... (Identique) ... */
+        const placeholderId = canvasId.replace('-canvas', '-placeholder'); const placeholder = document.getElementById(placeholderId); const canvasEl = document.getElementById(canvasId); if (placeholder && canvasEl) { placeholder.textContent = message; placeholder.style.display = show ? 'block' : 'none'; canvasEl.style.opacity = show ? '0.3' : '1'; canvasEl.style.display = show ? 'none' : 'block'; }
+    }
+    function populateExerciseSelect() { /* ... (Identique) ... */
+        if (!exerciseSelect || !workoutHistory) return; const uniqueExercises = new Set(); workoutHistory.forEach(entry => { entry.exercises?.forEach(ex => uniqueExercises.add(ex.name)); }); const sortedExercises = Array.from(uniqueExercises).sort(); exerciseSelect.innerHTML = '<option value="all">Tous les exercices (Total Reps)</option>'; sortedExercises.forEach(exName => { const option = document.createElement('option'); option.value = exName; option.textContent = exName; exerciseSelect.appendChild(option); }); displayExerciseProgress();
+    }
+    function displayExerciseProgress() { /* ... (Identique, s'assurer que les variables RGB sont bien formatées) ... */
+        if (!exerciseProgressChartCanvasEl) return; const ctx = exerciseProgressChartCanvasEl.getContext('2d'); if (!ctx) return; if (!googleAccessToken) { setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } const selectedExercise = exerciseSelect.value; const selectedPeriod = periodSelect.value; const filteredHistory = filterHistoryByPeriod(workoutHistory, selectedPeriod); let chartData; let chartOptions; let chartType = 'line'; if (selectedExercise === 'all') { const { labels, data } = aggregateChartData(filteredHistory, selectedPeriod, 'totalReps'); if (labels.length === 0 || data.every(d => d === 0)) { setChartPlaceholder('exercise-progress-chart', "Aucune donnée pour afficher la progression totale des reps."); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-purple').trim(); const primColorRgb = styles.getPropertyValue('--neon-purple-rgb').trim(); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').trim()}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); chartData = { labels, datasets: [{ label: 'Total Répétitions par Séance', data: data, borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.5)`, tension: 0.1, fill: true, pointRadius: 2, pointBackgroundColor: primColor }] }; chartOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: {display: true, text: getChartXAxisTitle(selectedPeriod), color: textColor} }, y: { beginAtZero: true, title: { display: true, text: 'Total Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0]?.label || '', label: (context) => `Total Reps: ${context.parsed.y}` } } } }; chartType = 'line'; } else { const exerciseData = []; filteredHistory.forEach(entry => { entry.exercises?.forEach(ex => { if (ex.name === selectedExercise) { exerciseData.push({ date: new Date(entry.date), reps: ex.actualReps ?? ex.reps ?? ex.reps_start ?? 0 }); } }); }); exerciseData.sort((a, b) => a.date - b.date); if (exerciseData.length === 0) { setChartPlaceholder('exercise-progress-chart', `Aucune donnée pour l'exercice "${selectedExercise}".`); if (exercisePerfChartInstance) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = null; } return; } else { setChartPlaceholder('exercise-progress-chart', "", false); } const labels = exerciseData.map(d => d.date.toLocaleDateString('fr-CA')); const styles = getComputedStyle(document.documentElement); const primColor = styles.getPropertyValue('--neon-blue').trim(); const primColorRgb = styles.getPropertyValue('--neon-blue-rgb').trim(); const gridColor = styles.getPropertyValue('--accent-border-color').trim(); const textColor = styles.getPropertyValue('--secondary-text-color').trim(); const tooltipBg = `rgba(${styles.getPropertyValue('--secondary-bg-color-dark-rgb').trim()}, 0.8)`; const tooltipText = styles.getPropertyValue('--primary-text-color').trim(); chartData = { labels, datasets: [{ label: 'Répétitions', data: exerciseData.map(d => d.reps), borderColor: primColor, backgroundColor: `rgba(${primColorRgb}, 0.2)`, tension: 0.3, fill: false, pointRadius: 3, pointBackgroundColor: primColor, pointBorderColor: primColor, pointHoverRadius: 5, yAxisID: 'yMetric' }] }; chartOptions = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { x: { ticks: { color: textColor }, grid: { display: false }, title: {display: true, text: 'Date', color: textColor} }, yMetric: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Répétitions', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText, padding: 10, cornerRadius: 4, displayColors: false, callbacks: { title: (tooltipItems) => tooltipItems[0] ? new Date(tooltipItems[0].label).toLocaleDateString('fr-FR') : '', label: (context) => `${context.dataset.label}: ${context.parsed.y}` } } } }; chartType = 'line'; } if (exercisePerfChartInstance) { if (exercisePerfChartInstance.config.type !== chartType) { exercisePerfChartInstance.destroy(); exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); } else { exercisePerfChartInstance.data = chartData; exercisePerfChartInstance.options = chartOptions; exercisePerfChartInstance.update(); } } else { exercisePerfChartInstance = new Chart(ctx, { type: chartType, data: chartData, options: chartOptions }); }
+    }
+    function populateAndShowSummary() { /* ... (Identique à la version précédente) ... */
         if (!postWorkoutSummary || !summaryItemsList || !finishSummaryBtn) return;
-        const planToSummarize = originalCompletedWorkoutPlan;
-        const programName = loadedWorkouts[currentWorkoutType]?.routine_name || currentWorkoutType || '?';
-        if (summaryTitle) summaryTitle.textContent = `Résumé & Objectifs (${programName})`;
-
-        if (summaryItemsList) {
-            summaryItemsList.innerHTML = '';
-            planToSummarize.forEach((item, index) => {
-                if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
-                    const li = document.createElement('li');
-                    li.classList.add('summary-item');
-                    li.dataset.originalIndex = index; // Conserver l'index original dans le plan
-
-                    const performedReps = item.actualReps ?? (item.reps_text === "AMRAP" ? "AMRAP" : (item.reps_start ?? item.reps ?? 0));
-                    const nextTargetRepsValue = item.reps_start ?? item.reps ?? 0;
-                    const isAmrap = item.reps_text === "AMRAP";
-                    const setsInfoText = item.sets_info ? `, ${item.sets_info}` : '';
-
-                    let contentHtml = `<div class="exercise-name">
-                        <i class="fas ${getIconForType(item.type)}" style="color:var(--color-exercise)"></i> ${item.name || 'Exercice'}
-                        <small>(${performedReps} fait${setsInfoText})</small>
-                    </div>`;
-
-                    if (isAmrap) {
-                        contentHtml += `<div class="input-container"><span>Objectif: AMRAP</span></div>`;
-                    } else {
-                        contentHtml += `<div class="input-container">
-                            <label for="next-reps-${index}">Obj:</label>
-                            <input type="number" id="next-reps-${index}" value="${nextTargetRepsValue}" min="0" step="1" placeholder="Reps">
-                        </div>`;
-                    }
-                    li.innerHTML = contentHtml;
-                    summaryItemsList.appendChild(li);
-                }
-            });
-        }
-        if (finishSummaryBtn) finishSummaryBtn.disabled = false;
-        if (postWorkoutSummary) postWorkoutSummary.classList.add('visible');
+        const planToSummarize = originalCompletedWorkoutPlan; const programName = loadedWorkouts[currentWorkoutType]?.routine_name || currentWorkoutType || '?'; if (summaryTitle) summaryTitle.textContent = `Résumé & Objectifs (${programName})`;
+        if (summaryItemsList) { summaryItemsList.innerHTML = ''; planToSummarize.forEach((item, index) => { if (item.type === 'exercise' || item.type?.startsWith('exercise_')) { const li = document.createElement('li'); li.classList.add('summary-item'); li.dataset.originalIndex = index; const performedReps = item.actualReps ?? (item.reps_text === "AMRAP" ? "AMRAP" : (item.reps_start ?? item.reps ?? 0)); const nextTargetRepsValue = item.reps_start ?? item.reps ?? 0; const isAmrap = item.reps_text === "AMRAP"; const setsInfoText = item.sets_info ? `, ${item.sets_info}` : ''; let contentHtml = `<div class="exercise-name"><i class="fas ${getIconForType(item.type)}" style="color:var(--color-exercise)"></i> ${item.name || 'Exercice'}<small>(${performedReps} fait${setsInfoText})</small></div>`; if (isAmrap) { contentHtml += `<div class="input-container"><span>Objectif: AMRAP</span></div>`; } else { contentHtml += `<div class="input-container"><label for="next-reps-${index}">Obj:</label><input type="number" id="next-reps-${index}" value="${nextTargetRepsValue}" min="0" step="1" placeholder="Reps"></div>`; } li.innerHTML = contentHtml; summaryItemsList.appendChild(li); } }); }
+        if (finishSummaryBtn) finishSummaryBtn.disabled = false; if (postWorkoutSummary) postWorkoutSummary.classList.add('visible');
     }
-    async function finishSummary() {
-        if (!googleAccessToken || !currentWorkoutType || !programFileIds[currentWorkoutType]) {
-            showMessage("Erreur de sauvegarde des objectifs. Problème de connexion ou de fichier.", 4000, true);
-            resetCurrentWorkout();
-            return;
-        }
-        if (isSavingDriveData) {
-            showMessage("Sauvegarde des objectifs en cours...", 2000);
-            return;
-        }
-
-        let changesMade = false;
-        // On modifie une copie de loadedWorkouts[currentWorkoutType].workout_data
-        // car loadedWorkouts[currentWorkoutType] est l'objet complet {routine_name, ..., workout_data}
-        const programToUpdateContainer = loadedWorkouts[currentWorkoutType];
-        if (!programToUpdateContainer || !Array.isArray(programToUpdateContainer.workout_data)) {
-            showMessage("Erreur: structure du programme à mettre à jour invalide.", 5000, true);
-            resetCurrentWorkout();
-            return;
-        }
-        const programDataToUpdate = programToUpdateContainer.workout_data;
-
-
-        summaryItemsList.querySelectorAll('.summary-item[data-original-index]').forEach(li => {
-            const originalIndex = parseInt(li.dataset.originalIndex, 10);
-            const input = li.querySelector(`#next-reps-${originalIndex}`);
-
-            if (input && programDataToUpdate[originalIndex] && (programDataToUpdate[originalIndex].type === 'exercise' || programDataToUpdate[originalIndex].type?.startsWith('exercise_')) && programDataToUpdate[originalIndex].reps_text !== "AMRAP") {
-                const nextRepsRaw = input.value.trim();
-                const nextReps = nextRepsRaw === '' ? null : parseInt(nextRepsRaw, 10);
-
-                if (nextReps !== null && !isNaN(nextReps) && nextReps >= 0) {
-                    // Mettre à jour reps_start si disponible, sinon reps
-                    if (programDataToUpdate[originalIndex].hasOwnProperty('reps_start')) {
-                        if (programDataToUpdate[originalIndex].reps_start !== nextReps) {
-                            programDataToUpdate[originalIndex].reps_start = nextReps;
-                            changesMade = true;
-                        }
-                    } else if (programDataToUpdate[originalIndex].reps !== nextReps) {
-                         programDataToUpdate[originalIndex].reps = nextReps;
-                         changesMade = true;
-                    }
-                } else if (nextRepsRaw !== '') {
-                    // Valeur invalide, on pourrait afficher un message
-                    console.warn(`Valeur invalide pour les reps de ${programDataToUpdate[originalIndex].name}: ${nextRepsRaw}`);
-                }
-            }
-        });
-
-        if (changesMade) {
-            if (finishSummaryBtn) {
-                finishSummaryBtn.disabled = true;
-                finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
-            }
-            // On sauvegarde l'objet programme complet (avec routine_name, description, etc.)
-            const success = await updateFileContent(programFileIds[currentWorkoutType], programToUpdateContainer);
-            if (success) {
-                showMessage(`Objectifs pour "${programToUpdateContainer.routine_name || currentWorkoutType}" mis à jour !`, 2500);
-            } else {
-                showMessage(`Échec de la sauvegarde des objectifs. Veuillez réessayer.`, 5000, true);
-            }
-            if (finishSummaryBtn) {
-                finishSummaryBtn.disabled = false;
-                finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`;
-            }
-        }
-        resetCurrentWorkout();
+    async function finishSummary() { /* ... (Identique à la version précédente) ... */
+        if (!googleAccessToken || !currentWorkoutType || !programFileIds[currentWorkoutType]) { showMessage("Erreur de sauvegarde des objectifs. Problème de connexion ou de fichier.", 4000, true); resetCurrentWorkout(); return; }
+        if (isSavingDriveData) { showMessage("Sauvegarde des objectifs en cours...", 2000); return; } let changesMade = false; const programToUpdateContainer = loadedWorkouts[currentWorkoutType];
+        if (!programToUpdateContainer || !Array.isArray(programToUpdateContainer.workout_data)) { showMessage("Erreur: structure du programme à mettre à jour invalide.", 5000, true); resetCurrentWorkout(); return; } const programDataToUpdate = programToUpdateContainer.workout_data;
+        summaryItemsList.querySelectorAll('.summary-item[data-original-index]').forEach(li => { const originalIndex = parseInt(li.dataset.originalIndex, 10); const input = li.querySelector(`#next-reps-${originalIndex}`); if (input && programDataToUpdate[originalIndex] && (programDataToUpdate[originalIndex].type === 'exercise' || programDataToUpdate[originalIndex].type?.startsWith('exercise_')) && programDataToUpdate[originalIndex].reps_text !== "AMRAP") { const nextRepsRaw = input.value.trim(); const nextReps = nextRepsRaw === '' ? null : parseInt(nextRepsRaw, 10); if (nextReps !== null && !isNaN(nextReps) && nextReps >= 0) { if (programDataToUpdate[originalIndex].hasOwnProperty('reps_start')) { if (programDataToUpdate[originalIndex].reps_start !== nextReps) { programDataToUpdate[originalIndex].reps_start = nextReps; changesMade = true; } } else if (programDataToUpdate[originalIndex].reps !== nextReps) { programDataToUpdate[originalIndex].reps = nextReps; changesMade = true; } } else if (nextRepsRaw !== '') { console.warn(`Valeur invalide pour les reps de ${programDataToUpdate[originalIndex].name}: ${nextRepsRaw}`); } } });
+        if (changesMade) { if (finishSummaryBtn) { finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileIds[currentWorkoutType], programToUpdateContainer); if (success) { showMessage(`Objectifs pour "${programToUpdateContainer.routine_name || currentWorkoutType}" mis à jour !`, 2500); } else { showMessage(`Échec de la sauvegarde des objectifs. Veuillez réessayer.`, 5000, true); } if (finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } } resetCurrentWorkout();
     }
-    function closeSummary(updateUI = true) { if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUI) setState(currentState); }
-
-    // --- Sauvegarde & Chargement (Drive & LocalStorage) ---
-    async function saveHistoryToDrive() { if (!googleAccessToken || isSavingDriveData) return; if (!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); if (historyFileId) await updateFileContent(historyFileId, workoutHistory); }
-    async function loadHistoryFromDrive() { if (!googleAccessToken) return; historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); if (historyFileId) { const content = await readFileContent(historyFileId); if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); } catch (e) { workoutHistory = []; console.error("Erreur parsing historique:", e); } } else workoutHistory = []; } else workoutHistory = []; displayHistory(currentHistoryPeriod); }
-    async function loadProgramsFromDrive() {
-        if (!googleAccessToken) return false;
-        let allLoadedSuccessfully = true;
-        // loadedWorkouts sera un objet où chaque clé (Push, Pull, Legs) contient l'objet programme complet
-        loadedWorkouts = {};
-        for (const type of PROGRAM_TYPES) {
-            // Le contenu par défaut est l'objet programme complet pour ce type
-            const defaultProgObject = defaultWorkouts[type] || { routine_name: `${type} (Défaut)`, description: "Programme par défaut.", workout_data: [] };
-            programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], JSON.stringify(defaultProgObject, null, 2));
-
-            if (programFileIds[type]) {
-                const content = await readFileContent(programFileIds[type]);
-                if (content !== null) {
-                    try {
-                        loadedWorkouts[type] = JSON.parse(content || JSON.stringify(defaultProgObject));
-                        // Valider la structure minimale
-                        if (!loadedWorkouts[type].workout_data || !Array.isArray(loadedWorkouts[type].workout_data)) {
-                            console.warn(`Programme ${type} depuis Drive a une structure workout_data invalide. Utilisation du défaut.`);
-                            loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject));
-                        }
-                    } catch (e) {
-                        console.error(`Erreur parsing programme ${type} depuis Drive:`, e);
-                        loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject));
-                        allLoadedSuccessfully = false;
-                    }
-                } else { // Erreur de lecture du fichier
-                    loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject));
-                    allLoadedSuccessfully = false;
-                }
-            } else { // Erreur findOrCreateFile
-                loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject));
-                allLoadedSuccessfully = false;
-            }
-        }
-        console.log("Programmes chargés:", loadedWorkouts);
-        return allLoadedSuccessfully;
+    function closeSummary(updateUI = true) { /* ... (Identique) ... */
+        if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUI) setState(currentState);
     }
-    function saveInProgressState() { if (!isWorkoutActive || currentState === 'preparing' || typeof localStorage === 'undefined') return; const stateToSave = { currentWorkoutType, currentItemIndex, timeLeft: currentState === 'break' || currentState === 'paused' ? timeLeft : 0, currentState, workoutStartTime, currentWorkoutPlan, timestamp: Date.now() }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); } catch (e) {} }
-    function loadInProgressState() { if (typeof localStorage === 'undefined' || !googleAccessToken) return; try { const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) return; const savedState = JSON.parse(savedStateJSON); const maxAge = 24 * 60 * 60 * 1000; if (Date.now() - savedState.timestamp > maxAge) { clearInProgressState(); return; } if (confirm(`Un entraînement "${savedState.currentWorkoutType}" était en cours. Voulez-vous le reprendre ?`)) { currentWorkoutType = savedState.currentWorkoutType; currentItemIndex = savedState.currentItemIndex; currentState = savedState.currentState; workoutStartTime = savedState.workoutStartTime; currentWorkoutPlan = savedState.currentWorkoutPlan; if (currentState === 'break' || (currentState === 'paused' && currentWorkoutPlan[currentItemIndex]?.type === 'break')) { totalTime = currentWorkoutPlan[currentItemIndex]?.duration || 0; timeLeft = Math.max(0, Math.min(savedState.timeLeft, totalTime)); } else { timeLeft = 0; totalTime = 0; } setActiveWorkoutNav(currentWorkoutType); showSection('workout-section'); setState(currentState); showMessage(`Entraînement "${currentWorkoutType}" repris.`, 3000); } else { clearInProgressState(); } } catch (e) { clearInProgressState(); } }
-    function clearInProgressState() { if (typeof localStorage === 'undefined') return; try { localStorage.removeItem(IN_PROGRESS_KEY); } catch (e) {} }
-    function saveWorkoutToHistory() { if (!googleAccessToken || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return; const endTime = Date.now(); const durationSeconds = workoutStartTime ? (endTime - workoutStartTime) / 1000 : 0; let totalReps = 0; originalCompletedWorkoutPlan.forEach(item => { if (item.type === 'exercise' || item.type?.startsWith('exercise_')) totalReps += item.actualReps ?? (item.reps_text === "AMRAP" ? 1 : (item.reps_start ?? item.reps ?? 0)); }); const historyEntry = { date: new Date(workoutStartTime || endTime).toISOString(), type: loadedWorkouts[currentWorkoutType]?.routine_name || currentWorkoutType || 'Inconnu', durationSeconds: Math.round(durationSeconds), totalReps: totalReps, exercises: originalCompletedWorkoutPlan.map(item => ({ ...item })) }; workoutHistory.unshift(historyEntry); saveHistoryToDrive(); displayHistory(currentHistoryPeriod); populateExerciseSelect(); displayExerciseProgress(); }
-    function exportHistory() { if (!googleAccessToken) { showMessage("Veuillez vous connecter pour exporter l'historique.", 3000, true); return; } if (workoutHistory.length === 0) { showMessage("L'historique est vide. Rien à exporter.", 3000); return; } try { const jsonData = JSON.stringify(workoutHistory, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const dateStr = new Date().toISOString().split('T')[0]; a.download = `armorworkout_history_${dateStr}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showMessage("Historique exporté avec succès.", 2500); } catch (e) { showMessage("Erreur lors de l'export de l'historique.", 4000, true); console.error("Erreur export:", e); } }
-
-    // --- Gestion Overlay Ajustement Répétitions ---
-    function showRepAdjustmentOverlay() { if (!isWorkoutActive || currentState === 'finished' || currentState === 'preparing' || currentState === 'paused') return; const itemForAdjustment = currentWorkoutPlan[nextExerciseIndexForAdjustment]; if (!itemForAdjustment || (itemForAdjustment.type !== 'exercise' && !itemForAdjustment.type?.startsWith('exercise_'))) { hideRepAdjustmentOverlay(); return; } if(repAdjustmentExerciseName) repAdjustmentExerciseName.textContent = itemForAdjustment.name; const baseReps = itemForAdjustment.reps_start ?? itemForAdjustment.reps ?? 0; if(currentRepsDisplay) currentRepsDisplay.textContent = Math.max(0, baseReps + currentRepAdjustment); if (!isRepAdjustmentVisible && repAdjustmentOverlay) { repAdjustmentOverlay.classList.add('visible'); isRepAdjustmentVisible = true; } }
-    function hideRepAdjustmentOverlay() { if (isRepAdjustmentVisible && repAdjustmentOverlay) { repAdjustmentOverlay.classList.remove('visible'); isRepAdjustmentVisible = false; } }
-    function handleRepAdjustClick(event) { const adjustment = event.target.id === 'rep-adjust-minus' ? -1 : 1; currentRepAdjustment += adjustment; const itemForAdjustment = currentWorkoutPlan[nextExerciseIndexForAdjustment]; if (itemForAdjustment && currentRepsDisplay) { const baseReps = itemForAdjustment.reps_start ?? itemForAdjustment.reps ?? 0; currentRepsDisplay.textContent = Math.max(0, baseReps + currentRepAdjustment); } }
-    function findNextExerciseForAdjustment() { nextExerciseIndexForAdjustment = -1; if (!currentWorkoutPlan) return; for (let i = currentItemIndex + 1; i < currentWorkoutPlan.length; i++) { if (currentWorkoutPlan[i].type === 'exercise' || currentWorkoutPlan[i].type?.startsWith('exercise_')) { nextExerciseIndexForAdjustment = i; return; } } }
-
-    // --- Initialisation Générale ---
-    function initializeDOMReferences() { try {
-        timeDisplayDiv = document.getElementById('time-left'); timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); prevBtn = document.getElementById('prev-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); progressSection = document.getElementById('progress-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay?.querySelector('.content-wrapper'); historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button')); historyChartCanvasEl = document.getElementById('history-chart-canvas'); exerciseProgressChartCanvasEl = document.getElementById('exercise-progress-chart'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); exportButton = document.getElementById('export-button'); driveStatusElement = document.getElementById('drive-status'); driveStatusTextElement = document.getElementById('drive-status-text'); settingsIcon = document.getElementById('settings-icon'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); finishSummaryBtn = document.getElementById('finish-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.querySelector('.timer-display'); reactorElement = document.querySelector('.reactor'); progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions'); exerciseSelect = document.getElementById('exercise-select'); metricSelect = document.getElementById('metric-select'); periodSelect = document.getElementById('period-select'); exerciseChartPlaceholder = document.getElementById('exercise-progress-placeholder'); repAdjustmentOverlay = document.getElementById('rep-adjustment-overlay'); repAdjustMinusBtn = document.getElementById('rep-adjust-minus'); repAdjustPlusBtn = document.getElementById('rep-adjust-plus'); currentRepsDisplay = document.getElementById('current-reps-display'); repAdjustmentExerciseName = document.getElementById('rep-adjustment-exercise-name'); navHistoryBtn = document.getElementById('nav-history'); navProgressBtn = document.getElementById('nav-progress'); navButtons = [ document.getElementById('nav-push'), document.getElementById('nav-pull'), document.getElementById('nav-legs') ];
-    } catch (e) { console.error("Erreur initialisation DOM:", e); } }
-    function addEventListeners() {
+    async function saveHistoryToDrive() { /* ... (Identique) ... */
+        if (!googleAccessToken || isSavingDriveData) return; if (!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); if (historyFileId) await updateFileContent(historyFileId, workoutHistory);
+    }
+    async function loadHistoryFromDrive() { /* ... (Identique) ... */
+        if (!googleAccessToken) return; historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); if (historyFileId) { const content = await readFileContent(historyFileId); if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); } catch (e) { workoutHistory = []; console.error("Erreur parsing historique:", e); } } else workoutHistory = []; } else workoutHistory = []; displayHistory(currentHistoryPeriod);
+    }
+    async function loadProgramsFromDrive() { /* ... (Identique à la version précédente) ... */
+        if (!googleAccessToken) return false; let allLoadedSuccessfully = true; loadedWorkouts = {};
+        for (const type of PROGRAM_TYPES) { const defaultProgObject = defaultWorkouts[type] || { routine_name: `${type} (Défaut)`, description: "Programme par défaut.", workout_data: [] }; programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], JSON.stringify(defaultProgObject, null, 2)); if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { loadedWorkouts[type] = JSON.parse(content || JSON.stringify(defaultProgObject)); if (!loadedWorkouts[type].workout_data || !Array.isArray(loadedWorkouts[type].workout_data)) { console.warn(`Programme ${type} depuis Drive a une structure workout_data invalide. Utilisation du défaut.`); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject)); } } catch (e) { console.error(`Erreur parsing programme ${type} depuis Drive:`, e); loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject)); allLoadedSuccessfully = false; } } else { loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject)); allLoadedSuccessfully = false; } } else { loadedWorkouts[type] = JSON.parse(JSON.stringify(defaultProgObject)); allLoadedSuccessfully = false; } } console.log("Programmes chargés:", loadedWorkouts); return allLoadedSuccessfully;
+    }
+    function saveInProgressState() { /* ... (Identique) ... */
+        if (!isWorkoutActive || currentState === 'preparing' || typeof localStorage === 'undefined') return; const stateToSave = { currentWorkoutType, currentItemIndex, timeLeft: currentState === 'break' || currentState === 'paused' ? timeLeft : 0, currentState, workoutStartTime, currentWorkoutPlan, timestamp: Date.now() }; try { localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); } catch (e) {}
+    }
+    function loadInProgressState() { /* ... (Identique) ... */
+        if (typeof localStorage === 'undefined' || !googleAccessToken) return; try { const savedStateJSON = localStorage.getItem(IN_PROGRESS_KEY); if (!savedStateJSON) return; const savedState = JSON.parse(savedStateJSON); const maxAge = 24 * 60 * 60 * 1000; if (Date.now() - savedState.timestamp > maxAge) { clearInProgressState(); return; } if (confirm(`Un entraînement "${savedState.currentWorkoutType}" était en cours. Voulez-vous le reprendre ?`)) { currentWorkoutType = savedState.currentWorkoutType; currentItemIndex = savedState.currentItemIndex; currentState = savedState.currentState; workoutStartTime = savedState.workoutStartTime; currentWorkoutPlan = savedState.currentWorkoutPlan; if (currentState === 'break' || (currentState === 'paused' && currentWorkoutPlan[currentItemIndex]?.type === 'break')) { totalTime = currentWorkoutPlan[currentItemIndex]?.duration || 0; timeLeft = Math.max(0, Math.min(savedState.timeLeft, totalTime)); } else { totalTime = 0; timeLeft = 0; } setActiveWorkoutNav(currentWorkoutType); showSection('workout-section'); setState(currentState); showMessage(`Entraînement "${currentWorkoutType}" repris.`, 3000); } else { clearInProgressState(); } } catch (e) { clearInProgressState(); }
+    }
+    function clearInProgressState() { /* ... (Identique) ... */
+        if (typeof localStorage === 'undefined') return; try { localStorage.removeItem(IN_PROGRESS_KEY); } catch (e) {}
+    }
+    function saveWorkoutToHistory() { /* ... (Identique à la version précédente) ... */
+        if (!googleAccessToken || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return; const endTime = Date.now(); const durationSeconds = workoutStartTime ? (endTime - workoutStartTime) / 1000 : 0; let totalReps = 0; originalCompletedWorkoutPlan.forEach(item => { if (item.type === 'exercise' || item.type?.startsWith('exercise_')) totalReps += item.actualReps ?? (item.reps_text === "AMRAP" ? 1 : (item.reps_start ?? item.reps ?? 0)); }); const historyEntry = { date: new Date(workoutStartTime || endTime).toISOString(), type: loadedWorkouts[currentWorkoutType]?.routine_name || currentWorkoutType || 'Inconnu', durationSeconds: Math.round(durationSeconds), totalReps: totalReps, exercises: originalCompletedWorkoutPlan.map(item => ({ ...item })) }; workoutHistory.unshift(historyEntry); saveHistoryToDrive(); displayHistory(currentHistoryPeriod); populateExerciseSelect(); displayExerciseProgress();
+    }
+    function exportHistory() { /* ... (Identique) ... */
+        if (!googleAccessToken) { showMessage("Veuillez vous connecter pour exporter l'historique.", 3000, true); return; } if (workoutHistory.length === 0) { showMessage("L'historique est vide. Rien à exporter.", 3000); return; } try { const jsonData = JSON.stringify(workoutHistory, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const dateStr = new Date().toISOString().split('T')[0]; a.download = `armorworkout_history_${dateStr}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showMessage("Historique exporté avec succès.", 2500); } catch (e) { showMessage("Erreur lors de l'export de l'historique.", 4000, true); console.error("Erreur export:", e); }
+    }
+    function showRepAdjustmentOverlay() { /* ... (Identique) ... */
+        if (!isWorkoutActive || currentState === 'finished' || currentState === 'preparing' || currentState === 'paused') return; const itemForAdjustment = currentWorkoutPlan[nextExerciseIndexForAdjustment]; if (!itemForAdjustment || (itemForAdjustment.type !== 'exercise' && !itemForAdjustment.type?.startsWith('exercise_'))) { hideRepAdjustmentOverlay(); return; } if(repAdjustmentExerciseName) repAdjustmentExerciseName.textContent = itemForAdjustment.name; const baseReps = itemForAdjustment.reps_start ?? itemForAdjustment.reps ?? 0; if(currentRepsDisplay) currentRepsDisplay.textContent = Math.max(0, baseReps + currentRepAdjustment); if (!isRepAdjustmentVisible && repAdjustmentOverlay) { repAdjustmentOverlay.classList.add('visible'); isRepAdjustmentVisible = true; }
+    }
+    function hideRepAdjustmentOverlay() { /* ... (Identique) ... */
+        if (isRepAdjustmentVisible && repAdjustmentOverlay) { repAdjustmentOverlay.classList.remove('visible'); isRepAdjustmentVisible = false; }
+    }
+    function handleRepAdjustClick(event) { /* ... (Identique) ... */
+        const adjustment = event.target.id === 'rep-adjust-minus' ? -1 : 1; currentRepAdjustment += adjustment; const itemForAdjustment = currentWorkoutPlan[nextExerciseIndexForAdjustment]; if (itemForAdjustment && currentRepsDisplay) { const baseReps = itemForAdjustment.reps_start ?? itemForAdjustment.reps ?? 0; currentRepsDisplay.textContent = Math.max(0, baseReps + currentRepAdjustment); }
+    }
+    function findNextExerciseForAdjustment() { /* ... (Identique) ... */
+        nextExerciseIndexForAdjustment = -1; if (!currentWorkoutPlan) return; for (let i = currentItemIndex + 1; i < currentWorkoutPlan.length; i++) { if (currentWorkoutPlan[i].type === 'exercise' || currentWorkoutPlan[i].type?.startsWith('exercise_')) { nextExerciseIndexForAdjustment = i; return; } }
+    }
+    function initializeDOMReferences() { /* ... (Identique) ... */
+        try { timeDisplayDiv = document.getElementById('time-left'); timerStateDisplay = document.getElementById('timer-state'); currentExerciseContainer = document.getElementById('current-exercise-container'); progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn'); resetBtn = document.getElementById('reset-btn'); prevBtn = document.getElementById('prev-btn'); messageArea = document.getElementById('message-area'); workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); progressSection = document.getElementById('progress-section'); historyList = document.getElementById('history-list'); statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay?.querySelector('.content-wrapper'); historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button')); historyChartCanvasEl = document.getElementById('history-chart-canvas'); exerciseProgressChartCanvasEl = document.getElementById('exercise-progress-chart'); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); exportButton = document.getElementById('export-button'); driveStatusElement = document.getElementById('drive-status'); driveStatusTextElement = document.getElementById('drive-status-text'); settingsIcon = document.getElementById('settings-icon'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title'); summaryItemsList = document.getElementById('summary-items-list'); finishSummaryBtn = document.getElementById('finish-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status'); currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main'); driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.querySelector('.timer-display'); reactorElement = document.querySelector('.reactor'); progressTextArea = document.getElementById('progress-text-area'); historyActionsContainer = document.querySelector('.history-actions'); exerciseSelect = document.getElementById('exercise-select'); metricSelect = document.getElementById('metric-select'); periodSelect = document.getElementById('period-select'); exerciseChartPlaceholder = document.getElementById('exercise-progress-placeholder'); repAdjustmentOverlay = document.getElementById('rep-adjustment-overlay'); repAdjustMinusBtn = document.getElementById('rep-adjust-minus'); repAdjustPlusBtn = document.getElementById('rep-adjust-plus'); currentRepsDisplay = document.getElementById('current-reps-display'); repAdjustmentExerciseName = document.getElementById('rep-adjustment-exercise-name'); navHistoryBtn = document.getElementById('nav-history'); navProgressBtn = document.getElementById('nav-progress'); navButtons = [ document.getElementById('nav-push'), document.getElementById('nav-pull'), document.getElementById('nav-legs') ]; } catch (e) { console.error("Erreur initialisation DOM:", e); }
+    }
+    function addEventListeners() { /* ... (Identique) ... */
         if (startPauseBtn) startPauseBtn.addEventListener('click', () => { initAudioContext(); if (currentState === 'idle') setState('preparing'); else if (currentState === 'exercise' || currentState.startsWith('exercise_')) handleItemCompletion(false); else if (currentState === 'break') setState('paused'); else if (currentState === 'paused') setState((currentWorkoutPlan[currentItemIndex]?.type === 'exercise' || currentWorkoutPlan[currentItemIndex]?.type?.startsWith('exercise_')) ? 'exercise' : 'break'); });
         if (timerDisplayElement) timerDisplayElement.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && currentState !== 'preparing' && currentState !== 'finished') handleItemCompletion(false); else if (currentState === 'idle' && startPauseBtn && !startPauseBtn.disabled) setState('preparing'); });
         if (skipBtn) skipBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive) handleItemCompletion(false); });
@@ -1027,14 +1014,13 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initializeDOMReferences();
-        loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts)); // Initialiser avec les nouveaux programmes
+        loadedWorkouts = JSON.parse(JSON.stringify(defaultWorkouts));
         initSounds(); addEventListeners(); loadSavedTheme();
         setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis();
         setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
         setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression.");
-        console.log("ArmorWorkout V3 Initialisé avec Programmes JSON et Images.");
+        console.log("ArmorWorkout V3.1 Initialisé (Tentative Connexion Silencieuse, Correctif Son Pause).");
     });
-
 </script>
 </body>
 </html>
