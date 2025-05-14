@@ -63,21 +63,67 @@
         .history-section, .progress-section { max-width: 850px; text-align: left; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); padding: 30px; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color-dark); }
         .section-hidden { opacity: 0; max-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; margin-bottom: 0 !important; border-width: 0 !important; visibility: hidden; transition: opacity var(--section-transition-speed) ease-in-out, visibility 0s linear var(--section-transition-speed), max-height 0s linear var(--section-transition-speed), padding var(--section-transition-speed) ease-out, margin var(--section-transition-speed) ease-out, border-width var(--section-transition-speed) ease-out; }
 
-        /* Styles Arc Reactor (Animations inchangées) */
         @-webkit-keyframes rotate-left { from { transform: rotate(360deg); } to { transform: rotate(0); } } @keyframes rotate-left { from { transform: rotate(360deg); } to { transform: rotate(0); } } @-webkit-keyframes rotate-right { from { transform: rotate(0); } to { transform: rotate(360deg); } } @keyframes rotate-right { from { transform: rotate(0); } to { transform: rotate(360deg); } } @-webkit-keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0); } 30% { transform: translate(-50%, -50%) rotate(360deg); } 50% { transform: translate(-50%, -50%) rotate(0); } 100% { transform: translate(-50%, -50%) rotate(360deg); } } @keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0); } 30% { transform: translate(-50%, -50%) rotate(360deg); } 50% { transform: translate(-50%, -50%) rotate(0); } 100% { transform: translate(-50%, -50%) rotate(360deg); } } @keyframes countdown-pulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; } 50% { transform: translateX(-50%) scale(1.05); opacity: 0.85; } }
 
-        .timer-display { margin-bottom: 20px; /* Réduit pour faire place à l'image */ position: relative; display: flex; justify-content: center; align-items: center; width: 320px; height: 250px; margin-left: auto; margin-right: auto; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+        /* NOUVEAU Wrapper pour l'image et le timer */
+        .timer-and-image-wrapper {
+            display: flex;
+            flex-direction: column; /* Image au-dessus du timer par défaut */
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .exercise-image-area {
+            width: 100%;
+            max-width: 250px; /* Taille de l'image */
+            margin: 0 auto; /* Plus besoin de marges verticales ici, géré par le gap du wrapper */
+            padding: 8px;
+            background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.25);
+            border: 1px solid var(--border-color-dark);
+            border-radius: var(--border-radius-md);
+            display: none; /* Caché par défaut */
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 5;
+            transition: opacity 0.4s ease-in-out, transform 0.3s ease-in-out;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .exercise-image-area.visible {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+        #exercise-image-display {
+            display: block;
+            max-width: 100%;
+            max-height: 200px; /* Limite la hauteur de l'image */
+            object-fit: contain;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .timer-display {
+            /* margin-bottom enlevé, géré par le gap du wrapper */
+            position: relative; display: flex; justify-content: center; align-items: center;
+            width: 320px; height: 250px;
+            margin-left: auto; margin-right: auto; /* Garder pour centrer le timer-display lui-même si le wrapper est plus large */
+            cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+        }
         .reactor {
             position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;
             border-radius: 50%; overflow: hidden;
-            z-index: 10; /* S'assurer que le réacteur est au-dessus de la zone image */
+            z-index: 10; /* Doit être au-dessus de .exercise-image-area si jamais il y a superposition (ne devrait pas) */
+            background-color: var(--bg-color); /* Fond pour le réacteur lui-même */
         }
-        .reactor::before { /* Overlay du réacteur si besoin, mais plus pour l'image */
+        .reactor::before { /* Overlay du réacteur si besoin */
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.1); /* Très léger ou supprimer */
-            z-index: 1;
+            background-color: rgba(0, 0, 0, 0.1);
+            z-index: 1; /* Sous les cercles du réacteur */
             border-radius: 50%;
         }
+
         /* Z-index des composants du réacteur, au-dessus de .reactor::before */
         .triangle { z-index: 5; /* ... */ } .circle-1 { z-index: 2; /* ... */ } .circle-2 { z-index: 4; /* ... */ } .circle-3 { z-index: 7; /* ... */ } .circle-4 { z-index: 8; /* ... */ } .circle-5 { z-index: 9; /* ... */ } .circle-6 { z-index: 11; /* ... */ } .circle-7 { z-index: 12; /* ... */ } .circle-8 { z-index: 13; /* ... */ }
         /* Styles inchangés pour les cercles et triangle */
@@ -120,38 +166,6 @@
         #timer-state.preparing { animation: countdown-pulse 1s infinite; font-size: 1.1em; }
         #timer-state.finished-state { font-size: 1em; bottom: 15px; color: var(--finished-color-val); text-shadow: 0 0 8px var(--finished-color-val); }
         .state-exercise #time-left { font-size: 4.2em; letter-spacing: 0.05em; }
-
-        /* NOUVEAUX Styles pour la zone d'image de l'exercice */
-        .exercise-image-area {
-            width: 100%;
-            max-width: 280px; /* Augmenté pour plus de visibilité */
-            margin: 15px auto 25px; /* Ajuster marges */
-            padding: 10px;
-            background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.3);
-            border: 1px solid var(--border-color-dark);
-            border-radius: var(--border-radius-lg);
-            display: none; /* Caché par défaut */
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.25);
-            z-index: 5; /* Au-dessus du fond général, sous les modales */
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        .exercise-image-area.visible {
-            display: flex;
-            opacity: 1;
-            transform: scale(1);
-        }
-        #exercise-image-display {
-            display: block; /* Assurer que l'image est un block pour le centrage/dimensions */
-            max-width: 100%;
-            max-height: 220px; /* Limiter la hauteur */
-            object-fit: contain;
-            border-radius: var(--border-radius-md);
-            /* Pas de filtre ici, on le laisse "brut" pour le moment */
-        }
 
         .workout-info { margin-bottom: 20px; min-height: 60px; position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         #current-exercise-name-display { display: block; font-size: 1.4em; font-weight: 600; color: var(--primary-text-color); margin-bottom: 10px; padding: 0 10px; min-height: 1.4em; transition: color 0.3s ease; }
@@ -242,6 +256,21 @@
         footer p { margin-bottom: 8px; } footer a { color: var(--link-color); text-decoration: none; transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease; } footer a:hover { color: var(--primary-text-color); text-decoration: underline; text-shadow: 0 0 5px var(--link-color); }
         footer .fab.fa-google-drive { color: var(--neon-green); } footer .fab.fa-github { color: var(--neon-purple); }
 
+        @media (min-width: 769px) { /* Écrans plus larges */
+            .timer-and-image-wrapper {
+                flex-direction: row; /* Image à côté du timer */
+                justify-content: center;
+                align-items: center;
+                gap: 30px;
+            }
+            .exercise-image-area {
+                max-width: 220px; /* Ajuster la taille pour l'affichage latéral */
+                margin: 0;
+            }
+            #exercise-image-display { max-height: 180px; }
+            .timer-display { margin: 0; } /* Retirer les marges auto si flex gère le centrage */
+        }
+
         @media (max-width: 768px) {
              .timer-display { width: 280px; height: 220px; }
              .reactor { width: 180px; height: 180px; }
@@ -262,7 +291,7 @@
              .exercise-image-area { max-width: 220px; margin-bottom: 20px; } #exercise-image-display { max-height: 180px; }
         }
         @media (max-width: 480px) {
-             .timer-display { width: 240px; height: 200px; margin-bottom:15px;}
+             .timer-display { width: 240px; height: 200px; margin-bottom:0; /* Géré par le gap du wrapper */}
              .reactor { width: 160px; height: 160px; }
              #time-left { font-size: 2.8em; }
               .triangle { width: 115px; top: 64%; }
@@ -285,7 +314,8 @@
              .summary-controls button { width: 100%; } .summary-item { grid-template-columns: 1fr auto; }
              .post-workout-summary-content { max-width: 95%; }
              .summary-item .exercise-name { font-size: 0.9em; }
-             .exercise-image-area { max-width: 200px; margin-bottom: 15px; } #exercise-image-display { max-height: 160px; }
+             .exercise-image-area { max-width: 180px; /* Encore plus petit sur mobile */ margin-bottom: 15px; } #exercise-image-display { max-height: 140px; }
+             .timer-and-image-wrapper { gap: 10px; }
         }
     </style>
 </head>
@@ -318,33 +348,33 @@
 <div class="container">
     <main>
         <div class="workout-section app-section" id="workout-section">
-            <!-- NOUVELLE Zone Image Exercice -->
-            <div id="exercise-image-container" class="exercise-image-area">
-                <img id="exercise-image-display" src="" alt="Image de l'exercice">
-            </div>
 
-            <div class="timer-display" id="timer-display-clickable" aria-label="Affichage du timer Arc Reactor">
-                <div class="reactor">
-                    {/* L'image de fond du réacteur est retirée, l'image est maintenant gérée par #exercise-image-display */}
-                    <div class="triangle"></div>
-                    <div class="circle-1"><span></span><span></span><span></span><span></span></div>
-                    <div class="circle-2"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                    <div class="circle-3"></div>
-                    <div class="circle-4"><span></span><span></span><span></span></div>
-                    <div class="circle-5"><span></span><span></span><span></span></div>
-                    <div class="circle-6"></div>
-                    <div class="circle-7"></div>
-                    <div class="circle-8"><span></span><span></span><span></span></div>
-                    <div id="time-left" aria-live="polite">00:00</div>
-                    <div id="timer-state" aria-live="polite">Prêt</div>
+            <div class="timer-and-image-wrapper">
+                <div id="exercise-image-container" class="exercise-image-area">
+                    <img id="exercise-image-display" src="" alt="Image de l'exercice">
                 </div>
-                <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
-                    <div class="title">Ajuster Répétitions</div>
-                    <div class="rep-adjustment-next-exercise" id="rep-adjustment-exercise-name">Exercice</div>
-                    <div class="rep-adjustment-controls">
-                        <button class="rep-adjustment-btn minus" id="rep-adjust-minus" aria-label="Diminuer répétitions">-</button>
-                        <span class="current-reps" id="current-reps-display" aria-live="polite">12</span>
-                        <button class="rep-adjustment-btn plus" id="rep-adjust-plus" aria-label="Augmenter répétitions">+</button>
+                <div class="timer-display" id="timer-display-clickable" aria-label="Affichage du timer Arc Reactor">
+                    <div class="reactor">
+                        <div class="triangle"></div>
+                        <div class="circle-1"><span></span><span></span><span></span><span></span></div>
+                        <div class="circle-2"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                        <div class="circle-3"></div>
+                        <div class="circle-4"><span></span><span></span><span></span></div>
+                        <div class="circle-5"><span></span><span></span><span></span></div>
+                        <div class="circle-6"></div>
+                        <div class="circle-7"></div>
+                        <div class="circle-8"><span></span><span></span><span></span></div>
+                        <div id="time-left" aria-live="polite">00:00</div>
+                        <div id="timer-state" aria-live="polite">Prêt</div>
+                    </div>
+                    <div class="rep-adjustment-overlay" id="rep-adjustment-overlay">
+                        <div class="title">Ajuster Répétitions</div>
+                        <div class="rep-adjustment-next-exercise" id="rep-adjustment-exercise-name">Exercice</div>
+                        <div class="rep-adjustment-controls">
+                            <button class="rep-adjustment-btn minus" id="rep-adjust-minus" aria-label="Diminuer répétitions">-</button>
+                            <span class="current-reps" id="current-reps-display" aria-live="polite">12</span>
+                            <button class="rep-adjustment-btn plus" id="rep-adjust-plus" aria-label="Augmenter répétitions">+</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -422,7 +452,7 @@
         "workout_data": [
           { "type": "exercise", "name": "Dumbbell Floor Flyes (Pré-Épuisement Superset 1/2)", "sets_info": "Partie 1/2 du Superset - Total 3 Supersets", "reps": 15, "weight": 10, "weight_unit": "kg (2x5kg)", "details": "Écarté au sol avec haltères 5kg. Focus contraction et contrôle.", "equipment": "Haltères 5kg, Tapis de sol", "reps_start": 15, "reps_target_max": 20, "progression_note": "Quand 20 reps (RIR 0-1) faciles, focus sur tempo excentrique plus lent (3-4s) ou pause en étirement (1s)." },
           { "type": "break", "duration": 15, "name": "Transition Superset (15s)" },
-          { "type": "exercise", "name": "Pompes avec Pieds Surélevés (Pré-Épuisement Superset 2/2)", "sets_info": "Partie 2/2 du Superset - Total 3 Supersets", "reps_text": "AMRAP", "weight": 0, "weight_unit": "Poids de corps", "details": "Option: + Élastique(s) sur le dos. Pieds surélevés pour cibler haut des pecs.", "equipment": "Poids de corps, Option: Élastiques 15kg/25kg", "reps_start_text": "AMRAP", "reps_target_max_text": "AMRAP", "progression_note": "Aller à l'échec technique. Quand les reps augmentent significativement, ajouter élastique 15kg, puis 25kg, ou surélever plus les pieds." },
+          { "type": "exercise", "name": "Pompes avec Pieds Surélevés (Pré-Épuisement Superset 2/2)", "sets_info": "Partie 2/2 du Superset - Total 3 Supersets", "reps_text": "AMRAP", "weight": 0, "weight_unit": "Poids de corps", "details": "Option: + Élastique(s) sur le dos. Pieds surélevés pour cibler haut des pecs.", "equipment": "Poids de corps, Option: Élastiques 15kg/25kg", "reps_start_text": "AMRAP", "reps_target_max_text": "AMRAP", "progression_note": "Aller à l'échec technique. Quand les reps augmentent significativamente, ajouter élastique 15kg, puis 25kg, ou surélever plus les pieds." },
           { "type": "break", "duration": 90, "name": "Repos après Superset" },
           { "type": "exercise", "name": "Dumbbell Floor Flyes (Pré-Épuisement Superset 1/2) - Série 2", "sets_info": "Partie 1/2 du Superset - Total 3 Supersets", "reps": 15, "weight": 10, "weight_unit": "kg (2x5kg)", "details": "Écarté au sol avec haltères 5kg.", "equipment": "Haltères 5kg, Tapis de sol", "reps_start": 15, "reps_target_max": 20, "progression_note": "Vise la même difficulté/reps que la 1ère série du superset." },
           { "type": "break", "duration": 15, "name": "Transition Superset (15s)" },
@@ -797,12 +827,17 @@
 
         if (showImage && imageUrlForDisplay) {
             exerciseImageDisplay.src = imageUrlForDisplay;
-            exerciseImageDisplay.alt = item?.name || "Image d'exercice";
+            exerciseImageDisplay.alt = item?.name || "Image de l'exercice";
             exerciseImageContainer.classList.add('visible');
         } else {
             exerciseImageContainer.classList.remove('visible');
-            exerciseImageDisplay.src = ''; // Pour éviter de montrer une image cassée
-            exerciseImageDisplay.alt = '';
+            // setTimeout pour s'assurer que la transition de disparition se fait avant de changer la source
+            setTimeout(() => {
+                 if (!exerciseImageContainer.classList.contains('visible')) { // Double check
+                    exerciseImageDisplay.src = '';
+                    exerciseImageDisplay.alt = '';
+                 }
+            }, 400); // Doit correspondre à la durée de transition de .exercise-image-area
         }
 
         switch (currentState) {
@@ -875,12 +910,12 @@
     }
     function setState(newState) {
         if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return;
-        previousState = currentState;
+        previousState = currentState; // Important pour la logique d'affichage de l'image en pause
         currentState = newState;
         clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId);
         if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); }
 
-        updateWorkoutInfo(); // Appel crucial pour mettre à jour l'image et infos AVANT la logique du switch
+        updateWorkoutInfo();
 
         document.body.className = Array.from(document.body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`;
         document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState));
@@ -1160,7 +1195,7 @@
         setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis();
         setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
         setChartPlaceholder('exercise-progress-chart', "Connectez-vous pour voir la progression.");
-        console.log("ArmorWorkout V3.5 Initialisé (Image séparée, correctifs z-index).");
+        console.log("ArmorWorkout V3.6 Initialisé (Image séparée et repositionnée).");
     });
 </script>
 </body>
