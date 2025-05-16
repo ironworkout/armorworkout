@@ -276,15 +276,8 @@
             color: var(--timer-text-color-main); text-shadow: var(--timer-text-glow-main); 
             transition: font-size 0.2s ease; pointer-events: none; white-space: nowrap; 
         }
-        #timer-state {
-            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 20; 
-            font-size: 0.85em; font-family: var(--font-family-main); letter-spacing: 0.1em; font-weight: 500; text-transform: uppercase;
-            opacity: 0; transition: opacity 0.3s ease, color var(--transition-speed) ease, text-shadow var(--transition-speed) ease, font-size 0.2s ease, bottom 0.2s ease;
-            color: var(--current-timer-state-color); text-shadow: none; pointer-events: none; white-space: nowrap;
-        }
-        #timer-state.visible { opacity: 0.9; animation: textGlowPulseState 2s infinite ease-in-out; }
-        #timer-state.preparing { animation: textGlowPulseState 1s infinite, countdown-pulse 1s infinite; font-size: 1em; } 
-        #timer-state.finished-state { font-size: 0.95em; bottom: 18px; color: var(--finished-color-val); text-shadow: 0 0 8px var(--finished-color-val); animation: none; }
+        #timer-state { display: none !important; /* Masqué de façon permanente */ }
+
         @keyframes countdown-pulse { 0%, 100% { opacity: 0.7; transform: scale(1) translateX(-50%); } 50% { opacity: 1; transform: scale(1.05) translateX(-50%); } }
         .state-exercise #time-left { font-size: 4em; letter-spacing: 0.05em; }
         .state-exercise .triangle { background-color: var(--exercise-color-val); }
@@ -360,7 +353,7 @@
         #drive-connection-status-main i.fa-google-drive { display: inline-block; font-size: 1.1em; }
         #drive-connection-status-main.error { color: var(--neon-red); } #drive-connection-status-main.loading { color: var(--neon-yellow); }
         #progress-text-area { font-weight: 500; letter-spacing: 0.05em; }
-        .rep-adjustment-overlay { display: none !important; } /* Overlay masqué car l'ajustement se fait dans le résumé */
+        .rep-adjustment-overlay { display: none !important; }
         .history-section h2 { color: var(--primary-text-color); margin-bottom: 25px; text-align: center; font-family: var(--font-family-titles); text-shadow: 0 0 6px rgba(var(--electric-cyan-rgb), 0.6); }
         .chart-container, .stats-display, .history-list { border-color: var(--border-color-dark); background-color: transparent; }
         .history-filters button.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background-color: rgba(var(--electric-cyan-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--electric-cyan-rgb),0.4); text-shadow: 0 0 5px var(--electric-cyan); }
@@ -557,7 +550,6 @@
                             <div id="time-left" aria-live="polite">00:00</div>
                             <div id="timer-state" aria-live="polite">Prêt</div>
                         </div>
-                        
                     </div>
                 </div>
 
@@ -648,49 +640,29 @@
         const GIS_MAX_RETRIES = 50; 
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
-        let loadedFullProgram = null; 
-
-        const exerciseImageMapping = {
-            "Écarté Pectoraux au Sol avec Haltères (Pré-Épuisement 1/2)": "https://ironworkout.github.io/armorworkout/superhero_dumbbell_floor_flyes.png",
-            "Pompes avec Pieds Surélevés (Pré-Épuisement 2/2)": "https://ironworkout.github.io/armorworkout/superhero_elevated_pushups_band.png",
-            "Floor Press (Combo Haltères + Élastique) - Série d'Activation Myo-Reps": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
-            "Floor Press (Combo) - Mini-Série Myo-Reps 1/4": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
-            "Floor Press (Combo) - Mini-Série Myo-Reps 2/4": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
-            "Floor Press (Combo) - Mini-Série Myo-Reps 3/4": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
-            "Floor Press (Combo) - Mini-Série Myo-Reps 4/4 (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_floor_press_combo.png",
-            "Pompes Piquées": "https://ironworkout.github.io/armorworkout/superhero_pike_pushups.png",
-            "Élévations Latérales avec Haltères": "https://ironworkout.github.io/armorworkout/superhero_lateral_raises.png",
-            "Extensions Triceps avec Élastique (Pushdowns)": "https://ironworkout.github.io/armorworkout/superhero_band_pushdowns.png",
-            "Tirage Vertical à Genoux avec Élastique (Pauses Iso & Excentrique Lente)": "https://ironworkout.github.io/armorworkout/superhero_band_kneeling_lat_pulldown.png",
-            "Row Penché Unilatéral avec Élastique (Gauche) - Série d'Activation Myo-Reps": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Gauche) - Mini-Série Myo-Reps 1/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Gauche) - Mini-Série Myo-Reps 2/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Gauche) - Mini-Série Myo-Reps 3/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Gauche) - Mini-Série Myo-Reps 4/4 (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Droit) - Série d'Activation Myo-Reps": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Droit) - Mini-Série Myo-Reps 1/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Droit) - Mini-Série Myo-Reps 2/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Droit) - Mini-Série Myo-Reps 3/4": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Row Penché Unilatéral avec Élastique (Droit) - Mini-Série Myo-Reps 4/4 (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_band_bent_over_row_unilateral.png",
-            "Tirage Visage avec Élastique (Face Pull)": "https://ironworkout.github.io/armorworkout/superhero_band_face_pull.png",
-            "Curl Marteau avec Haltères (Gauche) - Activation Myo-Reps (Superset 1/2)": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Gauche) - Mini-Série Myo-Reps 1/3": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Gauche) - Mini-Série Myo-Reps 2/3": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Gauche) - Mini-Série Myo-Reps 3/3 (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Droit) - Activation Myo-Reps (Superset 1/2)": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Droit) - Mini-Série Myo-Reps 1/3": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Droit) - Mini-Série Myo-Reps 2/3": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Marteau avec Haltères (Droit) - Mini-Série Myo-Reps 3/3 (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_hammer_curls.png",
-            "Curl Concentration avec UN Haltère (Gauche) (Superset 2/2)": "https://ironworkout.github.io/armorworkout/superhero_concentration_curl.png",
-            "Curl Concentration avec UN Haltère (Droit) (Superset 2/2)": "https://ironworkout.github.io/armorworkout/superhero_concentration_curl.png",
-            "Rétractions Scapulaires avec Élastique (Optionnel)": "https://ironworkout.github.io/armorworkout/superhero_band_scapular_retractions.png",
-            "Front Squat Combo (Avec Pause en Bas 2-3s)": "https://ironworkout.github.io/armorworkout/superhero_front_squat_combo.png",
-            "Fentes Arrières Alternées (Avec Haltères et Excentrique Lente 3-4s)": "https://ironworkout.github.io/armorworkout/superhero_rear_lunges_dumbbells.png",
-            "Extensions Nordiques Inversées (Focus Négative LENTE)": "https://ironworkout.github.io/armorworkout/superhero_reverse_nordic_curls.png",
-            "Extensions Mollets (Sur marche - TEMPO COMPLET)": "https://ironworkout.github.io/armorworkout/superhero_calf_raises_combo.png",
-            "Crunch sur Swiss Ball avec Élastique": "https://ironworkout.github.io/armorworkout/superhero_swiss_ball_crunch_band.png",
-            "Enroulements Bassin au Sol (Reverse Crunches - Contrôle excentrique)": "https://ironworkout.github.io/armorworkout/superhero_reverse_crunches.png",
-            "Planche sur Swiss Ball (Coudes sur le ballon)": "https://ironworkout.github.io/armorworkout/superhero_swiss_ball_plank.png",
+        let loadedFullProgram = { 
+            "nom_programme": "Programme Complet Hypertrophie Élite v1 (Défaut Intégré)",
+            "description_programme": "Ceci est un programme par défaut. Connectez-vous à Google Drive pour charger votre programme personnalisé.",
+            "auteur_programme": "ArmorWorkout App",
+            "frequence_suggeree": "PPLPPLR",
+            "notes_generales": "Assurez-vous que votre fichier 'programmeCompletHypertrophieElite_v1.json' est correctement formaté sur Google Drive.",
+            "sessions": [
+                {
+                    "nom_session": "PUSH V4 - Pectoraux, Épaules, Triceps",
+                    "description_session": "Session Push par défaut.",
+                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple PUSH", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
+                },
+                {
+                    "nom_session": "PULL V5.2 - Dos, Arrière Épaules, Biceps",
+                    "description_session": "Session Pull par défaut.",
+                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple PULL", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
+                },
+                {
+                    "nom_session": "LEGS & ABDOS V1.7 - Jambes & Sangle Abdominale",
+                    "description_session": "Session Legs par défaut.",
+                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple LEGS", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
+                }
+            ]
         };
 
         let timeDisplayDiv, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
@@ -702,7 +674,6 @@
             workoutSection, historySection, statsDisplay, statsContentWrapper, historyFilterBtns,
             reactorElement, exerciseImageContainer, exerciseImageDisplay,
             timerProgressIndicator, workoutTimeTotalDisplay, workoutTimeRemainingDisplay, workoutTimeInfoDisplay;
-            // repAdjustmentOverlay et ses composants ne sont plus nécessaires ici car l'ajustement a été retiré en cours de séance.
 
         let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = [];
         let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null, workoutProgressInterval = null;
@@ -799,25 +770,26 @@
                 if(driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
                 try {
                     await loadHistoryFromDrive(); 
-                    await loadFullProgramFromDrive(); 
-                    if (programsLoaded && loadedFullProgram && loadedFullProgram.sessions) { 
+                    const programLoadSuccess = await loadFullProgramFromDrive(); 
+                    if (programLoadSuccess && loadedFullProgram && loadedFullProgram.sessions) { 
                         showMessage("Programme et historique chargés.", 3000);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
                     } else { 
-                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive ou programme invalide. Veuillez vérifier le fichier sur votre Drive.`, 7000, true);
+                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive ou programme invalide. Vérifiez le fichier sur votre Drive. Utilisation du programme par défaut minimal.`, 7000, true);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Prog';
-                        loadedFullProgram = null; programsLoaded = false; 
+                        loadedFullProgram = defaultFullProgram; // Fallback vers le programme par défaut intégré
+                        programsLoaded = true; // Marquer comme chargé pour permettre l'utilisation du défaut
                     }
                 } catch (error) {
-                    showMessage("Erreur majeure lors du chargement depuis Drive.", 6000, true);
+                    showMessage("Erreur majeure lors du chargement depuis Drive. Utilisation du programme par défaut minimal.", 6000, true);
                     if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                     if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
-                    loadedFullProgram = null; programsLoaded = false; 
+                    loadedFullProgram = defaultFullProgram; programsLoaded = true;
                 } finally {
                     updateAuthUI(true); 
-                    if (programsLoaded && loadedFullProgram) displayHistory(currentHistoryPeriod); 
+                    displayHistory(currentHistoryPeriod); 
                     loadInProgressState(); 
                 }
             } else handleTokenError({ error: "Réponse de token invalide ou vide" });
@@ -866,7 +838,7 @@
             if (currentState === 'idle') {
                 const canStartWorkout = isLoggedIn && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0;
                 if(startPauseBtn) { startPauseBtn.disabled = !canStartWorkout; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.className = ''; }
-            } else if (startPauseBtn) startPauseBtn.disabled = ['preparing', 'finished', 'exercise'].includes(currentState); // Désactivé en mode 'exercise' car pas de bouton "Fait"
+            } else if (startPauseBtn) startPauseBtn.disabled = ['preparing', 'finished', 'exercise'].includes(currentState);
             if(prevBtn) prevBtn.disabled = !(isTimerActive && currentItemIndex > 0);
             if(finishBtn) finishBtn.disabled = !isTimerActive;
             if(resetBtn) resetBtn.disabled = !isTimerActive && !isLoggedIn; 
@@ -879,16 +851,16 @@
                 const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { showMessage("Session expirée.", 5000, true); googleAccessToken = null; updateAuthUI(false); return null; } throw new Error(`Erreur recherche ${filename}: ${searchRes.status}`); }
                 const searchData = await searchRes.json();
-                if (searchData.files && searchData.files.length > 0) return searchData.files[0].id;
+                if (searchData.files && searchData.files.length > 0) { console.log(`Fichier '${filename}' trouvé avec ID: ${searchData.files[0].id}`); return searchData.files[0].id; }
                 if (!createIfNotExist) { console.log(`Fichier ${filename} non trouvé et création désactivée.`); return null; } 
-                console.log(`Fichier ${filename} non trouvé. Tentative de création...`);
+                console.log(`Fichier '${filename}' non trouvé. Tentative de création...`);
                 const createUrl = `https://www.googleapis.com/drive/v3/files`;
                 const metadata = { name: filename, mimeType: mimeType };
                 const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) });
                 if (!createRes.ok) throw new Error(`Erreur création ${filename}: ${createRes.status}`);
                 const createData = await createRes.json(); const newFileId = createData.id;
                 const writeSuccess = await updateFileContent(newFileId, defaultContentStr);
-                console.log(`Fichier ${filename} créé avec ID: ${newFileId}. Succès écriture: ${writeSuccess}`);
+                console.log(`Fichier '${filename}' créé avec ID: ${newFileId}. Succès écriture contenu par défaut: ${writeSuccess}`);
                 return writeSuccess ? newFileId : null;
             } catch (error) { console.error(`Erreur findOrCreateFile pour ${filename}:`, error); showMessage(`Erreur gestion fichier ${filename}.`, 5000, true); return null; }
         }
@@ -920,7 +892,8 @@
         function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
         function updateOverallWorkoutProgressDisplay() {
             if (!timerProgressIndicator || !workoutTimeTotalDisplay || !workoutTimeRemainingDisplay || !workoutTimeInfoDisplay) return;
-            if (isWorkoutActive && estimatedTotalWorkoutTime > 0) {
+            if (isWorkoutActive && estimatedTotalWorkoutTime > 0 && workoutStartTime) {
+                elapsedTimeForProgressBar = (Date.now() - workoutStartTime) / 1000;
                 const progressPercentage = Math.min(1, elapsedTimeForProgressBar / estimatedTotalWorkoutTime);
                 const dashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE * (1 - progressPercentage);
                 timerProgressIndicator.style.strokeDashoffset = Math.max(0, dashoffset);
@@ -930,27 +903,24 @@
             } else { timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE; workoutTimeInfoDisplay.classList.remove('visible'); }
         }
         function updateTimerDisplay() {
-            if (!timeDisplayDiv || !timerStateDisplay) return;
-            let timeString = "00:00", stateText = '', stateClass = ''; 
+            if (!timeDisplayDiv /* || !timerStateDisplay */) return; // timerStateDisplay masqué
+            let timeString = "00:00"; //stateText = '', stateClass = ''; 
             const item = currentWorkoutPlan[currentItemIndex];
-            const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0;
+            // const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; // Plus utilisé pour timerStateDisplay
             switch(currentState) {
-                case 'exercise': timeString = "GO!"; stateText = item?.name || 'Exercice'; break;
-                case 'break': timeString = formatTime(timeLeft); stateText = item?.name || 'Repos'; break;
-                case 'paused': timeString = (previousState === 'break') ? formatTime(timeLeft) : "PAUSE"; stateText = 'En Pause'; break;
-                case 'preparing': timeString = formatTime(prepareTimeLeft); stateText = 'Préparation'; break;
-                case 'finished': timeString = "FINI!"; stateText = `Terminé ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}`; stateClass = 'finished-state'; break;
-                default: timeString = formatTime(0); stateText = 'Prêt'; break;
+                case 'exercise': timeString = "GO!"; /* stateText = item?.name || 'Exercice'; */ break;
+                case 'break': timeString = formatTime(timeLeft); /* stateText = item?.name || 'Repos'; */ break;
+                case 'paused': timeString = (previousState === 'break') ? formatTime(timeLeft) : "PAUSE"; /* stateText = 'En Pause'; */ break;
+                case 'preparing': timeString = formatTime(prepareTimeLeft); /* stateText = 'Préparation'; */ break;
+                case 'finished': timeString = "FINI!"; /* stateText = `Terminé ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}`; stateClass = 'finished-state'; */ break;
+                default: timeString = formatTime(0); /* stateText = 'Prêt'; */ break;
             }
-            timeDisplayDiv.textContent = timeString; timerStateDisplay.textContent = stateText;
-            timerStateDisplay.className = 'timer-state'; 
-            if (currentState !== 'idle') timerStateDisplay.classList.add('visible');
-            if (stateClass) timerStateDisplay.classList.add(stateClass);
-            if (currentState === 'preparing') timerStateDisplay.classList.add('preparing'); 
+            timeDisplayDiv.textContent = timeString; 
+            // if(timerStateDisplay) { timerStateDisplay.textContent = stateText; timerStateDisplay.className = 'timer-state'; if (currentState !== 'idle') timerStateDisplay.classList.add('visible'); if (stateClass) timerStateDisplay.classList.add(stateClass); if (currentState === 'preparing') timerStateDisplay.classList.add('preparing'); }
             updateOverallWorkoutProgressDisplay();
         }
         function updateTimerVisuals(state) {
-            if (!timerStateDisplay || !timerProgressIndicator) return;
+            if (/*!timerStateDisplay ||*/ !timerProgressIndicator) return; // timerStateDisplay masqué
             let stateColorVar = '--idle-color-val', stateGlowRgbVar = '--idle-color-rgb', progressCircleColorVar = '--electric-cyan'; 
             switch(state) {
                 case 'exercise': stateColorVar = '--exercise-color-val'; stateGlowRgbVar = '--exercise-color-rgb'; progressCircleColorVar = 'var(--exercise-color-val)'; break;
@@ -963,7 +933,7 @@
             const rootStyle = getComputedStyle(document.documentElement);
             const stateColor = rootStyle.getPropertyValue(stateColorVar).trim();
             const stateGlowRgb = rootStyle.getPropertyValue(stateGlowRgbVar).trim(); 
-            timerStateDisplay.style.color = stateColor; 
+            // if(timerStateDisplay) timerStateDisplay.style.color = stateColor; 
             document.documentElement.style.setProperty('--current-timer-state-color', stateColor);
             document.documentElement.style.setProperty('--current-timer-state-color-rgb', stateGlowRgb); 
             timerProgressIndicator.style.stroke = rootStyle.getPropertyValue(progressCircleColorVar.startsWith('var(') ? progressCircleColorVar.slice(4,-1) : progressCircleColorVar).trim();
@@ -978,11 +948,9 @@
             const item = currentWorkoutPlan[currentItemIndex]; let infoHtml = '', exerciseName = '', progressText = '';
             const body = document.body; let showImage = false, imageUrlForDisplay = '';
             if (item && (item.type === 'exercise' || item.type?.startsWith('exercise_')) && (currentState === 'exercise' || (currentState === 'paused' && previousState === 'exercise'))) {
-                const normalizedName = normalizeExerciseName(item.name); imageUrlForDisplay = exerciseImageMapping[normalizedName] || item.image_url; 
-                if (imageUrlForDisplay) showImage = true;
+                imageUrlForDisplay = item.image_url; if (imageUrlForDisplay) showImage = true;
             } else if (currentState === 'preparing' && currentWorkoutPlan[0] && (currentWorkoutPlan[0].type === 'exercise' || currentWorkoutPlan[0].type?.startsWith('exercise_'))) {
-                const normalizedName = normalizeExerciseName(currentWorkoutPlan[0].name); imageUrlForDisplay = exerciseImageMapping[normalizedName] || currentWorkoutPlan[0].image_url;
-                if (imageUrlForDisplay) showImage = true;
+                imageUrlForDisplay = currentWorkoutPlan[0].image_url; if (imageUrlForDisplay) showImage = true;
             }
             if (showImage && imageUrlForDisplay) { exerciseImageDisplay.src = imageUrlForDisplay; exerciseImageDisplay.alt = item?.name || "Image de l'exercice"; exerciseImageContainer.classList.add('visible'); }
             else { exerciseImageContainer.classList.remove('visible'); setTimeout(() => { if (!exerciseImageContainer.classList.contains('visible')) { exerciseImageDisplay.src = ''; exerciseImageDisplay.alt = ''; } }, 400); }
@@ -1002,13 +970,13 @@
                     if (!item) { exerciseName = 'Erreur'; infoHtml = '<p>Erreur de chargement de l\'étape.</p>'; progressText = `Étape ?/${currentWorkoutPlan.length}`; break; }
                     exerciseName = `${item.name || (item.type === 'break' ? 'Repos' : 'Exercice Inconnu')}`; progressText = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`;
                     if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
-                        const repsDisplay = item.reps_text || (item.reps_start !== undefined ? item.reps_start : item.reps) || '-';
+                        const repsDisplay = item.reps_text || item.reps || '-'; 
                         let weightDisplay = item.weight_text || item.weight_details || (item.weight !== undefined && item.unit ? `${item.weight} ${item.unit}` : (item.weight !== undefined && item.weight > 0 ? `${item.weight} kg` : (item.unit === "PDC" ? "PDC" : "-")));
                         const details = item.details || '', setsInfo = item.sets_info || '', repsUnit = item.reps_unit ? ` ${item.reps_unit}` : '';
                         infoHtml = `<div class="exercise-details" style="border-color: var(--color-exercise);">`; if (setsInfo) infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${setsInfo}</span>`; infoHtml += `<span><i class="fas ${getIconForType(item.type)}" style="color: var(--color-exercise)"></i> ${repsDisplay}${repsUnit}</span>`; if (weightDisplay !== '-') infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span>`; if (details) infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`; infoHtml += `</div>`;
                     } else if (item.type === 'break') {
                         infoHtml = `<div class="break-info" style="border-color: var(--color-break);"><i class="fas ${getIconForType('break')}" style="color: var(--color-break)"></i><span>${item.name || `Pause: ${formatTime(item.duration || 0)}`}</span></div>`;
-                        const nextExIdx = currentItemIndex + 1; if (nextExIdx < currentWorkoutPlan.length && (currentWorkoutPlan[nextExIdx].type === 'exercise' || currentWorkoutPlan[nextExIdx].type?.startsWith('exercise_'))) { const nextEx = currentWorkoutPlan[nextExIdx]; const nextReps = nextEx.reps_text || (nextEx.reps_start !== undefined ? nextEx.reps_start : nextEx.reps) || '-'; let nextWeight = nextEx.weight_text || nextEx.weight_details || (nextEx.weight !== undefined && nextEx.unit ? `${nextEx.weight} ${nextEx.unit}` : (nextEx.weight !== undefined && nextEx.weight > 0 ? `${nextEx.weight} kg` : (nextEx.unit === "PDC" ? "PDC" : "-"))); const nextRepsUnit = nextEx.reps_unit ? ` ${nextEx.reps_unit}` : ''; infoHtml += `<div class="break-info" style="margin-top: 8px; opacity: 0.8; border-color: var(--color-exercise);"><i class="fas fa-arrow-right"></i><span>Suiv: ${nextEx.name || '?'} (${nextReps}${nextRepsUnit}${nextWeight !== '-' ? '@' + nextWeight : ''})</span></div>`; }
+                        const nextExIdx = currentItemIndex + 1; if (nextExIdx < currentWorkoutPlan.length && (currentWorkoutPlan[nextExIdx].type === 'exercise' || currentWorkoutPlan[nextExIdx].type?.startsWith('exercise_'))) { const nextEx = currentWorkoutPlan[nextExIdx]; const nextReps = nextEx.reps_text || nextEx.reps || '-'; let nextWeight = nextEx.weight_text || nextEx.weight_details || (nextEx.weight !== undefined && nextEx.unit ? `${nextEx.weight} ${nextEx.unit}` : (nextEx.weight !== undefined && nextEx.weight > 0 ? `${nextEx.weight} kg` : (nextEx.unit === "PDC" ? "PDC" : "-"))); const nextRepsUnit = nextEx.reps_unit ? ` ${nextEx.reps_unit}` : ''; infoHtml += `<div class="break-info" style="margin-top: 8px; opacity: 0.8; border-color: var(--color-exercise);"><i class="fas fa-arrow-right"></i><span>Suiv: ${nextEx.name || '?'} (${nextReps}${nextRepsUnit}${nextWeight !== '-' ? '@' + nextWeight : ''})</span></div>`; }
                     } break;
                 default: exerciseName = '?'; infoHtml = '<p>État inconnu.</p>'; progressText = ''; break;
             }
@@ -1017,32 +985,38 @@
         }
         function getIconForState(state){ switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'paused': return 'fa-pause-circle'; case 'preparing': return 'fa-spinner'; case 'finished': return 'fa-flag-checkered'; default: return 'fa-clock'; } }
         function getIconForType(type){ if (type?.includes("myo_reps")) return 'fa-bolt'; if (type?.startsWith('exercise_')) return 'fa-fire'; if (type === 'break') return 'fa-coffee'; return 'fa-question-circle'; }
+        
         function startWorkoutProgressTimer() {
             if (workoutProgressInterval) clearInterval(workoutProgressInterval); 
-            if (isWorkoutActive && estimatedTotalWorkoutTime > 0) {
+            if (isWorkoutActive && estimatedTotalWorkoutTime > 0 && workoutStartTime) {
                 workoutProgressInterval = setInterval(() => {
-                    if (isWorkoutActive && currentState !== 'paused' && currentState !== 'finished') { elapsedTimeForProgressBar++; updateOverallWorkoutProgressDisplay(); }
+                    if (isWorkoutActive && currentState !== 'paused' && currentState !== 'finished') {
+                         updateOverallWorkoutProgressDisplay(); 
+                    }
                 }, 1000);
             }
         }
         function stopWorkoutProgressTimer() { if (workoutProgressInterval) clearInterval(workoutProgressInterval); workoutProgressInterval = null; }
         function setState(newState) {
-            if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerStateDisplay || !workoutSection || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return;
+            if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return; // timerStateDisplay enlevé car masqué
             previousState = currentState; currentState = newState; clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId); 
-            if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); }
+            // if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } // Logique timerStateDisplay masquée
             updateWorkoutInfo(); 
             document.body.className = Array.from(document.body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`;
             document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState));
             if(startPauseBtn) { startPauseBtn.className = ''; startPauseBtn.disabled = true; }
             if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true;
             const isTimerActive = ['preparing', 'exercise', 'break', 'paused'].includes(newState);
-            navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && loadedFullProgram && !isTimerActive); }); 
+            navButtons.forEach(btn => { if(btn) btn.disabled = !(googleAccessToken && programsLoaded && loadedFullProgram && !isTimerActive); });
             document.querySelectorAll('nav a.nav-link').forEach(link => { link.classList.toggle('disabled-link-look', isTimerActive); });
             if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive;
-            if (!['idle', 'finished'].includes(newState) && !workoutProgressInterval) startWorkoutProgressTimer(); else if (['idle', 'finished'].includes(newState) && workoutProgressInterval) stopWorkoutProgressTimer();
+            
+            if (!['idle', 'finished'].includes(newState)) { if(!workoutProgressInterval) startWorkoutProgressTimer(); }
+            else if (['idle', 'finished'].includes(newState) && workoutProgressInterval) stopWorkoutProgressTimer();
+
             switch (newState) {
                 case 'idle': isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; estimatedTotalWorkoutTime = 0; elapsedTimeForProgressBar = 0; const canStartIdle = googleAccessToken && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; finishBtn.disabled = true; if (wasFinishedState) wasFinishedState = false; break;
-                case 'preparing': isWorkoutActive = true; if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) workoutStartTime = Date.now(); vibrate([50,30,50]); break;
+                case 'preparing': isWorkoutActive = true; /* if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); */ prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) { workoutStartTime = Date.now(); elapsedTimeForProgressBar = 0;} vibrate([50,30,50]); break;
                 case 'exercise': isWorkoutActive = true; isTimerRunning = false; timeLeft = 0; totalTime = 0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = true; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('exercise')}"></i> En Cours`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } vibrate([150]); playSound(soundLaser); triggerTriangleSpin(); break;
                 case 'break': isTimerRunning = true; isWorkoutActive = true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('paused')}"></i> Pause`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } startBreakTimer(); vibrate([80, 50, 80]); playSound(soundLaser); triggerTriangleSpin(); break;
                 case 'paused': isTimerRunning = false; isWorkoutActive = true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } vibrate(); break;
@@ -1073,10 +1047,19 @@
             if (currentItemIndex > 0) {
                 currentItemIndex--; const prevItem = currentWorkoutPlan[currentItemIndex];
                 if (prevItem.type?.includes("myo_reps") && prevItem.completed_mini_sets) prevItem.completed_mini_sets = 0;
-                let timeToRewind = 0;
-                if (currentItemIndex + 1 < currentWorkoutPlan.length) { const skippedItem = currentWorkoutPlan[currentItemIndex + 1]; if (skippedItem.type === 'break') timeToRewind += skippedItem.duration || 0; else if (skippedItem.duration) timeToRewind += skippedItem.duration; else if (skippedItem.type === 'exercise' && previousState === 'exercise') timeToRewind += PREPARE_DURATION; }
-                if(prevItem.type === 'break') timeToRewind += prevItem.duration || 0; else if(prevItem.duration) timeToRewind += prevItem.duration; else if (prevItem.type === 'exercise') timeToRewind += PREPARE_DURATION;
-                elapsedTimeForProgressBar = Math.max(0, elapsedTimeForProgressBar - timeToRewind); updateOverallWorkoutProgressDisplay();
+                let timeToRewind = 0; const currentItemDuration = PREPARE_DURATION; 
+                if (currentItemIndex + 1 < currentWorkoutPlan.length) { 
+                    const skippedItem = currentWorkoutPlan[currentItemIndex + 1]; 
+                    if (skippedItem.type === 'break') timeToRewind += skippedItem.duration || 0; 
+                    else if (skippedItem.duration) timeToRewind += skippedItem.duration; 
+                    else timeToRewind += currentItemDuration; 
+                }
+                if(prevItem.type === 'break') timeToRewind += prevItem.duration || 0; 
+                else if(prevItem.duration) timeToRewind += prevItem.duration;
+                else timeToRewind += PREPARE_DURATION; 
+
+                elapsedTimeForProgressBar = Math.max(0, elapsedTimeForProgressBar - timeToRewind); 
+                updateOverallWorkoutProgressDisplay();
                 setState(prevItem.type === 'break' ? 'break' : 'exercise'); saveInProgressState(); vibrate();
             }
         }
@@ -1087,21 +1070,21 @@
                 workoutPlanToCalc.forEach(item => {
                     if (item.type === 'break' && item.duration) totalDuration += item.duration;
                     else if (item.duration && (item.type === 'exercise' || item.type?.startsWith('exercise_'))) totalDuration += item.duration;
-                    else if (item.type === 'exercise' || item.type?.startsWith('exercise_')) totalDuration += 30; // Estimation pour exos sans durée
+                    else if (item.type === 'exercise' || item.type?.startsWith('exercise_')) totalDuration += 45; 
                 });
             } return totalDuration;
         }
         function loadSession(sessionName) {
             if (!loadedFullProgram || !loadedFullProgram.sessions) { showMessage(`Programme '${FULL_PROGRAM_FILENAME}' non chargé ou invalide. Vérifiez Drive.`, 5000, true); return; }
             const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
-            if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" non trouvée ou invalide dans le programme.`, 4000, true); currentWorkoutPlan = []; return; }
+            if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" non trouvée ou invalide.`, 4000, true); currentWorkoutPlan = []; return; }
             currentWorkoutType = session.nom_session; currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); 
             currentWorkoutPlan.forEach(item => {
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
-                    if (item.reps_start !== undefined) item.current_reps = item.reps_start; else if (item.reps !== undefined) item.current_reps = item.reps; 
-                    if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) { if (item.activation_reps_start !== undefined) item.current_activation_reps = item.activation_reps_start; else item.current_activation_reps = item.reps; item.completed_mini_sets = 0; }
-                    else if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("mini-série")) { item.current_reps = item.reps_start || item.reps; } // Pour mini-séries
-                    else if (item.reps_text?.toUpperCase() === "AMRAP" || item.reps_text?.toUpperCase().includes("NÉG")) item.current_reps = item.reps; // Utilise la valeur numérique (ex: 99)
+                    item.current_reps = item.reps; 
+                    if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) {
+                        item.current_activation_reps = item.reps; item.completed_mini_sets = 0; 
+                    }
                 }
             });
             currentItemIndex = 0; workoutStartTime = null; 
@@ -1149,12 +1132,7 @@
             filteredHistory.forEach(item => {
                 const li = document.createElement('li'); const itemDate = new Date(item.date);
                 const dateString = itemDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }); const timeString = itemDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                const totalReps = item.exercises?.reduce((sum, ex) => {
-                    let repsForEx = 0;
-                    if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) repsForEx = parseInt(ex.finalReps, 10);
-                    // Ne pas ajouter current_reps, reps_start, reps pour le total de l'historique, seulement finalReps
-                    return sum + repsForEx;
-                }, 0) || 0;
+                const totalReps = item.exercises?.reduce((sum, ex) => { let repsForEx = 0; if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) repsForEx = parseInt(ex.finalReps, 10); return sum + repsForEx; }, 0) || 0;
                 const durationFormatted = formatTime(item.durationSeconds || 0);
                 li.innerHTML = `<span class="history-item-date">${dateString} <small>${timeString}</small></span> <span class="history-item-type">${item.type}</span> <span class="history-item-reps"><i class="fas fa-running"></i> ${totalReps > 0 ? totalReps : '-'}</span> <span class="history-item-duration"><i class="fas fa-stopwatch"></i> ${durationFormatted}</span>`;
                 historyList.appendChild(li);
@@ -1213,17 +1191,7 @@
             originalCompletedWorkoutPlan.forEach((item, index) => {
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
                     const li = document.createElement('li'); li.classList.add('summary-item');
-                    let initialRepsForInput = item.reps; // Valeur par défaut
-                    if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) {
-                        initialRepsForInput = item.current_activation_reps !== undefined ? item.current_activation_reps : (item.activation_reps_start || item.reps);
-                    } else {
-                         initialRepsForInput = item.current_reps !== undefined ? item.current_reps : (item.reps_start || item.reps);
-                    }
-                    if (item.reps_text?.toUpperCase() === "AMRAP" || item.reps_text?.toUpperCase().includes("NÉG")) {
-                        initialRepsForInput = item.current_reps; // Pour AMRAP/Négatives, on veut la valeur réellement effectuée si disponible, sinon la valeur par défaut (ex: 99, ou ce qui a été compté)
-                    }
-
-
+                    let initialRepsForInput = item.current_reps !== undefined ? item.current_reps : item.reps;
                     let repsUnit = item.reps_unit ? ` ${item.reps_unit}` : ''; let inputId = `summary-reps-${index}`; 
                     if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) repsUnit += " (Act.)";
                     else if (item.reps_text?.toUpperCase() === "AMRAP") repsUnit = " (AMRAP)";
@@ -1239,21 +1207,48 @@
             if (!finishSummaryBtn) return; finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
             const latestWorkoutEntry = workoutHistory[workoutHistory.length - 1];
             if (!latestWorkoutEntry || !latestWorkoutEntry.exercises) { closeSummary(); showMessage("Erreur: Données d'historique invalides pour sauvegarde.", 4000, true); if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; }
-            let exerciseIndexInOriginalPlan = 0; 
+            
+            let planExerciseIndex = 0; 
             for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) {
-                 while(exerciseIndexInOriginalPlan < originalCompletedWorkoutPlan.length && 
-                       !(originalCompletedWorkoutPlan[exerciseIndexInOriginalPlan].type === 'exercise' || originalCompletedWorkoutPlan[exerciseIndexInOriginalPlan].type?.startsWith('exercise_'))) {
-                    exerciseIndexInOriginalPlan++; // Sauter les pauses dans le plan original pour aligner les index
+                while(planExerciseIndex < originalCompletedWorkoutPlan.length && !(originalCompletedWorkoutPlan[planExerciseIndex].type === 'exercise' || originalCompletedWorkoutPlan[planExerciseIndex].type?.startsWith('exercise_'))) {
+                    planExerciseIndex++; 
                 }
-                if (exerciseIndexInOriginalPlan < originalCompletedWorkoutPlan.length) {
-                    const inputId = `summary-reps-${exerciseIndexInOriginalPlan}`; const inputElement = document.getElementById(inputId);
-                    if (inputElement) { const finalReps = parseInt(inputElement.value, 10); if (!isNaN(finalReps)) latestWorkoutEntry.exercises[i].finalReps = finalReps; }
-                    exerciseIndexInOriginalPlan++;
+                if (planExerciseIndex < originalCompletedWorkoutPlan.length) {
+                    const inputId = `summary-reps-${planExerciseIndex}`; const inputElement = document.getElementById(inputId);
+                    const originalExerciseInPlan = originalCompletedWorkoutPlan[planExerciseIndex]; 
+                    if (inputElement) { 
+                        const finalReps = parseInt(inputElement.value, 10); 
+                        if (!isNaN(finalReps)) {
+                            latestWorkoutEntry.exercises[i].finalReps = finalReps;
+                            // Mise à jour du programme de base (loadedFullProgram)
+                            if (loadedFullProgram && loadedFullProgram.sessions) {
+                                const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
+                                if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
+                                    const exerciseToUpdateInFullProgram = currentSessionInFullProgram.exercices_et_pauses.find(ex => ex.name === originalExerciseInPlan.name && ex.details === originalExerciseInPlan.details); // Tenter de matcher plus précisément
+                                    if (exerciseToUpdateInFullProgram) {
+                                        console.log(`Mise à jour du programme: Exo '${exerciseToUpdateInFullProgram.name}', reps de ${exerciseToUpdateInFullProgram.reps} à ${finalReps}`);
+                                        if (exerciseToUpdateInFullProgram.name.toLowerCase().includes("activation") && exerciseToUpdateInFullProgram.type.includes("myo_reps")){
+                                            exerciseToUpdateInFullProgram.activation_reps_start = finalReps; // Cas spécifique Myo Activation
+                                        } else {
+                                            exerciseToUpdateInFullProgram.reps = finalReps; // Cas général
+                                        }
+                                        exerciseToUpdateInFullProgram.reps_start = finalReps; // Mettre à jour reps_start aussi pour la prochaine initialisation
+                                    } else {
+                                        console.warn("Exercice non trouvé dans loadedFullProgram pour mise à jour :", originalExerciseInPlan.name, originalExerciseInPlan.details);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    planExerciseIndex++;
                 }
             }
-            await saveHistoryToDrive(); closeSummary(false); const previouslyActiveWorkoutType = currentWorkoutType; 
+            await saveHistoryToDrive(); 
+            if (loadedFullProgram) await saveFullProgramToDrive(); // Sauvegarder le programme modifié
+            
+            closeSummary(false); const previouslyActiveWorkoutType = currentWorkoutType; 
             setState('idle'); if (previouslyActiveWorkoutType && loadedFullProgram) loadSession(previouslyActiveWorkoutType); 
-            showMessage("Entraînement et résumé sauvegardés !", 3000);
+            showMessage("Entraînement et programme mis à jour sauvegardés !", 3000);
             if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
         }
         function closeSummary(updateUIafter = true) { if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUIafter) setState('idle'); }
@@ -1261,6 +1256,16 @@
             if (!googleAccessToken || !workoutHistory) return; if (!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([]));
             if (historyFileId) { const success = await updateFileContent(historyFileId, workoutHistory); if (success && historyDriveStatus) { historyDriveStatus.textContent = 'Synchro OK'; historyDriveStatus.className = 'success'; } }
             else { showMessage("Impossible de sauvegarder l'historique sur Drive.", 4000, true); if (historyDriveStatus) { historyDriveStatus.textContent = 'Erreur ID'; historyDriveStatus.className = 'error'; } }
+        }
+        async function saveFullProgramToDrive() {
+            if (!googleAccessToken || !loadedFullProgram) { console.warn("Tentative de sauvegarde du programme global sans token ou sans programme chargé."); return; }
+            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true); // Créer s'il n'existe pas
+            if (programFileId) {
+                console.log(`Sauvegarde du programme global '${FULL_PROGRAM_FILENAME}' sur Drive...`);
+                const success = await updateFileContent(programFileId, loadedFullProgram);
+                if (success) console.log(`Programme global '${FULL_PROGRAM_FILENAME}' sauvegardé avec succès sur Drive.`);
+                else console.error(`Échec de la sauvegarde du programme global '${FULL_PROGRAM_FILENAME}' sur Drive.`);
+            } else { console.error(`Impossible de trouver ou créer le fichier du programme global '${FULL_PROGRAM_FILENAME}' sur Drive pour la sauvegarde.`); showMessage("Impossible de sauvegarder le programme sur Drive.", 4000, true); }
         }
         async function loadHistoryFromDrive() {
             if (!googleAccessToken) return; console.log("Tentative de chargement de l'historique depuis Drive...");
@@ -1273,34 +1278,42 @@
             displayHistory(currentHistoryPeriod); 
         }
         async function loadFullProgramFromDrive() {
-            programsLoaded = false; loadedFullProgram = null; 
-            if (!googleAccessToken) { console.log("Pas de token Google, impossible de charger le programme depuis Drive."); showMessage("Connectez-vous à Google Drive pour charger le programme.", 5000); return false; }
+            programsLoaded = false; // Ne pas utiliser loadedFullProgram de la portée globale ici, mais une var locale.
+            let localLoadedProgram = null;
+
+            if (!googleAccessToken) { console.log("Pas de token Google, utilisation du programme par défaut intégré."); loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return true; }
+            
             console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
-            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); 
+            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(defaultFullProgram), true); // Créer avec le défaut s'il n'existe pas
+
             if (programFileId) {
                 const content = await readFileContent(programFileId);
-                if (content && content.trim() !== "" && content.trim() !== "{}") {
+                if (content && content.trim() !== "" ) { // Ne pas vérifier "{}" car on peut avoir un fichier vide intentionnellement avant la première sauvegarde
                     try {
-                        const parsedProgram = JSON.parse(content);
-                        if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) {
-                            loadedFullProgram = parsedProgram; programsLoaded = true;
+                        localLoadedProgram = JSON.parse(content);
+                        if (localLoadedProgram && localLoadedProgram.sessions && Array.isArray(localLoadedProgram.sessions)) {
+                            loadedFullProgram = localLoadedProgram; programsLoaded = true;
                             console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
                             return true;
                         } else {
-                            console.error(`Programme global '${FULL_PROGRAM_FILENAME}' malformé (manque .sessions ou n'est pas un tableau).`);
-                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé.`, 5000, true); return false;
+                            console.error(`Programme global '${FULL_PROGRAM_FILENAME}' malformé. Structure attendue : { "sessions": [...] }. Utilisation du défaut intégré.`);
+                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé. Utilisation du défaut intégré.`, 5000, true);
+                            loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
                         }
                     } catch (e) {
                         console.error(`Erreur parsing programme global '${FULL_PROGRAM_FILENAME}' depuis Drive:`, e, "\nContenu (début):", content.substring(0, 200) + "...");
-                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu ou invalide. Veuillez vérifier sa syntaxe JSON.`, 7000, true); return false;
+                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu. Utilisation du défaut intégré. Erreur: ${e.message}`, 7000, true);
+                        loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false;
                     }
                 } else { 
-                    console.log(`Aucun contenu pour '${FULL_PROGRAM_FILENAME}' sur Drive ou fichier vide. L'utilisateur doit le remplir.`); 
-                    showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide ou non trouvé sur Drive. Assurez-vous qu'il existe et contient le programme au format JSON.`, 7000, true); return false; 
+                     console.log(`Aucun contenu valide pour '${FULL_PROGRAM_FILENAME}' sur Drive. Utilisation du défaut intégré.`); 
+                     showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide ou invalide sur Drive. Utilisation du programme par défaut intégré.`, 7000, true);
+                     loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
                 }
             } else { 
-                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. L'utilisateur doit le créer.`); 
-                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer et le remplir.`, 7000, true); return false; 
+                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé ou création échouée sur Drive. Utilisation du défaut intégré.`); 
+                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé/créé sur Drive. Utilisation du programme par défaut intégré.`, 7000, true);
+                loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
             }
         }
         function saveInProgressState() {
@@ -1313,12 +1326,12 @@
             if (savedState) {
                 try {
                     const parsedState = JSON.parse(savedState);
-                    if (parsedState.currentWorkoutType && parsedState.currentWorkoutPlan && parsedState.currentState && loadedFullProgram) { // Vérifier aussi loadedFullProgram
+                    if (parsedState.currentWorkoutType && parsedState.currentWorkoutPlan && parsedState.currentState && loadedFullProgram) {
                         if (confirm("Un entraînement était en cours. Voulez-vous le reprendre ?")) {
                             currentWorkoutType = parsedState.currentWorkoutType; currentWorkoutPlan = parsedState.currentWorkoutPlan; 
                             currentItemIndex = parsedState.currentItemIndex; timeLeft = parsedState.timeLeft; prepareTimeLeft = parsedState.prepareTimeLeft;
                             workoutStartTime = parsedState.workoutStartTime; previousState = parsedState.previousState || 'idle'; 
-                            estimatedTotalWorkoutTime = parsedState.estimatedTotalWorkoutTime || calculateEstimatedTotalWorkoutTime(currentWorkoutPlan); // Recalculer si non sauvegardé
+                            estimatedTotalWorkoutTime = parsedState.estimatedTotalWorkoutTime || calculateEstimatedTotalWorkoutTime(currentWorkoutPlan);
                             elapsedTimeForProgressBar = parsedState.elapsedTimeForProgressBar || 0;
                             setActiveWorkoutNav(currentWorkoutType); setState(parsedState.currentState); 
                             if (isWorkoutActive) startWorkoutProgressTimer(); updateOverallWorkoutProgressDisplay(); 
@@ -1334,7 +1347,18 @@
             const endTime = Date.now(); const durationSeconds = (endTime - workoutStartTime) / 1000;
             const exercisesForHistory = originalCompletedWorkoutPlan
                 .filter(item => item.type === 'exercise' || item.type?.startsWith('exercise_'))
-                .map(ex => ({ name: ex.name, type: ex.type, reps: ex.reps_text || (ex.reps_start !== undefined ? ex.reps_start : ex.reps), current_reps: ex.current_reps, finalReps: ex.finalReps, weight_text: ex.weight_text, weight_details: ex.weight_details, weight: ex.weight, unit: ex.unit, reps_unit: ex.reps_unit, ...(ex.type?.includes("myo_reps") && { activation_reps_start: ex.activation_reps_start, current_activation_reps: ex.current_activation_reps, completed_mini_sets: ex.completed_mini_sets, mini_reps_start: ex.mini_reps_start, }) }));
+                .map(ex => {
+                    const historyEx = { name: ex.name, type: ex.type, reps: ex.reps_text || ex.reps, current_reps: ex.current_reps, finalReps: ex.finalReps, weight: ex.weight, unit: ex.unit, reps_unit: ex.reps_unit, image_url: ex.image_url };
+                    if(ex.weight_text) historyEx.weight_text = ex.weight_text;
+                    if(ex.weight_details) historyEx.weight_details = ex.weight_details;
+                    if (ex.type?.includes("myo_reps")) {
+                        historyEx.activation_reps_start = ex.activation_reps_start;
+                        historyEx.current_activation_reps = ex.current_activation_reps;
+                        historyEx.completed_mini_sets = ex.completed_mini_sets;
+                        historyEx.mini_reps_start = ex.mini_reps_start;
+                    }
+                    return historyEx;
+                });
             const historyEntry = { date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: durationSeconds, exercises: exercisesForHistory };
             workoutHistory.push(historyEntry);
         }
@@ -1380,7 +1404,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v2).");
+            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v4).");
         });
     </script>
 </body>
