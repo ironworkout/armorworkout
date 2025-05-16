@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -276,7 +277,7 @@
             color: var(--timer-text-color-main); text-shadow: var(--timer-text-glow-main); 
             transition: font-size 0.2s ease; pointer-events: none; white-space: nowrap; 
         }
-        #timer-state { display: none !important; /* Masqué de façon permanente */ }
+        #timer-state { display: none !important; } /* Masqué de façon permanente */
 
         @keyframes countdown-pulse { 0%, 100% { opacity: 0.7; transform: scale(1) translateX(-50%); } 50% { opacity: 1; transform: scale(1.05) translateX(-50%); } }
         .state-exercise #time-left { font-size: 4em; letter-spacing: 0.05em; }
@@ -640,30 +641,7 @@
         const GIS_MAX_RETRIES = 50; 
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
-        let loadedFullProgram = { 
-            "nom_programme": "Programme Complet Hypertrophie Élite v1 (Défaut Intégré)",
-            "description_programme": "Ceci est un programme par défaut. Connectez-vous à Google Drive pour charger votre programme personnalisé.",
-            "auteur_programme": "ArmorWorkout App",
-            "frequence_suggeree": "PPLPPLR",
-            "notes_generales": "Assurez-vous que votre fichier 'programmeCompletHypertrophieElite_v1.json' est correctement formaté sur Google Drive.",
-            "sessions": [
-                {
-                    "nom_session": "PUSH V4 - Pectoraux, Épaules, Triceps",
-                    "description_session": "Session Push par défaut.",
-                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple PUSH", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
-                },
-                {
-                    "nom_session": "PULL V5.2 - Dos, Arrière Épaules, Biceps",
-                    "description_session": "Session Pull par défaut.",
-                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple PULL", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
-                },
-                {
-                    "nom_session": "LEGS & ABDOS V1.7 - Jambes & Sangle Abdominale",
-                    "description_session": "Session Legs par défaut.",
-                    "exercices_et_pauses": [ { "type": "exercise", "name": "Exemple LEGS", "reps": 10, "weight": 0, "unit": "PDC", "details": "Ceci est un exercice d'exemple." }, { "type": "break", "duration": 60, "name": "Repos" } ]
-                }
-            ]
-        };
+        let loadedFullProgram = null; 
 
         let timeDisplayDiv, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
             navButtons = [], navHistoryBtn, signInButton, driveStatusElement, driveStatusTextElement,
@@ -776,20 +754,19 @@
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
                     } else { 
-                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive ou programme invalide. Vérifiez le fichier sur votre Drive. Utilisation du programme par défaut minimal.`, 7000, true);
+                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive ou programme invalide. Assurez-vous qu'il est présent et correct.`, 7000, true);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Prog';
-                        loadedFullProgram = defaultFullProgram; // Fallback vers le programme par défaut intégré
-                        programsLoaded = true; // Marquer comme chargé pour permettre l'utilisation du défaut
+                        loadedFullProgram = null; programsLoaded = false; 
                     }
                 } catch (error) {
-                    showMessage("Erreur majeure lors du chargement depuis Drive. Utilisation du programme par défaut minimal.", 6000, true);
+                    showMessage("Erreur majeure lors du chargement depuis Drive.", 6000, true);
                     if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                     if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
-                    loadedFullProgram = defaultFullProgram; programsLoaded = true;
+                    loadedFullProgram = null; programsLoaded = false; 
                 } finally {
                     updateAuthUI(true); 
-                    displayHistory(currentHistoryPeriod); 
+                    if (programsLoaded && loadedFullProgram) displayHistory(currentHistoryPeriod); 
                     loadInProgressState(); 
                 }
             } else handleTokenError({ error: "Réponse de token invalide ou vide" });
@@ -892,7 +869,7 @@
         function formatTime(seconds) { const cleanSeconds = Math.max(0, Math.round(seconds)); const minutes = Math.floor(cleanSeconds / 60); const remainingSeconds = cleanSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }
         function updateOverallWorkoutProgressDisplay() {
             if (!timerProgressIndicator || !workoutTimeTotalDisplay || !workoutTimeRemainingDisplay || !workoutTimeInfoDisplay) return;
-            if (isWorkoutActive && estimatedTotalWorkoutTime > 0 && workoutStartTime) {
+            if (isWorkoutActive && estimatedTotalWorkoutTime > 0 && workoutStartTime) { 
                 elapsedTimeForProgressBar = (Date.now() - workoutStartTime) / 1000;
                 const progressPercentage = Math.min(1, elapsedTimeForProgressBar / estimatedTotalWorkoutTime);
                 const dashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE * (1 - progressPercentage);
@@ -903,24 +880,22 @@
             } else { timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE; workoutTimeInfoDisplay.classList.remove('visible'); }
         }
         function updateTimerDisplay() {
-            if (!timeDisplayDiv /* || !timerStateDisplay */) return; // timerStateDisplay masqué
-            let timeString = "00:00"; //stateText = '', stateClass = ''; 
+            if (!timeDisplayDiv) return;
+            let timeString = "00:00"; 
             const item = currentWorkoutPlan[currentItemIndex];
-            // const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; // Plus utilisé pour timerStateDisplay
             switch(currentState) {
-                case 'exercise': timeString = "GO!"; /* stateText = item?.name || 'Exercice'; */ break;
-                case 'break': timeString = formatTime(timeLeft); /* stateText = item?.name || 'Repos'; */ break;
-                case 'paused': timeString = (previousState === 'break') ? formatTime(timeLeft) : "PAUSE"; /* stateText = 'En Pause'; */ break;
-                case 'preparing': timeString = formatTime(prepareTimeLeft); /* stateText = 'Préparation'; */ break;
-                case 'finished': timeString = "FINI!"; /* stateText = `Terminé ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}`; stateClass = 'finished-state'; */ break;
-                default: timeString = formatTime(0); /* stateText = 'Prêt'; */ break;
+                case 'exercise': timeString = "GO!"; break;
+                case 'break': timeString = formatTime(timeLeft); break;
+                case 'paused': timeString = (previousState === 'break') ? formatTime(timeLeft) : "PAUSE"; break;
+                case 'preparing': timeString = formatTime(prepareTimeLeft); break;
+                case 'finished': timeString = "FINI!"; break;
+                default: timeString = formatTime(0); break;
             }
             timeDisplayDiv.textContent = timeString; 
-            // if(timerStateDisplay) { timerStateDisplay.textContent = stateText; timerStateDisplay.className = 'timer-state'; if (currentState !== 'idle') timerStateDisplay.classList.add('visible'); if (stateClass) timerStateDisplay.classList.add(stateClass); if (currentState === 'preparing') timerStateDisplay.classList.add('preparing'); }
             updateOverallWorkoutProgressDisplay();
         }
         function updateTimerVisuals(state) {
-            if (/*!timerStateDisplay ||*/ !timerProgressIndicator) return; // timerStateDisplay masqué
+            if (!timerProgressIndicator) return; // timerStateDisplay masqué
             let stateColorVar = '--idle-color-val', stateGlowRgbVar = '--idle-color-rgb', progressCircleColorVar = '--electric-cyan'; 
             switch(state) {
                 case 'exercise': stateColorVar = '--exercise-color-val'; stateGlowRgbVar = '--exercise-color-rgb'; progressCircleColorVar = 'var(--exercise-color-val)'; break;
@@ -933,8 +908,7 @@
             const rootStyle = getComputedStyle(document.documentElement);
             const stateColor = rootStyle.getPropertyValue(stateColorVar).trim();
             const stateGlowRgb = rootStyle.getPropertyValue(stateGlowRgbVar).trim(); 
-            // if(timerStateDisplay) timerStateDisplay.style.color = stateColor; 
-            document.documentElement.style.setProperty('--current-timer-state-color', stateColor);
+            document.documentElement.style.setProperty('--current-timer-state-color', stateColor); // Gardé pour la cohérence si #timer-state revient
             document.documentElement.style.setProperty('--current-timer-state-color-rgb', stateGlowRgb); 
             timerProgressIndicator.style.stroke = rootStyle.getPropertyValue(progressCircleColorVar.startsWith('var(') ? progressCircleColorVar.slice(4,-1) : progressCircleColorVar).trim();
             if(currentExerciseNameDisplay) {
@@ -965,7 +939,7 @@
                     progressText = googleAccessToken ? (programsLoaded && loadedFullProgram ? (currentWorkoutType ? `Prêt: ${currentWorkoutType}`: "Sélectionnez P/P/L") : "Chargement/Vérification...") : "Connectez-vous";
                     infoHtml = idleMsg; break;
                 case 'finished': const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0; exerciseName = 'Entraînement Terminé !'; infoHtml = `<div class="exercise-details" style="border-color: var(--color-finished);"><i class="fas ${getIconForState('finished')}" style="color: var(--color-finished)"></i><span>Bravo ! ${durationSeconds > 0 ? `(${formatTime(durationSeconds)})` : ''}</span></div>`; progressText = `Fini (${originalCompletedWorkoutPlan.length}/${originalCompletedWorkoutPlan.length})`; break;
-                case 'preparing': const nextItem = currentWorkoutPlan[0]; exerciseName = `Préparation...`; infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"><i class="fas ${getIconForState('preparing')} fa-spin" style="color: var(--color-prepare)"></i><span>Prêt pour <strong>${nextItem?.name || 'Exercice'}</strong> (${formatTime(prepareTimeLeft)})...</span></div>`; progressText = `Prépa... (1/${currentWorkoutPlan.length})`; break;
+                case 'preparing': const nextItem = currentWorkoutPlan[0]; exerciseName = `Préparation...`; infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"><i class="fas ${getIconForState('preparing')} fa-spin" style="color: var(--color-prepare)"></i><span>Prêt pour <strong>${nextItem?.name || 'Exercice'}</strong></span></div>`; progressText = `Prépa... (1/${currentWorkoutPlan.length})`; break; // (${formatTime(prepareTimeLeft)}) enlevé
                 case 'exercise': case 'paused': case 'break':
                     if (!item) { exerciseName = 'Erreur'; infoHtml = '<p>Erreur de chargement de l\'étape.</p>'; progressText = `Étape ?/${currentWorkoutPlan.length}`; break; }
                     exerciseName = `${item.name || (item.type === 'break' ? 'Repos' : 'Exercice Inconnu')}`; progressText = `Étape ${currentItemIndex + 1}/${currentWorkoutPlan.length}`;
@@ -998,9 +972,9 @@
         }
         function stopWorkoutProgressTimer() { if (workoutProgressInterval) clearInterval(workoutProgressInterval); workoutProgressInterval = null; }
         function setState(newState) {
-            if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return; // timerStateDisplay enlevé car masqué
+            if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || /*!timerStateDisplay ||*/ !workoutSection || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return;
             previousState = currentState; currentState = newState; clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId); 
-            // if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } // Logique timerStateDisplay masquée
+            // if(timerStateDisplay) { timerStateDisplay.classList.remove('preparing'); timerStateDisplay.classList.toggle('visible', newState !== 'idle'); } 
             updateWorkoutInfo(); 
             document.body.className = Array.from(document.body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${currentState}`;
             document.body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState));
@@ -1013,7 +987,6 @@
             
             if (!['idle', 'finished'].includes(newState)) { if(!workoutProgressInterval) startWorkoutProgressTimer(); }
             else if (['idle', 'finished'].includes(newState) && workoutProgressInterval) stopWorkoutProgressTimer();
-
             switch (newState) {
                 case 'idle': isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; estimatedTotalWorkoutTime = 0; elapsedTimeForProgressBar = 0; const canStartIdle = googleAccessToken && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; finishBtn.disabled = true; if (wasFinishedState) wasFinishedState = false; break;
                 case 'preparing': isWorkoutActive = true; /* if(timerStateDisplay) timerStateDisplay.classList.add('preparing'); */ prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) { workoutStartTime = Date.now(); elapsedTimeForProgressBar = 0;} vibrate([50,30,50]); break;
@@ -1047,16 +1020,16 @@
             if (currentItemIndex > 0) {
                 currentItemIndex--; const prevItem = currentWorkoutPlan[currentItemIndex];
                 if (prevItem.type?.includes("myo_reps") && prevItem.completed_mini_sets) prevItem.completed_mini_sets = 0;
-                let timeToRewind = 0; const currentItemDuration = PREPARE_DURATION; 
+                let timeToRewind = 0; const defaultExerciseTime = PREPARE_DURATION + 45; // Estimation prépa + temps exo
                 if (currentItemIndex + 1 < currentWorkoutPlan.length) { 
                     const skippedItem = currentWorkoutPlan[currentItemIndex + 1]; 
-                    if (skippedItem.type === 'break') timeToRewind += skippedItem.duration || 0; 
+                    if (skippedItem.type === 'break' && skippedItem.duration) timeToRewind += skippedItem.duration; 
                     else if (skippedItem.duration) timeToRewind += skippedItem.duration; 
-                    else timeToRewind += currentItemDuration; 
+                    else timeToRewind += defaultExerciseTime; 
                 }
-                if(prevItem.type === 'break') timeToRewind += prevItem.duration || 0; 
+                if(prevItem.type === 'break' && prevItem.duration) timeToRewind += prevItem.duration; 
                 else if(prevItem.duration) timeToRewind += prevItem.duration;
-                else timeToRewind += PREPARE_DURATION; 
+                else timeToRewind += defaultExerciseTime; 
 
                 elapsedTimeForProgressBar = Math.max(0, elapsedTimeForProgressBar - timeToRewind); 
                 updateOverallWorkoutProgressDisplay();
@@ -1075,7 +1048,7 @@
             } return totalDuration;
         }
         function loadSession(sessionName) {
-            if (!loadedFullProgram || !loadedFullProgram.sessions) { showMessage(`Programme '${FULL_PROGRAM_FILENAME}' non chargé ou invalide. Vérifiez Drive.`, 5000, true); return; }
+            if (!loadedFullProgram || !loadedFullProgram.sessions) { showMessage(`Programme '${FULL_PROGRAM_FILENAME}' non chargé ou invalide.`, 5000, true); return; }
             const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
             if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" non trouvée ou invalide.`, 4000, true); currentWorkoutPlan = []; return; }
             currentWorkoutType = session.nom_session; currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); 
@@ -1192,6 +1165,9 @@
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
                     const li = document.createElement('li'); li.classList.add('summary-item');
                     let initialRepsForInput = item.current_reps !== undefined ? item.current_reps : item.reps;
+                    if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) initialRepsForInput = item.current_activation_reps !== undefined ? item.current_activation_reps : (item.activation_reps_start || item.reps);
+                    else if (item.reps_text?.toUpperCase() === "AMRAP" || item.reps_text?.toUpperCase().includes("NÉG")) initialRepsForInput = item.current_reps; 
+                    
                     let repsUnit = item.reps_unit ? ` ${item.reps_unit}` : ''; let inputId = `summary-reps-${index}`; 
                     if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) repsUnit += " (Act.)";
                     else if (item.reps_text?.toUpperCase() === "AMRAP") repsUnit = " (AMRAP)";
@@ -1210,7 +1186,7 @@
             
             let planExerciseIndex = 0; 
             for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) {
-                while(planExerciseIndex < originalCompletedWorkoutPlan.length && !(originalCompletedWorkoutPlan[planExerciseIndex].type === 'exercise' || originalCompletedWorkoutPlan[planExerciseIndex].type?.startsWith('exercise_'))) {
+                 while(planExerciseIndex < originalCompletedWorkoutPlan.length && !(originalCompletedWorkoutPlan[planExerciseIndex].type === 'exercise' || originalCompletedWorkoutPlan[planExerciseIndex].type?.startsWith('exercise_'))) {
                     planExerciseIndex++; 
                 }
                 if (planExerciseIndex < originalCompletedWorkoutPlan.length) {
@@ -1220,21 +1196,19 @@
                         const finalReps = parseInt(inputElement.value, 10); 
                         if (!isNaN(finalReps)) {
                             latestWorkoutEntry.exercises[i].finalReps = finalReps;
-                            // Mise à jour du programme de base (loadedFullProgram)
                             if (loadedFullProgram && loadedFullProgram.sessions) {
                                 const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
                                 if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
-                                    const exerciseToUpdateInFullProgram = currentSessionInFullProgram.exercices_et_pauses.find(ex => ex.name === originalExerciseInPlan.name && ex.details === originalExerciseInPlan.details); // Tenter de matcher plus précisément
-                                    if (exerciseToUpdateInFullProgram) {
-                                        console.log(`Mise à jour du programme: Exo '${exerciseToUpdateInFullProgram.name}', reps de ${exerciseToUpdateInFullProgram.reps} à ${finalReps}`);
+                                    const exerciseToUpdateInFullProgram = currentSessionInFullProgram.exercices_et_pauses.find(ex => ex.name === originalExerciseInPlan.name && ex.details === originalExerciseInPlan.details);
+                                    if (exerciseToUpdateInFullProgram && exerciseToUpdateInFullProgram.reps_text?.toUpperCase() !== "AMRAP" && !exerciseToUpdateInFullProgram.reps_text?.toUpperCase().includes("NÉG")) { // Ne pas modifier AMRAP/Négatives dans le programme source
                                         if (exerciseToUpdateInFullProgram.name.toLowerCase().includes("activation") && exerciseToUpdateInFullProgram.type.includes("myo_reps")){
-                                            exerciseToUpdateInFullProgram.activation_reps_start = finalReps; // Cas spécifique Myo Activation
+                                            exerciseToUpdateInFullProgram.activation_reps_start = finalReps;
+                                            exerciseToUpdateInFullProgram.reps = finalReps; // Aussi mettre à jour reps pour cohérence si utilisé
                                         } else {
-                                            exerciseToUpdateInFullProgram.reps = finalReps; // Cas général
+                                            exerciseToUpdateInFullProgram.reps = finalReps;
                                         }
-                                        exerciseToUpdateInFullProgram.reps_start = finalReps; // Mettre à jour reps_start aussi pour la prochaine initialisation
-                                    } else {
-                                        console.warn("Exercice non trouvé dans loadedFullProgram pour mise à jour :", originalExerciseInPlan.name, originalExerciseInPlan.details);
+                                        if (exerciseToUpdateInFullProgram.reps_start !== undefined) exerciseToUpdateInFullProgram.reps_start = finalReps;
+                                        console.log(`Programme mis à jour: Exo '${exerciseToUpdateInFullProgram.name}', reps: ${finalReps}`);
                                     }
                                 }
                             }
@@ -1244,7 +1218,7 @@
                 }
             }
             await saveHistoryToDrive(); 
-            if (loadedFullProgram) await saveFullProgramToDrive(); // Sauvegarder le programme modifié
+            if (loadedFullProgram) await saveFullProgramToDrive(); 
             
             closeSummary(false); const previouslyActiveWorkoutType = currentWorkoutType; 
             setState('idle'); if (previouslyActiveWorkoutType && loadedFullProgram) loadSession(previouslyActiveWorkoutType); 
@@ -1259,7 +1233,7 @@
         }
         async function saveFullProgramToDrive() {
             if (!googleAccessToken || !loadedFullProgram) { console.warn("Tentative de sauvegarde du programme global sans token ou sans programme chargé."); return; }
-            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true); // Créer s'il n'existe pas
+            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true);
             if (programFileId) {
                 console.log(`Sauvegarde du programme global '${FULL_PROGRAM_FILENAME}' sur Drive...`);
                 const success = await updateFileContent(programFileId, loadedFullProgram);
@@ -1278,17 +1252,15 @@
             displayHistory(currentHistoryPeriod); 
         }
         async function loadFullProgramFromDrive() {
-            programsLoaded = false; // Ne pas utiliser loadedFullProgram de la portée globale ici, mais une var locale.
-            let localLoadedProgram = null;
-
-            if (!googleAccessToken) { console.log("Pas de token Google, utilisation du programme par défaut intégré."); loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return true; }
+            programsLoaded = false; let localLoadedProgram = null;
+            if (!googleAccessToken) { console.log("Pas de token Google, le programme Drive ne sera pas chargé."); showMessage("Connectez-vous à Google Drive pour charger votre programme personnalisé.", 5000); loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false;  } // Utiliser le défaut si pas connecté
             
             console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
-            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(defaultFullProgram), true); // Créer avec le défaut s'il n'existe pas
-
+            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(defaultFullProgram), false); // Ne pas créer s'il n'existe pas avec defaultFullProgram, juste chercher.
+            
             if (programFileId) {
                 const content = await readFileContent(programFileId);
-                if (content && content.trim() !== "" ) { // Ne pas vérifier "{}" car on peut avoir un fichier vide intentionnellement avant la première sauvegarde
+                if (content && content.trim() !== "") {
                     try {
                         localLoadedProgram = JSON.parse(content);
                         if (localLoadedProgram && localLoadedProgram.sessions && Array.isArray(localLoadedProgram.sessions)) {
@@ -1297,22 +1269,22 @@
                             return true;
                         } else {
                             console.error(`Programme global '${FULL_PROGRAM_FILENAME}' malformé. Structure attendue : { "sessions": [...] }. Utilisation du défaut intégré.`);
-                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé. Utilisation du défaut intégré.`, 5000, true);
+                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé. Utilisation du programme par défaut.`, 5000, true);
                             loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
                         }
                     } catch (e) {
                         console.error(`Erreur parsing programme global '${FULL_PROGRAM_FILENAME}' depuis Drive:`, e, "\nContenu (début):", content.substring(0, 200) + "...");
-                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu. Utilisation du défaut intégré. Erreur: ${e.message}`, 7000, true);
+                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu. Utilisation du programme par défaut. Erreur: ${e.message}`, 7000, true);
                         loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false;
                     }
                 } else { 
-                     console.log(`Aucun contenu valide pour '${FULL_PROGRAM_FILENAME}' sur Drive. Utilisation du défaut intégré.`); 
-                     showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide ou invalide sur Drive. Utilisation du programme par défaut intégré.`, 7000, true);
+                     console.log(`Aucun contenu pour '${FULL_PROGRAM_FILENAME}' sur Drive ou fichier vide. Utilisation du programme par défaut intégré.`); 
+                     showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide sur Drive. Utilisation du programme par défaut.`, 7000, true);
                      loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
                 }
             } else { 
-                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé ou création échouée sur Drive. Utilisation du défaut intégré.`); 
-                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé/créé sur Drive. Utilisation du programme par défaut intégré.`, 7000, true);
+                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. L'utilisateur doit le créer. Utilisation du programme par défaut intégré.`); 
+                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer et le remplir. Utilisation du programme par défaut.`, 7000, true);
                 loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
             }
         }
@@ -1349,14 +1321,8 @@
                 .filter(item => item.type === 'exercise' || item.type?.startsWith('exercise_'))
                 .map(ex => {
                     const historyEx = { name: ex.name, type: ex.type, reps: ex.reps_text || ex.reps, current_reps: ex.current_reps, finalReps: ex.finalReps, weight: ex.weight, unit: ex.unit, reps_unit: ex.reps_unit, image_url: ex.image_url };
-                    if(ex.weight_text) historyEx.weight_text = ex.weight_text;
-                    if(ex.weight_details) historyEx.weight_details = ex.weight_details;
-                    if (ex.type?.includes("myo_reps")) {
-                        historyEx.activation_reps_start = ex.activation_reps_start;
-                        historyEx.current_activation_reps = ex.current_activation_reps;
-                        historyEx.completed_mini_sets = ex.completed_mini_sets;
-                        historyEx.mini_reps_start = ex.mini_reps_start;
-                    }
+                    if(ex.weight_text) historyEx.weight_text = ex.weight_text; if(ex.weight_details) historyEx.weight_details = ex.weight_details;
+                    if (ex.type?.includes("myo_reps")) { historyEx.activation_reps_start = ex.activation_reps_start; historyEx.current_activation_reps = ex.current_activation_reps; historyEx.completed_mini_sets = ex.completed_mini_sets; historyEx.mini_reps_start = ex.mini_reps_start; }
                     return historyEx;
                 });
             const historyEntry = { date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: durationSeconds, exercises: exercisesForHistory };
@@ -1404,7 +1370,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v4).");
+            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v5).");
         });
     </script>
 </body>
