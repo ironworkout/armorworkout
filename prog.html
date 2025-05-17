@@ -42,7 +42,7 @@
             --glow-purple: 0 0 8px var(--neon-purple), 0 0 12px rgba(var(--neon-purple-rgb),0.7);
             --electric-yellow: var(--neon-yellow); 
             --electric-yellow-rgb: var(--neon-yellow-rgb);
-            --color-exercise: var(--neon-pink); 
+            /* --color-exercise: var(--neon-pink); // Sera dynamique */
             --color-break: var(--neon-yellow);
             --font-family-main: 'Inter', sans-serif;
             --font-family-titles: 'Orbitron', sans-serif; 
@@ -104,19 +104,14 @@
         .auth-controls button:not(:disabled):hover, .nav-buttons a:not(.disabled-link-look):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
         #signin-button, #signin-button-prompt { border-color: var(--button-connect-color); color: var(--button-connect-color); }
         #signin-button:not(:disabled):hover, #signin-button-prompt:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
-        /* #signout-button enlevé */
         #drive-status { font-size: 0.8em; color: var(--secondary-text-color); margin-left: 5px; transition: opacity 0.3s, color 0.3s, border-color 0.3s; min-width: fit-content; text-align: right; font-style: normal; padding: 4px 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none; }
         #drive-status.loading { color: var(--neon-yellow); border-color: var(--neon-yellow); animation: blink-border 1.5s infinite ease-in-out; }
         #drive-status.error { color: var(--neon-red); border-color: var(--neon-red); }
         #drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
         @keyframes blink-border { 50% { border-color: rgba(var(--neon-yellow-rgb), 0.4); } }
         
-        body.logged-out #signin-button { display: inline-flex; } 
-        /* body.logged-out #signout-button { display: none; }  enlevé */
-        body.logged-out #drive-status { display: none; }
-        body.logged-in #signin-button { display: none; } 
-        /* body.logged-in #signout-button { display: inline-flex; } enlevé */
-        body.logged-in #drive-status { display: inline-block; }
+        body.logged-out #signin-button { display: inline-flex; } body.logged-out #drive-status { display: none; }
+        body.logged-in #signin-button { display: none; } body.logged-in #drive-status { display: inline-block; }
 
         .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; padding: 0; justify-content: center; } 
         .nav-buttons a { padding: 8px 16px; font-size: 0.9em; }
@@ -145,12 +140,12 @@
         #program-display:empty::before { content: "Connectez-vous et assurez-vous que '" + FULL_PROGRAM_FILENAME + "' existe sur votre Drive."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
 
         .program-step { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: start; position: relative; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; cursor: grab; }
-        .program-step.exercise-step { border-left: 4px solid var(--color-exercise); }
-        .program-step.break-step { border-left: 4px solid var(--color-break); }
+        /* La couleur de la bordure gauche sera définie dynamiquement par JS */
         .program-step:hover { border-color: var(--accent-border-color); box-shadow: 0 2px 8px rgba(var(--bg-color-dark-rgb),0.3); }
-        .step-icon { font-size: 1.3em; color: var(--secondary-text-color); padding-top: 5px; grid-column: 1 / 2; align-self: center; }
-        .exercise-step .step-icon { color: var(--color-exercise); }
-        .break-step .step-icon { color: var(--color-break); }
+        .step-icon { font-size: 1.3em; padding-top: 5px; grid-column: 1 / 2; align-self: center; transition: color var(--transition-speed) ease; }
+        /* La couleur de l'icône sera définie dynamiquement par JS */
+        .break-step .step-icon { color: var(--color-break); } /* Garder pour les pauses */
+        
         .step-content { grid-column: 2 / 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
         .step-field { display: flex; flex-direction: column; gap: 4px; }
         .step-field label { font-size: 0.8em; font-weight: 500; color: var(--secondary-text-color); }
@@ -161,6 +156,12 @@
         .step-field input[type="number"]::-webkit-outer-spin-button, .step-field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .step-field select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A0AEC0'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.22a.75.75 0 011.06 0L8 8.94l2.72-2.72a.75.75 0 111.06 1.06l-3.25 3.25a.75.75 0 01-1.06 0L4.22 7.28a.75.75 0 010-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 16px 16px; padding-right: 30px; }
         .step-field option { background-color: var(--secondary-bg-color); color: var(--primary-text-color); }
+        
+        .color-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; grid-column: 1 / -1; }
+        .color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s ease, border-color 0.2s ease; }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.active { border-color: var(--primary-text-color); box-shadow: 0 0 0 2px var(--accent-border-color); transform: scale(1.15); }
+
         .step-actions { grid-column: 3 / 4; display: flex; flex-direction: column; gap: 8px; align-items: center; padding-top: 5px; }
         .step-actions button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.1em; cursor: pointer; padding: 5px; transition: color var(--transition-speed) ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         .step-actions button:hover { color: var(--primary-text-color); background-color: rgba(var(--primary-text-color-dark-rgb), 0.1); }
@@ -173,7 +174,7 @@
         .add-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .editor-actions button { padding: 9px 20px; font-size: 0.95em; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; }
         .editor-actions button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-        #add-exercise-btn { border-color: var(--color-exercise); color: var(--color-exercise); background: transparent; }
+        #add-exercise-btn { border-color: var(--neon-pink); color: var(--neon-pink); background: transparent; } /* Couleur par défaut pour bouton exercice */
         #add-exercise-btn:not(:disabled):hover { background-color: rgba(var(--neon-pink-rgb), 0.1); box-shadow: var(--glow-pink); }
         #add-break-btn { border-color: var(--color-break); color: var(--color-break); background: transparent; }
         #add-break-btn:not(:disabled):hover { background-color: rgba(var(--neon-yellow-rgb), 0.1); box-shadow: var(--glow-yellow); }
@@ -206,7 +207,7 @@
         <div class="header-actions">
             <div class="auth-controls">
                 <button id="signin-button" disabled><i class="fab fa-google"></i> Connecter Drive</button>
-                <!-- Bouton Déconnexion supprimé -->
+                <!-- Bouton Déconnexion Supprimé -->
             </div>
             <span id="drive-status"></span>
         </div>
@@ -258,10 +259,19 @@
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const FULL_PROGRAM_FILENAME = "programmeCompletHypertrophieElite_v1.json"; 
-    const GIS_CHECK_INTERVAL = 100; 
+    const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
 
     let loadedFullProgram = null; 
+    const defaultFullProgramMinimal = { // Uniquement utilisé si le fichier Drive est introuvable ou vide après connexion
+        "nom_programme": "Programme de Secours", "sessions": [
+            { "nom_session": "PUSH V4 - Pectoraux, Épaules, Triceps", "exercices_et_pauses": [] },
+            { "nom_session": "PULL V5.2 - Dos, Arrière Épaules, Biceps", "exercices_et_pauses": [] },
+            { "nom_session": "LEGS & ABDOS V1.7 - Jambes & Sangle Abdominale", "exercices_et_pauses": [] }
+        ]
+    };
+    const stepColorPalette = ['#22D3EE', '#00BFFF', '#4D94FF', '#FF1493', '#9400D3', '#39FF14', '#A78BFA', '#FF7B72', '#FACC15', '#F0F4F8'];
+
 
     let signInButton, driveStatusElement, 
         signInButtonPrompt, connectionPrompt, programEditorArea,
@@ -278,7 +288,7 @@
     let messageTimeoutId = null;
     let sortableInstance = null;
     let audioContext = null;
-    let gisCheckRetries = 0; // Réintroduit pour checkAndInitGis
+    let gisCheckRetries = 0;
 
     function updateAuthUI(isLoggedIn) { 
         const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); 
@@ -292,40 +302,18 @@
         updateEditorActionButtonsState(); 
     }
 
-    function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
+    function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) {} } }
     
-    async function gisInitInternal() { 
-        const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); 
-        if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } 
-        if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'est pas prête (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } 
-        try { 
-            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError }); 
-            console.log("Token Client Google initialisé (Éditeur). Tentative de reconnexion silencieuse..."); 
-            if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; 
+    function gisLoadedCallback() {
+        console.log("GIS script chargé, initialisation de initTokenClient (Éditeur)...");
+        if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'est pas prête (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; }
+        try {
+            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError });
+            console.log("Token Client Google initialisé (Éditeur). Tentative de reconnexion silencieuse...");
+            if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false;
             if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
-        } catch (error) {  
-            console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, "error");  
-            updateAuthUI(false);  
-            if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; }  
-            if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true;  
-        } 
+        } catch (error) { console.error("Erreur google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, "error"); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; }
     }
-
-    function checkAndInitGis() { 
-        console.log(`Vérification GIS (Éditeur - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`);
-        if (typeof google !== 'undefined' && typeof google.accounts !== 'undefined' && typeof google.accounts.oauth2 !== 'undefined' && typeof google.accounts.oauth2.initTokenClient === 'function') { 
-            console.log("API Google OAuth2 détectée (Éditeur)! Lancement de gisInitInternal.");
-            gisInitInternal(); 
-        } else if (gisCheckRetries < GIS_MAX_RETRIES) { 
-            gisCheckRetries++; 
-            setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); 
-        } else { 
-            console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); 
-            showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, "error"); 
-            if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; 
-        } 
-    }
-
 
     function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
     
@@ -369,7 +357,7 @@
         const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`;
         try {
             const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
-            if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { /* handleSignoutClick(false); */ showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; } throw new Error(`Recherche échouée (${searchRes.status})`); }
+            if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { /* handleSignoutClick(false); // Déconnexion n'est plus une option ici */ showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; } throw new Error(`Recherche échouée (${searchRes.status})`); }
             const searchData = await searchRes.json();
             if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; }
             if (!createIfNotExist) { console.log(`Drive (Éditeur): Fichier ${filename} non trouvé et création désactivée.`); return null; } 
@@ -398,7 +386,7 @@
             if (content && content.trim() !== "") {
                 try {
                     const parsedProgram = JSON.parse(content);
-                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { // Ne pas vérifier .length > 0 ici
+                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { 
                         loadedFullProgram = parsedProgram; programsLoaded = true;
                         console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
                         return true;
@@ -443,9 +431,18 @@
 
     function renderStep(step, index, sessionNameForDataset) { 
         const li = document.createElement('li'); li.classList.add('program-step', `${step.type}-step`); li.dataset.index = index; li.dataset.session = sessionNameForDataset;
-        const isExercise = step.type === 'exercise'; const iconClass = isExercise ? 'fa-dumbbell' : 'fa-hourglass-half'; 
+        const isExercise = step.type === 'exercise'; 
+        const defaultColor = stepColorPalette[0];
+        const currentStepColor = step.step_color || defaultColor;
+        li.style.borderLeftColor = isExercise ? currentStepColor : 'var(--color-break)';
+        
+        const iconClass = isExercise ? 'fa-dumbbell' : 'fa-hourglass-half'; 
+        let iconHtml = `<i class="fas ${iconClass} step-icon" style="color: ${isExercise ? currentStepColor : 'var(--color-break)'};" aria-hidden="true"></i>`;
+
         const commonFields = ` <div class="step-field"> <label for="name-${index}">Nom</label> <input type="text" id="name-${index}" data-field="name" value="${step.name ?? ''}" ${!isExercise && step.name === 'Repos' ? 'readonly' : ''}> </div> <div class="step-field" style="grid-column: 1 / -1;"> <label for="details-${index}">Détails</label> <textarea id="details-${index}" data-field="details" placeholder="Infos supplémentaires...">${step.details || ''}</textarea> </div>`;
         let exerciseSpecificFields = '';
+        let colorPaletteHtml = '';
+
         if (isExercise) {
             exerciseSpecificFields = `
                 <div class="step-field"> <label for="reps-${index}">Reps</label> <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12"> </div>
@@ -455,15 +452,34 @@
                 <div class="step-field"> <label for="image_url-${index}">URL Image</label> <input type="text" id="image_url-${index}" data-field="image_url" value="${step.image_url || ''}" placeholder="https://..."> </div>
                 <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note Progression</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment progresser...">${step.progression_note || ''}</textarea> </div>
             `;
-        } else { exerciseSpecificFields = ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `; }
-        li.innerHTML = ` <i class="fas ${iconClass} step-icon" aria-hidden="true"></i> <div class="step-content"> ${commonFields} ${exerciseSpecificFields} </div> <div class="step-actions"> <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button> </div> `; 
+            colorPaletteHtml = `<div class="step-field color-palette-container" style="grid-column: 1 / -1;"><label>Couleur de l'étape</label><div class="color-palette">`;
+            stepColorPalette.forEach(color => {
+                colorPaletteHtml += `<span class="color-swatch ${color === currentStepColor ? 'active' : ''}" style="background-color: ${color};" data-color="${color}" title="${color}"></span>`;
+            });
+            colorPaletteHtml += `</div></div>`;
+        } else { 
+            exerciseSpecificFields = ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `; 
+        }
+        li.innerHTML = ` ${iconHtml} <div class="step-content"> ${commonFields} ${exerciseSpecificFields} ${colorPaletteHtml} </div> <div class="step-actions"> <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button> </div> `; 
         li.querySelector('.delete-step-btn').addEventListener('click', () => handleDeleteStep(index)); 
         li.querySelectorAll('input, textarea, select').forEach(input => { input.addEventListener('input', () => markAsDirty(true)); input.addEventListener('change', (event) => handleEditStep(parseInt(li.dataset.index, 10), event.target.dataset.field, event.target.value)); }); 
+        li.querySelectorAll('.color-swatch').forEach(swatch => { swatch.addEventListener('click', (event) => handleColorChange(index, event.target.dataset.color)); });
         return li; 
+    }
+    function handleColorChange(stepIndex, newColor) {
+        if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return;
+        const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName);
+        if (!currentSession || !currentSession.exercices_et_pauses || stepIndex < 0 || stepIndex >= currentSession.exercices_et_pauses.length) return;
+        const step = currentSession.exercices_et_pauses[stepIndex];
+        if (step.type === 'exercise') {
+            step.step_color = newColor;
+            markAsDirty(true);
+            displayProgram(currentEditingSessionName); // Redessine pour mettre à jour la couleur
+        }
     }
 
     function handleTabClick(sessionName) { initAudioContext(); if (!programsLoaded || !loadedFullProgram) return; if (!sessionName && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) { sessionName = loadedFullProgram.sessions[0].nom_session; } else if (!sessionName) { return; } if (sessionName === currentEditingSessionName) return; if (isDirty) { if (!confirm(`Vous avez des modifications non sauvegardées pour la session "${currentEditingSessionName}". Voulez-vous continuer sans sauvegarder ?`)) { programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === currentEditingSessionName); }); return; } } displayProgram(sessionName); }
-    function handleAddStep(stepType) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession) return; let newStep = {}; if (stepType === 'exercise') newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, unit: "kg", details: "", equipment: "", image_url: "", progression_note: "" }; else newStep = { type: "break", duration: 60, name: "Repos", details: "" }; if (!currentSession.exercices_et_pauses) currentSession.exercices_et_pauses = []; currentSession.exercices_et_pauses.push(newStep); displayProgram(currentEditingSessionName); markAsDirty(true); programDisplay.scrollTop = programDisplay.scrollHeight; showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500, "success"); }
+    function handleAddStep(stepType) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession) return; let newStep = {}; if (stepType === 'exercise') newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, unit: "kg", details: "", equipment: "", image_url: "", progression_note: "", step_color: stepColorPalette[0] }; else newStep = { type: "break", duration: 60, name: "Repos", details: "" }; if (!currentSession.exercices_et_pauses) currentSession.exercices_et_pauses = []; currentSession.exercices_et_pauses.push(newStep); displayProgram(currentEditingSessionName); markAsDirty(true); programDisplay.scrollTop = programDisplay.scrollHeight; showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500, "success"); }
     function handleDeleteStep(index) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const stepToDelete = currentSession.exercices_et_pauses[index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { currentSession.exercices_et_pauses.splice(index, 1); displayProgram(currentEditingSessionName); markAsDirty(true); showMessage("Étape supprimée.", 1500, "info"); } }
     function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration', 'reps_start', 'reps_target_max']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
     function handleDragEnd(event) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses) return; const itemToMove = currentSession.exercices_et_pauses.splice(oldIndex, 1)[0]; currentSession.exercices_et_pauses.splice(newIndex, 0, itemToMove); displayProgram(currentEditingSessionName); markAsDirty(true); }
@@ -487,7 +503,6 @@
 
     function initializeDOMReferences() {
         signInButton = document.getElementById('signin-button'); 
-        // signOutButton = document.getElementById('signout-button'); // Supprimé
         driveStatusElement = document.getElementById('drive-status'); signInButtonPrompt = document.getElementById('signin-button-prompt');
         connectionPrompt = document.getElementById('connection-prompt'); programEditorArea = document.getElementById('program-editor-area');
         programTabsContainer = document.getElementById('program-tabs'); programDisplay = document.getElementById('program-display');
@@ -497,7 +512,6 @@
     function addEventListeners() {
         if(signInButton) signInButton.addEventListener('click', handleAuthClick);
         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
-        // if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true)); // Supprimé
         programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => handleTabClick(btn.dataset.sessionName)); });
         if(addExerciseBtn) addExerciseBtn.addEventListener('click', () => handleAddStep('exercise'));
         if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break'));
@@ -511,7 +525,7 @@
         addEventListeners(); 
         loadSavedTheme();
         updateAuthUI(false); 
-        checkAndInitGis(); 
+        // checkAndInitGis(); // Remplacé par l'attribut onload dans la balise script GIS
         console.log("Éditeur ArmorWorkout Initialisé (v9).");
     });
 
