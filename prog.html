@@ -257,8 +257,6 @@
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const FULL_PROGRAM_FILENAME = "programmeCompletHypertrophieElite_v1.json"; 
-    const GIS_CHECK_INTERVAL = 100; // Non utilisé avec onload, mais gardé pour référence
-    const GIS_MAX_RETRIES = 50;   // Non utilisé avec onload
 
     let loadedFullProgram = null; 
 
@@ -293,7 +291,7 @@
 
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
     
-    function gisLoadedCallback() { // Sera appelée par le script Google une fois chargé
+    function gisLoadedCallback() {
         console.log("GIS script chargé, initialisation de initTokenClient (Éditeur)...");
         const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID");
         if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; }
@@ -304,7 +302,7 @@
             tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError });
             console.log("Token Client Google initialisé (Éditeur). Tentative de reconnexion silencieuse...");
             if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false;
-            if (tokenClient) tokenClient.requestAccessToken({ prompt: '' }); // Important pour la reconnexion auto
+            if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
         } catch (error) { 
             console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, "error"); 
             updateAuthUI(false); 
@@ -326,10 +324,10 @@
             try { 
                 const programLoadSuccess = await loadFullProgramFromDrive(); 
                 if (programLoadSuccess && loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) { 
-                    programsLoaded = true; // Important de le mettre ici
+                    programsLoaded = true; 
                     showMessage("Programme chargé depuis Drive.", 3000, "success"); 
                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } 
-                    handleTabClick(loadedFullProgram.sessions[0]?.nom_session); 
+                    handleTabClick(loadedFullProgram.sessions[0]?.nom_session); // Afficher la première session par défaut
                 } else { 
                     showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé, vide, ou invalide sur Drive. Assurez-vous qu'il existe et contient des sessions.`, 8000, "error"); 
                     if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Prog.'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } 
@@ -377,14 +375,14 @@
         programsLoaded = false; loadedFullProgram = null; 
         if (!googleAccessToken) { showMessage("Connectez-vous à Drive pour charger votre programme.", 5000, "info"); return false; }
         console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
-        programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); 
+        programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); // Ne pas créer avec défaut, juste chercher
         
         if (programFileId) {
             const content = await readFileContent(programFileId);
             if (content && content.trim() !== "") {
                 try {
                     const parsedProgram = JSON.parse(content);
-                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) {
+                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { // On ne vérifie plus .length > 0 ici pour permettre un fichier avec des sessions vides
                         loadedFullProgram = parsedProgram; programsLoaded = true;
                         console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
                         return true;
@@ -409,7 +407,7 @@
     function displayProgram(sessionName) { 
         if (!programDisplay) { console.error("Élément #program-display non trouvé."); return; }
         if (!loadedFullProgram || !loadedFullProgram.sessions) { 
-            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Aucun programme chargé. Vérifiez '${FULL_PROGRAM_FILENAME}' sur Drive.</li>`; 
+            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Aucun programme chargé. Connectez-vous et vérifiez '${FULL_PROGRAM_FILENAME}' sur votre Drive.</li>`; 
             currentEditingSessionName = null; markAsDirty(false); updateEditorActionButtonsState(); return;
         }
         const sessionToDisplay = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
@@ -453,7 +451,7 @@
     function handleDeleteStep(index) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const stepToDelete = currentSession.exercices_et_pauses[index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { currentSession.exercices_et_pauses.splice(index, 1); displayProgram(currentEditingSessionName); markAsDirty(true); showMessage("Étape supprimée.", 1500, "info"); } }
     function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration', 'reps_start', 'reps_target_max']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
     function handleDragEnd(event) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses) return; const itemToMove = currentSession.exercices_et_pauses.splice(oldIndex, 1)[0]; currentSession.exercices_et_pauses.splice(newIndex, 0, itemToMove); displayProgram(currentEditingSessionName); markAsDirty(true); }
-    async function handleSaveProgram() { initAudioContext(); if (!googleAccessToken || !programFileId) { showMessage("Connexion Drive ou ID de fichier programme manquant.", 4000, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder.", 2000, "info"); return; } console.log(`Sauvegarde du programme global sur Drive...`); showMessage(`Sauvegarde du programme en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
+    async function handleSaveProgram() { initAudioContext(); if (!googleAccessToken || !programFileId) { showMessage("Connexion Drive ou ID de fichier programme manquant.", 4000, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder.", 2000, "info"); return; } if (!loadedFullProgram) { showMessage("Aucun programme chargé à sauvegarder.", 3000, "error"); return; } console.log(`Sauvegarde du programme global sur Drive...`); showMessage(`Sauvegarde du programme en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
     function markAsDirty(dirtyState) { isDirty = dirtyState; updateSaveButtonState(); const currentTab = programTabsContainer.querySelector(`button[data-session-name="${currentEditingSessionName}"]`); if (currentTab) currentTab.classList.toggle('is-dirty', dirtyState); }
     function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !programFileId ; saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; }
     function updateEditorActionButtonsState() { const enable = googleAccessToken && programsLoaded && !!currentEditingSessionName && loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0; if(addExerciseBtn) addExerciseBtn.disabled = !enable; if(addBreakBtn) addBreakBtn.disabled = !enable; updateSaveButtonState(); }
@@ -496,7 +494,7 @@
         addEventListeners(); 
         loadSavedTheme();
         updateAuthUI(false); 
-        console.log("Éditeur ArmorWorkout Initialisé (v7).");
+        console.log("Éditeur ArmorWorkout Initialisé (v8 - avec callback GIS).");
     });
 
 </script>
