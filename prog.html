@@ -141,7 +141,7 @@
         @keyframes blink-dot { 50% { opacity: 0.3; } }
 
         #program-display { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; min-height: 200px; background-color: rgba(var(--bg-color-dark-rgb), 0.15); border: 1px dashed var(--border-color); border-radius: var(--border-radius-md); padding: 15px; }
-        #program-display:empty::before { content: "Chargez un programme depuis Google Drive ou sélectionnez un onglet pour commencer."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
+        #program-display:empty::before { content: "Connectez-vous et assurez-vous que '" + FULL_PROGRAM_FILENAME + "' existe sur votre Drive."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
 
         .program-step { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: start; position: relative; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; cursor: grab; }
         .program-step.exercise-step { border-left: 4px solid var(--color-exercise); }
@@ -176,7 +176,7 @@
         #add-exercise-btn:not(:disabled):hover { background-color: rgba(var(--neon-pink-rgb), 0.1); box-shadow: var(--glow-pink); }
         #add-break-btn { border-color: var(--color-break); color: var(--color-break); background: transparent; }
         #add-break-btn:not(:disabled):hover { background-color: rgba(var(--neon-yellow-rgb), 0.1); box-shadow: var(--glow-yellow); }
-        #save-program-btn { border: none; background-color: var(--neon-green); color: #030712; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #save-program-btn { border: none; background-color: var(--neon-green); color: #030712; box-shadow: 0 2px 5px rgba(0,0,0,0.2); } 
         #save-program-btn:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25), var(--glow-green); }
         #save-program-btn:disabled { background-color: var(--secondary-text-color); color: rgba(var(--bg-color-dark-rgb),0.7); box-shadow: none; border-color: var(--secondary-text-color); }
 
@@ -196,7 +196,7 @@
 
     </style>
 </head>
-<body class="logged-out dark-theme">
+<body class="logged-out dark-theme"> 
 
 <header>
     <div class="header-content">
@@ -239,7 +239,7 @@
                     <button id="add-exercise-btn" disabled><i class="fas fa-dumbbell"></i> Ajouter Exercice</button>
                     <button id="add-break-btn" disabled><i class="fas fa-hourglass-half"></i> Ajouter Pause</button>
                 </div>
-                <button id="save-program-btn" disabled><i class="fas fa-save"></i> Sauvegarder Session</button>
+                <button id="save-program-btn" disabled><i class="fas fa-save"></i> Sauvegarder Session Actuelle</button>
             </div>
         </div>
     </main>
@@ -260,7 +260,7 @@
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
 
-    let loadedFullProgram = null; // Sera initialisé par le chargement Drive
+    let loadedFullProgram = null; 
 
     let signInButton, signOutButton, driveStatusElement, 
         signInButtonPrompt, connectionPrompt, programEditorArea,
@@ -269,9 +269,9 @@
 
     let googleAccessToken = null;
     let tokenClient = null;
-    let programFileId = null; // ID du fichier programmeCompletHypertrophieElite_v1.json
-    let programsLoaded = false; // Indique si loadedFullProgram a été chargé avec succès
-    let currentEditingSessionName = null; // Nom de la session en cours d'édition (ex: "PUSH V4...")
+    let programFileId = null; 
+    let programsLoaded = false; 
+    let currentEditingSessionName = null; 
     let isDirty = false;
     let currentTheme = 'dark';
     let messageTimeoutId = null;
@@ -280,10 +280,10 @@
     let audioContext = null;
 
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
-    async function gisInitInternal() { const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
-    function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    async function gisInitInternal() { const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true, "error"); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google.", 10000, true, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
     function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
-    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement du programme...", 2500, "info"); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { programsLoaded = await loadFullProgramFromDrive(); if (programsLoaded && loadedFullProgram) { showMessage("Programme chargé depuis Drive.", 3000, "success"); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } handleTabClick(loadedFullProgram.sessions[0]?.nom_session); } else { showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé ou invalide sur Drive. Veuillez le créer/corriger.`, 8000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Prog.'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement du programme Drive (Éditeur):", error); showMessage("Erreur majeure chargement programme.", 6000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Éditeur)." }); } }
+    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement du programme...", 2500, "info"); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { programsLoaded = await loadFullProgramFromDrive(); if (programsLoaded && loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) { showMessage("Programme chargé depuis Drive.", 3000, "success"); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } handleTabClick(loadedFullProgram.sessions[0]?.nom_session); } else { showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé, vide ou invalide sur Drive. Assurez-vous qu'il existe et contient des sessions.`, 8000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Prog.'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement du programme Drive (Éditeur):", error); showMessage("Erreur majeure chargement programme.", 6000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Éditeur)." }); } }
     function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000, "info"); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true, "error"); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
     function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { googleAccessToken = null; programFileId = null; programsLoaded = false; loadedFullProgram = null; currentEditingSessionName = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000, "info"); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; updateAuthUI(false); }); }
     async function findOrCreateFile(filename, defaultContentStr = "{}", mimeType = 'application/json', createIfNotExist = false) { 
@@ -314,34 +314,52 @@
         if (!googleAccessToken) { showMessage("Connectez-vous à Drive pour charger votre programme.", 5000, "info"); return false; }
         console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
         programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); 
+        
         if (programFileId) {
             const content = await readFileContent(programFileId);
-            if (content && content.trim() !== "" && content.trim() !== "{}") {
+            if (content && content.trim() !== "") {
                 try {
                     const parsedProgram = JSON.parse(content);
-                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions) && parsedProgram.sessions.length > 0) {
+                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) {
                         loadedFullProgram = parsedProgram; programsLoaded = true;
-                        console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`); return true;
-                    } else { console.error(`'${FULL_PROGRAM_FILENAME}' malformé.`); showMessage(`'${FULL_PROGRAM_FILENAME}' sur Drive malformé ou vide.`, 5000, true, "error"); return false; }
-                } catch (e) { console.error(`Erreur parsing '${FULL_PROGRAM_FILENAME}':`, e); showMessage(`'${FULL_PROGRAM_FILENAME}' corrompu. Erreur: ${e.message}`, 7000, true, "error"); return false; }
-            } else { showMessage(`'${FULL_PROGRAM_FILENAME}' vide sur Drive. Veuillez le remplir.`, 7000, true, "info"); return false; }
-        } else { showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer.`, 7000, true, "info"); return false; }
+                        console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
+                        return true;
+                    } else {
+                        console.error(`'${FULL_PROGRAM_FILENAME}' malformé. Structure attendue : { "sessions": [...] }.`);
+                        showMessage(`'${FULL_PROGRAM_FILENAME}' sur Drive est malformé ou ne contient pas de sessions.`, 5000, true, "error"); return false; 
+                    }
+                } catch (e) {
+                    console.error(`Erreur parsing programme global '${FULL_PROGRAM_FILENAME}' depuis Drive:`, e, "\nContenu (début):", content.substring(0, 200) + "...");
+                    showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu ou invalide. Vérifiez sa syntaxe JSON. Erreur: ${e.message}`, 7000, true, "error"); return false;
+                }
+            } else { 
+                 console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé ou vide sur Drive.`); 
+                 showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé ou vide sur Drive. Veuillez le créer et le remplir correctement.`, 7000, true, "info"); return false; 
+            }
+        } else { 
+            console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive (findOrCreateFile a retourné null).`); 
+            showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer et le remplir.`, 7000, true, "info"); return false; 
+        }
     }
 
     function displayProgram(sessionName) { 
-        if (!programDisplay || !loadedFullProgram || !loadedFullProgram.sessions) { console.warn("Impossible d'afficher le programme: données manquantes."); return; }
+        if (!programDisplay) return;
+        if (!loadedFullProgram || !loadedFullProgram.sessions) { 
+            console.warn("Impossible d'afficher le programme: 'loadedFullProgram' est null ou ne contient pas de sessions."); 
+            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Aucun programme chargé. Vérifiez '${FULL_PROGRAM_FILENAME}' sur Drive.</li>`;
+            currentEditingSessionName = null; markAsDirty(false); updateEditorActionButtonsState(); return;
+        }
         const sessionToDisplay = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
-        if (!sessionToDisplay) { console.warn(`Session '${sessionName}' non trouvée.`); programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Session '${sessionName}' non trouvée.</li>`; currentEditingSessionName = null; markAsDirty(false); updateEditorActionButtonsState(); return; }
-        
-        console.log(`Affichage de la session: ${sessionName}`);
+        if (!sessionToDisplay) { 
+            console.warn(`Session '${sessionName}' non trouvée.`); 
+            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Session '${sessionName}' non trouvée dans le programme chargé.</li>`; 
+            currentEditingSessionName = null; markAsDirty(false); updateEditorActionButtonsState(); return;
+        }
         currentEditingSessionName = sessionName; programDisplay.innerHTML = ''; 
         programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === sessionName); btn.disabled = !programsLoaded; }); 
-        
         if (sessionToDisplay.exercices_et_pauses && sessionToDisplay.exercices_et_pauses.length > 0) {
             sessionToDisplay.exercices_et_pauses.forEach((step, index) => { const stepElement = renderStep(step, index, sessionName); programDisplay.appendChild(stepElement); });
-        } else {
-            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Cette session est vide. Ajoutez des étapes !</li>`;
-        }
+        } else { programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Cette session est vide. Ajoutez des étapes !</li>`; }
         markAsDirty(false); updateEditorActionButtonsState(); 
         if (sortableInstance) sortableInstance.destroy(); 
         if(programDisplay) sortableInstance = new Sortable(programDisplay, { animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', handle: '.program-step', onEnd: handleDragEnd }); 
@@ -361,9 +379,7 @@
                 <div class="step-field"> <label for="image_url-${index}">URL Image</label> <input type="text" id="image_url-${index}" data-field="image_url" value="${step.image_url || ''}" placeholder="https://..."> </div>
                 <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note Progression</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment progresser...">${step.progression_note || ''}</textarea> </div>
             `;
-        } else { // Break
-            exerciseSpecificFields = ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `;
-        }
+        } else { exerciseSpecificFields = ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `; }
         li.innerHTML = ` <i class="fas ${iconClass} step-icon" aria-hidden="true"></i> <div class="step-content"> ${commonFields} ${exerciseSpecificFields} </div> <div class="step-actions"> <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button> </div> `; 
         li.querySelector('.delete-step-btn').addEventListener('click', () => handleDeleteStep(index)); 
         li.querySelectorAll('input, textarea, select').forEach(input => { input.addEventListener('input', () => markAsDirty(true)); input.addEventListener('change', (event) => handleEditStep(parseInt(li.dataset.index, 10), event.target.dataset.field, event.target.value)); }); 
@@ -375,23 +391,25 @@
     function handleDeleteStep(index) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const stepToDelete = currentSession.exercices_et_pauses[index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { currentSession.exercices_et_pauses.splice(index, 1); displayProgram(currentEditingSessionName); markAsDirty(true); showMessage("Étape supprimée.", 1500, "info"); } }
     function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration', 'reps_start', 'reps_target_max']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
     function handleDragEnd(event) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses) return; const itemToMove = currentSession.exercices_et_pauses.splice(oldIndex, 1)[0]; currentSession.exercices_et_pauses.splice(newIndex, 0, itemToMove); displayProgram(currentEditingSessionName); markAsDirty(true); }
-    async function handleSaveProgram() { initAudioContext(); if (!currentEditingSessionName || !googleAccessToken || !programFileId) { showMessage("Impossible de sauvegarder: Session ou connexion Drive manquante.", 4000, true, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder pour cette session.", 2000, "info"); return; } console.log(`Sauvegarde du programme global (session: ${currentEditingSessionName}) sur Drive...`); showMessage(`Sauvegarde de "${currentEditingSessionName}" en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Session`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, true, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
+    async function handleSaveProgram() { initAudioContext(); if (!currentEditingSessionName || !googleAccessToken || !programFileId) { showMessage("Impossible de sauvegarder: Session ou connexion Drive manquante.", 4000, true, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder pour cette session.", 2000, "info"); return; } console.log(`Sauvegarde du programme global (session: ${currentEditingSessionName}) sur Drive...`); showMessage(`Sauvegarde de "${currentEditingSessionName}" en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Session Actuelle`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, true, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
     function markAsDirty(dirtyState) { isDirty = dirtyState; updateSaveButtonState(); const currentTab = programTabsContainer.querySelector(`button[data-session-name="${currentEditingSessionName}"]`); if (currentTab) currentTab.classList.toggle('is-dirty', dirtyState); }
-    function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !currentEditingSessionName; if (currentEditingSessionName) saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Session`; else saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder`; }
+    function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !currentEditingSessionName; if (currentEditingSessionName) saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder ${currentEditingSessionName.split(" ")[0]}`; else saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder`; }
     function updateEditorActionButtonsState() { const enable = googleAccessToken && programsLoaded && !!currentEditingSessionName && loadedFullProgram && loadedFullProgram.sessions.length > 0; if(addExerciseBtn) addExerciseBtn.disabled = !enable; if(addBreakBtn) addBreakBtn.disabled = !enable; updateSaveButtonState(); }
 
     function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); try { localStorage.setItem('armorWorkoutEditorTheme', theme); } catch (e) {} }
     function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('armorWorkoutEditorTheme') || 'dark'; } catch (e) {} applyTheme(savedTheme); if(document.getElementById('current-year-editor')) document.getElementById('current-year-editor').textContent = new Date().getFullYear(); }
 
-    function showMessage(msg, duration = 3000, isErrorOrType = false, typeOverride = null) { 
+    function showMessage(msg, duration = 3000, isSuccessOrInfo = true, type = null) { 
         if (!messageArea) return;
         messageArea.textContent = msg;
         messageArea.classList.remove('error', 'success', 'info'); 
-        let finalType = typeof isErrorOrType === 'string' ? isErrorOrType : (isErrorOrType ? 'error' : 'info');
-        if (typeOverride) finalType = typeOverride;
+        let finalType = type;
+        if (finalType === null) {
+            finalType = isSuccessOrInfo ? (isSuccessOrInfo === true || isSuccessOrInfo === "success" ? "success" : "info") : "error";
+        }
         if (finalType === 'error') messageArea.classList.add('error');
         else if (finalType === 'success') messageArea.classList.add('success');
-        else messageArea.classList.add('info');
+        else messageArea.classList.add('info'); 
         messageArea.classList.add('visible');
         if (messageTimeoutId) clearTimeout(messageTimeoutId); 
         messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration);
@@ -415,10 +433,26 @@
         if(saveProgramBtn) saveProgramBtn.addEventListener('click', handleSaveProgram);
         window.addEventListener('beforeunload', (event) => { if (isDirty) { event.preventDefault(); event.returnValue = ''; } });
     }
+    
+    // Déplacer updateAuthUI avant son premier appel potentiel dans checkAndInitGis -> tokenCallback -> ...
+    function updateAuthUI(isLoggedIn) { 
+        const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); 
+        if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; 
+        if (programEditorArea) programEditorArea.style.display = isLoggedIn ? 'flex' : 'none'; 
+        if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; 
+        if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; 
+        if(signOutButton) signOutButton.disabled = !isLoggedIn; 
+        if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } 
+        programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.disabled = !isLoggedIn || !programsLoaded; btn.classList.remove('is-dirty'); }); 
+        if (!isLoggedIn) { if(programDisplay) programDisplay.innerHTML = ''; currentEditingSessionName = null; isDirty = false; } 
+        updateEditorActionButtonsState(); 
+    }
+
 
     document.addEventListener('DOMContentLoaded', () => {
         initializeDOMReferences(); initAudioContext(); addEventListeners(); loadSavedTheme();
-        updateAuthUI(false); checkAndInitGis(); 
+        updateAuthUI(false); 
+        checkAndInitGis(); 
         console.log("Éditeur ArmorWorkout Initialisé.");
     });
 
