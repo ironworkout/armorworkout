@@ -4,85 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArmorWorkout - Éditeur de Programme</title>
-    <!-- Font Awesome (CDNJS for reliability) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Google Fonts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- SortableJS (pour Drag & Drop) - HASH VÉRIFIÉ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <!-- Google Identity Services (GIS) - chargé à la fin du body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px; /* Espacement en dessous des boutons */
-            padding: 0 25px; /* Assurer l'alignement avec le header-content */
-            justify-content: center;
-        }
-        /* --- Variables Globales & Thèmes (Identiques) --- */
         :root {
-            /* Thème Sombre (Base) */
-            --bg-color-dark: #0D1117; --secondary-bg-color-dark: #161B22; --primary-text-color-dark: #c9d1d9; --secondary-text-color-dark: #8b949e; --border-color-dark: #30363d; --accent-border-color-dark: #58a6ff33; --input-bg-dark: #0d1117;
-            /* Couleurs Néon (Thème Sombre) */
-            --neon-blue: #58a6ff; --neon-pink: #f778ba; --neon-red: #ff7b72; --neon-yellow: #facc15; --neon-green: #3fb950; --neon-purple: #bc8cff; --neon-orange: #f9a825;
-            /* Glows (Thème Sombre) */
-            --glow-blue: 0 0 12px rgba(88, 166, 255, 0.6); --glow-pink: 0 0 12px rgba(247, 120, 186, 0.6); --glow-red: 0 0 10px rgba(255, 123, 114, 0.6); --glow-yellow: 0 0 10px rgba(250, 204, 21, 0.5); --glow-green: 0 0 10px rgba(63, 185, 80, 0.6); --glow-purple: 0 0 12px rgba(188, 140, 255, 0.6); --glow-orange: 0 0 10px rgba(249, 168, 37, 0.6);
-             /* Couleurs spécifiques aux types (simplifié pour éditeur) */
-            --color-exercise: var(--neon-pink);
+            --bg-color-dark: #030712; 
+            --secondary-bg-color-dark: #0B132B; 
+            --primary-text-color-dark: #F0F4F8; 
+            --secondary-text-color-dark: #A0AEC0; 
+            --border-color-dark: #1E293B; 
+            --electric-blue: #00BFFF; 
+            --electric-cyan: #22D3EE; 
+            --electric-blue-light: #4D94FF; 
+            --glow-accent: #0AF; 
+            --electric-blue-rgb: 0, 191, 255;
+            --electric-cyan-rgb: 34, 211, 238;
+            --glow-accent-rgb: 0, 170, 255;
+            --secondary-bg-color-dark-rgb: 11, 19, 43;
+            --bg-color-dark-rgb: 3, 7, 18;
+            --neon-pink: #FF1493; 
+            --neon-purple: #9400D3; 
+            --neon-green: #39FF14; 
+            --neon-red: #FF3131; 
+            --neon-yellow: #FFF01F; 
+            --neon-pink-rgb: 255, 20, 147;
+            --neon-purple-rgb: 148, 0, 211;
+            --neon-green-rgb: 57, 255, 20;
+            --neon-red-rgb: 255, 49, 49;
+            --neon-yellow-rgb: 255, 240, 31;
+            --glow-red: 0 0 8px var(--neon-red), 0 0 12px rgba(var(--neon-red-rgb),0.7);
+            --glow-green: 0 0 8px var(--neon-green), 0 0 12px rgba(var(--neon-green-rgb),0.7);
+            --glow-yellow: 0 0 8px var(--neon-yellow), 0 0 12px rgba(var(--neon-yellow-rgb),0.7);
+            --glow-pink: 0 0 8px var(--neon-pink), 0 0 12px rgba(var(--neon-pink-rgb),0.7);
+            --glow-purple: 0 0 8px var(--neon-purple), 0 0 12px rgba(var(--neon-purple-rgb),0.7);
+            --electric-yellow: var(--neon-yellow); 
+            --electric-yellow-rgb: var(--neon-yellow-rgb);
+            --color-exercise: var(--neon-pink); 
             --color-break: var(--neon-yellow);
-            /* --- Autres Variables --- */
-            --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --border-radius-lg: 12px; --border-radius-md: 8px; --border-radius-sm: 6px; --transition-speed: 0.25s;
-            /* Initialisation Thème Sombre par Défaut */
-            --bg-color: var(--bg-color-dark); --secondary-bg-color: var(--secondary-bg-color-dark); --primary-text-color: var(--primary-text-color-dark); --secondary-text-color: var(--secondary-text-color-dark); --border-color: var(--border-color-dark); --accent-border-color: var(--accent-border-color-dark); --input-bg: var(--input-bg-dark);
-            /* Variables RGBA */
-            --neon-blue-rgb: 88, 166, 255; --neon-pink-rgb: 247, 120, 186; --neon-red-rgb: 255, 123, 114; --neon-yellow-rgb: 250, 204, 21; --neon-green-rgb: 63, 185, 80; --neon-purple-rgb: 188, 140, 255; --neon-orange-rgb: 249, 168, 37;
-            --secondary-text-color-dark-rgb: 139, 148, 158; --bg-color-dark-rgb: 13, 17, 23; --secondary-bg-color-dark-rgb: 22, 27, 34; --primary-text-color-dark-rgb: 201, 209, 217;
-            --color-exercise-rgb: 247, 120, 186; --color-break-rgb: 250, 204, 21;
-             --link-color: var(--neon-blue); /* Ajout link color */
-             --button-connect-color: var(--neon-green); --button-connect-glow: var(--glow-green); --button-disconnect-color: var(--neon-red); --button-disconnect-glow: var(--glow-red);
+            --font-family-main: 'Inter', sans-serif;
+            --font-family-titles: 'Orbitron', sans-serif; 
+            --border-radius-lg: 10px;
+            --border-radius-md: 8px;
+            --border-radius-sm: 6px;
+            --transition-speed: 0.3s;
+            --bg-color: var(--bg-color-dark);
+            --secondary-bg-color: var(--secondary-bg-color-dark);
+            --primary-text-color: var(--primary-text-color-dark);
+            --secondary-text-color: var(--secondary-text-color-dark);
+            --border-color: var(--border-color-dark);
+            --accent-border-color: rgba(var(--electric-blue-rgb), 0.4); 
+            --input-bg: #1A202C; 
+            --link-color: var(--electric-cyan);
+            --button-connect-color: var(--neon-green);
+            --button-connect-glow: var(--glow-green);
+            --button-disconnect-color: var(--neon-red);
+            --button-disconnect-glow: var(--glow-red);
         }
 
-        body.light-theme {
-            /* Thème Clair (Identique) */
-            --bg-color: #ffffff; --secondary-bg-color: #f6f8fa; --primary-text-color: #24292f; --secondary-text-color: #57606a; --border-color: #d0d7de; --accent-border-color: #0969da33; --input-bg: #f6f8fa;
-            --neon-blue: #0969da; --neon-pink: #bf3989; --neon-red: #d73a49; --neon-yellow: #dbab09; --neon-green: #2da44e; --neon-purple: #8250df; --neon-orange: #f66a0a;
-            --glow-blue: 0 0 8px rgba(9, 105, 218, 0.3); --glow-pink: 0 0 8px rgba(191, 57, 137, 0.3); --glow-red: 0 0 8px rgba(215, 58, 73, 0.3); --glow-yellow: 0 0 8px rgba(219, 171, 9, 0.3); --glow-green: 0 0 8px rgba(45, 164, 78, 0.3); --glow-purple: 0 0 8px rgba(130, 80, 223, 0.3); --glow-orange: 0 0 8px rgba(246, 106, 10, 0.3);
-             --link-color: #0969da;
-            --bg-color-dark-rgb: 255, 255, 255; --secondary-bg-color-dark-rgb: 246, 248, 250; --primary-text-color-dark-rgb: 36, 41, 47; --secondary-text-color-dark-rgb: 87, 96, 106;
-            --color-exercise-rgb: 191, 57, 137; --color-break-rgb: 219, 171, 9; --neon-orange-rgb: 246, 106, 10;
-        }
-
-        /* --- Styles de Base & Réinitialisation (Identiques) --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; font-size: 16px; }
         body {
-            font-family: var(--font-family); background-color: var(--bg-color); color: var(--primary-text-color);
-            line-height: 1.6; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            font-family: var(--font-family-main); background-color: var(--bg-color); color: var(--primary-text-color);
+            line-height: 1.65; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
             display: flex; flex-direction: column; min-height: 100vh;
-            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; overflow-x: hidden;
+            background-image: radial-gradient(ellipse at center, rgba(var(--electric-blue-rgb), 0.08) 0%, transparent 60%),
+                              linear-gradient(0deg, rgba(var(--bg-color-dark-rgb), 0.5) 0%, rgba(var(--bg-color-dark-rgb), 0.9) 100%);
+            position: relative; 
+        }
+        body::before { 
+            content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: linear-gradient(rgba(var(--electric-blue-rgb), 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(var(--electric-blue-rgb), 0.05) 1px, transparent 1px);
+            background-size: 30px 30px; z-index: -1; opacity: 0.7;
         }
         .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
-
-        /* --- En-tête (Identique) --- */
-        header { padding: 15px 0; border-bottom: 1px solid var(--border-color); transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease; position: sticky; top: 0; z-index: 1000; background-color: rgba(var(--bg-color-dark-rgb), 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        
+        header {
+            padding: 15px 0; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); backdrop-filter: blur(8px) saturate(150%);
+            border-bottom: 1px solid rgba(var(--electric-blue-rgb), 0.3); box-shadow: 0 2px 15px rgba(var(--electric-blue-rgb), 0.1);
+            position: sticky; top:0; z-index: 1000; 
+        }
         .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 25px; flex-wrap: wrap; gap: 15px 20px; }
-        header h1 { font-size: 1.5em; color: var(--primary-text-color); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        header h1 i { color: var(--neon-blue); animation: pulse 2s infinite ease-in-out; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
-        .header-link { color: var(--secondary-text-color); font-size: 0.9em; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: color var(--transition-speed) ease; }
-        .header-link:hover { color: var(--link-color); }
-
-        /* Actions Header (Identique) */
-        .header-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        header h1 { font-size: 1.6em; color: var(--primary-text-color); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; font-family: var(--font-family-titles); text-shadow: 0 0 8px rgba(var(--electric-cyan-rgb), 0.7); }
+        header h1 i { color: var(--electric-cyan); animation: subtlePulse 3s infinite ease-in-out; }
+        @keyframes subtlePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
+        .header-link { color: var(--secondary-text-color); font-size: 0.9em; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: color var(--transition-speed) ease; padding: 8px 12px; border-radius: var(--border-radius-sm); border: 1px solid transparent; }
+        .header-link:hover { color: var(--link-color); background-color: rgba(var(--electric-blue-rgb), 0.1); border-color: rgba(var(--electric-blue-rgb), 0.4); text-shadow: 0 0 5px rgba(var(--electric-blue-rgb), 0.5); }
+        
+        .header-actions { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .auth-controls { display: flex; gap: 10px; align-items: center; }
-        .auth-controls button { background: none; border: 1px solid var(--accent-border-color); color: var(--secondary-text-color); padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 0.85em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px; }
-        .auth-controls button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; background-color: transparent !important; }
-        .auth-controls button:not(:disabled):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
-        #signin-button { border-color: var(--button-connect-color); color: var(--button-connect-color); }
-        #signin-button:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
+        .auth-controls button, .nav-buttons a {
+            background: none; border: 1px solid var(--accent-border-color); color: var(--secondary-text-color); padding: 6px 14px;
+            border-radius: var(--border-radius-md); font-size: 0.85em; font-weight: 500; cursor: pointer;
+            transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+        }
+        .auth-controls button:disabled, .nav-buttons a.disabled-link-look { opacity: 0.5; cursor: not-allowed; pointer-events: auto; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; background-color: transparent !important; }
+        .auth-controls button:not(:disabled):hover, .nav-buttons a:not(.disabled-link-look):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
+        #signin-button, #signin-button-prompt { border-color: var(--button-connect-color); color: var(--button-connect-color); }
+        #signin-button:not(:disabled):hover, #signin-button-prompt:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
         #signout-button { border-color: var(--button-disconnect-color); color: var(--button-disconnect-color); }
         #signout-button:not(:disabled):hover { background-color: rgba(var(--neon-red-rgb), 0.1); box-shadow: var(--glow-red); border-color: var(--neon-red); }
         #drive-status { font-size: 0.8em; color: var(--secondary-text-color); margin-left: 5px; transition: opacity 0.3s, color 0.3s, border-color 0.3s; min-width: fit-content; text-align: right; font-style: normal; padding: 4px 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none; }
@@ -90,111 +113,94 @@
         #drive-status.error { color: var(--neon-red); border-color: var(--neon-red); }
         #drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
         @keyframes blink-border { 50% { border-color: rgba(var(--neon-yellow-rgb), 0.4); } }
-        .theme-toggle button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.2em; padding: 5px; cursor: pointer; transition: color var(--transition-speed) ease; }
-        .theme-toggle button:hover { color: var(--neon-yellow); }
+        
         body.logged-out #signin-button { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-out #drive-status { display: none; }
         body.logged-in #signin-button { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-in #drive-status { display: inline-block; }
 
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; padding: 0; justify-content: center; } 
+        .nav-buttons a { padding: 8px 16px; font-size: 0.9em; }
+        .nav-buttons a:hover { background-color: rgba(var(--electric-blue-rgb), 0.1); border-color: rgba(var(--electric-blue-rgb), 0.4); text-shadow: 0 0 5px rgba(var(--electric-blue-rgb), 0.5); color: var(--electric-blue); }
 
-        /* --- Contenu Principal (Identique) --- */
-        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
-        main h2 { font-size: 1.6em; font-weight: 700; margin-bottom: 30px; text-align: center; color: var(--primary-text-color); display: flex; align-items: center; gap: 10px; justify-content: center;}
-        main h2 i { color: var(--neon-blue); }
+        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 20px; } 
+        main h2 { font-size: 1.8em; font-weight: 700; margin-bottom: 25px; text-align: center; color: var(--primary-text-color); display: flex; align-items: center; gap: 12px; justify-content: center; font-family: var(--font-family-titles); text-shadow: 0 0 8px rgba(var(--electric-cyan-rgb), 0.7);}
+        main h2 i { color: var(--electric-cyan); animation: subtlePulse 3s infinite ease-in-out; }
 
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 0 25px;
-            justify-content: center;
-        }
-        .nav-buttons button {
-             padding: 6px 14px;
-        }
-        /* Message si non connecté (Identique) */
         #connection-prompt { text-align: center; padding: 40px 20px; background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); border: 1px dashed var(--border-color); margin: 20px auto; max-width: 600px; }
         #connection-prompt p { margin-bottom: 15px; color: var(--secondary-text-color); }
-        #connection-prompt button { border-color: var(--button-connect-color); color: var(--button-connect-color); background: transparent; padding: 8px 18px; border: 1px solid; border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 6px; }
-        #connection-prompt button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--secondary-text-color) !important; box-shadow: none !important; background-color: transparent !important; }
-        #connection-prompt button:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
+        #connection-prompt button { padding: 8px 18px; border: 1px solid; font-size: 0.9em; }
 
-        /* Zone de l'éditeur (Identique) */
-        #program-editor-area { width: 100%; background-color: var(--secondary-bg-color); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 25px; display: none; flex-direction: column; gap: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #program-editor-area { width: 100%; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.6); backdrop-filter: blur(10px) saturate(130%); border-radius: var(--border-radius-lg); border: 1px solid rgba(var(--electric-blue-rgb), 0.2); padding: 25px; display: none; flex-direction: column; gap: 25px; box-shadow: 0 5px 25px rgba(var(--bg-color-dark-rgb), 0.5), inset 0 0 15px rgba(var(--electric-blue-rgb), 0.1); }
         body.logged-in #program-editor-area { display: flex; }
 
-        /* Onglets de sélection du programme (Identique) */
         .program-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; flex-wrap: wrap; }
         .program-tabs button { padding: 8px 18px; font-size: 1em; font-weight: 500; border: none; background: none; color: var(--secondary-text-color); cursor: pointer; transition: all var(--transition-speed) ease; border-radius: var(--border-radius-md); position: relative; }
         .program-tabs button:disabled { color: rgba(var(--secondary-text-color-dark-rgb), 0.5); cursor: not-allowed; opacity: 0.6; }
-        .program-tabs button:not(:disabled):hover { background-color: rgba(var(--primary-text-color-dark-rgb), 0.05); color: var(--primary-text-color); }
-        .program-tabs button.active { color: var(--neon-blue); background-color: rgba(var(--neon-blue-rgb), 0.1); font-weight: 700; }
+        .program-tabs button:not(:disabled):hover { background-color: rgba(var(--electric-blue-rgb), 0.1); color: var(--primary-text-color); }
+        .program-tabs button.active { color: var(--electric-cyan); background-color: rgba(var(--electric-cyan-rgb), 0.15); font-weight: 700; border: 1px solid var(--electric-cyan); box-shadow: 0 0 10px rgba(var(--electric-cyan-rgb),0.3); }
         .program-tabs button.is-dirty::after { content: '●'; position: absolute; top: 5px; right: 8px; font-size: 0.7em; color: var(--neon-orange); animation: blink-dot 1.5s infinite ease-in-out; }
         @keyframes blink-dot { 50% { opacity: 0.3; } }
 
-        /* Zone d'affichage du programme (Identique) */
-        #program-display { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; min-height: 200px; background-color: rgba(var(--bg-color-dark-rgb), 0.1); border: 1px dashed var(--border-color); border-radius: var(--border-radius-md); padding: 15px; }
-        #program-display:empty::before { content: "Glissez-déposez les étapes ici ou utilisez les boutons 'Ajouter'."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
+        #program-display { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; min-height: 200px; background-color: rgba(var(--bg-color-dark-rgb), 0.15); border: 1px dashed var(--border-color); border-radius: var(--border-radius-md); padding: 15px; }
+        #program-display:empty::before { content: "Chargez un programme depuis Google Drive ou sélectionnez un onglet pour commencer."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
 
-        /* Style d'une étape (carte) (Identique) */
         .program-step { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: start; position: relative; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; cursor: grab; }
         .program-step.exercise-step { border-left: 4px solid var(--color-exercise); }
         .program-step.break-step { border-left: 4px solid var(--color-break); }
-        .program-step:hover { border-color: var(--accent-border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .program-step:hover { border-color: var(--accent-border-color); box-shadow: 0 2px 8px rgba(var(--bg-color-dark-rgb),0.3); }
         .step-icon { font-size: 1.3em; color: var(--secondary-text-color); padding-top: 5px; grid-column: 1 / 2; align-self: center; }
         .exercise-step .step-icon { color: var(--color-exercise); }
         .break-step .step-icon { color: var(--color-break); }
         .step-content { grid-column: 2 / 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
         .step-field { display: flex; flex-direction: column; gap: 4px; }
         .step-field label { font-size: 0.8em; font-weight: 500; color: var(--secondary-text-color); }
-        .step-field input[type="text"], .step-field input[type="number"], .step-field textarea { width: 100%; padding: 8px 10px; font-size: 0.9em; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--primary-text-color); transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
-        .step-field input:focus, .step-field textarea:focus { border-color: var(--neon-blue); outline: none; box-shadow: 0 0 0 2px rgba(var(--neon-blue-rgb), 0.3); }
+        .step-field input[type="text"], .step-field input[type="number"], .step-field textarea, .step-field select { width: 100%; padding: 8px 10px; font-size: 0.9em; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--primary-text-color); transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
+        .step-field input:focus, .step-field textarea:focus, .step-field select:focus { border-color: var(--electric-cyan); outline: none; box-shadow: 0 0 0 2px rgba(var(--electric-cyan-rgb), 0.3); }
         .step-field textarea { min-height: 60px; resize: vertical; font-family: inherit;}
         .step-field input[type="number"] { -moz-appearance: textfield; width: 80px; }
         .step-field input[type="number"]::-webkit-outer-spin-button, .step-field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .step-field select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A0AEC0'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.22a.75.75 0 011.06 0L8 8.94l2.72-2.72a.75.75 0 111.06 1.06l-3.25 3.25a.75.75 0 01-1.06 0L4.22 7.28a.75.75 0 010-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 16px 16px; padding-right: 30px; }
+        .step-field option { background-color: var(--secondary-bg-color); color: var(--primary-text-color); }
         .step-actions { grid-column: 3 / 4; display: flex; flex-direction: column; gap: 8px; align-items: center; padding-top: 5px; }
         .step-actions button { background: none; border: none; color: var(--secondary-text-color); font-size: 1.1em; cursor: pointer; padding: 5px; transition: color var(--transition-speed) ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         .step-actions button:hover { color: var(--primary-text-color); background-color: rgba(var(--primary-text-color-dark-rgb), 0.1); }
         .step-actions .delete-step-btn:hover { color: var(--neon-red); background-color: rgba(var(--neon-red-rgb), 0.1); }
 
-        /* Styles pour Drag & Drop (Identique) */
-        .program-step.sortable-ghost { opacity: 0.4; background-color: rgba(var(--neon-blue-rgb), 0.1); border-style: dashed; }
-        .program-step.sortable-chosen { cursor: grabbing; border-color: var(--neon-blue); box-shadow: 0 4px 12px rgba(var(--neon-blue-rgb), 0.3); }
+        .program-step.sortable-ghost { opacity: 0.4; background-color: rgba(var(--electric-blue-rgb), 0.1); border-style: dashed; }
+        .program-step.sortable-chosen { cursor: grabbing; border-color: var(--electric-cyan); box-shadow: 0 4px 12px rgba(var(--electric-cyan-rgb), 0.3); }
 
-        /* Boutons d'action globaux (Identique) */
         .editor-actions { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 25px; margin-top: 10px; }
         .add-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .editor-actions button { padding: 9px 20px; font-size: 0.95em; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; }
         .editor-actions button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         #add-exercise-btn { border-color: var(--color-exercise); color: var(--color-exercise); background: transparent; }
-        #add-exercise-btn:not(:disabled):hover { background-color: rgba(var(--color-exercise-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--color-exercise-rgb), 0.5); }
+        #add-exercise-btn:not(:disabled):hover { background-color: rgba(var(--neon-pink-rgb), 0.1); box-shadow: var(--glow-pink); }
         #add-break-btn { border-color: var(--color-break); color: var(--color-break); background: transparent; }
-        #add-break-btn:not(:disabled):hover { background-color: rgba(var(--color-break-rgb), 0.1); box-shadow: 0 0 8px rgba(var(--color-break-rgb), 0.5); }
-        #save-program-btn { border: none; background-color: var(--neon-green); color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        #save-program-btn:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
-        #save-program-btn:disabled { background-color: var(--secondary-text-color); color: rgba(255,255,255,0.7); box-shadow: none; border-color: var(--secondary-text-color); }
+        #add-break-btn:not(:disabled):hover { background-color: rgba(var(--neon-yellow-rgb), 0.1); box-shadow: var(--glow-yellow); }
+        #save-program-btn { border: none; background-color: var(--neon-green); color: #030712; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #save-program-btn:not(:disabled):hover { filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.25), var(--glow-green); }
+        #save-program-btn:disabled { background-color: var(--secondary-text-color); color: rgba(var(--bg-color-dark-rgb),0.7); box-shadow: none; border-color: var(--secondary-text-color); }
 
-
-        /* --- Zone de Messages Flottante (Identique) --- */
         .message-area { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.9); color: var(--primary-text-color); border: 1px solid var(--border-color); padding: 12px 25px; border-radius: var(--border-radius-md); z-index: 3000; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease, bottom 0.5s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; pointer-events: none; font-size: 0.95em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); max-width: 90%; text-align: center; }
         .message-area.visible { opacity: 1; transform: translate(-50%, 0); bottom: 40px; pointer-events: auto; }
+        .message-area.error { background-color: rgba(var(--neon-red-rgb), 0.8); color: #fff; border-color: var(--neon-red); text-shadow: 0 0 5px rgba(0,0,0,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px var(--glow-red); }
+        .message-area.success { background-color: rgba(var(--neon-green-rgb), 0.8); color: #030712; border-color: var(--neon-green); text-shadow: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px var(--glow-green); }
+        .message-area.info { background-color: rgba(var(--electric-blue-rgb), 0.8); color: #fff; border-color: var(--electric-blue); box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px var(--glow-blue); }
 
-        /* --- Pied de Page (Identique) --- */
-        footer { color: var(--secondary-text-color); opacity: 0.7; border-top: 1px solid var(--border-color); margin-top: 60px; padding: 25px; text-align: center; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; }
+        footer { color: var(--secondary-text-color); opacity: 0.7; border-top: 1px solid rgba(var(--electric-blue-rgb), 0.2); margin-top: 60px; padding: 25px; text-align: center; transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease; background-color: rgba(var(--bg-color-dark-rgb), 0.7); backdrop-filter: blur(3px); }
         footer a { color: var(--link-color); text-decoration: none; transition: color var(--transition-speed) ease; }
-        footer a:hover { color: var(--primary-text-color); text-decoration: underline; }
-        footer .fab.fa-google-drive { color: #4CAF50; }
+        footer a:hover { color: var(--primary-text-color); text-decoration: underline; text-shadow: 0 0 8px var(--link-color); }
+        footer .fab.fa-google-drive { color: var(--neon-green); }
 
-        /* --- Responsive (Identique) --- */
         @media (max-width: 768px) { .container { padding: 20px 15px; } main h2 { font-size: 1.4em; } .program-step { grid-template-columns: auto 1fr; } .step-actions { grid-column: 2 / 3; flex-direction: row; justify-content: flex-end; padding-top: 0; align-items: center; } .step-content { grid-template-columns: 1fr; } }
-        @media (max-width: 480px) { .header-content { padding: 0 15px; } .header-actions { gap: 10px; } .auth-controls button { padding: 5px 10px; font-size: 0.8em; } main h2 { font-size: 1.3em; } .program-tabs { gap: 5px; } .program-tabs button { padding: 6px 12px; font-size: 0.9em; } .program-step { padding: 12px; } .step-field input, .step-field textarea { padding: 6px 8px; font-size: 0.85em;} .editor-actions { flex-direction: column; align-items: stretch; } .editor-actions button { width: 100%; justify-content: center; } }
+        @media (max-width: 480px) { .header-content { padding: 0 15px; } .header-actions { gap: 10px; } .auth-controls button, .nav-buttons a { padding: 5px 10px; font-size: 0.8em; } main h2 { font-size: 1.3em; } .program-tabs { gap: 5px; } .program-tabs button { padding: 6px 12px; font-size: 0.9em; } .program-step { padding: 12px; } .step-field input, .step-field textarea, .step-field select { padding: 6px 8px; font-size: 0.85em;} .editor-actions { flex-direction: column; align-items: stretch; } .editor-actions button { width: 100%; justify-content: center; } }
 
     </style>
 </head>
-<body class="logged-out dark-theme"> <!-- Initialement logged-out -->
+<body class="logged-out dark-theme">
 
 <header>
     <div class="header-content">
-        <a href="timer.html" class="header-link"><i class="fas fa-arrow-left"></i> Retour au Timer</a>
+        <a href="index.html" class="header-link"><i class="fas fa-arrow-left"></i> Retour au Timer</a>
         <h1><i class="fas fa-shield-halved"></i> ArmorWorkout</h1>
         <div class="header-actions">
             <div class="auth-controls">
@@ -202,165 +208,219 @@
                 <button id="signout-button" disabled><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
             </div>
             <span id="drive-status"></span>
-            <div class="theme-toggle">
-                <button id="theme-toggle-btn" aria-label="Basculer le thème"><i class="fas fa-sun"></i></button>
-            </div>
         </div>
     </div>
 </header>
 
 <div class="container">
-    <div class="nav-buttons">
-        <a href="https://ironworkout.github.io/armorworkout/index.html" class="auth-controls button-nav"><i class="fas fa-home"></i> Accueil</a>
-
-        <a href="https://ironworkout.github.io/armorworkout/muscle-evolution.html" class="auth-controls button-nav"><i class="fas fa-chart-line"></i> Évolution Musculaire</a>
+     <div class="nav-buttons">
+        <a href="index.html" class="auth-controls button-nav"><i class="fas fa-home"></i> Accueil Timer</a>
+        <a href="muscle-evolution.html" class="auth-controls button-nav"><i class="fas fa-chart-line"></i> Évolution Musculaire</a>
     </div>
-
     <main>
         <h2><i class="fas fa-edit"></i> Éditeur de Programme</h2>
 
         <div id="connection-prompt">
-            <p>Veuillez vous connecter à votre compte Google Drive pour charger et modifier vos programmes d'entraînement.</p>
+            <p>Veuillez vous connecter à votre compte Google Drive pour charger et modifier votre programme d'entraînement.</p>
             <button id="signin-button-prompt" disabled><i class="fab fa-google"></i> Connecter Drive</button>
         </div>
 
         <div id="program-editor-area">
             <div class="program-tabs" id="program-tabs">
-                <button data-type="Push" disabled>Push</button>
-                <button data-type="Pull" disabled>Pull</button>
-                <button data-type="Legs" disabled>Legs</button>
+                <button data-session-name="PUSH V4 - Pectoraux, Épaules, Triceps" disabled>Push</button>
+                <button data-session-name="PULL V5.2 - Dos, Arrière Épaules, Biceps" disabled>Pull</button>
+                <button data-session-name="LEGS & ABDOS V1.7 - Jambes & Sangle Abdominale" disabled>Legs</button>
             </div>
 
-            <ul id="program-display">
-                <!-- Les étapes du programme seront chargées ici par JS -->
-            </ul>
+            <ul id="program-display"></ul>
 
             <div class="editor-actions">
                 <div class="add-buttons">
                     <button id="add-exercise-btn" disabled><i class="fas fa-dumbbell"></i> Ajouter Exercice</button>
                     <button id="add-break-btn" disabled><i class="fas fa-hourglass-half"></i> Ajouter Pause</button>
                 </div>
-                <button id="save-program-btn" disabled><i class="fas fa-save"></i> Sauvegarder</button>
+                <button id="save-program-btn" disabled><i class="fas fa-save"></i> Sauvegarder Session</button>
             </div>
         </div>
-
     </main>
 </div>
 
 <footer>
-    <p>© 2024 ArmorWorkout Editor. Sauvegarde sur <i class="fab fa-google-drive" aria-hidden="true"></i> Google Drive.</p>
-     <p><a href="timer.html">Retourner au Timer</a> | <a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> Voir sur GitHub</a></p>
+    <p>© <span id="current-year-editor">2024</span> ArmorWorkout Éditeur. Programme stocké sur <i class="fab fa-google-drive" aria-hidden="true"></i> Google Drive.</p>
+     <p><a href="index.html">Retourner au Timer</a> | <a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> Voir sur GitHub</a></p>
 </footer>
 
-<!-- Zone de Message Flottante -->
 <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
 
-<!-- Google Identity Services Script - SANS onload -->
 <script async defer src="https://accounts.google.com/gsi/client"></script>
-
 <script>
-    // --- CONFIGURATION & CONSTANTES (Identiques) ---
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const PROGRAM_FILENAMES = { Push: "armorworkout_push_program.json", Pull: "armorworkout_pull_program.json", Legs: "armorworkout_legs_program.json" };
-    const PROGRAM_TYPES = ['Push', 'Pull', 'Legs'];
+    const FULL_PROGRAM_FILENAME = "programmeCompletHypertrophieElite_v1.json"; 
     const GIS_CHECK_INTERVAL = 100;
     const GIS_MAX_RETRIES = 50;
 
-    // --- DONNÉES PAR DÉFAUT (Identiques) ---
-    const defaultWorkouts = { /* ... Contenu identique ... */
-        Push: [ {"type": "exercise", "name": "Pompes (Push-ups)", "reps": 8, "weight": 0, "details": "Poids de corps", "equipment": "Bodyweight", "reps_start": 8, "reps_target_max": 20, "progression_note": "Quand 20 reps faciles: Augmenter difficulté (pieds plus hauts)."}, {"type": "break", "duration": 75, "name": "Repos"}, {"type": "exercise", "name": "Band Standing Chest Press", "reps": 10, "weight": 15, "details": "Élastique 15kg, ancrage porte", "equipment": "Élastique 15kg", "reps_start": 10, "reps_target_max": 15, "progression_note": "Quand 15 reps: Essayer Élastique 25kg."} ],
-        Pull: [ {"type": "exercise", "name": "Band Bent-over Row", "reps": 10, "weight": 25, "details": "Élastique 25kg", "equipment": "Élastique 25kg", "reps_start": 10, "reps_target_max": 15, "progression_note": "Quand 15 reps: Combiner 15+25kg."}, {"type": "break", "duration": 75, "name": "Repos"}, {"type": "exercise", "name": "Band Face Pull", "reps": 15, "weight": 15, "details": "Élastique 15kg", "equipment": "Élastique 15kg", "reps_start": 15, "reps_target_max": 25, "progression_note": "Quand 25 reps: Essayer 25kg ou tempo lent."}],
-        Legs: [ {"type": "exercise", "name": "Front Squat Combo", "reps": 10, "weight": 45, "details": "Élastique 15+25kg + 1 haltère 5kg", "equipment": "Élastique 15+25kg, Haltère 5kg", "reps_start": 10, "reps_target_max": 15, "progression_note": "Augmenter reps."}, {"type": "break", "duration": 90, "name": "Repos"}, {"type": "exercise", "name": "Calf Raises", "reps": 15, "weight": 50, "details": "Sur livre, Élastiques 15+25kg + 2 haltères 5kg", "equipment": "Élastique 15+25kg, Haltères 5kg", "reps_start": 15, "reps_target_max": 30, "progression_note": "Amplitude complète."}]
-    };
+    let loadedFullProgram = null; // Sera initialisé par le chargement Drive
 
-    // --- Éléments DOM (Identiques) ---
-    let signInButton, signOutButton, driveStatusElement, themeToggleBtn,
+    let signInButton, signOutButton, driveStatusElement, 
         signInButtonPrompt, connectionPrompt, programEditorArea,
         programTabsContainer, programDisplay, addExerciseBtn, addBreakBtn, saveProgramBtn,
         messageArea;
 
-    // --- Variables d'État (Identiques) ---
     let googleAccessToken = null;
     let tokenClient = null;
-    let programFileIds = { Push: null, Pull: null, Legs: null };
-    let loadedPrograms = { Push: [], Pull: [], Legs: [] };
-    let programsLoaded = false;
-    let currentEditingType = null;
+    let programFileId = null; // ID du fichier programmeCompletHypertrophieElite_v1.json
+    let programsLoaded = false; // Indique si loadedFullProgram a été chargé avec succès
+    let currentEditingSessionName = null; // Nom de la session en cours d'édition (ex: "PUSH V4...")
     let isDirty = false;
     let currentTheme = 'dark';
     let messageTimeoutId = null;
     let gisCheckRetries = 0;
     let sortableInstance = null;
-
-    // --- Audio (Identique) ---
     let audioContext = null;
+
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
-
-    // --- Google Identity Services (GIS) & Drive API (Identiques) ---
-    async function gisInitInternal() { console.log(">>> gisInitInternal appelée (Éditeur)..."); const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { console.log("Tentative d'initialisation de initTokenClient (Éditeur)..."); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); console.log("Token Client Google initialisé avec succès (Éditeur)."); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } console.log(">>> gisInitInternal (Éditeur) - Fin d'exécution"); }
-    function checkAndInitGis() { console.log(`Vérification GIS (Éditeur - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`); if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { console.log("API Google OAuth2 détectée (Éditeur)! Lancement de gisInitInternal."); gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
-    function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
-    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { console.log("Access Token reçu (Éditeur)."); googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement des programmes...", 2500); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { programsLoaded = await loadProgramsFromDrive(); if (programsLoaded) { showMessage("Programmes chargés depuis Drive.", 3000); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } handleTabClick(PROGRAM_TYPES[0]); } else { showMessage("Certains programmes non trouvés/invalides. Utilisation des défauts.", 5000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Progs'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } programsLoaded = true; handleTabClick(PROGRAM_TYPES[0]); } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement des programmes Drive (Éditeur):", error); showMessage("Erreur majeure chargement programmes Drive.", 6000, true); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Éditeur)." }); } }
-    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000); console.warn("Tentative de connexion avant init tokenClient (Éditeur)."); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { console.log("Déjà déconnecté (Éditeur)."); updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { console.log('Token Google révoqué (Éditeur).'); googleAccessToken = null; programFileIds = { Push: null, Pull: null, Legs: null }; programsLoaded = false; loadedPrograms = { Push: [], Pull: [], Legs: [] }; currentEditingType = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; updateAuthUI(false); }); }
-    async function findOrCreateFile(filename, defaultContent = "[]", mimeType = 'application/json') { console.log(`Drive (Éditeur): Recherche/Création de ${filename}`); if (!googleAccessToken) { console.warn("findOrCreateFile (Éditeur): Pas de token Google."); return null; } const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`; try { const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { console.warn(`findOrCreateFile(${filename}): Erreur d'autorisation (${searchRes.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Recherche échouée (${searchRes.status}) (Éditeur): ${await searchRes.text()}`); } const searchData = await searchRes.json(); if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; } console.log(`Drive (Éditeur): Fichier ${filename} non trouvé. Création...`); const createUrl = `https://www.googleapis.com/drive/v3/files`; const metadata = { name: filename, mimeType: mimeType }; const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) }); if (!createRes.ok) { throw new Error(`Création échouée (${createRes.status}) (Éditeur): ${await createRes.text()}`); } const createData = await createRes.json(); const newFileId = createData.id; console.log(`Drive (Éditeur): Fichier ${filename} créé (ID: ${newFileId}). Écriture du contenu par défaut...`); const writeSuccess = await updateFileContent(newFileId, defaultContent); if (writeSuccess) { console.log(`Drive (Éditeur): Contenu par défaut écrit avec succès dans ${filename}.`); return newFileId; } else { console.error(`Drive (Éditeur): Échec de l'écriture du contenu par défaut dans ${filename}.`); return null; } } catch (error) { console.error(`Erreur Drive (Éditeur - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true); return null; } }
-    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) { console.warn("readFileContent (Éditeur): Pas de token ou d'ID."); return null; } console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404). Retourne chaîne vide pour création.`); return ""; } if (response.status === 401 || response.status === 403) { console.warn(`readFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session Google expirée. Reconnectez-vous.", 5000, true); return null; } throw new Error(`Lecture échouée (${response.status}) (Éditeur): ${await response.text()}`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true); return null; } }
-    async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) { console.warn("updateFileContent (Éditeur): Pas de token ou d'ID."); return false; } console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`); if(saveProgramBtn) saveProgramBtn.disabled = true; const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { console.warn(`updateFileContent(${fileId}): Erreur d'autorisation (${response.status}) (Éditeur). Déconnexion.`); handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", 6000, true); } else { throw new Error(`Écriture échouée (${response.status}) (Éditeur): ${await response.text()}`); } } else { console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`); success = true; } } catch (error) { console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, true); success = false; } finally { if(saveProgramBtn) saveProgramBtn.disabled = !success && isDirty; console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
-
-    // --- Chargement des Programmes (Identique) ---
-    async function loadProgramsFromDrive() { if (!googleAccessToken) return false; console.log("Chargement des programmes depuis Drive (Éditeur)..."); let allLoadedSuccessfully = true; const tempLoadedPrograms = {}; for (const type of PROGRAM_TYPES) { console.log(`Chargement programme: ${type}...`); const defaultJsonString = JSON.stringify(defaultWorkouts[type] || [], null, 2); programFileIds[type] = await findOrCreateFile(PROGRAM_FILENAMES[type], defaultJsonString); if (programFileIds[type]) { const content = await readFileContent(programFileIds[type]); if (content !== null) { try { const parsedContent = JSON.parse(content || defaultJsonString); tempLoadedPrograms[type] = Array.isArray(parsedContent) ? parsedContent : JSON.parse(defaultJsonString); console.log(`Programme ${type} chargé/parsé (${tempLoadedPrograms[type].length} étapes).`); } catch (e) { console.error(`Erreur parsing JSON programme ${type}:`, e, "Contenu:", content); showMessage(`Erreur format programme ${type}. Utilisation défaut.`, 4000, true); tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); allLoadedSuccessfully = false; } } else { console.warn(`Lecture programme ${type} échouée. Utilisation défaut.`); tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); allLoadedSuccessfully = false; } } else { console.error(`Impossible d'obtenir/créer l'ID pour ${type}. Utilisation défaut.`); tempLoadedPrograms[type] = JSON.parse(JSON.stringify(defaultWorkouts[type] || [])); allLoadedSuccessfully = false; } } loadedPrograms = tempLoadedPrograms; console.log("Fin chargement programmes. Global success:", allLoadedSuccessfully); return allLoadedSuccessfully; }
-
-    // --- Logique de l'Éditeur (Identique) ---
-    function displayProgram(type) { if (!programDisplay || !loadedPrograms[type]) return; console.log(`Affichage du programme: ${type}`); currentEditingType = type; programDisplay.innerHTML = ''; programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.type === type); btn.disabled = !programsLoaded; }); if (loadedPrograms[type].length > 0) { loadedPrograms[type].forEach((step, index) => { const stepElement = renderStep(step, index); programDisplay.appendChild(stepElement); }); } markAsDirty(false); updateEditorActionButtonsState(); if (sortableInstance) { sortableInstance.destroy(); } if(programDisplay) { sortableInstance = new Sortable(programDisplay, { animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', handle: '.program-step', onEnd: handleDragEnd }); } }
-    function renderStep(step, index) { const li = document.createElement('li'); li.classList.add('program-step', `${step.type}-step`); li.dataset.index = index; const isExercise = step.type === 'exercise'; const iconClass = isExercise ? 'fa-dumbbell' : 'fa-hourglass-half'; const fieldsHtml = ` <div class="step-field"> <label for="name-${index}">Nom</label> <input type="text" id="name-${index}" data-field="name" value="${step.name ?? ''}" ${!isExercise && step.name === 'Repos' ? 'readonly' : ''}> </div> ${isExercise ? ` <div class="step-field"> <label for="reps-${index}">Reps Actuel</label> <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12"> </div> <div class="step-field"> <label for="reps_start-${index}">Reps Début</label> <input type="number" id="reps_start-${index}" data-field="reps_start" value="${step.reps_start ?? ''}" min="0" step="1" placeholder="Ex: 8"> </div> <div class="step-field"> <label for="reps_target_max-${index}">Reps Max</label> <input type="number" id="reps_target_max-${index}" data-field="reps_target_max" value="${step.reps_target_max ?? ''}" min="0" step="1" placeholder="Ex: 15"> </div> <div class="step-field"> <label for="weight-${index}">Poids/Res.</label> <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5" placeholder="Ex: 25"> </div> <div class="step-field"> <label for="equipment-${index}">Équipement</label> <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}" placeholder="Élastique 25kg"> </div> ` : ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `} <div class="step-field" style="grid-column: 1 / -1;"> <label for="details-${index}">Détails</label> <textarea id="details-${index}" data-field="details" placeholder="Infos supplémentaires...">${step.details || ''}</textarea> </div> ${isExercise ? ` <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note de Progression</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment augmenter la difficulté...">${step.progression_note || ''}</textarea> </div> ` : ''} `; li.innerHTML = ` <i class="fas ${iconClass} step-icon" aria-hidden="true"></i> <div class="step-content"> ${fieldsHtml} </div> <div class="step-actions"> <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button> </div> `; li.querySelector('.delete-step-btn').addEventListener('click', () => handleDeleteStep(index)); li.querySelectorAll('input, textarea').forEach(input => { input.addEventListener('input', () => markAsDirty(true)); input.addEventListener('change', (event) => handleEditStep(parseInt(li.dataset.index, 10), event.target.dataset.field, event.target.value)); }); return li; }
-    function handleTabClick(type) { initAudioContext(); if (!programsLoaded) return; if (type === currentEditingType) return; if (isDirty) { if (!confirm(`Vous avez des modifications non sauvegardées pour le programme "${currentEditingType}". Voulez-vous continuer sans sauvegarder ?`)) { programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.type === currentEditingType); }); return; } } displayProgram(type); }
-    function handleAddStep(stepType) { initAudioContext(); if (!currentEditingType || !loadedPrograms[currentEditingType]) return; let newStep = {}; if (stepType === 'exercise') { newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, details: "", equipment: "", reps_start: 8, reps_target_max: 12, progression_note: "" }; } else { newStep = { type: "break", duration: 60, name: "Repos" }; } loadedPrograms[currentEditingType].push(newStep); displayProgram(currentEditingType); markAsDirty(true); programDisplay.scrollTop = programDisplay.scrollHeight; showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500); }
-    function handleDeleteStep(index) { initAudioContext(); if (!currentEditingType || !loadedPrograms[currentEditingType] || index < 0 || index >= loadedPrograms[currentEditingType].length) return; const stepToDelete = loadedPrograms[currentEditingType][index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { loadedPrograms[currentEditingType].splice(index, 1); displayProgram(currentEditingType); markAsDirty(true); showMessage("Étape supprimée.", 1500); } }
-    function handleEditStep(index, field, value) { if (!currentEditingType || !loadedPrograms[currentEditingType] || index < 0 || index >= loadedPrograms[currentEditingType].length) return; const step = loadedPrograms[currentEditingType][index]; const numericFields = ['reps', 'reps_start', 'reps_target_max', 'weight', 'duration']; let processedValue = value; if (numericFields.includes(field)) { processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); } if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
-    function handleDragEnd(event) { if (!currentEditingType || !loadedPrograms[currentEditingType]) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; console.log(`Drag&Drop: ${currentEditingType} de ${oldIndex} vers ${newIndex}`); const itemToMove = loadedPrograms[currentEditingType].splice(oldIndex, 1)[0]; loadedPrograms[currentEditingType].splice(newIndex, 0, itemToMove); displayProgram(currentEditingType); markAsDirty(true); }
-    async function handleSaveProgram() { initAudioContext(); if (!currentEditingType || !googleAccessToken || !programFileIds[currentEditingType]) { showMessage("Impossible de sauvegarder: Programme ou connexion manquante.", 4000, true); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder.", 2000); return; } const programToSave = loadedPrograms[currentEditingType]; console.log(`Sauvegarde du programme: ${currentEditingType} sur Drive...`); showMessage(`Sauvegarde de "${currentEditingType}" en cours...`, 2000); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileIds[currentEditingType], programToSave); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder ${currentEditingType}`; } if (success) { markAsDirty(false); showMessage(`Programme "${currentEditingType}" sauvegardé sur Drive !`, 3000); } else { showMessage(`Échec de la sauvegarde de "${currentEditingType}". Veuillez réessayer.`, 5000, true); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
-    function markAsDirty(dirtyState) { isDirty = dirtyState; updateSaveButtonState(); const currentTab = programTabsContainer.querySelector(`button[data-type="${currentEditingType}"]`); if (currentTab) { currentTab.classList.toggle('is-dirty', dirtyState); } }
-    function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !currentEditingType; if (currentEditingType) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder ${currentEditingType}`; } else { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder`; } }
-    function updateEditorActionButtonsState() { const enable = googleAccessToken && programsLoaded && !!currentEditingType; if(addExerciseBtn) addExerciseBtn.disabled = !enable; if(addBreakBtn) addBreakBtn.disabled = !enable; updateSaveButtonState(); }
-
-    // --- UI Update (Identique) ---
-    function updateAuthUI(isLoggedIn) { console.log(`Update UI (Éditeur) - Connecté: ${isLoggedIn}, Programmes Chargés: ${programsLoaded}`); const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; if (programEditorArea) programEditorArea.style.display = isLoggedIn ? 'flex' : 'none'; if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; if(signOutButton) signOutButton.disabled = !isLoggedIn; if(themeToggleBtn) themeToggleBtn.disabled = false; if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.disabled = !isLoggedIn || !programsLoaded; btn.classList.remove('is-dirty'); }); if (!isLoggedIn) { if(programDisplay) programDisplay.innerHTML = ''; currentEditingType = null; isDirty = false; } updateEditorActionButtonsState(); }
-
-    // --- Gestion Thème (Identique) ---
-    function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); if (themeToggleBtn) { themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'); } try { localStorage.setItem('theme', theme); console.log(`Thème appliqué/sauvegardé (Éditeur): ${theme}`); } catch (e) { console.warn("Impossible de sauvegarder le thème (Éditeur):", e); } }
-    function toggleTheme() { const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); }
-    function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('theme') || 'dark'; } catch (e) { console.warn("Impossible de lire le thème depuis localStorage (Éditeur):", e); } applyTheme(savedTheme); }
-
-    // --- Message Area (Identique) ---
-    function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.style.backgroundColor = isError ? 'var(--neon-red)' : 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)'; messageArea.style.color = isError ? '#fff' : 'var(--primary-text-color)'; messageArea.style.borderColor = isError ? 'var(--neon-red)' : 'var(--border-color)'; messageArea.classList.add('visible'); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
-
-    // --- Initialisation ---
-    function initializeDOMReferences() { console.log("Init DOM Refs (Éditeur)..."); signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button'); driveStatusElement = document.getElementById('drive-status'); themeToggleBtn = document.getElementById('theme-toggle-btn'); signInButtonPrompt = document.getElementById('signin-button-prompt'); connectionPrompt = document.getElementById('connection-prompt'); programEditorArea = document.getElementById('program-editor-area'); programTabsContainer = document.getElementById('program-tabs'); programDisplay = document.getElementById('program-display'); addExerciseBtn = document.getElementById('add-exercise-btn'); addBreakBtn = document.getElementById('add-break-btn'); saveProgramBtn = document.getElementById('save-program-btn'); messageArea = document.getElementById('message-area'); console.log("DOM Refs initialisées (Éditeur)."); }
-    function addEventListeners() { console.log("Ajout Event Listeners (Éditeur)..."); if(signInButton) signInButton.addEventListener('click', handleAuthClick); if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick); if(signOutButton) signOutButton.addEventListener('click', handleSignoutClick); if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme); programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => handleTabClick(btn.dataset.type)); }); if(addExerciseBtn) addExerciseBtn.addEventListener('click', () => handleAddStep('exercise')); if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break')); if(saveProgramBtn) saveProgramBtn.addEventListener('click', handleSaveProgram); window.addEventListener('beforeunload', (event) => { if (isDirty) { event.preventDefault(); event.returnValue = ''; } }); console.log("Event Listeners ajoutés (Éditeur)."); }
-
-    // --- Point d'entrée ---
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM Chargé (Éditeur). Initialisation...");
+    async function gisInitInternal() { const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'a pas été correctement chargée ou initialisée (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError, prompt: '' }); if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; } catch (error) { console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function checkAndInitGis() { if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') { gisInitInternal(); } else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); } else { console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); showMessage("Impossible de charger les services Google.", 10000, true); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; } }
+    function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, true, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    async function tokenCallback(tokenResponse) { if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error', 'success'); driveStatusElement.style.display = 'inline-block'; } if (tokenResponse.error) { handleTokenError(tokenResponse); return; } if (tokenResponse && tokenResponse.access_token) { googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement du programme...", 2500, "info"); if (driveStatusElement) { driveStatusElement.textContent = 'Chargement...'; driveStatusElement.classList.add('loading'); } try { programsLoaded = await loadFullProgramFromDrive(); if (programsLoaded && loadedFullProgram) { showMessage("Programme chargé depuis Drive.", 3000, "success"); if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } handleTabClick(loadedFullProgram.sessions[0]?.nom_session); } else { showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé ou invalide sur Drive. Veuillez le créer/corriger.`, 8000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Prog.'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } } catch (error) { console.error("Erreur CRITIQUE pendant le chargement du programme Drive (Éditeur):", error); showMessage("Erreur majeure chargement programme.", 6000, true, "error"); if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Données'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); } programsLoaded = false; loadedFullProgram = null; } finally { updateAuthUI(true); } } else { handleTokenError({ error: "invalid_response", details: "Réponse inattendue du serveur Google (Éditeur)." }); } }
+    function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000, "info"); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, true, "error"); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
+    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { googleAccessToken = null; programFileId = null; programsLoaded = false; loadedFullProgram = null; currentEditingSessionName = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000, "info"); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; updateAuthUI(false); }); }
+    async function findOrCreateFile(filename, defaultContentStr = "{}", mimeType = 'application/json', createIfNotExist = false) { 
+        if (!googleAccessToken) return null; 
+        const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`;
         try {
-            initializeDOMReferences();
-            addEventListeners();
-            loadSavedTheme();
-            updateAuthUI(false); // État initial déconnecté
-            checkAndInitGis(); // Lancer la vérification/initialisation GIS
-            console.log("Initialisation Éditeur terminée. Attente API Google...");
-        } catch (error) {
-            console.error("Erreur majeure lors de l'initialisation DOMContentLoaded (Éditeur):", error);
-             showMessage("Erreur critique au chargement de l'éditeur.", 10000, true);
-             const body = document.querySelector('body');
-             if(body) {
-                const errorDiv = document.createElement('div');
-                errorDiv.textContent = "Erreur chargement éditeur: " + error.message;
-                errorDiv.style.color='red'; errorDiv.style.padding='10px';
-                body.prepend(errorDiv);
-             }
+            const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
+            if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { handleSignoutClick(false); showMessage("Session Google expirée.", 5000, true, "error"); return null; } throw new Error(`Recherche échouée (${searchRes.status})`); }
+            const searchData = await searchRes.json();
+            if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; }
+            if (!createIfNotExist) { console.log(`Drive (Éditeur): Fichier ${filename} non trouvé et création désactivée.`); return null; } 
+            console.log(`Drive (Éditeur): Fichier ${filename} non trouvé. Création...`);
+            const createUrl = `https://www.googleapis.com/drive/v3/files`;
+            const metadata = { name: filename, mimeType: mimeType };
+            const createRes = await fetch(createUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(metadata) });
+            if (!createRes.ok) throw new Error(`Création échouée (${createRes.status})`);
+            const createData = await createRes.json(); const newFileId = createData.id;
+            const writeSuccess = await updateFileContent(newFileId, defaultContentStr);
+            console.log(`Drive (Éditeur): Fichier ${filename} créé (ID: ${newFileId}). Succès écriture contenu par défaut: ${writeSuccess}`);
+            return writeSuccess ? newFileId : null;
+        } catch (error) { console.error(`Erreur Drive (Éditeur - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, true, "error"); return null; }
+    }
+    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) return null; console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404).`); return null; } if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session Google expirée.", 5000, true, "error"); return null; } throw new Error(`Lecture échouée (${response.status})`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, true, "error"); return null; } }
+    async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) return false; console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`); if(saveProgramBtn) saveProgramBtn.disabled = true; const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", 6000, true, "error"); } else { throw new Error(`Écriture échouée (${response.status})`); } } else { console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`); success = true; } } catch (error) { console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, true, "error"); success = false; } finally { if(saveProgramBtn) saveProgramBtn.disabled = !success && isDirty; console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
+
+    async function loadFullProgramFromDrive() {
+        programsLoaded = false; loadedFullProgram = null; 
+        if (!googleAccessToken) { showMessage("Connectez-vous à Drive pour charger votre programme.", 5000, "info"); return false; }
+        console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
+        programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); 
+        if (programFileId) {
+            const content = await readFileContent(programFileId);
+            if (content && content.trim() !== "" && content.trim() !== "{}") {
+                try {
+                    const parsedProgram = JSON.parse(content);
+                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions) && parsedProgram.sessions.length > 0) {
+                        loadedFullProgram = parsedProgram; programsLoaded = true;
+                        console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`); return true;
+                    } else { console.error(`'${FULL_PROGRAM_FILENAME}' malformé.`); showMessage(`'${FULL_PROGRAM_FILENAME}' sur Drive malformé ou vide.`, 5000, true, "error"); return false; }
+                } catch (e) { console.error(`Erreur parsing '${FULL_PROGRAM_FILENAME}':`, e); showMessage(`'${FULL_PROGRAM_FILENAME}' corrompu. Erreur: ${e.message}`, 7000, true, "error"); return false; }
+            } else { showMessage(`'${FULL_PROGRAM_FILENAME}' vide sur Drive. Veuillez le remplir.`, 7000, true, "info"); return false; }
+        } else { showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer.`, 7000, true, "info"); return false; }
+    }
+
+    function displayProgram(sessionName) { 
+        if (!programDisplay || !loadedFullProgram || !loadedFullProgram.sessions) { console.warn("Impossible d'afficher le programme: données manquantes."); return; }
+        const sessionToDisplay = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
+        if (!sessionToDisplay) { console.warn(`Session '${sessionName}' non trouvée.`); programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Session '${sessionName}' non trouvée.</li>`; currentEditingSessionName = null; markAsDirty(false); updateEditorActionButtonsState(); return; }
+        
+        console.log(`Affichage de la session: ${sessionName}`);
+        currentEditingSessionName = sessionName; programDisplay.innerHTML = ''; 
+        programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === sessionName); btn.disabled = !programsLoaded; }); 
+        
+        if (sessionToDisplay.exercices_et_pauses && sessionToDisplay.exercices_et_pauses.length > 0) {
+            sessionToDisplay.exercices_et_pauses.forEach((step, index) => { const stepElement = renderStep(step, index, sessionName); programDisplay.appendChild(stepElement); });
+        } else {
+            programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Cette session est vide. Ajoutez des étapes !</li>`;
         }
-    }); // <--- !!! CORRECTION : Fermeture du listener DOMContentLoaded ajoutée ici !!!
+        markAsDirty(false); updateEditorActionButtonsState(); 
+        if (sortableInstance) sortableInstance.destroy(); 
+        if(programDisplay) sortableInstance = new Sortable(programDisplay, { animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', handle: '.program-step', onEnd: handleDragEnd }); 
+    }
+
+    function renderStep(step, index, sessionNameForDataset) { 
+        const li = document.createElement('li'); li.classList.add('program-step', `${step.type}-step`); li.dataset.index = index; li.dataset.session = sessionNameForDataset;
+        const isExercise = step.type === 'exercise'; const iconClass = isExercise ? 'fa-dumbbell' : 'fa-hourglass-half'; 
+        const commonFields = ` <div class="step-field"> <label for="name-${index}">Nom</label> <input type="text" id="name-${index}" data-field="name" value="${step.name ?? ''}" ${!isExercise && step.name === 'Repos' ? 'readonly' : ''}> </div> <div class="step-field" style="grid-column: 1 / -1;"> <label for="details-${index}">Détails</label> <textarea id="details-${index}" data-field="details" placeholder="Infos supplémentaires...">${step.details || ''}</textarea> </div>`;
+        let exerciseSpecificFields = '';
+        if (isExercise) {
+            exerciseSpecificFields = `
+                <div class="step-field"> <label for="reps-${index}">Reps</label> <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12"> </div>
+                <div class="step-field"> <label for="weight-${index}">Poids/Rés.</label> <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5" placeholder="Ex: 25"> </div>
+                <div class="step-field"> <label for="unit-${index}">Unité</label> <input type="text" id="unit-${index}" data-field="unit" value="${step.unit || ''}" placeholder="kg, PDC, etc."> </div>
+                <div class="step-field"> <label for="equipment-${index}">Équipement</label> <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}" placeholder="Haltères, Élastique"> </div>
+                <div class="step-field"> <label for="image_url-${index}">URL Image</label> <input type="text" id="image_url-${index}" data-field="image_url" value="${step.image_url || ''}" placeholder="https://..."> </div>
+                <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note Progression</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment progresser...">${step.progression_note || ''}</textarea> </div>
+            `;
+        } else { // Break
+            exerciseSpecificFields = ` <div class="step-field"> <label for="duration-${index}">Durée (secs)</label> <input type="number" id="duration-${index}" data-field="duration" value="${step.duration ?? ''}" min="1" step="1" placeholder="Ex: 75"> </div> `;
+        }
+        li.innerHTML = ` <i class="fas ${iconClass} step-icon" aria-hidden="true"></i> <div class="step-content"> ${commonFields} ${exerciseSpecificFields} </div> <div class="step-actions"> <button class="delete-step-btn" title="Supprimer l'étape" aria-label="Supprimer l'étape ${index + 1}"><i class="fas fa-trash-alt"></i></button> </div> `; 
+        li.querySelector('.delete-step-btn').addEventListener('click', () => handleDeleteStep(index)); 
+        li.querySelectorAll('input, textarea, select').forEach(input => { input.addEventListener('input', () => markAsDirty(true)); input.addEventListener('change', (event) => handleEditStep(parseInt(li.dataset.index, 10), event.target.dataset.field, event.target.value)); }); 
+        return li; 
+    }
+
+    function handleTabClick(sessionName) { initAudioContext(); if (!programsLoaded || !loadedFullProgram) return; if (sessionName === currentEditingSessionName) return; if (isDirty) { if (!confirm(`Vous avez des modifications non sauvegardées pour la session "${currentEditingSessionName}". Voulez-vous continuer sans sauvegarder ?`)) { programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === currentEditingSessionName); }); return; } } displayProgram(sessionName); }
+    function handleAddStep(stepType) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession) return; let newStep = {}; if (stepType === 'exercise') newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, unit: "kg", details: "", equipment: "", image_url: "", progression_note: "" }; else newStep = { type: "break", duration: 60, name: "Repos", details: "" }; if (!currentSession.exercices_et_pauses) currentSession.exercices_et_pauses = []; currentSession.exercices_et_pauses.push(newStep); displayProgram(currentEditingSessionName); markAsDirty(true); programDisplay.scrollTop = programDisplay.scrollHeight; showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500, "success"); }
+    function handleDeleteStep(index) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const stepToDelete = currentSession.exercices_et_pauses[index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { currentSession.exercices_et_pauses.splice(index, 1); displayProgram(currentEditingSessionName); markAsDirty(true); showMessage("Étape supprimée.", 1500, "info"); } }
+    function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration', 'reps_start', 'reps_target_max']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
+    function handleDragEnd(event) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses) return; const itemToMove = currentSession.exercices_et_pauses.splice(oldIndex, 1)[0]; currentSession.exercices_et_pauses.splice(newIndex, 0, itemToMove); displayProgram(currentEditingSessionName); markAsDirty(true); }
+    async function handleSaveProgram() { initAudioContext(); if (!currentEditingSessionName || !googleAccessToken || !programFileId) { showMessage("Impossible de sauvegarder: Session ou connexion Drive manquante.", 4000, true, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder pour cette session.", 2000, "info"); return; } console.log(`Sauvegarde du programme global (session: ${currentEditingSessionName}) sur Drive...`); showMessage(`Sauvegarde de "${currentEditingSessionName}" en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Session`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, true, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
+    function markAsDirty(dirtyState) { isDirty = dirtyState; updateSaveButtonState(); const currentTab = programTabsContainer.querySelector(`button[data-session-name="${currentEditingSessionName}"]`); if (currentTab) currentTab.classList.toggle('is-dirty', dirtyState); }
+    function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !currentEditingSessionName; if (currentEditingSessionName) saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Session`; else saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder`; }
+    function updateEditorActionButtonsState() { const enable = googleAccessToken && programsLoaded && !!currentEditingSessionName && loadedFullProgram && loadedFullProgram.sessions.length > 0; if(addExerciseBtn) addExerciseBtn.disabled = !enable; if(addBreakBtn) addBreakBtn.disabled = !enable; updateSaveButtonState(); }
+
+    function applyTheme(theme) { const body = document.body; currentTheme = theme; body.classList.remove('light-theme', 'dark-theme'); body.classList.add(theme + '-theme'); try { localStorage.setItem('armorWorkoutEditorTheme', theme); } catch (e) {} }
+    function loadSavedTheme() { let savedTheme = 'dark'; try { savedTheme = localStorage.getItem('armorWorkoutEditorTheme') || 'dark'; } catch (e) {} applyTheme(savedTheme); if(document.getElementById('current-year-editor')) document.getElementById('current-year-editor').textContent = new Date().getFullYear(); }
+
+    function showMessage(msg, duration = 3000, isErrorOrType = false, typeOverride = null) { 
+        if (!messageArea) return;
+        messageArea.textContent = msg;
+        messageArea.classList.remove('error', 'success', 'info'); 
+        let finalType = typeof isErrorOrType === 'string' ? isErrorOrType : (isErrorOrType ? 'error' : 'info');
+        if (typeOverride) finalType = typeOverride;
+        if (finalType === 'error') messageArea.classList.add('error');
+        else if (finalType === 'success') messageArea.classList.add('success');
+        else messageArea.classList.add('info');
+        messageArea.classList.add('visible');
+        if (messageTimeoutId) clearTimeout(messageTimeoutId); 
+        messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration);
+    }
+
+    function initializeDOMReferences() {
+        signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button');
+        driveStatusElement = document.getElementById('drive-status'); signInButtonPrompt = document.getElementById('signin-button-prompt');
+        connectionPrompt = document.getElementById('connection-prompt'); programEditorArea = document.getElementById('program-editor-area');
+        programTabsContainer = document.getElementById('program-tabs'); programDisplay = document.getElementById('program-display');
+        addExerciseBtn = document.getElementById('add-exercise-btn'); addBreakBtn = document.getElementById('add-break-btn');
+        saveProgramBtn = document.getElementById('save-program-btn'); messageArea = document.getElementById('message-area');
+    }
+    function addEventListeners() {
+        if(signInButton) signInButton.addEventListener('click', handleAuthClick);
+        if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
+        if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true));
+        programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => handleTabClick(btn.dataset.sessionName)); });
+        if(addExerciseBtn) addExerciseBtn.addEventListener('click', () => handleAddStep('exercise'));
+        if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break'));
+        if(saveProgramBtn) saveProgramBtn.addEventListener('click', handleSaveProgram);
+        window.addEventListener('beforeunload', (event) => { if (isDirty) { event.preventDefault(); event.returnValue = ''; } });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeDOMReferences(); initAudioContext(); addEventListeners(); loadSavedTheme();
+        updateAuthUI(false); checkAndInitGis(); 
+        console.log("Éditeur ArmorWorkout Initialisé.");
+    });
 
 </script>
 
