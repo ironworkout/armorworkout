@@ -60,8 +60,6 @@
             --link-color: var(--electric-cyan);
             --button-connect-color: var(--neon-green);
             --button-connect-glow: var(--glow-green);
-            --button-disconnect-color: var(--neon-red);
-            --button-disconnect-glow: var(--glow-red);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -106,16 +104,19 @@
         .auth-controls button:not(:disabled):hover, .nav-buttons a:not(.disabled-link-look):hover { border-color: var(--primary-text-color); color: var(--primary-text-color); }
         #signin-button, #signin-button-prompt { border-color: var(--button-connect-color); color: var(--button-connect-color); }
         #signin-button:not(:disabled):hover, #signin-button-prompt:not(:disabled):hover { background-color: rgba(var(--neon-green-rgb), 0.1); box-shadow: var(--glow-green); border-color: var(--neon-green); }
-        #signout-button { border-color: var(--button-disconnect-color); color: var(--button-disconnect-color); }
-        #signout-button:not(:disabled):hover { background-color: rgba(var(--neon-red-rgb), 0.1); box-shadow: var(--glow-red); border-color: var(--neon-red); }
+        /* #signout-button enlevé */
         #drive-status { font-size: 0.8em; color: var(--secondary-text-color); margin-left: 5px; transition: opacity 0.3s, color 0.3s, border-color 0.3s; min-width: fit-content; text-align: right; font-style: normal; padding: 4px 8px; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.5); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none; }
         #drive-status.loading { color: var(--neon-yellow); border-color: var(--neon-yellow); animation: blink-border 1.5s infinite ease-in-out; }
         #drive-status.error { color: var(--neon-red); border-color: var(--neon-red); }
         #drive-status.success { color: var(--neon-green); border-color: var(--neon-green); }
         @keyframes blink-border { 50% { border-color: rgba(var(--neon-yellow-rgb), 0.4); } }
         
-        body.logged-out #signin-button { display: inline-flex; } body.logged-out #signout-button { display: none; } body.logged-out #drive-status { display: none; }
-        body.logged-in #signin-button { display: none; } body.logged-in #signout-button { display: inline-flex; } body.logged-in #drive-status { display: inline-block; }
+        body.logged-out #signin-button { display: inline-flex; } 
+        /* body.logged-out #signout-button { display: none; }  enlevé */
+        body.logged-out #drive-status { display: none; }
+        body.logged-in #signin-button { display: none; } 
+        /* body.logged-in #signout-button { display: inline-flex; } enlevé */
+        body.logged-in #drive-status { display: inline-block; }
 
         .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; padding: 0; justify-content: center; } 
         .nav-buttons a { padding: 8px 16px; font-size: 0.9em; }
@@ -205,7 +206,7 @@
         <div class="header-actions">
             <div class="auth-controls">
                 <button id="signin-button" disabled><i class="fab fa-google"></i> Connecter Drive</button>
-                <button id="signout-button" disabled><i class="fas fa-sign-out-alt"></i> Déconnecter</button>
+                <!-- Bouton Déconnexion supprimé -->
             </div>
             <span id="drive-status"></span>
         </div>
@@ -252,15 +253,17 @@
 
 <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
 
-<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoadedCallback"></script>
+<script async defer src="https://accounts.google.com/gsi/client"></script>
 <script>
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const FULL_PROGRAM_FILENAME = "programmeCompletHypertrophieElite_v1.json"; 
+    const GIS_CHECK_INTERVAL = 100; 
+    const GIS_MAX_RETRIES = 50;
 
     let loadedFullProgram = null; 
 
-    let signInButton, signOutButton, driveStatusElement, 
+    let signInButton, driveStatusElement, 
         signInButtonPrompt, connectionPrompt, programEditorArea,
         programTabsContainer, programDisplay, addExerciseBtn, addBreakBtn, saveProgramBtn,
         messageArea;
@@ -275,14 +278,14 @@
     let messageTimeoutId = null;
     let sortableInstance = null;
     let audioContext = null;
+    let gisCheckRetries = 0; // Réintroduit pour checkAndInitGis
 
     function updateAuthUI(isLoggedIn) { 
         const body = document.body; body.classList.toggle('logged-in', isLoggedIn); body.classList.toggle('logged-out', !isLoggedIn); 
-        if (connectionPrompt) connectionPrompt.style.display = isLoggedIn ? 'none' : 'block'; 
-        if (programEditorArea) programEditorArea.style.display = isLoggedIn ? 'flex' : 'none'; 
+        if (connectionPrompt) connectionPrompt.style.display = isLoggedIn && programsLoaded && loadedFullProgram ? 'none' : 'block'; 
+        if (programEditorArea) programEditorArea.style.display = isLoggedIn && programsLoaded && loadedFullProgram ? 'flex' : 'none'; 
         if(signInButton) signInButton.disabled = isLoggedIn || !tokenClient; 
         if(signInButtonPrompt) signInButtonPrompt.disabled = isLoggedIn || !tokenClient; 
-        if(signOutButton) signOutButton.disabled = !isLoggedIn; 
         if(driveStatusElement) { driveStatusElement.style.display = isLoggedIn ? 'inline-block' : 'none'; if (!isLoggedIn) driveStatusElement.textContent = ''; } 
         programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.disabled = !isLoggedIn || !programsLoaded || !loadedFullProgram; btn.classList.remove('is-dirty'); }); 
         if (!isLoggedIn) { if(programDisplay) programDisplay.innerHTML = ''; currentEditingSessionName = null; isDirty = false; } 
@@ -291,25 +294,38 @@
 
     function initAudioContext() { if (!audioContext && typeof AudioContext !== 'undefined') { try { audioContext = new AudioContext(); } catch (e) { console.warn("AudioContext non supporté ou bloqué.", e); } } }
     
-    function gisLoadedCallback() {
-        console.log("GIS script chargé, initialisation de initTokenClient (Éditeur)...");
-        const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID");
-        if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; }
-        
-        if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'est pas prête (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; }
-        
-        try {
-            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError });
-            console.log("Token Client Google initialisé (Éditeur). Tentative de reconnexion silencieuse...");
-            if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false;
+    async function gisInitInternal() { 
+        const clientIdValid = GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"); 
+        if (!clientIdValid) { console.error("CRITICAL: GOOGLE_CLIENT_ID non configuré !"); showMessage("Erreur critique : ID Client Google manquant.", 10000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } 
+        if (!google || !google.accounts || !google.accounts.oauth2) { console.error("L'API Google Identity Services n'est pas prête (Éditeur)."); showMessage("Erreur chargement API Google.", 6000, "error"); if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; return; } 
+        try { 
+            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError }); 
+            console.log("Token Client Google initialisé (Éditeur). Tentative de reconnexion silencieuse..."); 
+            if (signInButton) signInButton.disabled = false; if (signInButtonPrompt) signInButtonPrompt.disabled = false; 
             if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
-        } catch (error) { 
-            console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, "error"); 
-            updateAuthUI(false); 
-            if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } 
-            if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; 
-        }
+        } catch (error) {  
+            console.error("Erreur lors de l'appel à google.accounts.oauth2.initTokenClient (Éditeur):", error); showMessage("Erreur initialisation services Google.", 5000, "error");  
+            updateAuthUI(false);  
+            if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Init Auth'; driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; }  
+            if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true;  
+        } 
     }
+
+    function checkAndInitGis() { 
+        console.log(`Vérification GIS (Éditeur - Essai ${gisCheckRetries + 1}/${GIS_MAX_RETRIES})...`);
+        if (typeof google !== 'undefined' && typeof google.accounts !== 'undefined' && typeof google.accounts.oauth2 !== 'undefined' && typeof google.accounts.oauth2.initTokenClient === 'function') { 
+            console.log("API Google OAuth2 détectée (Éditeur)! Lancement de gisInitInternal.");
+            gisInitInternal(); 
+        } else if (gisCheckRetries < GIS_MAX_RETRIES) { 
+            gisCheckRetries++; 
+            setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); 
+        } else { 
+            console.error(`Échec de la détection de l'API Google (Éditeur) après ${GIS_MAX_RETRIES} essais.`); 
+            showMessage("Impossible de charger les services Google. Vérifiez votre connexion ou bloqueur de script.", 10000, "error"); 
+            if(signInButton) signInButton.disabled = true; if(signInButtonPrompt) signInButtonPrompt.disabled = true; 
+        } 
+    }
+
 
     function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
     
@@ -327,7 +343,7 @@
                     programsLoaded = true; 
                     showMessage("Programme chargé depuis Drive.", 3000, "success"); 
                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } 
-                    handleTabClick(loadedFullProgram.sessions[0]?.nom_session); // Afficher la première session par défaut
+                    handleTabClick(loadedFullProgram.sessions[0]?.nom_session); 
                 } else { 
                     showMessage(`'${FULL_PROGRAM_FILENAME}' non trouvé, vide, ou invalide sur Drive. Assurez-vous qu'il existe et contient des sessions.`, 8000, "error"); 
                     if (driveStatusElement) { driveStatusElement.textContent = 'Erreur Prog.'; driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); } 
@@ -347,13 +363,13 @@
     }
 
     function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts...", 3000, "info"); if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")) { showMessage("Erreur critique : ID Client Google manquant.", 8000, "error"); } return; } if (driveStatusElement) { driveStatusElement.textContent = 'Connexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.classList.remove('error', 'success'); driveStatusElement.style.display = 'inline-block'; } tokenClient.requestAccessToken({ prompt: 'consent' }); }
-    function handleSignoutClick(showMessages = true) { const token = googleAccessToken; if (!token) { updateAuthUI(false); return; } if (showMessages && driveStatusElement) { driveStatusElement.textContent = 'Déconnexion...'; driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-block'; } google.accounts.oauth2.revoke(token, () => { googleAccessToken = null; programFileId = null; programsLoaded = false; loadedFullProgram = null; currentEditingSessionName = null; isDirty = false; if (showMessages) { showMessage("Déconnecté de Google Drive.", 3000, "info"); } if (driveStatusElement) { driveStatusElement.textContent = ''; driveStatusElement.style.display = 'none'; } if(programDisplay) programDisplay.innerHTML = ''; updateAuthUI(false); }); }
+    
     async function findOrCreateFile(filename, defaultContentStr = "{}", mimeType = 'application/json', createIfNotExist = false) { 
         if (!googleAccessToken) return null; 
         const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`;
         try {
             const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
-            if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { handleSignoutClick(false); showMessage("Session Google expirée.", 5000, "error"); return null; } throw new Error(`Recherche échouée (${searchRes.status})`); }
+            if (!searchRes.ok) { if (searchRes.status === 401 || searchRes.status === 403) { /* handleSignoutClick(false); */ showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; } throw new Error(`Recherche échouée (${searchRes.status})`); }
             const searchData = await searchRes.json();
             if (searchData.files && searchData.files.length > 0) { console.log(`Drive (Éditeur): Fichier ${filename} trouvé (ID: ${searchData.files[0].id}).`); return searchData.files[0].id; }
             if (!createIfNotExist) { console.log(`Drive (Éditeur): Fichier ${filename} non trouvé et création désactivée.`); return null; } 
@@ -368,21 +384,21 @@
             return writeSuccess ? newFileId : null;
         } catch (error) { console.error(`Erreur Drive (Éditeur - findOrCreate ${filename}):`, error); showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, "error"); return null; }
     }
-    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) return null; console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404).`); return null; } if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session Google expirée.", 5000, "error"); return null; } throw new Error(`Lecture échouée (${response.status})`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, "error"); return null; } }
-    async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) return false; console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`); if(saveProgramBtn) saveProgramBtn.disabled = true; const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { handleSignoutClick(false); showMessage("Session expirée. Sauvegarde échouée.", 6000, "error"); } else { throw new Error(`Écriture échouée (${response.status})`); } } else { console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`); success = true; } } catch (error) { console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, "error"); success = false; } finally { if(saveProgramBtn) saveProgramBtn.disabled = !success && isDirty; console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
+    async function readFileContent(fileId) { if (!googleAccessToken || !fileId) return null; console.log(`Drive (Éditeur): Lecture du fichier ${fileId}`); const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; try { const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }); if (!response.ok) { if (response.status === 404) { console.warn(`readFileContent(${fileId}) (Éditeur): Fichier non trouvé (404).`); return null; } if (response.status === 401 || response.status === 403) { /* handleSignoutClick(false); */ showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; } throw new Error(`Lecture échouée (${response.status})`); } const content = await response.text(); console.log(`Drive (Éditeur): Contenu du fichier ${fileId} lu.`); return content; } catch (error) { console.error(`Erreur Drive (Éditeur - readFile ${fileId}):`, error); showMessage(`Erreur Lecture Drive (${fileId}): ${error.message}`, 6000, "error"); return null; } }
+    async function updateFileContent(fileId, content) { if (!googleAccessToken || !fileId) return false; console.log(`Drive (Éditeur): Écriture dans le fichier ${fileId}...`); if(saveProgramBtn) saveProgramBtn.disabled = true; const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`; const isJson = typeof content === 'object'; const contentToSend = isJson ? JSON.stringify(content, null, 2) : content; const contentType = isJson ? 'application/json; charset=UTF-8' : 'text/plain; charset=UTF-8'; let success = false; try { const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': contentType }, body: contentToSend }); if (!response.ok) { if (response.status === 401 || response.status === 403) { /* handleSignoutClick(false); */ showMessage("Session expirée. Sauvegarde échouée.", 6000, "error"); googleAccessToken = null; updateAuthUI(false); } else { throw new Error(`Écriture échouée (${response.status})`); } } else { console.log(`Drive (Éditeur): Fichier ${fileId} mis à jour.`); success = true; } } catch (error) { console.error(`Erreur Drive (Éditeur - updateFile ${fileId}):`, error); showMessage(`Erreur Écriture Drive: ${error.message}`, 6000, "error"); success = false; } finally { if(saveProgramBtn) saveProgramBtn.disabled = !success && isDirty; console.log(`Drive (Éditeur): Écriture ${fileId} terminée. Succès: ${success}`); } return success; }
 
     async function loadFullProgramFromDrive() {
         programsLoaded = false; loadedFullProgram = null; 
         if (!googleAccessToken) { showMessage("Connectez-vous à Drive pour charger votre programme.", 5000, "info"); return false; }
         console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
-        programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); // Ne pas créer avec défaut, juste chercher
+        programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); 
         
         if (programFileId) {
             const content = await readFileContent(programFileId);
             if (content && content.trim() !== "") {
                 try {
                     const parsedProgram = JSON.parse(content);
-                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { // On ne vérifie plus .length > 0 ici pour permettre un fichier avec des sessions vides
+                    if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { // Ne pas vérifier .length > 0 ici
                         loadedFullProgram = parsedProgram; programsLoaded = true;
                         console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
                         return true;
@@ -470,7 +486,8 @@
     }
 
     function initializeDOMReferences() {
-        signInButton = document.getElementById('signin-button'); signOutButton = document.getElementById('signout-button');
+        signInButton = document.getElementById('signin-button'); 
+        // signOutButton = document.getElementById('signout-button'); // Supprimé
         driveStatusElement = document.getElementById('drive-status'); signInButtonPrompt = document.getElementById('signin-button-prompt');
         connectionPrompt = document.getElementById('connection-prompt'); programEditorArea = document.getElementById('program-editor-area');
         programTabsContainer = document.getElementById('program-tabs'); programDisplay = document.getElementById('program-display');
@@ -480,7 +497,7 @@
     function addEventListeners() {
         if(signInButton) signInButton.addEventListener('click', handleAuthClick);
         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
-        if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true));
+        // if(signOutButton) signOutButton.addEventListener('click', () => handleSignoutClick(true)); // Supprimé
         programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => handleTabClick(btn.dataset.sessionName)); });
         if(addExerciseBtn) addExerciseBtn.addEventListener('click', () => handleAddStep('exercise'));
         if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break'));
@@ -494,7 +511,8 @@
         addEventListeners(); 
         loadSavedTheme();
         updateAuthUI(false); 
-        console.log("Éditeur ArmorWorkout Initialisé (v8 - avec callback GIS).");
+        checkAndInitGis(); 
+        console.log("Éditeur ArmorWorkout Initialisé (v9).");
     });
 
 </script>
