@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zabbix E6 - Checklist Détaillée des Mises en Place</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f9f9f9; }
+        .container { background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        h2 { color: #007bff; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        h3 { color: #555; margin-top: 25px; }
+        .task-item { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; background-color: #fff; }
+        .task-header { padding: 10px; background-color: #f1f1f1; display: flex; align-items: center; }
+        input[type="checkbox"] { margin-right: 10px; }
+        .task-title { font-weight: bold; }
+        details { margin: 0; }
+        summary { padding: 10px; background-color: #e9e9e9; cursor: pointer; font-weight: bold; outline: none; }
+        .tutorial-content { padding: 15px; border-top: 1px solid #ddd; }
+        .tutorial-content h4 { color: #0056b3; margin-top: 15px; }
+        .code-block { background-color: #272822; color: #f8f8f2; padding: 10px; border-radius: 4px; margin: 10px 0; overflow-x: auto; position: relative; }
+        .code-block pre { margin: 0; white-space: pre-wrap; word-break: break-all; font-size: 0.9em; }
+        .copy-button { position: absolute; top: 5px; right: 5px; background-color: #555; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 0.8em; }
+        .file-path-title { font-weight: bold; margin-top: 10px; display: block; }
+        .file-path { font-family: monospace; background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px; color: #c7254e; }
+        .notes { background-color: #fffbe6; border-left: 3px solid #ffc107; padding: 10px; margin: 10px 0; font-size: 0.9em; }
+        .badge { background-color: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 5px; vertical-align: middle;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Zabbix E6 - Checklist Détaillée des Mises en Place</h1>
+
+        <!-- Catégorie 2: Communication réseau -->
+        <h2 id="cat2-title">2) Communication réseau <span class="badge">Notions</span></h2>
+
+        <div class="task-item" id="task2-1">
+            <div class="task-header">
+                <input type="checkbox" onchange="toggleCompleted(this)">
+                <span class="task-title">Défi 2.1 : Superviser un Routeur/Pare-feu (ex: OPNsense) via SNMP <span class="badge">SNMP</span></span>
+            </div>
+            <details>
+                <summary>Guide de Déploiement Détaillé 📖</summary>
+                <div class="tutorial-content">
+                    <h4>🎯 Objectif Stratégique :</h4>
+                    <p>Obtenir une télémétrie précise sur les performances, l'état des interfaces et la charge de ton équipement OPNsense pour anticiper les problèmes et comprendre les flux.</p>
+                    
+                    <h4>🗂️ Fichiers & Ports Clés :</h4>
+                    <ul>
+                        <li>OPNsense : Configuration SNMP via UI (<span class="file-path">Services ▷ SNMP</span>). Port UDP <span class="file-path">161</span>.</li>
+                        <li>Zabbix Server/Proxy : <span class="file-path">/etc/snmp/snmp.conf</span> (pour MIBs). MIBs dans <span class="file-path">/usr/share/snmp/mibs/</span>.</li>
+                    </ul>
+
+                    <h4>🔩 Phase 1 : Activation et Configuration de l'Agent SNMP sur OPNsense</h4>
+                    <p><strong>Pourquoi :</strong> Permettre à OPNsense d'exposer ses données de manière sécurisée à Zabbix.</p>
+                    <ol>
+                        <li>Interface OPNsense : <span class="file-path">Services ▷ SNMP ▷ Général</span>. Cocher "Activer le service SNMP".</li>
+                        <li><strong>Pour SNMPv2c :</strong> Section "Communautés" ▷ "+ Ajouter". Nom : <code>MaCommunauteOpnSenseRO</code>. Réseaux sources : IP Zabbix (ex: <code>172.22.48.4/32</code>).</li>
+                        <li><strong>Pour SNMPv3 (Recommandé) :</strong> Section "Utilisateurs" ▷ "+ Ajouter". Nom : <code>zbxUserSnmpV3</code>. Niveau : <code>authPriv</code>. Protocoles Auth (SHA-256) & Priv (AES-128) avec mots de passe robustes.</li>
+                        <li>Appliquer.</li>
+                    </ol>
+
+                    <h4>🛠️ Phase 2 : Préparation du Collecteur Zabbix (Serveur ou Proxy)</h4>
+                    <p><strong>Pourquoi :</strong> Donner à Zabbix les outils pour dialoguer en SNMP et comprendre les réponses.</p>
+                    <ol>
+                        <li>Sur le serveur/proxy Zabbix, installer les paquets SNMP :
+                            <div class="code-block"><pre><code>sudo apt update && sudo apt install snmp snmp-mibs-downloader -y</code></pre><button class="copy-button" onclick="copyCode(this)">Copier</button></div>
+                        </li>
+                        <li>Télécharger les MIBs :
+                            <div class="code-block"><pre><code>sudo download-mibs</code></pre><button class="copy-button" onclick="copyCode(this)">Copier</button></div>
+                        </li>
+                        <li>Dans <span class="file-path">/etc/snmp/snmp.conf</span>, commenter la ligne `mibs :` pour charger toutes les MIBs.</li>
+                    </ol>
+
+                    <h4>📊 Phase 3 : Création de l'Hôte Zabbix & Liaison du Template</h4>
+                    <p><strong>Pourquoi :</strong> Enregistrer OPNsense dans Zabbix, spécifier le mode de communication et les données à collecter.</p>
+                    <ol>
+                        <li>Zabbix UI : <span class="file-path">Configuration ▷ Hôtes ▷ Créer hôte</span>.</li>
+                        <li>Nom : <code>OPNsense-FW-Principal</code>. Groupe : <code>Pare-feux</code>.</li>
+                        <li>Interface SNMP : IP OPNsense, port 161. Version SNMP (v2c ou v3) et identifiants correspondants (communauté via macro `{$SNMP_COMMUNITY}` ou détails v3).</li>
+                        <li>Macros (onglet) : Si SNMPv2, `{$SNMP_COMMUNITY}` = <code>MaCommunauteOpnSenseRO</code>.</li>
+                        <li>Templates (onglet) : Lier "Template OS FreeBSD SNMP" et/ou "Template Net Generic SNMPv2". Rechercher un template communautaire "OPNsense SNMP" pour plus de détails.</li>
+                    </ol>
+                    <div class="notes">L'icône SNMP de l'hôte doit passer au vert.</div>
+                    <span class="notes">Notions E6 : Adressage IP, Routage, Supervision.</span>
+                </div>
+            </details>
+        </div>
+            
+        <!-- Défi 2.2 -->
+        <h3>Défi 2.2 : Surveiller un Service DNS (ex: BIND9) <span class="badge badge-agent">Agent</span> <span class="badge badge-script">Script</span> <span class="badge badge-simple">Simple Check</span></h3>
+        <div class="task-item" id="task2-2">
+            <div class="task-header">
+                <input type="checkbox" onchange="toggleCompleted(this)">
+                <span class="task-title">Mettre en place la supervision complète d'un serveur DNS BIND9.</span>
+            </div>
+            <details>
+                <summary>Guide de Déploiement Détaillé 📖</summary>
+                <div class="tutorial-content">
+                    <h4>🎯 Objectif Stratégique :</h4>
+                    <p>Valider en continu la disponibilité, la performance et la correction des réponses du service DNS BIND9.</p>
+                    <h4>🗂️ Fichiers & Ports Clés (BIND9 sur Linux Debian/Ubuntu) :</h4>
+                    <ul>
+                        <li>Config BIND : <span class="file-path">/etc/bind/named.conf</span> (et <span class="file-path">named.conf.options</span>, <span class="file-path">named.conf.local</span>). Processus : `named`.</li>
+                        <li>Logs : Souvent via syslog (<span class="file-path">/var/log/syslog</span>) ou dans <span class="file-path">/var/log/bind/</span>. Port : UDP/TCP <span class="file-path">53</span>.</li>
+                        <li>Stats BIND (si `statistics-channels` activé) : Port HTTP (ex: <span class="file-path">8053</span>). Fichier de stats `rndc`: <span class="file-path">named.stats</span>.</li>
+                    </ul>
+
+                    <h4>🔩 Phase 1 : Supervision de Base du Service BIND9</h4>
+                    <p><strong>Pourquoi :</strong> Vérifier si le processus BIND est actif et si le serveur répond sur le port DNS.</p>
+                    <ol>
+                        <li><strong>Via Agent Zabbix (sur le serveur DNS) :</strong>
+                            <ul>
+                                <li>Item : `Service BIND Process`. Clé : `proc.num[named,,,]`. Trigger si `last(...) = 0`.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Via Simple Check (depuis Zabbix Server/Proxy) :</strong>
+                            <ul>
+                                <li>Item : `DNS Port UDP Check`. Clé : `net.udp.service[dns,{$DNS_SERVER_IP},53]`. Trigger si `last(...) = 0`. <div class="notes">{$DNS_SERVER_IP} est une macro d'hôte.</div></li>
+                                <li>Item : `DNS Port TCP Perf`. Clé : `net.tcp.service.perf[dns,{$DNS_SERVER_IP},53]`. Trigger si `avg(...,5m) > 0.15` (150ms).</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h4>🌐 Phase 2 : Tests de Résolution DNS</h4>
+                    <p><strong>Pourquoi :</strong> S'assurer que le DNS résout correctement les noms demandés.</p>
+                    <ol>
+                        <li><strong>Item (Simple Check) :</strong>
+                            <ul>
+                                <li>Nom : `DNS Lookup - intranet.local`. Clé : `net.dns.record[{$DNS_SERVER_IP},intranet.local,A,3,2]`. Type info : `Texte`.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Trigger (Échec ou IP incorrecte) :</strong>
+                            <ul>
+                                <li>Expression (si IP attendue `192.168.1.10`) : <code>last(/Zabbix server/net.dns.record[...])<>"192.168.1.10"</code>.</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h4>📜 Phase 3 : Surveillance des Logs BIND9 (Agent Zabbix)</h4>
+                    <p><strong>Pourquoi :</strong> Détecter les erreurs internes non visibles par des tests externes.</p>
+                    <ol>
+                        <li>Configurer BIND pour loguer les erreurs (ex: dans `named.conf.options`).</li>
+                        <li><strong>Item Agent (actif) :</strong>
+                            <ul>
+                                <li>Nom : `BIND Log Errors`. Clé : `logrt["/var/log/bind/bind.log","(error|critical|failed|REFUSED|zone.*not loaded)",UTF-8,,,skip]`.</li>
+                                <li>Trigger si `count(...,5m)>0`.</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    
+                    <h4>✨ Phase 4 : (Avancé) Statistiques BIND9 via `rndc stats` ou `statistics-channels`</h4>
+                    <p><strong>Pourquoi :</strong> Accéder à des métriques de performance détaillées (requêtes/sec, erreurs, cache).</p>
+                    <ol>
+                        <li><strong>Via `rndc stats` (UserParameter sur Agent Zabbix) :</strong>
+                            <ul>
+                                <li>Configurer `controls{}` dans `named.conf` pour autoriser `rndc`.</li>
+                                <li>Le script UserParameter exécute `rndc stats` et parse <span class="file-path">named.stats</span> pour extraire des compteurs (QUERY, NXDOMAIN, SERVFAIL).</li>
+                                <li>Item Zabbix : Clé ex: `bind.metric[QUERY]`.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Via `statistics-channels` (Item HTTP Agent Zabbix) :</strong>
+                            <ul>
+                                <li>Activer dans `named.conf` (port HTTP, accès restreint).</li>
+                                <li>Item Zabbix `HTTP agent` interroge l'URL des stats (ex: `http://localhost:8053/json/v1/server`).</li>
+                                <li>Utiliser le prétraitement JSONPath pour extraire les compteurs.</li>
+                                <div class="notes">Le template "BIND DNS server by Zabbix agent 2" gère souvent cela.</div>
+                            </ul>
+                        </li>
+                        <li>Triggers sur augmentations anormales des erreurs ou variations de trafic.</li>
+                    </ol>
+                    <span class="notes">Notions E6 : DNS, Adressage IP, Supervision.</span>
+                </div>
+            </details>
+        </div>
+        </section> <!-- Fin Catégorie 2 -->
+
+
+        <!-- Catégorie 3: Gestion des accès utilisateurs -->
+        <section class="cat3-defi">
+            <h2 id="cat3-title">3) Gestion des accès utilisateurs <span class="badge">Notions Centrales</span></h2>
+            
+            <!-- Défi 3.1 -->
+            <h3>Défi 3.1 : Superviser un Serveur Active Directory (AD) Windows <span class="badge badge-agent">Agent</span></h3>
+            <div class="task-item" id="task3-1">
+                <div class="task-header">
+                    <input type="checkbox" onchange="applyCategoryColor(this, 'task3-1', 'var(--cat3-color)')">
+                    <span class="task-title">Configurer la supervision des services critiques et des performances d'un AD.</span>
+                </div>
+                <details>
+                    <summary style="color:var(--cat3-color);">Guide de Déploiement Détaillé 📖</summary>
+                    <div class="tutorial-content">
+                        <h4 style="color:var(--cat3-color);">🎯 Objectif Stratégique :</h4>
+                        <p>Garantir la disponibilité et la réactivité des services d'annuaire Active Directory, surveiller la réplication, les authentifications et détecter les problèmes de sécurité.</p>
+                        <h4 style="color:var(--cat3-color);">🗂️ Éléments Clés Windows Server (AD DS) :</h4>
+                        <ul>
+                            <li>Services : <span class="file-path">NTDS</span> (AD DS), <span class="file-path">Kdc</span> (Kerberos), <span class="file-path">NetLogon</span>, <span class="file-path">DNS Server</span> (si DC=DNS), <span class="file-path">DFSR</span> (Réplication DFS).</li>
+                            <li>Journaux d'événements : <span class="file-path">System</span>, <span class="file-path">Security</span>, <span class="file-path">Directory Service</span>, <span class="file-path">DFS Replication</span>, <span class="file-path">DNS Server</span>.</li>
+                            <li>Compteurs de performance : Objets `NTDS` (réplication, LDAP), `Security System-Wide Statistics` (Kerberos, NTLM), `LogicalDisk` (pour le disque NTDS.DIT).</li>
+                            <li>Base de données AD : <span class="file-path">%SYSTEMROOT%\NTDS\NTDS.DIT</span>.</li>
+                        </ul>
+                        <h4 style="color:var(--cat3-color);">🔩 Phase 1 : Installation Agent Zabbix & Application Templates</h4>
+                        <p><strong>Pourquoi :</strong> L'agent collecte les données locales, les templates structurent cette collecte pour AD.</p>
+                        <ol>
+                            <li>Installer Zabbix Agent (ou Agent 2, recommandé pour les fonctionnalités Windows) sur chaque Contrôleur de Domaine (DC). Configurer `Server`, `ServerActive`, `Hostname` dans <span class="file-path">zabbix_agentd.conf</span>.</li>
+                            <li>Autoriser le port `10050/TCP` (et `10051/TCP` si checks actifs serveur) dans le Pare-feu Windows.</li>
+                            <li>Zabbix UI : Créer l'hôte du DC. Lier "Template OS Windows by Zabbix agent" ET "Template App Windows Active Directory DC by Zabbix agent" (ou version Agent 2).</li>
+                        </ol>
+                        <h4 style="color:var(--cat3-color);">🛠️ Phase 2 : Items & Triggers Clés (via Template ou à ajouter)</h4>
+                        <ol>
+                            <li><strong>Services Windows Critiques (Items `service.state[<nom_service>]`) :</strong> `NTDS`, `Kdc`, `NetLogon`, `DNS Server`, `DFSR`. Trigger si état != `0` (Running). Sévérité: `Désastre`.</li>
+                            <li><strong>Réplication AD (Compteurs `perf_counter_en["<chemin_compteur>"]`) :</strong>
+                                <div class="code-block"><pre><code>\NTDS\DRA Pending Replication Synchronizations</code></pre><button class="copy-button" onclick="copyCode(this,'var(--cat3-color)')">Copier</button></div>
+                                Trigger si > 5 pendant 15min. Sévérité: `Haute`.
+                            </li>
+                            <li><strong>Authentification & Performance LDAP (Compteurs `perf_counter_en[]`) :</strong>
+                                <div class="code-block"><pre><code>\Security System-Wide Statistics\Kerberos Authentications/sec
+\NTDS\LDAP Bind Time
+\NTDS\LDAP Client Sessions</code></pre><button class="copy-button" onclick="copyCode(this,'var(--cat3-color)')">Copier</button></div>
+                                Trigger sur `LDAP Bind Time` élevé (>100ms).
+                            </li>
+                            <li><strong>Journaux d'Événements (`eventlog[]`) :</strong>
+                                <ul>
+                                    <li>`Directory Service`: Filtrer sur erreurs de réplication (ID 1311, 1864, 2089).</li>
+                                    <li>`Security`: Échecs de connexion (ID 4625), Comptes verrouillés (ID 4740). Trigger sur occurrences multiples.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Test de Port LDAP (Simple Check `net.tcp.service[ldap,{$AD_DC_IP},389]`) :</strong> Vérifie la réponse du service LDAP.</li>
+                            <li><strong>(Avancé) `dcdiag` (UserParameter) :</strong>
+                                <div class="code-block"><pre><code>UserParameter=ad.dcdiag.status,powershell -NoProfile -Command "if ((dcdiag /q) -match 'failed test') { Write-Host 1 } else { Write-Host 0 }"</code></pre><button class="copy-button" onclick="copyCode(this,'var(--cat3-color)')">Copier</button></div>
+                                Trigger si = 1.
+                            </li>
+                        </ol>
+                        <span class="notes">Notions E6 : Mise en place d’un annuaire, Accès aux services, Supervision.</span>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Défi 3.3 -->
+            <h3>Défi 3.3 : Détecter les Tentatives de Connexion Infructueuses (Linux SSH) <span class="badge badge-agent">Agent</span></h3>
+            <div class="task-item" id="task3-3">
+               <div class="task-header">
+                    <input type="checkbox" onchange="applyCategoryColor(this, 'task3-3', 'var(--cat3-color)')">
+                    <span class="task-title">Configurer la détection de tentatives de brute-force SSH sur des serveurs Linux.</span>
+                </div>
+                <details>
+                    <summary style="color:var(--cat3-color);">Guide de Déploiement Détaillé 📖</summary>
+                    <div class="tutorial-content">
+                        <h4 style="color:var(--cat3-color);">🎯 Objectif Stratégique :</h4>
+                        <p>Identifier rapidement les tentatives d'accès SSH non autorisé par force brute pour permettre une réaction.</p>
+                        <h4 style="color:var(--cat3-color);">🗂️ Fichiers Clés (Linux) :</h4>
+                        <ul>
+                            <li>Logs SSH : <span class="file-path">/var/log/auth.log</span> (Debian/Ubuntu) ou <span class="file-path">/var/log/secure</span> (RHEL/CentOS).</li>
+                        </ul>
+                        <h4 style="color:var(--cat3-color);">🔩 Phase 1 : Item Zabbix pour Compter les Échecs (Agent Actif)</h4>
+                        <p><strong>Pourquoi :</strong> L'agent lit activement le log et compte les échecs sur une fenêtre de temps.</p>
+                        <ol>
+                            <li><strong>Item :</strong>
+                                <ul>
+                                    <li>Nom : `SSH - Tentatives de connexion échouées (5 min)`</li>
+                                    <li>Type : `Agent Zabbix (actif)`</li>
+                                    <li>Clé : <code>log.count["/var/log/auth.log","Failed password for (invalid user )?.* from \S+","UTF-8,5m]</code>
+                                    <div class="notes">Adaptez chemin et regex. `5m` compte sur les 5 dernières minutes.</li>
+                                    <li>Type d'info : `Numérique (non signé)`. Intervalle : `1m`.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <h4 style="color:var(--cat3-color);">🛠️ Phase 2 : Trigger Zabbix pour Alerter</h4>
+                        <p><strong>Pourquoi :</strong> Déclencher une alerte si le nombre d'échecs dépasse un seuil.</p>
+                        <ol>
+                            <li><strong>Trigger :</strong>
+                                <ul>
+                                    <li>Nom : `🚨 ALERTE : Multiples échecs SSH sur {HOST.NAME}`</li>
+                                    <li>Sévérité : `Haute`.</li>
+                                    <li>Expression : <code>last(/ServeurLinux/log.count[...]) > 10</code> (Alerte si > 10 échecs / 5min).</li>
+                                    <li>Génération OK : `Expression`, Rétablissement OK : `last(...) <= 5`.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <div class="notes">Pour identifier l'IP source, un item `logrt[]` avec prétraitement Regex pour extraire l'IP est nécessaire (plus avancé).</div>
+                        <span class="notes">Notions E6 : Accès aux postes de travail (serveurs), Sécurité, Supervision.</span>
+                    </div>
+                </details>
+            </div>
+        </section> <!-- Fin Catégorie 3 -->
+
+        <!-- Catégorie 4: Gestion des données -->
+        <section class="cat4-defi">
+            <h2 id="cat4-title">4) Gestion des données <span class="badge">Notions Centrales</span></h2>
+            
+            <!-- Défi 4.2 -->
+            <h3>Défi 4.2 : Mettre en place la supervision d'un serveur de base de données (MySQL/MariaDB) <span class="badge badge-agent">Agent</span></h3>
+            <div class="task-item" id="task4-2">
+                <div class="task-header">
+                    <input type="checkbox" onchange="applyCategoryColor(this, 'task4-2', 'var(--cat4-color)')">
+                    <span class="task-title">Configurer la supervision complète d'un serveur MySQL/MariaDB.</span>
+                </div>
+                <details>
+                    <summary style="color:var(--cat4-color);">Guide de Déploiement Détaillé 📖</summary>
+                    <div class="tutorial-content">
+                        <h4 style="color:var(--cat4-color);">🎯 Objectif Stratégique :</h4>
+                        <p>Surveiller la disponibilité, les performances, l'utilisation des ressources et l'état des sauvegardes d'un serveur MySQL/MariaDB.</p>
+                        <h4 style="color:var(--cat4-color);">🗂️ Fichiers Clés (MySQL/MariaDB sur Linux) :</h4>
+                        <ul>
+                            <li>Config : <span class="file-path">/etc/mysql/my.cnf</span> ou <span class="file-path">/etc/my.cnf.d/</span>. Socket : <span class="file-path">/var/run/mysqld/mysqld.sock</span>.</li>
+                            <li>Logs d'erreur : Défini par `log_error` dans `my.cnf`.</li>
+                            <li>Fichier d'identifiants Zabbix : <span class="file-path">/etc/zabbix/zabbix_agentd.d/.my.cnf</span>.</li>
+                        </ul>
+                        <h4 style="color:var(--cat4-color);">🔩 Phase 1 : Utilisateur MySQL/MariaDB pour Zabbix</h4>
+                        <p><strong>Pourquoi :</strong> Zabbix a besoin d'un accès sécurisé à la BDD pour lire les métriques.</p>
+                        <ol>
+                            <li>Créer l'utilisateur `zabbix_monitor` avec les droits `PROCESS, SHOW DATABASES, SELECT ON performance_schema.*`.
+                            <div class="code-block"><pre><code>CREATE USER 'zabbix_monitor'@'localhost' IDENTIFIED BY 'MotDePasseSolide';
+GRANT PROCESS, SHOW DATABASES ON *.* TO 'zabbix_monitor'@'localhost';
+GRANT SELECT ON performance_schema.* TO 'zabbix_monitor'@'localhost';
+FLUSH PRIVILEGES;</code></pre><button class="copy-button" onclick="copyCode(this,'var(--cat4-color)')">Copier</button></div></li>
+                            <li>Créer <span class="file-path">/etc/zabbix/zabbix_agentd.d/.my.cnf</span> avec les identifiants. Sécuriser avec `chmod 600`.</li>
+                        </ol>
+                        <h4 style="color:var(--cat4-color);">🛠️ Phase 2 : Application Template Zabbix (Agent 2 Recommandé)</h4>
+                        <ol>
+                            <li>Installer Zabbix Agent 2 sur le serveur BDD.</li>
+                            <li>Zabbix UI : Lier "Template DB MySQL by Zabbix agent 2" à l'hôte.</li>
+                            <li>Configurer macros : `{$MYSQL.DSN}` (ex: `tcp://localhost:3306`), `{$MYSQL.USER}`, `{$MYSQL.PASSWORD}` (ou laisser l'agent utiliser `.my.cnf`).</li>
+                        </ol>
+                        <h4 style="color:var(--cat4-color);">📊 Phase 3 : Items & Triggers Essentiels (via Template)</h4>
+                        <ol>
+                            <li><strong>Disponibilité :</strong> Item `mysql.ping[{$MYSQL.DSN}]`. Trigger si = 0 (Sévérité: `Désastre`). Item `mysql.uptime[{$MYSQL.DSN}]`.</li>
+                            <li><strong>Performance :</strong> Items `mysql.queries[{$MYSQL.DSN},Slow_queries]`, `mysql.connections[{$MYSQL.DSN},Threads_connected]`, `mysql.innodb.buffer_pool_pages_util[{$MYSQL.DSN}]` (% util.). Triggers sur augmentation `Slow_queries`, `Threads_connected` proche de `max_connections`, faible `% buffer_pool_util`.</li>
+                            <li><strong>Supervision Sauvegardes (Exemple via fichier statut) :</strong>
+                                <ul>
+                                    <li>Script de backup crée/modifie <span class="file-path">/var/log/backup_mysql_status.txt</span> avec "OK" ou "ERROR".</li>
+                                    <li>Item Agent : `vfs.file.regexp[/var/log/backup_mysql_status.txt,^OK$,,,1]` (1 si OK).</li>
+                                    <li>Item Agent : `vfs.file.time[/var/log/backup_mysql_status.txt,modify]` (Timestamp).</li>
+                                    <li>Trigger 1 : Si `vfs.file.regexp` = 0. Trigger 2 : Si `vfs.file.time` inchangé > 25h.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <span class="notes">Notions E6 : Mise en place d’un service de base de données, Sauvegarde de bases de données, Supervision.</span>
+                    </div>
+                </details>
+            </div>
+        </section> <!-- Fin Catégorie 4 -->
+
+        <!-- Catégorie 5: Accès web -->
+        <section class="cat5-defi">
+            <h2 id="cat5-title">5) Accès web <span class="badge">Notions Centrales</span></h2>
+            
+            <!-- Défi 5.1 -->
+            <h3>Défi 5.1 : Superviser un Serveur Web (Apache) avec Plusieurs Sites <span class="badge badge-web">Web</span> <span class="badge badge-agent">Agent</span></h3>
+            <div class="task-item" id="task5-1">
+                <div class="task-header">
+                    <input type="checkbox" onchange="applyCategoryColor(this, 'task5-1', 'var(--cat5-color)')">
+                    <span class="task-title">Configurer la supervision d'un serveur Apache hébergeant plusieurs vhosts.</span>
+                </div>
+                <details>
+                    <summary style="color:var(--cat5-color);">Guide de Déploiement Détaillé 📖</summary>
+                    <div class="tutorial-content">
+                        <h4 style="color:var(--cat5-color);">🎯 Objectif Stratégique :</h4>
+                        <p>Assurer la disponibilité et la performance de chaque site web hébergé (vhost), ainsi que la santé globale du serveur Apache.</p>
+                        <h4 style="color:var(--cat5-color);">🗂️ Fichiers & Ports Clés (Apache sur Linux Debian/Ubuntu) :</h4>
+                        <ul>
+                            <li>Config principale : <span class="file-path">/etc/apache2/apache2.conf</span>. Vhosts : <span class="file-path">/etc/apache2/sites-available/</span> et <span class="file-path">sites-enabled/</span>.</li>
+                            <li>Module Status (`mod_status`) : Activer via `sudo a2enmod status`. Configurer l'accès à `/server-status` (ex: `Require local`).</li>
+                            <li>Logs : <span class="file-path">/var/log/apache2/error.log</span> (global), logs d'accès/erreur par vhost (ex: <span class="file-path">/var/log/apache2/site1_error.log</span>).</li>
+                            <li>Ports : HTTP <span class="file-path">80</span>, HTTPS <span class="file-path">443</span>. Processus : `apache2` (ou `httpd`).</li>
+                        </ul>
+                        <h4 style="color:var(--cat5-color);">🔩 Phase 1 : Supervision du Service Apache Global (Agent Zabbix)</h4>
+                        <p><strong>Pourquoi :</strong> Vérifier que le serveur web lui-même fonctionne et n'est pas surchargé.</p>
+                        <ol>
+                            <li><strong>Processus Apache :</strong> Item `proc.num[apache2,,,]`. Trigger si = 0.</li>
+                            <li><strong>Utilisation de `mod_status` (via Template "Apache by Zabbix agent" ou "HTTPD by Zabbix agent 2") :</strong>
+                                <ul>
+                                    <li>S'assurer que `mod_status` est activé et accessible (ex: `http://localhost/server-status?auto`).</li>
+                                    <li>Lier le template Zabbix à l'hôte du serveur web.</li>
+                                    <li>Configurer les macros du template : `{$APACHE.STATUS.PORT}` (ex: 80), `{$APACHE.STATUS.PATH}` (ex: server-status?auto).</li>
+                                    <li>Items clés collectés : `apache.busy_workers`, `apache.idle_workers`, `apache.requests_per_second`, `apache.kbytes_per_second`.</li>
+                                    <li>Triggers sur : Trop peu de workers idle, charge de requêtes trop élevée, etc.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Logs d'Erreur Apache Globaux :</strong>
+                                <ul>
+                                    <li>Item : `logrt[/var/log/apache2/error.log,"(emerg|alert|crit|error)",UTF-8,,,skip]`
+                                    <div class="notes">Rechercher les erreurs critiques. Ignorer les "notice" ou "warn" fréquents si non pertinents.</div></li>
+                                    <li>Trigger si `count(...,5m)>0`.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <h4 style="color:var(--cat5-color);">🌐 Phase 2 : Supervision Web pour Chaque Site/Vhost (Scénarios Web Zabbix)</h4>
+                        <p><strong>Pourquoi :</strong> Vérifier que chaque site individuel répond correctement, rapidement et avec le bon contenu.</p>
+                        <p>Pour chaque vhost critique (ex: `site1.lycee.fr`, `intranet.lycee.fr`) :</p>
+                        <ol>
+                            <li>Sur l'hôte Zabbix du serveur web (ou un hôte "Applications Web") : <span class="file-path">Configuration ▷ Hôtes ▷ [Votre Serveur Web] ▷ Scénarios Web ▷ Créer un scénario web</span>.</li>
+                            <li><strong>Nom du Scénario :</strong> Ex: `Check Web - site1.lycee.fr`</li>
+                            <li><strong>Application :</strong> Ex: `Web checks - Site1`</li>
+                            <li><strong>Intervalle de mise à jour :</strong> `1m` (ou `30s` pour les sites très critiques).</li>
+                            <li><strong>Onglet "Étapes" :</strong> Cliquer sur "Ajouter".
+                                <ul>
+                                    <li><strong>Nom de l'étape :</strong> `Accueil site1 - Vérification contenu`</li>
+                                    <li><strong>URL :</strong> `http://site1.lycee.fr` (ou `https://` si applicable).</li>
+                                    <li><strong>Variables (optionnel) :</strong> Pour POST, cookies, etc.</li>
+                                    <li><strong>Timeout :</strong> `10s` (ajuster).</li>
+                                    <li><strong>Codes de statut requis :</strong> `200` (pour HTTP OK).</li>
+                                    <li><strong>Chaîne requise :</strong> Un texte spécifique et unique présent sur la page d'accueil du site1 pour valider que le bon contenu est servi (ex: "© Lycée XYZ 2024").</li>
+                                </ul>
+                                <div class="notes">Ajouter d'autres étapes si besoin pour simuler une navigation, un formulaire de connexion (plus complexe, nécessite de gérer les sessions/cookies).</div>
+                            </li>
+                            <li><strong>Triggers pour ce Scénario Web (créés automatiquement ou à créer manuellement sur les items générés) :</strong>
+                                <ul>
+                                    <li>**Disponibilité :** Basé sur l'item `web.test.fail[<Nom du Scénario Web>]`. Trigger si `last(...) = 1` (signifie qu'une étape a échoué). Sévérité : `Haute`.</li>
+                                    <li>**Performance (Temps de réponse) :** Basé sur `web.test.time[<Nom du Scénario Web>,<Nom de l'étape>,resp]`. Trigger si `avg(...,5m) > 2` (si > 2 secondes). Sévérité : `Avertissement`.</li>
+                                    <li>**Contenu :** L'échec de la "Chaîne requise" est inclus dans `web.test.fail`. Si vous voulez une alerte spécifique, il faut vérifier l'item `web.test.error[<Nom du Scénario Web>]` pour un message d'erreur lié au contenu.</li>
+                                </ul>
+                            </li>
+                            <li>Répéter ce processus pour chaque vhost important.</li>
+                        </ol>
+                        <span class="notes">Notions E6 : Hébergement de différents sites, Accès aux sites hébergés, Supervision.</span>
+                    </div>
+                </details>
+            </div>
+        </section> <!-- Fin Catégorie 5 -->
+        
+        <!-- Catégorie 7 (Gestion Parc) est retirée car tous ses défis ont été supprimés -->
+
+    </div>
+
+    <script>
+        // JavaScript (applyCategoryColor, copyCode, IntersectionObserver) - INCHANGÉ
+        function applyCategoryColor(checkbox, taskId, categoryColorVarString) {
+            const taskItem = document.getElementById(taskId);
+            if (!taskItem) return;
+
+            const detailsElement = taskItem.querySelector('details');
+            const summaryElement = detailsElement ? detailsElement.querySelector('summary') : null;
+            const h4Elements = detailsElement ? detailsElement.querySelectorAll('.tutorial-content h4') : [];
+            const notesElements = detailsElement ? detailsElement.querySelectorAll('.tutorial-content .notes') : [];
+            const copyButtons = detailsElement ? detailsElement.querySelectorAll('.copy-button') : [];
+
+            const categoryColor = getComputedStyle(document.documentElement).getPropertyValue(categoryColorVarString).trim();
+            const successColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-accent').trim();
+            
+            checkbox.style.accentColor = checkbox.checked ? successColor : categoryColor;
+
+            if (checkbox.checked) {
+                taskItem.classList.add('completed');
+                taskItem.style.borderLeftColor = successColor; 
+                if (summaryElement) summaryElement.style.color = successColor;
+                if (summaryElement && summaryElement.style) summaryElement.style.setProperty('--dynamic-summary-before-color', successColor);
+                h4Elements.forEach(h4 => h4.style.color = successColor);
+                notesElements.forEach(note => note.style.borderLeftColor = successColor);
+                copyButtons.forEach(btn => btn.style.backgroundColor = successColor);
+            } else {
+                taskItem.classList.remove('completed');
+                taskItem.style.borderLeftColor = ''; 
+                 if (summaryElement) summaryElement.style.color = categoryColor;
+                 if (summaryElement && summaryElement.style) summaryElement.style.setProperty('--dynamic-summary-before-color', categoryColor);
+                h4Elements.forEach(h4 => h4.style.color = categoryColor);
+                notesElements.forEach(note => note.style.borderLeftColor = categoryColor);
+                copyButtons.forEach(btn => btn.style.backgroundColor = categoryColor);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.task-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const onchangeAttr = checkbox.getAttribute('onchange');
+                const match = onchangeAttr.match(/applyCategoryColor\(this, '[^']+', '(var\(--cat\d-color\))'\)/);
+                
+                if (match && match[1]) {
+                    const categoryColorVar = match[1];
+                    const categoryColor = getComputedStyle(document.documentElement).getPropertyValue(categoryColorVar).trim();
+
+                    const detailsElement = item.querySelector('details');
+                    const summaryElement = detailsElement ? detailsElement.querySelector('summary') : null;
+                    const h4Elements = detailsElement ? detailsElement.querySelectorAll('.tutorial-content h4') : [];
+                    const notesElements = detailsElement ? detailsElement.querySelectorAll('.tutorial-content .notes') : [];
+                    const copyButtons = detailsElement ? detailsElement.querySelectorAll('.copy-button') : [];
+
+                    if (summaryElement) {
+                        summaryElement.style.color = categoryColor;
+                        detailsElement.style.setProperty('--dynamic-summary-before-color', categoryColor); 
+                    }
+                    h4Elements.forEach(h4 => h4.style.color = categoryColor);
+                    notesElements.forEach(note => note.style.borderLeftColor = categoryColor);
+                    copyButtons.forEach(btn => btn.style.backgroundColor = categoryColor);
+                    applyCategoryColor(checkbox, item.id, categoryColorVar);
+                }
+            });
+        });
+
+        function copyCode(button) { 
+            const preElement = button.parentElement.querySelector('pre');
+            if (preElement) {
+                const codeToCopy = preElement.innerText;
+                navigator.clipboard.writeText(codeToCopy).then(() => {
+                    button.innerText = '✔ Copié!';
+                    const originalBgColor = button.style.backgroundColor; 
+                    button.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-accent').trim();
+                    setTimeout(() => {
+                        button.innerText = 'Copier';
+                        button.style.backgroundColor = originalBgColor; 
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Erreur de copie : ', err);
+                    button.innerText = 'Erreur';
+                     const originalBgColor = button.style.backgroundColor;
+                    button.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-accent').trim();
+                     setTimeout(() => {
+                        button.innerText = 'Copier';
+                        button.style.backgroundColor = originalBgColor;
+                    }, 2000);
+                });
+            }
+        }
+        const sections = document.querySelectorAll('h2');
+        const navLinks = document.querySelectorAll('#navbar a');
+        const observerOptions = {
+            root: null, 
+            rootMargin: '-30% 0px -65% 0px', 
+            threshold: 0 
+        };
+        const observer = new IntersectionObserver((entries) => {
+            let firstVisibleSectionLink = null;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`#navbar a[href="#${id}"]`);
+                    if (navLink && !firstVisibleSectionLink) { 
+                        firstVisibleSectionLink = navLink;
+                    }
+                }
+            });
+            navLinks.forEach(link => link.classList.remove('active'));
+            if (firstVisibleSectionLink) {
+                firstVisibleSectionLink.classList.add('active');
+            }
+        }, observerOptions);
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+
+</body>
+</html>
