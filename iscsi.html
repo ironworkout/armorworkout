@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutoriel : Cible iSCSI (Ubuntu) avec Stockage sur Partage AD Windows</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            margin: 0; 
+            padding-top: 70px; /* Espace pour la nav-bar fixe */
+            background-color: #f0f4f8; /* Un bleu-gris très clair */
+            color: #333;
+        }
+        #navbar {
+            background-color: #34495e; /* Bleu ardoise foncé */
+            padding: 10px 20px;
+            position: fixed; 
+            top: 0;
+            width: 100%;
+            z-index: 1000; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            display: flex; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+        }
+        #navbar a {
+            color: #ecf0f1; 
+            text-decoration: none;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #navbar a:hover {
+            background-color: #e74c3c; /* Rouge tomate */
+            color: #fff;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            margin: 20px auto; /* Centrer le conteneur */
+            max-width: 900px; /* Limiter la largeur pour meilleure lisibilité */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #c0392b; /* Rouge brique */
+            text-align: center;
+            border-bottom: 3px solid #e74c3c; /* Rouge tomate */
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        h2 { /* Titres des Étapes */
+            color: #2980b9; /* Bleu pétrole */
+            margin-top: 40px; 
+            margin-bottom: 20px;
+            border-left: 5px solid #2980b9;
+            padding-left: 15px;
+            font-size: 1.6em;
+            scroll-margin-top: 80px; /* Décalage pour la navbar fixe */
+        }
+        h3 { /* Sous-titres dans les étapes */
+            color: #27ae60; /* Vert émeraude */
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            border-bottom: 1px dashed #bdc3c7; /* Gris clair */
+            padding-bottom: 5px;
+        }
+        p, li {
+            color: #555; /* Gris foncé pour le texte */
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style-type: square;
+            padding-left: 20px;
+        }
+        code {
+            background-color: #ecf0f1; /* Gris très clair pour le fond du code */
+            border: 1px solid #bdc3c7; /* Bordure gris clair */
+            padding: 8px 12px; /* Plus d'espace */
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+            color: #2c3e50; /* Bleu foncé pour le texte du code */
+            display: block;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            white-space: pre-wrap; 
+            word-break: break-all;
+            font-size: 0.95em;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        }
+        .notes {
+            font-style: italic;
+            font-size: 0.9em;
+            color: #7f8c8d; /* Gris moyen */
+            margin-top: 5px;
+            padding-left: 15px;
+            border-left: 3px solid #f1c40f; /* Jaune pour les notes */
+            background-color: #fdf9e7;
+            padding: 8px;
+            border-radius: 3px;
+        }
+         .warning {
+            font-style: normal;
+            font-size: 0.9em;
+            color: #721c24; /* Rouge foncé pour avertissement */
+            margin-top: 10px;
+            padding: 10px;
+            border-left: 5px solid #e74c3c; /* Rouge pour avertissement */
+            background-color: #f8d7da; /* Rose clair */
+            border-radius: 3px;
+        }
+        .scenario {
+            background-color: #e8f6f3; /* Vert d'eau très clair */
+            border: 1px solid #a3e4d7; /* Vert d'eau */
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        .scenario strong {
+            color: #16a085; /* Vert d'eau foncé */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar">
+        <a href="#etape1">Étape 1: Prépa. Ubuntu</a>
+        <a href="#etape2">Étape 2: Prépa. Stockage Windows</a>
+        <a href="#etape3">Étape 3: Montage Partage Ubuntu</a>
+        <a href="#etape4">Étape 4: Install. iSCSI Target</a>
+        <a href="#etape5">Étape 5: Fichier Image (sur partage)</a>
+        <a href="#etape6">Étape 6: Config. TargetCLI</a>
+        <a href="#etape7">Étape 7: Service & Vérif.</a>
+        <a href="#etape8">Étape 8: Client iSCSI</a>
+    </div>
+
+    <div class="container">
+        <h1>Tutoriel : Cible iSCSI (Ubuntu) avec Stockage sur Partage AD Windows</h1>
+        <p>Ce guide vous montrera comment configurer votre serveur Ubuntu <strong>srv-nas</strong> en tant que cible iSCSI. La particularité ici est que les "disques" exposés par iSCSI seront des fichiers images stockés sur des partages réseau SMB/CIFS hébergés par votre serveur <strong>Windows Server 2019 AD</strong>.</p>
+
+        <div class="scenario">
+            <h3>Scénario Modifié :</h3>
+            <ul>
+                <li><strong>Serveur Cible iSCSI :</strong> <code>srv-nas</code> (VM Ubuntu)</li>
+                <li><strong>Serveur de Stockage Principal :</strong> Windows Server 2019 AD (nom d'hôte : <code>WIN-AD2019</code>, IP : <code>192.168.1.50</code> - exemple)</li>
+                <li><strong>Partage SMB/CIFS sur Windows AD :</strong> <code>\\WIN-AD2019\iSCSI_Shares</code> (contenant nos futurs fichiers images)</li>
+                <li><strong>Stockage à exposer via iSCSI :</strong> Un fichier image <code>disk1.img</code> de 10Go (situé dans le partage monté)</li>
+                <li><strong>Nom de la cible (IQN) :</strong> <code>iqn.2025-04.local.nas:target-winshare</code></li>
+            </ul>
+        </div>
+        <div class="warning">
+            <strong>Avertissement Important :</strong> Utiliser un partage SMB/CIFS comme backstore pour iSCSI est techniquement possible mais <strong>fortement déconseillé pour la production</strong>. Cela ajoute une couche de latence réseau, des points de défaillance multiples (réseau, serveur SMB, serveur iSCSI) et peut entraîner des problèmes de performance et de corruption de données si la connexion au partage est instable. Ce tutoriel est à des fins éducatives ou de laboratoire.
+        </div>
+
+        <h2 id="etape1">Étape 1: Préparation du Système Ubuntu (`srv-nas`)</h2>
+        
+        <h3>Mise à jour du système :</h3>
+        <code>sudo apt update
+sudo apt upgrade -y
+sudo apt autoclean && sudo apt autoremove -y</code>
+
+        <h3>Configuration du nom d'hôte (Hostname) :</h3>
+        <code>sudo hostnamectl set-hostname srv-nas</code>
+
+        <h3>Configuration du fuseau horaire :</h3>
+        <code>sudo timedatectl set-timezone "Europe/Paris"</code>
+
+        <h3>Configuration réseau (Adresse IP Statique) :</h3>
+        <p>Éditez <code>/etc/netplan/50-cloud-init.yaml</code> (adaptez le nom de l'interface <code>ens33</code> et les adresses) :</p>
+        <code>network:
+  ethernets:
+    ens33: # Ou eth0, enp0s3, etc.
+      dhcp4: no
+      addresses:
+        - 192.168.1.100/24 # IP statique de srv-nas
+      gateway4: 192.168.1.1
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1] # Ou IP de votre AD si DNS
+  version: 2</code>
+        <p>Appliquez :</p>
+        <code>sudo netplan apply</code>
+        <p class="notes">Vérifiez avec <code>ip a</code>.</p>
+
+        <h3>(Pour VM VirtualBox) Installation des Additions Invité :</h3>
+        <code>sudo apt install build-essential dkms linux-headers-$(uname -r) bzip2 gcc make perl
+# Menu VirtualBox: Périphériques -> Insérer l'image CD des Additions invité...
+sudo mkdir -p /media/cdrom
+sudo mount /dev/cdrom /media/cdrom
+cd /media/cdrom
+sudo ./VBoxLinuxAdditions.run
+sudo reboot</code>
+        
+        <h3>Installation des Utilitaires CIFS :</h3>
+        <p>Pour monter des partages SMB/CIFS.</p>
+        <code>sudo apt install cifs-utils -y</code>
+
+        <h2 id="etape2">Étape 2: Préparation du Stockage sur Windows Server 2019 AD</h2>
+        
+        <h3>Création du Partage SMB/CIFS :</h3>
+        <ol>
+            <li>Sur votre serveur Windows Server 2019 AD (ex: <code>WIN-AD2019</code>) :
+                <ul>
+                    <li>Créez un dossier, par exemple : <code>C:\Shares\iSCSI_BackingStores</code>.</li>
+                    <li>Clic droit sur ce dossier -> Propriétés -> Onglet Partage -> Partage avancé.</li>
+                    <li>Cochez "Partager ce dossier". Nom de partage : <code>iSCSI_Shares</code>.</li>
+                    <li>Cliquez sur "Autorisations". Donnez "Contrôle total" à un utilisateur de service dédié de votre AD (ex: <code>svc_iscsi_nas</code>).</li>
+                    <li>Notez le chemin : <code>\\WIN-AD2019\iSCSI_Shares</code>.</li>
+                </ul>
+            </li>
+        </ol>
+        <p class="notes">Assurez-vous que le pare-feu de Windows Server autorise les connexions SMB/CIFS (ports TCP 139, 445 et UDP 137, 138).</p>
+
+        <h2 id="etape3">Étape 3: Montage du Partage Windows sur Ubuntu (`srv-nas`)</h2>
+
+        <h3>Création du Point de Montage Local :</h3>
+        <code>sudo mkdir -p /mnt/win_iscsi_shares</code>
+
+        <h3>Montage Manuel (pour tester) :</h3>
+        <p>Remplacez les informations par les vôtres.</p>
+        <code>sudo mount -t cifs //WIN-AD2019/iSCSI_Shares /mnt/win_iscsi_shares -o username=svc_iscsi_nas,password=SonMotDePasseSuperSecret,domain=VOTRE_DOMAINE,uid=$(id -u),gid=$(id -g)</code>
+        <p>Vérifiez : <code>df -h</code> et <code>ls -l /mnt/win_iscsi_shares</code>.</p>
+
+        <h3>Montage Permanent (via `/etc/fstab`) :</h3>
+        <ol>
+            <li>Créez un fichier d'identifiants :
+                <code>sudo nano /etc/win-credentials.txt</code>
+                Contenu :
+                <code>username=svc_iscsi_nas
+password=SonMotDePasseSuperSecret
+domain=VOTRE_DOMAINE</code>
+                Sécurisez : <code>sudo chmod 600 /etc/win-credentials.txt</code>
+            </li>
+            <li>Modifiez <code>/etc/fstab</code> :
+                <code>sudo nano /etc/fstab</code>
+                Ajoutez :
+                <code>//WIN-AD2019/iSCSI_Shares /mnt/win_iscsi_shares cifs credentials=/etc/win-credentials.txt,uid=$(id -u),gid=$(id -g),iocharset=utf8,vers=3.0,_netdev 0 0</code>
+                <p class="notes"><code>_netdev</code> est important pour les montages réseau, cela indique au système d'attendre que le réseau soit prêt.</p>
+            </li>
+            <li>Testez : <code>sudo umount /mnt/win_iscsi_shares</code> (si monté manuellement) puis <code>sudo mount -a</code>.</li>
+        </ol>
+        
+        <h2 id="etape4">Étape 4: Installation du Logiciel Cible iSCSI sur `srv-nas`</h2>
+        <code>sudo apt install targetcli-fb -y</code>
+
+        <h2 id="etape5">Étape 5: Création du Fichier Image sur le Partage Monté</h2>
+        <p>Le fichier image sera créé dans <code>/mnt/win_iscsi_shares/</code>.</p>
+        <code>sudo truncate -s 10G /mnt/win_iscsi_shares/disk1.img</code>
+        <p class="notes">Ou avec <code>dd</code> si <code>truncate</code> ne crée pas correctement un fichier sparse sur le partage CIFS :</p>
+        <code># sudo dd if=/dev/zero of=/mnt/win_iscsi_shares/disk1.img bs=1G count=10 status=progress</code>
+        <p>Vérifiez : <code>ls -lh /mnt/win_iscsi_shares/disk1.img</code></p>
+
+        <h2 id="etape6">Étape 6: Configuration de la Cible iSCSI avec `targetcli`</h2>
+        <code>sudo targetcli</code>
+
+        <h3>Créer un Backstore `fileio` :</h3>
+        <code>/> backstores/fileio create name=win_disk1 file_or_dev=/mnt/win_iscsi_shares/disk1.img size=10G write_back=false</code>
+        <p class="notes"><code>write_back=false</code> est recommandé pour les backstores sur réseau pour la cohérence.</p>
+
+        <h3>Créer une Cible iSCSI (Target IQN) :</h3>
+        <code>/> iscsi/ create iqn.2025-04.local.nas:target-winshare</code>
+
+        <h3>Créer un LUN :</h3>
+        <code>/> cd /iscsi/iqn.2025-04.local.nas:target-winshare/tpg1/luns
+/iscsi/iqn.20...s:target-winshare/tpg1/luns> create /backstores/fileio/win_disk1</code>
+
+        <h3>(Optionnel) Configurer ACLs et Portails :</h3>
+        <p>Suivez les instructions de l'étape 4 du tutoriel iSCSI standard, en adaptant l'IQN de la cible (<code>iqn.2025-04.local.nas:target-winshare</code>).</p>
+
+        <h3>Vérifier et Sauvegarder :</h3>
+        <code>/> ls
+/> saveconfig
+/> exit</code>
+
+        <h2 id="etape7">Étape 7: Activer, Démarrer le Service Cible et Vérifications</h2>
+        <code>sudo systemctl enable target.service
+sudo systemctl start target.service
+sudo systemctl status target.service</code>
+        <p>Vérifiez le port d'écoute :</p>
+        <code>ss -tulnp | grep 3260</code>
+        <p class="notes">Assurez-vous que <code>/mnt/win_iscsi_shares</code> est monté avant que <code>target.service</code> ne démarre. L'option <code>_netdev</code> dans fstab aide, mais pour plus de robustesse, on pourrait créer une dépendance systemd pour <code>target.service</code> sur le point de montage (plus avancé).</p>
+
+        <h2 id="etape8">Étape 8: Connexion depuis un Client iSCSI (Initiateur)</h2>
+        <p>Le processus est identique à celui du tutoriel iSCSI standard, mais le client se connectera à l'IQN <code>iqn.2025-04.local.nas:target-winshare</code> sur l'IP de <code>srv-nas</code>.</p>
+        <h3>Sur le client Linux :</h3>
+        <code>sudo apt install open-iscsi -y # Si pas déjà fait
+sudo iscsiadm -m discovery -t sendtargets -p IP_DE_SRV-NAS
+sudo iscsiadm -m node -T iqn.2025-04.local.nas:target-winshare -p IP_DE_SRV-NAS --login</code>
+        <h3>Sur Windows :</h3>
+        <p>Utilisez l'Initiateur iSCSI intégré. Ajoutez l'IP de <code>srv-nas</code> dans "Découvrir le portail", puis connectez-vous à la cible <code>iqn.2025-04.local.nas:target-winshare</code> qui devrait apparaître.</p>
+        <p>Après connexion, un nouveau disque devrait être visible sur le client, prêt à être initialisé, partitionné et formaté.</p>
+        <hr>
+        <p>Vous avez maintenant un serveur iSCSI sur <code>srv-nas</code> qui expose un disque virtuel dont les données sont stockées sur un partage réseau de votre serveur Windows AD. N'oubliez pas les avertissements concernant cette configuration pour la production !</p>
+    </div>
+
+</body>
+</html>
