@@ -642,6 +642,7 @@
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
         // Version minimale du programme par défaut, au cas où Drive échoue complètement.
+        // Cela permet à l'UI de ne pas être complètement vide si le Drive est inaccessible.
         const defaultFullProgram = { 
             "nom_programme": "Programme de Secours ArmorWorkout",
             "description_programme": "Programme de base chargé car le programme principal n'a pu être récupéré.",
@@ -651,7 +652,7 @@
                 { "nom_session": "LEGS & ABDOS V1.7 - Jambes & Sangle Abdominale", "exercices_et_pauses": [{ "type": "exercise", "name": "Squats", "reps": 15, "details": "Programme LEGS non chargé."},{ "type": "break", "duration": 60}]}
             ]
         };
-        let loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); // Initialiser avec une copie du défaut
+        let loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); 
 
 
         let timeDisplayDiv, timerStateDisplay, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
@@ -686,47 +687,35 @@
         let triangleSpinTimeoutId = null; 
 
         function normalizeExerciseName(name) {
-            if (!name) return "";
-            let baseName = name;
-            baseName = baseName.replace(/ - Série \d+\/\d+/i, ''); 
-            baseName = baseName.replace(/\s*\(Pré-Épuisement \d+\/\d+\)/i, '');
-            baseName = baseName.replace(/\s*\(Superset \d+\/\d+\)/i, '');
-            baseName = baseName.replace(/\s*\(Optionnel.*?\)/i, '');
-            baseName = baseName.replace(/\s*\(Activation\)/i, '');
-            baseName = baseName.replace(/ - Mini-Série Myo-Reps \d+\/\d+/i, '');
-            baseName = baseName.replace(/ - Série d'Activation Myo-Reps/i, '');
-            baseName = baseName.replace(/\s*\(Gauche\)/i, '').replace(/\s*\(Droit\)/i, '');
+            if (!name) return ""; let baseName = name;
+            baseName = baseName.replace(/ - Série \d+\/\d+/i, ''); baseName = baseName.replace(/\s*\(Pré-Épuisement \d+\/\d+\)/i, '');
+            baseName = baseName.replace(/\s*\(Superset \d+\/\d+\)/i, ''); baseName = baseName.replace(/\s*\(Optionnel.*?\)/i, '');
+            baseName = baseName.replace(/\s*\(Activation\)/i, ''); baseName = baseName.replace(/ - Mini-Série Myo-Reps \d+\/\d+/i, '');
+            baseName = baseName.replace(/ - Série d'Activation Myo-Reps/i, ''); baseName = baseName.replace(/\s*\(Gauche\)/i, '').replace(/\s*\(Droit\)/i, '');
             if (baseName.startsWith("Curl Marteau avec Haltères")) baseName = "Curl Marteau avec Haltères";
             if (baseName.startsWith("Row Penché Unilatéral avec Élastique")) baseName = "Row Penché Unilatéral avec Élastique";
             return baseName.trim();
         }
-
         function triggerTriangleSpin() {
-            const triangle = document.querySelector('.reactor .triangle');
-            if (!triangle) return;
-            if (triangleSpinTimeoutId) clearTimeout(triangleSpinTimeoutId);
-            triangle.classList.remove('spin-transition'); void triangle.offsetWidth; 
-            triangle.classList.add('spin-transition');
-            triangleSpinTimeoutId = setTimeout(() => { triangle.classList.remove('spin-transition'); triangleSpinTimeoutId = null; }, 600); 
+            const t = document.querySelector('.reactor .triangle'); if (!t) return; if (triangleSpinTimeoutId) clearTimeout(triangleSpinTimeoutId);
+            t.classList.remove('spin-transition'); void t.offsetWidth; t.classList.add('spin-transition');
+            triangleSpinTimeoutId = setTimeout(() => { t.classList.remove('spin-transition'); triangleSpinTimeoutId = null; }, 600); 
         }
-        
         function initSounds() {
             try {
-                const basePath = "https://ironworkout.github.io/armorworkout/"; 
-                soundLaser = new Audio(basePath + 'laser.mp3'); sound5 = new Audio(basePath + '5.mp3'); sound4 = new Audio(basePath + '4.mp3');
-                sound3 = new Audio(basePath + '3.mp3'); sound2 = new Audio(basePath + '2.mp3'); sound1 = new Audio(basePath + '1.mp3');
-                soundWindows = new Audio(basePath + 'windows.mp3'); soundET = new Audio(basePath + 'e-t.mp3');
-                [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(sound => { if (sound) sound.preload = 'auto'; });
+                const bP = "https://ironworkout.github.io/armorworkout/"; 
+                soundLaser = new Audio(bP+'laser.mp3'); sound5=new Audio(bP+'5.mp3'); sound4=new Audio(bP+'4.mp3'); sound3=new Audio(bP+'3.mp3');
+                sound2=new Audio(bP+'2.mp3'); sound1=new Audio(bP+'1.mp3'); soundWindows=new Audio(bP+'windows.mp3'); soundET=new Audio(bP+'e-t.mp3');
+                [soundLaser,sound5,sound4,sound3,sound2,sound1,soundWindows,soundET].forEach(s => { if(s)s.preload='auto';});
             } catch (e) { showMessage("Erreur chargement sons.", 5000, true); }
         }
-
-        function playSound(audioElement) { if (!audioElement || !audioContext || audioContext.state !== 'running') return; audioElement.currentTime = 0; audioElement.play().catch(e => {}); }
+        function playSound(a) { if (!a || !audioContext || audioContext.state !== 'running') return; a.currentTime = 0; a.play().catch(e => {}); }
         function initAudioContext() {
             if (audioContext && audioContext.state === 'running') return; 
             if (!audioContext) { try { window.AudioContext = window.AudioContext || window.webkitAudioContext; if (window.AudioContext) audioContext = new AudioContext(); else return; } catch (e) { return; } }
             if (audioContext.state === 'suspended') audioContext.resume().catch(e => {});
         }
-        const vibrate = (pattern = [100]) => { if ('vibrate' in navigator) { try { navigator.vibrate(pattern); } catch (e) {} } };
+        const vibrate = (p = [100]) => { if ('vibrate' in navigator) { try { navigator.vibrate(p); } catch (e) {} } };
 
         async function gisInitInternal() {
             if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
@@ -743,12 +732,12 @@
             else { showMessage("Erreur critique: API Google non disponible.", 10000, true); if(signInButton) signInButton.disabled = true; }
         }
         function handleTokenError(error) {
-            let userMessage = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`;
-            if (error.type === 'popup_closed_by_user' || error.error === 'popup_closed_by_user') userMessage = "Fenêtre de connexion Google fermée.";
-            else if (error.type === 'popup_failed_to_open') userMessage = "Impossible d'ouvrir la fenêtre de connexion. Vérifiez les bloqueurs de popups.";
-            else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') userMessage = "Accès aux données Drive refusé par l'utilisateur.";
+            let msg = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`;
+            if (error.type === 'popup_closed_by_user' || error.error === 'popup_closed_by_user') msg = "Fenêtre de connexion Google fermée.";
+            else if (error.type === 'popup_failed_to_open') msg = "Impossible d'ouvrir la fenêtre de connexion. Vérifiez les bloqueurs de popups.";
+            else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') msg = "Accès aux données Drive refusé par l'utilisateur.";
             if (driveStatusElement) { driveStatusElement.className = 'error'; driveStatusElement.style.display = 'inline-flex'; }
-            showMessage(userMessage, 7000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Auth'; updateAuthUI(false); 
+            showMessage(msg, 7000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Auth'; updateAuthUI(false); 
         }
         async function tokenCallback(tokenResponse) {
             if (driveStatusElement) driveStatusElement.className = ''; 
@@ -764,27 +753,18 @@
                         showMessage("Programme et historique chargés.", 3000);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
-                    } else if (!programLoadSuccess && loadedFullProgram) { // Cas où Drive a échoué mais on a un défaut
-                         showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive. Programme par défaut minimal chargé.`, 7000, true);
+                    } else { 
+                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive ou programme invalide. Vérifiez le fichier. Programme par défaut minimal chargé.`, 8000, true);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
                         if(driveStatusTextElement) driveStatusTextElement.textContent = 'Prog Défaut';
-                    }
-                     else { // Échec complet
-                        showMessage(`Échec critique chargement programme '${FULL_PROGRAM_FILENAME}'. Vérifiez le fichier sur Drive.`, 7000, true);
-                        if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
-                        if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Prog';
-                        loadedFullProgram = null; programsLoaded = false; 
+                        loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; // Assure que l'UI peut utiliser le défaut
                     }
                 } catch (error) {
-                    showMessage("Erreur majeure lors du chargement depuis Drive. Programme par défaut minimal utilisé.", 6000, true);
+                    showMessage("Erreur majeure lors du chargement. Programme par défaut minimal utilisé.", 6000, true);
                     if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                     if(driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
                     loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; 
-                } finally {
-                    updateAuthUI(true); 
-                    displayHistory(currentHistoryPeriod); 
-                    loadInProgressState(); 
-                }
+                } finally { updateAuthUI(true); displayHistory(currentHistoryPeriod); loadInProgressState(); }
             } else handleTokenError({ error: "Réponse de token invalide ou vide" });
         }
         function handleAuthClick() {
@@ -799,19 +779,14 @@
             if (driveStatusElement && driveStatusTextElement) {
                 driveStatusElement.style.display = isLoggedIn ? 'inline-flex' : 'none';
                 if (isLoggedIn) { 
-                    const currentClasses = driveStatusElement.className;
-                    if (currentClasses.includes('loading')) driveStatusTextElement.textContent = 'Chargement...';
-                    else if (!currentClasses.includes('error')) { driveStatusElement.classList.add('success'); driveStatusTextElement.textContent = 'Connecté'; }
+                    const c = driveStatusElement.className; if (c.includes('loading')) driveStatusTextElement.textContent = 'Chargement...';
+                    else if (!c.includes('error')) { driveStatusElement.classList.add('success'); driveStatusTextElement.textContent = 'Connecté'; }
                 } else { driveStatusElement.className = ''; driveStatusTextElement.textContent = ''; }
             }
             if (driveConnectionStatusMain && driveConnectionText) {
-                driveConnectionStatusMain.style.display = isLoggedIn ? 'inline-flex' : 'none'; const dsClass = driveStatusElement?.className || ''; 
-                driveConnectionStatusMain.className = dsClass; 
-                if (isLoggedIn) {
-                    if (dsClass.includes('loading')) driveConnectionText.textContent = "Chargement...";
-                    else if (dsClass.includes('error')) driveConnectionText.textContent = `Erreur Drive`;
-                    else driveConnectionText.textContent = "Connecté";
-                }
+                driveConnectionStatusMain.style.display = isLoggedIn ? 'inline-flex' : 'none'; const d = driveStatusElement?.className || ''; 
+                driveConnectionStatusMain.className = d; 
+                if (isLoggedIn) { if (d.includes('loading')) driveConnectionText.textContent = "Chargement..."; else if (d.includes('error')) driveConnectionText.textContent = `Erreur Drive`; else driveConnectionText.textContent = "Connecté"; }
             }
             if (historyDriveStatus && historyActionsContainer) {
                 historyActionsContainer.style.display = isLoggedIn ? 'flex' : 'none';
@@ -896,8 +871,7 @@
             } else { timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE; workoutTimeInfoDisplay.classList.remove('visible'); }
         }
         function updateTimerDisplay() {
-            if (!timeDisplayDiv) return;
-            let timeString = "00:00"; 
+            if (!timeDisplayDiv) return; let timeString = "00:00"; 
             switch(currentState) {
                 case 'exercise': timeString = "GO!"; break;
                 case 'break': timeString = formatTime(timeLeft); break;
@@ -1194,7 +1168,7 @@
         async function finishSummary() {
             if (!finishSummaryBtn) return; finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
             const latestWorkoutEntry = workoutHistory[workoutHistory.length - 1];
-            if (!latestWorkoutEntry || !latestWorkoutEntry.exercises) { closeSummary(); showMessage("Erreur: Données d'historique invalides pour sauvegarde.", 4000, true); if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; }
+            if (!latestWorkoutEntry || !latestWorkoutEntry.exercises) { closeSummary(); showMessage("Erreur: Données d'historique invalides.", 4000, true); if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; }
             
             let planExerciseIndex = 0; 
             for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) {
@@ -1211,37 +1185,21 @@
                             if (loadedFullProgram && loadedFullProgram.sessions) {
                                 const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
                                 if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
-                                    // Trouver l'exercice correspondant en se basant sur le nom et potentiellement d'autres détails uniques si nécessaire.
-                                    // Pour cette implémentation, on va supposer que l'ordre et le nom sont suffisants pour une correspondance unique
-                                    // au sein de `originalCompletedWorkoutPlan` et `currentSessionInFullProgram.exercices_et_pauses` pour les items de type 'exercise'.
-                                    // On doit aussi s'assurer qu'on modifie le bon objet exercice dans le `loadedFullProgram`.
-                                    // Ceci est une simplification ; une correspondance plus robuste pourrait utiliser des IDs uniques par exercice.
-                                    
-                                    let targetExerciseInFullProgram = null;
-                                    let fullProgramExerciseIndex = 0;
+                                    let targetExerciseInFullProgram = null; let fullProgramExerciseIndex = 0;
                                     for(let k=0; k < currentSessionInFullProgram.exercices_et_pauses.length; k++){
                                         if(currentSessionInFullProgram.exercices_et_pauses[k].type === 'exercise' || currentSessionInFullProgram.exercices_et_pauses[k].type?.startsWith('exercise_')){
-                                            if(fullProgramExerciseIndex === i){ // i est l'index de l'exercice dans latestWorkoutEntry.exercises
-                                                targetExerciseInFullProgram = currentSessionInFullProgram.exercices_et_pauses[k];
-                                                break;
-                                            }
+                                            if(fullProgramExerciseIndex === i){ targetExerciseInFullProgram = currentSessionInFullProgram.exercices_et_pauses[k]; break; }
                                             fullProgramExerciseIndex++;
                                         }
                                     }
-
                                     if (targetExerciseInFullProgram) {
                                         if (targetExerciseInFullProgram.reps_text?.toUpperCase() !== "AMRAP" && !targetExerciseInFullProgram.reps_text?.toUpperCase().includes("NÉG")) { 
-                                            console.log(`Mise à jour du programme: Exo '${targetExerciseInFullProgram.name}', reps de ${targetExerciseInFullProgram.reps} à ${finalReps}`);
                                             if (targetExerciseInFullProgram.name.toLowerCase().includes("activation") && targetExerciseInFullProgram.type.includes("myo_reps")){
-                                                targetExerciseInFullProgram.activation_reps_start = finalReps;
-                                                targetExerciseInFullProgram.reps = finalReps; 
-                                            } else {
-                                                targetExerciseInFullProgram.reps = finalReps;
-                                            }
+                                                targetExerciseInFullProgram.activation_reps_start = finalReps; targetExerciseInFullProgram.reps = finalReps; 
+                                            } else targetExerciseInFullProgram.reps = finalReps;
                                             if (targetExerciseInFullProgram.reps_start !== undefined) targetExerciseInFullProgram.reps_start = finalReps;
+                                            console.log(`Programme mis à jour: Exo '${targetExerciseInFullProgram.name}', nouvelles reps de base: ${finalReps}`);
                                         }
-                                    } else {
-                                        console.warn("Exercice non trouvé dans loadedFullProgram pour mise à jour via index:", originalExerciseInPlan.name);
                                     }
                                 }
                             }
@@ -1265,61 +1223,56 @@
             else { showMessage("Impossible de sauvegarder l'historique sur Drive.", 4000, true); if (historyDriveStatus) { historyDriveStatus.textContent = 'Erreur ID'; historyDriveStatus.className = 'error'; } }
         }
         async function saveFullProgramToDrive() {
-            if (!googleAccessToken || !loadedFullProgram) { console.warn("Tentative de sauvegarde du programme global sans token ou sans programme chargé."); return; }
-            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true); // Créer s'il n'existe pas
+            if (!googleAccessToken || !loadedFullProgram) { console.warn("Tentative de sauvegarde du programme global sans token ou programme."); return; }
+            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true);
             if (programFileId) {
-                console.log(`Sauvegarde du programme global '${FULL_PROGRAM_FILENAME}' sur Drive...`);
+                console.log(`Sauvegarde du programme '${FULL_PROGRAM_FILENAME}' sur Drive...`);
                 const success = await updateFileContent(programFileId, loadedFullProgram);
-                if (success) console.log(`Programme global '${FULL_PROGRAM_FILENAME}' sauvegardé avec succès sur Drive.`);
-                else console.error(`Échec de la sauvegarde du programme global '${FULL_PROGRAM_FILENAME}' sur Drive.`);
-            } else { console.error(`Impossible de trouver ou créer le fichier du programme global '${FULL_PROGRAM_FILENAME}' sur Drive pour la sauvegarde.`); showMessage("Impossible de sauvegarder le programme sur Drive.", 4000, true); }
+                if (success) console.log(`Programme '${FULL_PROGRAM_FILENAME}' sauvegardé avec succès.`);
+                else console.error(`Échec sauvegarde programme '${FULL_PROGRAM_FILENAME}'.`);
+            } else { console.error(`ID fichier programme introuvable pour '${FULL_PROGRAM_FILENAME}'.`); showMessage("Impossible de sauvegarder le programme sur Drive.", 4000, true); }
         }
         async function loadHistoryFromDrive() {
-            if (!googleAccessToken) return; console.log("Tentative de chargement de l'historique depuis Drive...");
+            if (!googleAccessToken) return; console.log("Chargement historique Drive...");
             historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); 
             if (historyFileId) {
                 const content = await readFileContent(historyFileId);
-                if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); workoutHistory.forEach(entry => { if (!entry.exercises) entry.exercises = []; }); console.log("Historique chargé avec succès depuis Drive."); } catch (e) { console.error("Erreur parsing historique Drive:", e); showMessage("Historique Drive corrompu. Utilisation d'un historique vierge.", 4000, true); workoutHistory = []; } }
-                else { console.log("Aucun contenu d'historique trouvé sur Drive, initialisation à vide."); workoutHistory = []; }
-            } else { console.log("Impossible de trouver ou créer le fichier d'historique sur Drive."); workoutHistory = []; }
+                if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); console.log("Historique chargé."); } catch (e) { console.error("Erreur parsing historique:", e); showMessage("Historique Drive corrompu.", 4000, true); workoutHistory = []; } }
+                else { console.log("Aucun historique Drive."); workoutHistory = []; }
+            } else { console.log("Fichier historique Drive introuvable/création échouée."); workoutHistory = []; }
             displayHistory(currentHistoryPeriod); 
         }
         async function loadFullProgramFromDrive() {
-            programsLoaded = false; 
-            let localLoadedProgram = null; 
-            if (!googleAccessToken) { console.log("Pas de token Google, utilisation du programme par défaut intégré."); loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return true; } // Changé pour retourner true car on a un défaut
+            programsLoaded = false; let localLoadedProgram = null; 
+            if (!googleAccessToken) { console.log("Pas de token Google. Programme Drive non chargé."); showMessage("Connectez-vous à Google Drive pour charger votre programme.", 5000); loadedFullProgram = null; return false; }
             
-            console.log(`Tentative de chargement du programme global '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
-            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(defaultFullProgram), true); // Crée avec le défaut s'il n'existe pas
+            console.log(`Chargement programme '${FULL_PROGRAM_FILENAME}' depuis Drive...`);
+            programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", false); // Ne PAS créer avec contenu par défaut ici
             
             if (programFileId) {
                 const content = await readFileContent(programFileId);
-                if (content && content.trim() !== "" ) {
+                if (content && content.trim() !== "" && content.trim() !== "{}") {
                     try {
                         localLoadedProgram = JSON.parse(content);
                         if (localLoadedProgram && localLoadedProgram.sessions && Array.isArray(localLoadedProgram.sessions) && localLoadedProgram.sessions.length > 0) {
                             loadedFullProgram = localLoadedProgram; programsLoaded = true;
-                            console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
+                            console.log(`Programme '${FULL_PROGRAM_FILENAME}' chargé depuis Drive.`);
                             return true;
                         } else {
-                            console.error(`Programme global '${FULL_PROGRAM_FILENAME}' malformé ou vide. Utilisation du défaut intégré.`);
-                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé ou vide. Utilisation du défaut.`, 5000, true);
-                            loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
+                            console.error(`Programme '${FULL_PROGRAM_FILENAME}' malformé. Doit contenir { "sessions": [...] }.`);
+                            showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive malformé.`, 5000, true); loadedFullProgram = null; return false; 
                         }
                     } catch (e) {
-                        console.error(`Erreur parsing programme global '${FULL_PROGRAM_FILENAME}' depuis Drive:`, e, "\nContenu (début):", content.substring(0, 200) + "...");
-                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu. Utilisation du défaut. Erreur: ${e.message}`, 7000, true);
-                        loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false;
+                        console.error(`Erreur parsing '${FULL_PROGRAM_FILENAME}' depuis Drive:`, e, "\nContenu:", content.substring(0, 200) + "...");
+                        showMessage(`Programme '${FULL_PROGRAM_FILENAME}' sur Drive corrompu. Vérifiez sa syntaxe JSON. Erreur: ${e.message}`, 7000, true); loadedFullProgram = null; return false;
                     }
                 } else { 
-                     console.log(`Aucun contenu pour '${FULL_PROGRAM_FILENAME}' sur Drive ou fichier vide. Utilisation du défaut intégré (qui a été écrit si création).`); 
-                     showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide sur Drive. Programme par défaut minimal chargé.`, 7000, true);
-                     loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
+                     console.log(`'${FULL_PROGRAM_FILENAME}' vide ou non trouvé sur Drive. L'application nécessite ce fichier.`); 
+                     showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' vide ou non trouvé sur Drive. Veuillez le créer et le remplir.`, 7000, true); loadedFullProgram = null; return false; 
                 }
             } else { 
-                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé ou création échouée sur Drive. Utilisation du défaut intégré.`); 
-                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé/créé sur Drive. Programme par défaut minimal chargé.`, 7000, true);
-                loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true; return false; 
+                console.log(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. L'utilisateur doit le créer.`); 
+                showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer et le remplir.`, 7000, true); loadedFullProgram = null; return false; 
             }
         }
         function saveInProgressState() {
@@ -1404,7 +1357,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v6).");
+            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v7 - Sans programme par défaut strict).");
         });
     </script>
 </body>
