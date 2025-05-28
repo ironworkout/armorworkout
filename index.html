@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -334,8 +335,8 @@
         .details-text i { color: var(--electric-yellow); margin-right: 5px; } 
         
         .break-info { font-size: 1em; }
-        .break-info > i { font-size: 1.2em; margin-bottom: 3px;} /* Icon for break type */
-        .break-info > span { font-weight: 500; color: var(--primary-text-color); } /* Break name */
+        .break-info > i { font-size: 1.2em; margin-bottom: 3px;} 
+        .break-info > span { font-weight: 500; color: var(--primary-text-color); } 
         
         .next-exercise-preview {
             font-size: 0.85em; color: var(--secondary-text-color); margin-top: 10px; padding: 8px 12px;
@@ -996,11 +997,10 @@
 
         function getFormattedWeight(item) {
             if (!item) return "-";
-            if (item.weight_text) return item.weight_text; // "Résistance Élastique 15kg approx."
+            if (item.weight_text) return item.weight_text; 
             if (item.unit && item.unit.toLowerCase() === "pdc") return "Poids du Corps";
-            if (item.unit && item.unit.includes("kg") && item.unit.includes("Élastique")) return item.unit; // "kg (2x5kg H + Élastique 15kg)"
-            if (item.unit && item.unit.includes("kg")) return item.unit; // "kg (2x5kg)"
-            if (item.weight !== undefined && item.weight > 0 && item.unit) return `${item.weight} ${item.unit}`; // Fallback if unit is just "kg"
+            if (item.unit && (item.unit.includes("kg") || item.unit.includes("Élastique") || item.unit.startsWith("Résistance"))) return item.unit;
+            if (item.weight !== undefined && item.weight > 0 && item.unit) return `${item.weight} ${item.unit}`; 
             if (item.weight !== undefined && item.weight > 0) return `${item.weight} kg`;
             return "-";
         }
@@ -1127,7 +1127,7 @@
         function handleItemCompletion() {
             if (currentState === 'finished') return; 
             currentItemIndex++;
-            updateOverallWorkoutProgressDisplay(); // Update progress immediately
+            updateOverallWorkoutProgressDisplay(); 
             if (currentItemIndex >= currentWorkoutPlan.length) setState('finished'); 
             else { const nextItem = currentWorkoutPlan[currentItemIndex]; setState(nextItem.type === 'break' ? 'break' : 'exercise'); }
             saveInProgressState(); 
@@ -1135,7 +1135,7 @@
         function handlePreviousClick() {
             if (currentItemIndex > 0) {
                 currentItemIndex--; 
-                updateOverallWorkoutProgressDisplay(); // Update progress immediately
+                updateOverallWorkoutProgressDisplay(); 
                 const prevItem = currentWorkoutPlan[currentItemIndex];
                 if (prevItem.type?.includes("myo_reps") && prevItem.completed_mini_sets) prevItem.completed_mini_sets = 0;
                 setState(prevItem.type === 'break' ? 'break' : 'exercise'); saveInProgressState(); vibrate();
@@ -1148,12 +1148,12 @@
             const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
             if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" non trouvée ou invalide.`, 4000, true); currentWorkoutPlan = []; return; }
             currentWorkoutType = session.nom_session; currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); 
-            currentWorkoutPlan.forEach(item => { // Initialize/reset dynamic properties
+            currentWorkoutPlan.forEach(item => { 
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
-                    item.current_reps = item.reps; // Or duration if time-based
+                    item.current_reps = item.reps; 
                     item.finalReps = undefined;
                     item.finalWeightDescription = undefined;
-                    item.finalNotes = undefined;
+                    item.finalProgressionNote = undefined; 
                     if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) {
                         item.current_activation_reps = item.activation_reps_start || item.reps; 
                         item.completed_mini_sets = 0; 
@@ -1204,7 +1204,7 @@
             filteredHistory.forEach(item => {
                 const li = document.createElement('li'); const itemDate = new Date(item.date);
                 const dateString = itemDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }); const timeString = itemDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                const totalReps = item.exercises?.reduce((sum, ex) => { let repsForEx = 0; if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) repsForEx = parseInt(ex.finalReps, 10); return sum + repsForEx; }, 0) || 0;
+                const totalReps = item.exercises?.reduce((sum, ex) => { let repsForEx = 0; if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) repsForEx = parseInt(ex.finalReps, 10); else if (ex.finalDuration !== undefined && !isNaN(parseInt(ex.finalDuration,10))) repsForEx = 1; return sum + repsForEx; }, 0) || 0;
                 const durationFormatted = formatTime(item.durationSeconds || 0);
                 li.innerHTML = `<span class="history-item-date">${dateString} <small>${timeString}</small></span> <span class="history-item-type">${item.type}</span> <span class="history-item-reps"><i class="fas fa-running"></i> ${totalReps > 0 ? totalReps : '-'}</span> <span class="history-item-duration"><i class="fas fa-stopwatch"></i> ${durationFormatted}</span>`;
                 historyList.appendChild(li);
@@ -1215,7 +1215,7 @@
             if (!googleAccessToken) { statsContentWrapper.innerHTML = '<p>Connectez-vous pour voir les statistiques.</p>'; if (statsDisplay.querySelector('.motivational-message')) statsDisplay.querySelector('.motivational-message').textContent = ''; return; }
             const totalWorkouts = filteredHistory.length; const totalDuration = filteredHistory.reduce((sum, item) => sum + (item.durationSeconds || 0), 0);
             const avgDuration = totalWorkouts > 0 ? totalDuration / totalWorkouts : 0; let totalRepsAllWorkouts = 0;
-            filteredHistory.forEach(workout => { workout.exercises?.forEach(ex => { if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) totalRepsAllWorkouts += parseInt(ex.finalReps, 10); }); });
+            filteredHistory.forEach(workout => { workout.exercises?.forEach(ex => { if (ex.finalReps !== undefined && !isNaN(parseInt(ex.finalReps, 10))) totalRepsAllWorkouts += parseInt(ex.finalReps, 10); else if (ex.finalDuration !== undefined && !isNaN(parseInt(ex.finalDuration,10))) totalRepsAllWorkouts +=1; }); });
             statsContentWrapper.innerHTML = `<p><i class="fas fa-dumbbell"></i> Entraînements: <strong>${totalWorkouts}</strong></p> <p><i class="fas fa-stopwatch"></i> Temps total: <strong>${formatTime(totalDuration)}</strong></p> <p><i class="fas fa-clock"></i> Durée moyenne: <strong>${formatTime(avgDuration)}</strong></p> <p><i class="fas fa-running"></i> Répétitions totales: <strong>${totalRepsAllWorkouts > 0 ? totalRepsAllWorkouts : '-'}</strong></p>`;
             const motivationalMessageEl = statsDisplay.querySelector('.motivational-message');
             if (motivationalMessageEl) { if (totalWorkouts === 0) motivationalMessageEl.textContent = "Commencez votre premier entraînement !"; else if (totalWorkouts < 5) motivationalMessageEl.textContent = "Continuez comme ça, chaque séance compte !"; else motivationalMessageEl.textContent = "Quelle régularité, impressionnant !"; }
@@ -1266,11 +1266,10 @@
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
                     const li = document.createElement('li'); li.classList.add('summary-item');
                     
-                    // Determine initial value for reps/duration input
                     let initialRepsForInput;
-                    if (item.duration !== undefined) { // Time-based exercise
-                        initialRepsForInput = item.duration; // Use duration as the value
-                    } else { // Rep-based exercise
+                    if (item.duration !== undefined) { 
+                        initialRepsForInput = item.duration; 
+                    } else { 
                         initialRepsForInput = item.current_reps !== undefined ? item.current_reps : (item.reps !== undefined ? item.reps : 0);
                         if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) {
                             initialRepsForInput = item.current_activation_reps !== undefined ? item.current_activation_reps : (item.activation_reps_start || item.reps);
@@ -1278,17 +1277,18 @@
                     }
                     
                     let initialWeightDesc = getFormattedWeight(item);
-                    if (initialWeightDesc === "-") initialWeightDesc = item.unit || "PDC"; // Default if formatted is still '-'
+                    if (initialWeightDesc === "-") initialWeightDesc = item.unit || "PDC";
+
+                    const progressionNoteText = item.progression_note || "";
 
                     const repsInputId = `summary-reps-${index}`;
                     const weightInputId = `summary-weight-${index}`;
-                    const notesInputId = `summary-notes-${index}`;
+                    const progressionNoteInputId = `summary-progression-note-${index}`;
                     
                     let repsLabel = "Reps";
                     if (item.reps_unit) repsLabel += ` (${item.reps_unit})`;
                     else if (item.duration !== undefined && item.unit_duration) repsLabel = `Durée (${item.unit_duration})`;
                     else if (item.duration !== undefined) repsLabel = `Durée (s)`;
-
 
                     li.innerHTML = `
                         <div class="exercise-name"><i class="fas ${getIconForType(item.type)}"></i> ${item.name}</div>
@@ -1302,8 +1302,8 @@
                                 <input type="text" id="${weightInputId}" value="${initialWeightDesc}">
                             </div>
                             <div class="input-group notes-group">
-                                <label for="${notesInputId}">Notes Personnelles</label>
-                                <textarea id="${notesInputId}" placeholder="Vos notes pour cet exercice..."></textarea>
+                                <label for="${progressionNoteInputId}">Note de Progression (Programme)</label>
+                                <textarea id="${progressionNoteInputId}" placeholder="Sera mis à jour dans le programme...">${progressionNoteText}</textarea>
                             </div>
                         </div>`;
                     summaryItemsList.appendChild(li);
@@ -1322,20 +1322,18 @@
                 if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; 
             }
             
-            let originalPlanExerciseActualIndex = 0; // This tracks the true index in originalCompletedWorkoutPlan for exercises
+            let originalPlanExerciseActualIndex = 0; 
             
-            for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) { // i is index for latestWorkoutEntry.exercises
-                
-                // Find the corresponding exercise in originalCompletedWorkoutPlan
+            for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) { 
                 let correspondingOriginalExercise = null;
-                let searchIndexInOriginalPlan = 0; // Temp index to find the i-th exercise in originalCompletedWorkoutPlan
+                let searchIndexInOriginalPlan = 0; 
                 let exerciseCountInOriginalPlan = 0; 
 
                 for(let k=0; k < originalCompletedWorkoutPlan.length; k++) {
                     if (originalCompletedWorkoutPlan[k].type === 'exercise' || originalCompletedWorkoutPlan[k].type?.startsWith('exercise_')) {
-                        if (exerciseCountInOriginalPlan === i) { // Found the i-th exercise
+                        if (exerciseCountInOriginalPlan === i) { 
                             correspondingOriginalExercise = originalCompletedWorkoutPlan[k];
-                            originalPlanExerciseActualIndex = k; // Store its actual index in the full plan
+                            originalPlanExerciseActualIndex = k; 
                             break;
                         }
                         exerciseCountInOriginalPlan++;
@@ -1343,18 +1341,18 @@
                 }
 
                 if (correspondingOriginalExercise) {
-                    const repsInput = document.getElementById(`summary-reps-${originalPlanExerciseActualIndex}`); // Use actual index
+                    const repsInput = document.getElementById(`summary-reps-${originalPlanExerciseActualIndex}`); 
                     const weightInput = document.getElementById(`summary-weight-${originalPlanExerciseActualIndex}`);
-                    const notesInput = document.getElementById(`summary-notes-${originalPlanExerciseActualIndex}`);
+                    const progressionNoteInput = document.getElementById(`summary-progression-note-${originalPlanExerciseActualIndex}`);
 
                     if (repsInput) {
                         const finalRepsOrDuration = parseInt(repsInput.value, 10);
                         if (!isNaN(finalRepsOrDuration)) {
-                            if (correspondingOriginalExercise.duration !== undefined) { // Time-based
+                            if (correspondingOriginalExercise.duration !== undefined) { 
                                 latestWorkoutEntry.exercises[i].finalDuration = finalRepsOrDuration;
                                 correspondingOriginalExercise.duration = finalRepsOrDuration;
                                 if (correspondingOriginalExercise.duration_start !== undefined) correspondingOriginalExercise.duration_start = finalRepsOrDuration;
-                            } else { // Rep-based
+                            } else { 
                                 latestWorkoutEntry.exercises[i].finalReps = finalRepsOrDuration;
                                 correspondingOriginalExercise.reps = finalRepsOrDuration; 
                                 if (correspondingOriginalExercise.reps_start !== undefined) correspondingOriginalExercise.reps_start = finalRepsOrDuration;
@@ -1367,17 +1365,18 @@
                     if (weightInput) {
                         const finalWeightDesc = weightInput.value.trim();
                         latestWorkoutEntry.exercises[i].finalWeightDescription = finalWeightDesc;
-                        // Update program: prioritize 'unit' if it's complex, else 'weight_text', else 'unit' as simple unit if 'weight' is also set.
                         if (correspondingOriginalExercise.unit && (correspondingOriginalExercise.unit.includes("kg") || correspondingOriginalExercise.unit.includes("Élastique") || correspondingOriginalExercise.unit.toLowerCase() === "pdc" || correspondingOriginalExercise.unit.startsWith("Résistance"))) {
                              correspondingOriginalExercise.unit = finalWeightDesc;
                         } else if (correspondingOriginalExercise.weight_text !== undefined) {
                             correspondingOriginalExercise.weight_text = finalWeightDesc;
-                        } else { // Fallback if only simple weight/unit existed
-                            correspondingOriginalExercise.unit = finalWeightDesc; // Store the full string here
+                        } else { 
+                            correspondingOriginalExercise.unit = finalWeightDesc; 
                         }
                     }
-                    if (notesInput) {
-                        latestWorkoutEntry.exercises[i].finalNotes = notesInput.value.trim();
+                    if (progressionNoteInput) {
+                        const finalProgNote = progressionNoteInput.value.trim();
+                        latestWorkoutEntry.exercises[i].finalProgressionNote = finalProgNote; // Save to history entry
+                        correspondingOriginalExercise.progression_note = finalProgNote; // Update in program plan
                     }
                 }
             }
@@ -1385,9 +1384,8 @@
             if (loadedFullProgram && loadedFullProgram.sessions) {
                 const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
                 if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
-                    // Replace the exercises_et_pauses array with the modified one from originalCompletedWorkoutPlan
                     currentSessionInFullProgram.exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
-                     console.log(`Programme mis à jour localement: ${currentWorkoutType}`);
+                     console.log(`Programme mis à jour localement: ${currentWorkoutType} avec nouvelles notes de progression.`);
                 }
             }
 
@@ -1398,7 +1396,7 @@
             const previouslyActiveWorkoutType = currentWorkoutType; 
             setState('idle'); 
             if (previouslyActiveWorkoutType && loadedFullProgram) loadSession(previouslyActiveWorkoutType); 
-            showMessage("Entraînement et programme mis à jour sauvegardés !", 3000);
+            showMessage("Entraînement et programme (avec notes de progression) mis à jour sauvegardés !", 3500);
             if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
         }
 
@@ -1410,7 +1408,7 @@
         }
         async function saveFullProgramToDrive() {
             if (!googleAccessToken || !loadedFullProgram) { console.warn("Tentative de sauvegarde du programme global sans token ou programme."); return; }
-            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true); // Create if not exist with current state
+            if (!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram), true); 
             if (programFileId) {
                 console.log(`Sauvegarde du programme '${FULL_PROGRAM_FILENAME}' sur Drive...`);
                 const success = await updateFileContent(programFileId, loadedFullProgram);
@@ -1498,12 +1496,12 @@
                         reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps),
                         reps_unit: ex.reps_unit,
                         unit_duration: ex.unit_duration,
-                        weight_description_target: getFormattedWeight(ex), // Use the same formatting as display
+                        weight_description_target: getFormattedWeight(ex),
                         
                         finalReps: ex.duration !== undefined ? undefined : (ex.finalReps !== undefined ? ex.finalReps : ex.reps),
                         finalDuration: ex.duration !== undefined ? (ex.finalDuration !== undefined ? ex.finalDuration : ex.duration) : undefined,
                         finalWeightDescription: ex.finalWeightDescription !== undefined ? ex.finalWeightDescription : getFormattedWeight(ex),
-                        finalNotes: ex.finalNotes || "",
+                        finalProgressionNote: ex.finalProgressionNote !== undefined ? ex.finalProgressionNote : (ex.progression_note || ""), // Save modified or original progression note
                         
                         image_url: ex.image_url,
                         sets_info: ex.sets_info,
@@ -1558,7 +1556,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (Mode Drive Exclusif v7.2 - Améliorations UI/UX, Prog par Étapes).");
+            console.log("ArmorWorkout Initialisé (v7.3 - Notes de progression intégrées).");
         });
     </script>
 </body>
