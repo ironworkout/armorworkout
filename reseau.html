@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveaux Sous-Réseaux BRE - Documentation Technique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            color: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .header .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .network-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .network-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .network-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #1e40af);
+        }
+
+        .network-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .network-card.exam::before {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
+
+        .network-card.formation::before {
+            background: linear-gradient(90deg, #059669, #10b981);
+        }
+
+        .network-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .network-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white;
+            margin-right: 16px;
+        }
+
+        .exam .network-icon {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+        }
+
+        .formation .network-icon {
+            background: linear-gradient(135deg, #059669, #10b981);
+        }
+
+        .network-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .network-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .network-info {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 1px solid #f3f4f6;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .info-value {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #111827;
+            font-weight: 500;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .info-value.highlight {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .capacity-section {
+            margin-bottom: 24px;
+        }
+
+        .capacity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .capacity-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .capacity-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .capacity-bar {
+            height: 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .documentation {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-top: 40px;
+        }
+
+        .documentation h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-section {
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .doc-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .doc-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .doc-section li {
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .doc-section li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .tech-specs {
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .tech-specs h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .spec-item {
+            background: white;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .spec-item strong {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .spec-item span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: #111827;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .header {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .network-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .network-card {
+                padding: 24px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #166534;
+            margin-top: 8px;
+        }
+
+        .status-badge::before {
+            content: '●';
+            color: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Nouveaux Sous-Réseaux BRE</h1>
+            <p>Extension de l'infrastructure réseau - Réseau Exam & Formation</p>
+            <div class="subtitle">Réseau global : 172.22.48.0/20 • Plage : 172.22.48.0 - 172.22.63.255</div>
+        </div>
+
+        <div class="network-grid">
+            <!-- Réseau Exam -->
+            <div class="network-card exam">
+                <div class="network-header">
+                    <div class="network-icon">7</div>
+                    <div>
+                        <div class="network-title">Réseau Exam</div>
+                        <div class="network-subtitle">Environnement d'examen sécurisé</div>
+                        <div class="status-badge">Nouveau réseau</div>
+                    </div>
+                </div>
+
+                <div class="network-info">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Adresse réseau</div>
+                            <div class="info-value highlight">172.22.48.80/28</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Masque de sous-réseau</div>
+                            <div class="info-value">255.255.255.240</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Plage utilisable</div>
+                            <div class="info-value highlight">172.22.48.81 - 172.22.48.94</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Passerelle</div>
+                            <div class="info-value highlight">172.22.48.94</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Adresse de diffusion</div>
+                            <div class="info-value highlight">172.22.48.95</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">CIDR</div>
+                            <div class="info-value">/28</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="capacity-section">
+                    <div class="capacity-header">
+                        <span class="capacity-label">Capacité réseau</span>
+                        <span class="capacity-value">14 adresses utilisables</span>
+                    </div>
+                    <div class="capacity-bar">
+                        <div class="capacity-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="showExamConfig()">
+                        ⚙️ Configuration
+                    </button>
+                    <button class="btn btn-secondary" onclick="showExamExamples()">
+                        📋 Exemples IP
+                    </button>
+                    <button class="btn btn-success" onclick="testNetwork('exam')">
+                        🔍 Test réseau
+                    </button>
+                </div>
+            </div>
+
+            <!-- Réseau Formation -->
+            <div class="network-card formation">
+                <div class="network-header">
+                    <div class="network-icon">8</div>
+                    <div>
+                        <div class="network-title">Formation & Labs</div>
+                        <div class="network-subtitle">Réseau pour formations et laboratoires</div>
+                        <div class="status-badge">Nouveau réseau</div>
+                    </div>
+                </div>
+
+                <div class="network-info">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Adresse réseau</div>
+                            <div class="info-value highlight">172.22.49.0/24</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Masque de sous-réseau</div>
+                            <div class="info-value">255.255.255.0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Plage utilisable</div>
+                            <div class="info-value highlight">172.22.49.1 - 172.22.49.254</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Passerelle</div>
+                            <div class="info-value highlight">172.22.49.254</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Adresse de diffusion</div>
+                            <div class="info-value highlight">172.22.49.255</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">CIDR</div>
+                            <div class="info-value">/24</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="capacity-section">
+                    <div class="capacity-header">
+                        <span class="capacity-label">Capacité réseau</span>
+                        <span class="capacity-value">254 adresses utilisables</span>
+                    </div>
+                    <div class="capacity-bar">
+                        <div class="capacity-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="showFormationConfig()">
+                        ⚙️ Configuration
+                    </button>
+                    <button class="btn btn-secondary" onclick="showFormationSubnets()">
+                        🔀 Sous-divisions
+                    </button>
+                    <button class="btn btn-success" onclick="testNetwork('formation')">
+                        🔍 Test réseau
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="documentation">
+
+            
+
+
+    <script>
+        function showExamConfig() {
+            alert(`Configuration du Réseau Exam
+
+🔧 Paramètres de configuration :
+• Interface réseau : eth0
+• Adresse IP : 172.22.48.8X/28
+• Masque de sous-réseau : 255.255.255.240
+• Passerelle par défaut : 172.22.48.94
+• Serveurs DNS : Selon configuration réseau
+• VLAN ID : À définir (ex: VLAN 107)
+
+🛡️ Sécurité :
+• Isolation complète des autres réseaux
+• Règles de pare-feu restrictives
+• Accès Internet limité si nécessaire
+• Monitoring des connexions
+
+📋 Usage recommandé :
+• Postes d'examen isolés
+• Serveur de supervision centralisée
+• Contrôle d'accès strict
+• Logging des activités`);
+        }
+
+        function showExamExamples() {
+            alert(`Exemples d'attribution d'adresses IP - Réseau Exam
+
+🖥️ Infrastructure :
+• Passerelle/Routeur : 172.22.48.94
+• Serveur d'examen : 172.22.48.81
+• Serveur de supervision : 172.22.48.82
+• Imprimante réseau : 172.22.48.83
+
+👨‍🎓 Postes étudiants :
+• Poste 1 : 172.22.48.84
+• Poste 2 : 172.22.48.85
+• Poste 3 : 172.22.48.86
+• Poste 4 : 172.22.48.87
+• Poste 5 : 172.22.48.88
+• ...
+• Poste 10 : 172.22.48.93
+
+Total : 14 adresses utilisables`);
+        }
+
+        function showFormationConfig() {
+            alert(`Configuration du Réseau Formation & Labs
+
+🔧 Paramètres de configuration :
+• Interface réseau : eth0
+• Adresse IP : 172.22.49.X/24
+• Masque de sous-réseau : 255.255.255.0
+• Passerelle par défaut : 172.22.49.254
+• Serveurs DNS : Selon configuration réseau
+• VLAN ID : À définir (ex: VLAN 108)
+
+🎯 Flexibilité :
+• Réseau unique de 254 adresses
+• Ou subdivision en plusieurs sous-réseaux
+• Gestion centralisée des adresses IP
+• DHCP pour attribution automatique
+
+📚 Usage recommandé :
+• Salles de formation multiples
+• Laboratoires pratiques
+• Environnements de test
+• Projets étudiants`);
+        }
+
+        function showFormationSubnets() {
+            alert(`Subdivisions possibles - Réseau Formation & Labs
+
+📚 Option 1 - Salles de formation (/27) :
+• Salle 1 : 172.22.49.0/27 (172.22.49.1-30)
+• Salle 2 : 172.22.49.32/27 (172.22.49.33-62)
+• Salle 3 : 172.22.49.64/27 (172.22.49.65-94)
+• Salle 4 : 172.22.49.96/27 (172.22.49.97-126)
+• ...jusqu'à 8 salles
+
+🔬 Option 2 - Laboratoires (/28) :
+• Lab 1 : 172.22.49.0/28 (172.22.49.1-14)
+• Lab 2 : 172.22.49.16/28 (172.22.49.17-30)
+• Lab 3 : 172.22.49.32/28 (172.22.49.33-46)
+• ...jusqu'à 16 laboratoires
+
+🖥️ Infrastructure commune :
+• Serveurs : 172.22.49.200-220
+• Équipements : 172.22.49.250-253
+• Passerelle : 172.22.49.254`);
+        }
+
+        function testNetwork(type) {
+            const networks = {
+                'exam': '172.22.48.80/28',
+                'formation': '172.22.49.0/24'
+            };
+            
+            alert(`Test de connectivité pour ${networks[type]}
+
+🔍 Tests recommandés :
+• Ping vers la passerelle
+• Test de résolution DNS
+• Vérification de la connectivité inter-VLAN
+• Test des règles de pare-feu
+• Validation des performances réseau
+
+⚠️ Note : Cette fonction nécessite une implémentation serveur pour des tests réels de ping/connectivité.
+
+Commandes de test suggérées :
+• ping ${type === 'exam' ? '172.22.48.94' : '172.22.49.254'}
+• nslookup google.com
+• traceroute 8.8.8.8`);
+        }
+    </script>
+</body>
+</html>
