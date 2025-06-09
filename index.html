@@ -1,3 +1,5 @@
+Vous avez raison, c'est encore une erreur de ma part dans la réorganisation du code.
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -278,7 +280,7 @@
             color: var(--timer-text-color-main); text-shadow: var(--timer-text-glow-main); 
             transition: font-size 0.2s ease; pointer-events: none; white-space: nowrap; 
         }
-        #timer-state { display: none !important; }
+        #timer-state { display: none !important; } 
 
         @keyframes countdown-pulse { 0%, 100% { opacity: 0.7; transform: scale(1) translateX(-50%); } 50% { opacity: 1; transform: scale(1.05) translateX(-50%); } }
         .state-exercise #time-left { font-size: 4em; letter-spacing: 0.05em; }
@@ -715,7 +717,64 @@
 
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script>
-        // --- CONSTANTES ET VARIABLES GLOBALES ---
+        // --- Ordre des Fonctions Corrigé ---
+
+        // Les fonctions appelées par les event listeners sont définies avant.
+        function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.classList.add('visible'); messageArea.classList.toggle('error-message', isError); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
+        function handleAuthClick() { initAudioContext(); if (!tokenClient) { showMessage("Services Google non prêts. Veuillez patienter.", 3000); checkAndInitGis(); return; } if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; } if(driveStatusTextElement) driveStatusTextElement.textContent = 'Connexion...'; tokenClient.requestAccessToken({ prompt: 'consent' }); }
+        function handlePreviousClick() { if (currentItemIndex > 0) { currentItemIndex--; updateOverallWorkoutProgressDisplay(); const prevItem = currentWorkoutPlan[currentItemIndex]; setState(prevItem.type === 'break' ? 'break' : 'exercise'); saveInProgressState(); vibrate(); } }
+        function handleItemCompletion() { if (currentState === 'finished') return; const currentItem = currentWorkoutPlan[currentItemIndex]; if(currentItem.duration) currentItem.finalDuration = totalTime - timeLeft; else currentItem.finalReps = currentItem.reps; currentItemIndex++; updateOverallWorkoutProgressDisplay(); if (currentItemIndex >= currentWorkoutPlan.length) setState('finished'); else { const nextItem = currentWorkoutPlan[currentItemIndex]; timeLeft = 0; setState(nextItem.type === 'break' ? 'break' : 'exercise'); } saveInProgressState(); }
+        function forceFinishWorkout() { if (confirm("Êtes-vous sûr de vouloir terminer l'entraînement ?")) { setState('finished'); } }
+        function resetCurrentWorkout() { if (currentWorkoutType) { if (confirm(`Réinitialiser l'entraînement ${currentWorkoutType} ? Toute progression non sauvegardée sera perdue.`)) loadSession(currentWorkoutType); } else { currentItemIndex = 0; currentWorkoutPlan = []; workoutStartTime = null; setState('idle'); setActiveWorkoutNav(null); showMessage("Entraînement réinitialisé.", 2000); } clearInProgressState(); updateOverallWorkoutProgressDisplay(); }
+        function loadSession(sessionName) { if (!loadedFullProgram || !loadedFullProgram.sessions) { showMessage(`Programme non chargé. Vérifiez '${FULL_PROGRAM_FILENAME}' sur Drive.`, 5000, true); return; } const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName); if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" non trouvée ou invalide.`, 4000, true); currentWorkoutPlan = []; return; } currentWorkoutType = session.nom_session; currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); currentWorkoutPlan.forEach(item => { if (item.type === 'exercise' || item.type?.startsWith('exercise_')) { item.current_reps = item.reps; item.finalReps = undefined; item.finalDuration = undefined; item.finalWeightDescription = undefined; item.finalProgressionNote = undefined; if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) { item.current_activation_reps = item.activation_reps_start || item.reps; item.completed_mini_sets = 0; } } }); currentItemIndex = 0; workoutStartTime = null; estimatedTotalWorkoutTime = calculateEstimatedTotalWorkoutTime(currentWorkoutPlan); updateEstimatedEndTime(estimatedTotalWorkoutTime); setState('idle'); setActiveWorkoutNav(sessionName); showMessage(`${session.nom_session || 'Session'} chargée. Prêt à commencer !`, 2500); vibrate(); updateWorkoutInfo(); updateOverallWorkoutProgressDisplay(); clearInProgressState(); }
+        async function finishSummary() {
+            if (!finishSummaryBtn) return; finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
+            const latestWorkoutEntry = workoutHistory[workoutHistory.length - 1];
+            if (!latestWorkoutEntry || !latestWorkoutEntry.exercises) { closeSummary(); showMessage("Erreur: Données d'historique invalides.", 4000, true); if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; }
+            let planExerciseIndex = 0; 
+            for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) { 
+                 while(planExerciseIndex < originalCompletedWorkoutPlan.length && !(originalCompletedWorkoutPlan[planExerciseIndex].type === 'exercise' || originalCompletedWorkoutPlan[planExerciseIndex].type?.startsWith('exercise_'))) { planExerciseIndex++; }
+                if (planExerciseIndex < originalCompletedWorkoutPlan.length) {
+                    const originalExerciseInPlan = originalCompletedWorkoutPlan[planExerciseIndex];
+                    const repsInput = document.getElementById(`summary-reps-${planExerciseIndex}`); 
+                    const weightInput = document.getElementById(`summary-weight-${planExerciseIndex}`);
+                    const progressionNoteInput = document.getElementById(`summary-progression-note-${planExerciseIndex}`);
+                    if (repsInput && weightInput && progressionNoteInput) { 
+                        const finalValue = parseInt(repsInput.value, 10);
+                        if (!isNaN(finalValue)) {
+                            if (originalExerciseInPlan.duration !== undefined) { 
+                                latestWorkoutEntry.exercises[i].finalDuration = finalValue;
+                                if(originalExerciseInPlan.reps_text?.toUpperCase() !== "AMRAP") originalExerciseInPlan.duration = finalValue;
+                            } else { 
+                                latestWorkoutEntry.exercises[i].finalReps = finalValue;
+                                if(originalExerciseInPlan.reps_text?.toUpperCase() !== "AMRAP") originalExerciseInPlan.reps = finalValue; 
+                            }
+                        }
+                        const finalWeightDesc = weightInput.value.trim();
+                        latestWorkoutEntry.exercises[i].finalWeightDescription = finalWeightDesc;
+                        if (originalExerciseInPlan.unit) originalExerciseInPlan.unit = finalWeightDesc; else originalExerciseInPlan.weight_text = finalWeightDesc;
+                        
+                        const finalProgNote = progressionNoteInput.value.trim();
+                        latestWorkoutEntry.exercises[i].finalProgressionNote = finalProgNote; 
+                        originalExerciseInPlan.progression_note = finalProgNote;
+                    }
+                    planExerciseIndex++;
+                }
+            }
+            if (loadedFullProgram && loadedFullProgram.sessions) {
+                const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
+                if (currentSessionInFullProgram) currentSessionInFullProgram.exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
+            }
+            await saveHistoryToDrive(); 
+            if (loadedFullProgram) await saveFullProgramToDrive(); 
+            
+            closeSummary(false); const previouslyActiveWorkoutType = currentWorkoutType; 
+            setState('idle'); if (previouslyActiveWorkoutType && loadedFullProgram) loadSession(previouslyActiveWorkoutType); 
+            showMessage("Entraînement et programme mis à jour sauvegardés !", 3500);
+            if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
+        }
+        function closeSummary(updateUIafter = true) { if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUIafter) setState('idle'); }
+
         const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
         const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const HISTORY_FILENAME = "armorworkout_history.json";
@@ -726,6 +785,7 @@
         const GIS_CHECK_INTERVAL = 100; 
         const GIS_MAX_RETRIES = 50; 
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
+
         let loadedFullProgram = null; 
 
         let timeDisplayDiv, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
@@ -739,7 +799,6 @@
 
         let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = [];
         let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null;
-        let totalTime = 0, timeLeft = 0, prepareTimeLeft = 0;
         let isTimerRunning = false, isWorkoutActive = false, workoutFinished = false, wasFinishedState = false;
         let currentState = 'idle', previousState = 'idle'; 
         let workoutStartTime = null, workoutHistory = [];
@@ -753,41 +812,10 @@
         let audioContext = null;
         let gisCheckRetries = 0; 
         let halfwayTimeoutId = null; 
+
         let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
         let triangleSpinTimeoutId = null; 
 
-        // --- DÉCLARATION DES FONCTIONS ---
-        // (Définies ici pour éviter les erreurs de référence)
-
-        // Les fonctions sont listées ici. Leur définition complète est plus bas.
-        function showMessage(msg, duration, isError) {}
-        function handleAuthClick() {}
-        function handlePreviousClick() {}
-        function handleItemCompletion() {}
-        function forceFinishWorkout() {}
-        function resetCurrentWorkout() {}
-        function loadSession(sessionName) {}
-        function finishSummary() {}
-        function closeSummary(updateUIafter) {}
-        function updateAuthUI(isLoggedIn) {}
-        function setState(newState) {}
-        // etc... Toutes les fonctions sont définies ci-dessous
-
-        // --- INITIALISATION PRINCIPALE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeDOMReferences();
-            initSounds();
-            addEventListeners(); // Maintenant que les fonctions sont déclarées, on peut attacher les listeners.
-            loadSavedTheme(); 
-            setState('idle'); 
-            updateAuthUI(!!googleAccessToken); 
-            checkAndInitGis(); 
-            setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v10 - Correctif d'ordre).");
-        });
-
-        // --- Définitions complètes des fonctions ---
-        
         function normalizeExerciseName(name) { return name ? name.trim() : ""; }
         function triggerTriangleSpin() { const t = document.querySelector('.reactor .triangle'); if (!t) return; if (triangleSpinTimeoutId) clearTimeout(triangleSpinTimeoutId); t.classList.remove('spin-transition'); void t.offsetWidth; t.classList.add('spin-transition'); triangleSpinTimeoutId = setTimeout(() => { t.classList.remove('spin-transition'); triangleSpinTimeoutId = null; }, 600); }
         function initSounds() { try { const bP = "https://ironworkout.github.io/armorworkout/"; soundLaser = new Audio(bP+'laser.mp3'); sound5=new Audio(bP+'5.mp3'); sound4=new Audio(bP+'4.mp3'); sound3=new Audio(bP+'3.mp3'); sound2=new Audio(bP+'2.mp3'); sound1=new Audio(bP+'1.mp3'); soundWindows=new Audio(bP+'windows.mp3'); soundET=new Audio(bP+'e-t.mp3'); [soundLaser,sound5,sound4,sound3,sound2,sound1,soundWindows,soundET].forEach(s => { if(s)s.preload='auto';}); } catch (e) { showMessage("Erreur chargement sons.", 5000, true); } }
@@ -907,6 +935,7 @@
             } catch (error) { console.error(`Erreur updateFileContent pour ${fileId}:`, error); if (historyDriveStatus) { historyDriveStatus.textContent = 'Erreur Synchro'; historyDriveStatus.className = 'error'; } showMessage(`Erreur sauvegarde fichier Drive.`, 5000, true); }
             finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); } return success;
         }
+
         async function loadHistoryFromDrive() {
             if (!googleAccessToken) return; console.log("Chargement historique Drive...");
             historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([])); 
@@ -989,21 +1018,15 @@
             const exercisesForHistory = originalCompletedWorkoutPlan
                 .filter(item => item.type === 'exercise' || item.type?.startsWith('exercise_'))
                 .map(ex => {
-                    return { 
-                        name: ex.name, type: ex.type, 
-                        reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps),
-                        reps_unit: ex.reps_unit, unit_duration: ex.unit_duration,
-                        weight_description_target: getFormattedWeight(ex),
-                        finalReps: ex.finalReps, finalDuration: ex.finalDuration,
-                        finalWeightDescription: ex.finalWeightDescription, finalProgressionNote: ex.finalProgressionNote,
-                        image_url: ex.image_url, sets_info: ex.sets_info, details_original: ex.details 
-                    };
+                    const historyEx = { name: ex.name, type: ex.type, reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps), reps_unit: ex.reps_unit, unit_duration: ex.unit_duration, weight_description_target: getFormattedWeight(ex), finalReps: ex.finalReps, finalDuration: ex.finalDuration, finalWeightDescription: ex.finalWeightDescription, finalProgressionNote: ex.finalProgressionNote, image_url: ex.image_url, sets_info: ex.sets_info, details_original: ex.details };
+                    if(ex.weight_text) historyEx.weight_text = ex.weight_text; if(ex.weight_details) historyEx.weight_details = ex.weight_details;
+                    if (ex.type?.includes("myo_reps")) { historyEx.activation_reps_start = ex.activation_reps_start; historyEx.current_activation_reps = ex.current_activation_reps; historyEx.completed_mini_sets = ex.completed_mini_sets; historyEx.mini_reps_start = ex.mini_reps_start; }
+                    return historyEx;
                 });
             const historyEntry = { date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: durationSeconds, exercises: exercisesForHistory };
             workoutHistory.push(historyEntry);
         }
-
-        // --- Fonctions d'UI ---
+        
         function updateOverallWorkoutProgressDisplay() {
             if (!timerProgressIndicator || !workoutStepTotalDisplay || !workoutStepCurrentDisplay || !workoutStepInfoDisplay) return;
             if (isWorkoutActive && currentWorkoutPlan.length > 0) {
@@ -1017,6 +1040,7 @@
                 workoutStepInfoDisplay.classList.add('visible');
             } else { timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE; workoutStepInfoDisplay.classList.remove('visible'); }
         }
+        
         function updateTimerDisplay() {
             if (!timeDisplayDiv) return; let timeString = "00:00"; 
             const item = currentWorkoutPlan[currentItemIndex];
@@ -1031,6 +1055,7 @@
             timeDisplayDiv.textContent = timeString; 
             updateOverallWorkoutProgressDisplay();
         }
+        
         function updateTimerVisuals(state) {
             if (!timerProgressIndicator) return; 
             let stateColorVar = '--idle-color-val', stateGlowRgbVar = '--idle-color-rgb', progressCircleColorVar = '--electric-cyan'; 
@@ -1053,6 +1078,7 @@
                 else currentExerciseNameDisplay.style.color = rootStyle.getPropertyValue('--primary-text-color-dark').trim();
             }
         }
+        
         function getFormattedReps(item) {
             if (!item) return "-";
             if (item.reps_text) return item.reps_text;
@@ -1061,6 +1087,7 @@
             let repsUnit = item.reps_unit || "";
             return `${repsDisplay}${repsUnit ? ' ' + repsUnit : ''}`;
         }
+
         function getFormattedWeight(item) {
             if (!item) return "-";
             if (item.weight_text) return item.weight_text; 
@@ -1070,9 +1097,10 @@
             if (item.weight !== undefined && item.weight > 0) return `${item.weight} kg`;
             return "-";
         }
+
         function updateWorkoutInfo() {
-            if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !exerciseImageContainer || !exerciseImageDisplay) return;
             const body = document.body;
+            if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !exerciseImageContainer || !exerciseImageDisplay) return;
             const item = currentWorkoutPlan[currentItemIndex]; let infoHtml = '', exerciseName = '';
             let showImage = false, imageUrlForDisplay = '';
 
@@ -1119,10 +1147,12 @@
             if(currentExerciseNameDisplay) currentExerciseNameDisplay.textContent = exerciseName; if(currentExerciseContainer) currentExerciseContainer.innerHTML = infoHtml; 
             updateTimerVisuals(currentState); 
         }
+        
         function startPrepareCountdown() {
             totalTime = PREPARE_DURATION; timeLeft = PREPARE_DURATION; updateTimerDisplay(); if (prepareTimeLeft === 3) playSound(sound3);
             prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; timeLeft = prepareTimeLeft; updateTimerDisplay(); if (prepareTimeLeft === 2) playSound(sound2); if (prepareTimeLeft === 1) playSound(sound1); if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); setState('exercise'); } }, 1000);
         }
+        
         function startBreakTimer() { 
             const item = currentWorkoutPlan[currentItemIndex]; if (!item || !item.duration) { handleItemCompletion(); return; }
             totalTime = item.duration; if(timeLeft === 0) timeLeft = totalTime; 
@@ -1131,22 +1161,44 @@
             if (totalTime > 10) halfwayTimeoutId = setTimeout(() => { playSound(soundWindows); vibrate([50]); }, (timeLeft - (totalTime/2)) * 1000);
             timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft === 5) playSound(sound5); else if (timeLeft === 4) playSound(sound4); else if (timeLeft === 3) playSound(sound3); else if (timeLeft === 2) playSound(sound2); else if (timeLeft === 1) playSound(sound1); if (timeLeft <= 0) { clearInterval(timerInterval); clearTimeout(halfwayTimeoutId); handleItemCompletion(); } }, 1000);
         }
-        function calculateEstimatedTotalWorkoutTime(workoutPlanToCalc) {
-            let totalDuration = PREPARE_DURATION; 
-            if (workoutPlanToCalc && Array.isArray(workoutPlanToCalc)) {
-                workoutPlanToCalc.forEach(item => {
-                    if (item.type === 'break' && item.duration) totalDuration += item.duration;
-                    else if (item.duration && (item.type === 'exercise' || item.type?.startsWith('exercise_'))) totalDuration += item.duration;
-                    else if (item.type === 'exercise' || item.type?.startsWith('exercise_')) totalDuration += DEFAULT_EXERCISE_DURATION; 
+        
+        function saveInProgressState() { if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; } const stateToSave = { currentWorkoutType, currentWorkoutPlan: JSON.parse(JSON.stringify(currentWorkoutPlan)), currentItemIndex, timeLeft, prepareTimeLeft, workoutStartTime, currentState, previousState }; localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave)); }
+        function loadInProgressState() {
+            const savedState = localStorage.getItem(IN_PROGRESS_KEY);
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    if (parsedState.currentWorkoutType && parsedState.currentWorkoutPlan && parsedState.currentState && loadedFullProgram) {
+                        if (confirm("Un entraînement était en cours. Voulez-vous le reprendre ?")) {
+                            currentWorkoutType = parsedState.currentWorkoutType; currentWorkoutPlan = parsedState.currentWorkoutPlan; 
+                            currentItemIndex = parsedState.currentItemIndex; timeLeft = parsedState.timeLeft; prepareTimeLeft = parsedState.prepareTimeLeft;
+                            workoutStartTime = parsedState.workoutStartTime; previousState = parsedState.previousState || 'idle'; 
+                            estimatedTotalWorkoutTime = calculateEstimatedTotalWorkoutTime(currentWorkoutPlan); updateEstimatedEndTime(estimatedTotalWorkoutTime);
+                            setActiveWorkoutNav(currentWorkoutType); setState(parsedState.currentState); 
+                            updateOverallWorkoutProgressDisplay(); 
+                            showMessage("Entraînement repris.", 2500); return; 
+                        }
+                    }
+                } catch (e) { console.error("Erreur parsing état en cours:", e); }
+            } clearInProgressState(); 
+        }
+        function clearInProgressState() { localStorage.removeItem(IN_PROGRESS_KEY); }
+        
+        function saveWorkoutToHistory() {
+            if (!currentWorkoutType || !workoutStartTime || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return;
+            const endTime = Date.now(); const durationSeconds = (endTime - workoutStartTime) / 1000;
+            const exercisesForHistory = originalCompletedWorkoutPlan
+                .filter(item => item.type === 'exercise' || item.type?.startsWith('exercise_'))
+                .map(ex => {
+                    const historyEx = { name: ex.name, type: ex.type, reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps), reps_unit: ex.reps_unit, unit_duration: ex.unit_duration, weight_description_target: getFormattedWeight(ex), finalReps: ex.finalReps, finalDuration: ex.finalDuration, finalWeightDescription: ex.finalWeightDescription, finalProgressionNote: ex.finalProgressionNote, image_url: ex.image_url, sets_info: ex.sets_info, details_original: ex.details };
+                    if(ex.weight_text) historyEx.weight_text = ex.weight_text; if(ex.weight_details) historyEx.weight_details = ex.weight_details;
+                    if (ex.type?.includes("myo_reps")) { historyEx.activation_reps_start = ex.activation_reps_start; historyEx.current_activation_reps = ex.current_activation_reps; historyEx.completed_mini_sets = ex.completed_mini_sets; historyEx.mini_reps_start = ex.mini_reps_start; }
+                    return historyEx;
                 });
-            } return totalDuration;
+            const historyEntry = { date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: durationSeconds, exercises: exercisesForHistory };
+            workoutHistory.push(historyEntry);
         }
-        function updateEstimatedEndTime(totalDuration) {
-            if (totalDuration > 0) {
-                const now = new Date(); const endTime = new Date(now.getTime() + totalDuration * 1000);
-                estimatedEndTimeDisplay.textContent = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
-            } else { estimatedEndTimeDisplay.textContent = '--:--'; }
-        }
+        
         function displayHistory(period = 'week') {
             if (!googleAccessToken) { renderHistoryList([]); calculateAndDisplayStats([]); setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique."); if(historyFilterBtns) historyFilterBtns.forEach(b => b.classList.remove('active')); return; }
             currentHistoryPeriod = period; if(historyFilterBtns) historyFilterBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.period === period));
@@ -1223,6 +1275,48 @@
         }
         function clearCharts() { if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; } }
         function setChartPlaceholder(canvasId, message, show = true) { const placeholderId = canvasId.replace('-canvas', '-placeholder'); const placeholderEl = document.getElementById(placeholderId); const canvasEl = document.getElementById(canvasId); if (placeholderEl && canvasEl) { placeholderEl.textContent = message; placeholderEl.style.display = show ? 'block' : 'none'; canvasEl.style.opacity = show ? '0.2' : '1'; } }
+        
+        function initializeDOMReferences() {
+            try {
+                timeDisplayDiv = document.getElementById('time-left'); currentExerciseContainer = document.getElementById('current-exercise-container');
+                progressTracker = document.getElementById('progress-tracker'); startPauseBtn = document.getElementById('start-pause-btn'); skipBtn = document.getElementById('skip-btn'); finishBtn = document.getElementById('finish-btn');
+                resetBtn = document.getElementById('reset-btn'); prevBtn = document.getElementById('prev-btn'); messageArea = document.getElementById('message-area');
+                workoutSection = document.getElementById('workout-section'); historySection = document.getElementById('history-section'); historyList = document.getElementById('history-list');
+                statsDisplay = document.getElementById('stats-display'); statsContentWrapper = statsDisplay?.querySelector('.content-wrapper'); historyFilterBtns = Array.from(document.querySelectorAll('.history-filters button'));
+                historyChartCanvasEl = document.getElementById('history-chart-canvas'); signInButton = document.getElementById('signin-button'); driveStatusElement = document.getElementById('drive-status');
+                driveStatusTextElement = document.getElementById('drive-status-text'); postWorkoutSummary = document.getElementById('post-workout-summary'); summaryTitle = document.getElementById('summary-title');
+                summaryItemsList = document.getElementById('summary-items-list'); finishSummaryBtn = document.getElementById('finish-summary-btn'); historyDriveStatus = document.getElementById('history-drive-status');
+                currentExerciseNameDisplay = document.getElementById('current-exercise-name-display'); driveConnectionStatusMain = document.getElementById('drive-connection-status-main');
+                driveConnectionText = document.getElementById('drive-connection-text'); timerDisplayElement = document.querySelector('.timer-display'); reactorElement = document.querySelector('.reactor');
+                exerciseImageContainer = document.getElementById('exercise-image-container'); exerciseImageDisplay = document.getElementById('exercise-image-display'); progressTextArea = document.getElementById('progress-text-area');
+                historyActionsContainer = document.querySelector('.history-actions'); 
+                navHistoryBtn = document.getElementById('nav-history');
+                navButtons = [document.getElementById('nav-push'), document.getElementById('nav-pull'), document.getElementById('nav-legs')];
+                timerProgressIndicator = document.getElementById('timer-progress-indicator'); 
+                workoutStepTotalDisplay = document.getElementById('workout-step-total-display');
+                workoutStepCurrentDisplay = document.getElementById('workout-step-current-display');
+                workoutStepInfoDisplay = document.getElementById('workout-step-info-display');
+                estimatedEndTimeContainer = document.getElementById('estimated-end-time-container');
+                estimatedEndTimeDisplay = document.getElementById('estimated-end-time');
+            } catch (e) { document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px;'>Erreur critique chargement. Rafraîchissez.</p>"; }
+        }
+        function addEventListeners() {
+            if (startPauseBtn) startPauseBtn.addEventListener('click', () => { initAudioContext(); if (currentState === 'idle') setState('preparing'); else if (currentState === 'break') setState('paused'); else if (currentState === 'paused') { const item = currentWorkoutPlan[currentItemIndex]; setState(item?.duration ? 'exercise' : 'break'); } });
+            if (timerDisplayElement) timerDisplayElement.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && (currentState === 'exercise' && !currentWorkoutPlan[currentItemIndex]?.duration) && currentState !== 'preparing' && currentState !== 'finished') handleItemCompletion(); else if (currentState === 'idle' && startPauseBtn && !startPauseBtn.disabled) setState('preparing'); });
+            if (skipBtn) skipBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive) handleItemCompletion(); });
+            if (prevBtn) prevBtn.addEventListener('click', () => { initAudioContext(); handlePreviousClick(); });
+            if (finishBtn) finishBtn.addEventListener('click', () => { initAudioContext(); forceFinishWorkout(); });
+            if (resetBtn) resetBtn.addEventListener('click', () => { initAudioContext(); resetCurrentWorkout(); });
+            navButtons.forEach(btn => { if (btn) btn.addEventListener('click', () => { initAudioContext(); loadSession(btn.dataset.sessionName); }); });
+            document.querySelectorAll('nav a.nav-link').forEach(link => { link.addEventListener('click', (e) => { initAudioContext(); if (isWorkoutActive) { e.preventDefault(); showMessage("Terminez ou mettez en pause l'entraînement avant de naviguer.", 3000); } }); });
+            if(navHistoryBtn) navHistoryBtn.addEventListener('click', () => { initAudioContext(); showSection('history-section'); });
+            historyFilterBtns.forEach(btn => { if(btn) btn.addEventListener('click', () => { initAudioContext(); displayHistory(btn.dataset.period); }); });
+            if(signInButton) signInButton.addEventListener('click', handleAuthClick);
+            if(finishSummaryBtn) finishSummaryBtn.addEventListener('click', finishSummary);
+            if(postWorkoutSummary) postWorkoutSummary.addEventListener('click', (e) => { if (e.target === postWorkoutSummary) finishSummary(); });
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState(); });
+            window.addEventListener('beforeunload', () => { if (isWorkoutActive) saveInProgressState(); });
+        }
     </script>
 </body>
 </html>
