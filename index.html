@@ -358,7 +358,8 @@
         .workout-info { margin-bottom: 20px; min-height: auto; position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         #current-exercise-name-display { display: block; font-size: 1.3em; font-weight: 600; color: var(--primary-text-color); margin-bottom: 8px; padding: 0 10px; line-height: 1.3; text-shadow: none; }
         body.state-exercise #current-exercise-name-display, body.state-break #current-exercise-name-display { animation: textGlowPulseState 2s infinite ease-in-out; }
-        body.state-exercise #current-exercise-name-display { color: var(--color-exercise); } body.state-break #current-exercise-name-display { color: var(--color-break); }
+        body.state-exercise #current-exercise-name-display { color: var(--color-exercise); } 
+        body.state-break #current-exercise-name-display, body.state-preparing #current-exercise-name-display { color: var(--color-break); }
         
         #current-exercise-container { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1em; color: var(--secondary-text-color); min-height: auto; width: 100%; }
         .workout-prompt { display: inline-flex; align-items: center; gap: 10px; border: 1px dashed rgba(var(--electric-blue-rgb), 0.3); padding: 12px 22px; border-radius: var(--border-radius-md); color: var(--secondary-text-color-dark); font-size: 0.95em; margin-top: 0; cursor: default; background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.2); box-shadow: inset 0 0 8px rgba(var(--electric-blue-rgb),0.1); }
@@ -1061,9 +1062,29 @@
             if (item.weight !== undefined && item.weight > 0) return `${item.weight} kg`;
             return "-";
         }
+        
+        // NOUVELLE FONCTION HELPER pour calculer dynamiquement les séries
+        function getDynamicSetsInfo(targetIndex) {
+            if (!currentWorkoutPlan || targetIndex < 0 || targetIndex >= currentWorkoutPlan.length) return '';
+            const targetItem = currentWorkoutPlan[targetIndex];
+            if (!targetItem || (targetItem.type !== 'exercise' && !targetItem.type?.startsWith('exercise_'))) return '';
 
-        /** NOUVELLE FONCTION: Crée l'aperçu HTML pour le prochain exercice. */
-        function createNextExercisePreviewHtml(nextExercise, state = 'break') {
+            const exName = targetItem.name;
+            const allSetsForExercise = currentWorkoutPlan.filter(i => i.name === exName && (i.type === 'exercise' || i.type.startsWith('exercise_')));
+            const totalSets = allSetsForExercise.length;
+
+            if (totalSets <= 1) return targetItem.sets_info || ''; // Retourne l'info statique si elle existe et qu'il n'y a qu'une série
+
+            let currentSet = 0;
+            for (let i = 0; i <= targetIndex; i++) {
+                if (currentWorkoutPlan[i].name === exName && (currentWorkoutPlan[i].type === 'exercise' || currentWorkoutPlan[i].type.startsWith('exercise_'))) {
+                    currentSet++;
+                }
+            }
+            return `Série ${currentSet}/${totalSets}`;
+        }
+        
+        function createNextExercisePreviewHtml(nextExercise, state, dynamicSetsInfo) {
             if (!nextExercise) return '';
 
             const formattedNextReps = getFormattedReps(nextExercise);
@@ -1073,8 +1094,9 @@
             const iconColor = (state === 'preparing' ? `var(--color-prepare)`: `var(--color-break)`);
 
             let nextDetailsHtml = '';
-            if (nextExercise.sets_info) {
-                nextDetailsHtml += `<span><i class="fas fa-layer-group"></i> ${nextExercise.sets_info}</span>`;
+            // Utilise l'information dynamique des séries si elle est fournie
+            if (dynamicSetsInfo) {
+                nextDetailsHtml += `<span><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`;
             }
             nextDetailsHtml += `<span><i class="fas fa-repeat"></i> ${formattedNextReps}</span>`;
             if (formattedNextWeight !== "-") {
@@ -1121,7 +1143,10 @@
                 case 'preparing': 
                     const nextItemToPrepare = currentWorkoutPlan[0]; 
                     exerciseName = `Préparation...`; 
-                    infoHtml = nextItemToPrepare ? createNextExercisePreviewHtml(nextItemToPrepare, 'preparing') : ''; // Utilisation de la nouvelle fonction
+                    if(nextItemToPrepare) {
+                        const dynamicSetsInfo = getDynamicSetsInfo(0); // On calcule pour le premier exercice (index 0)
+                        infoHtml = createNextExercisePreviewHtml(nextItemToPrepare, 'preparing', dynamicSetsInfo);
+                    }
                     progressText = `Prépa... (1/${currentWorkoutPlan.length} étapes)`; 
                     break;
                 case 'exercise': case 'paused': case 'break':
@@ -1134,10 +1159,10 @@
                         const repsDisplay = getFormattedReps(item);
                         const weightDisplay = getFormattedWeight(item);
                         const details = item.details || '';
-                        const setsInfo = item.sets_info || '';
+                        const dynamicSetsInfo = getDynamicSetsInfo(currentItemIndex) || item.sets_info;
                         
                         infoHtml = `<div class="exercise-details" style="border-color: var(--color-exercise);">`;
-                        if (setsInfo) infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${setsInfo}</span>`;
+                        if (dynamicSetsInfo) infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`;
                         infoHtml += `<div class="main-stats">
                                         <span><i class="fas fa-repeat"></i> ${repsDisplay}</span>`;
                         if (weightDisplay !== "-") infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span>`;
@@ -1149,7 +1174,8 @@
                         const nextExIdx = currentItemIndex + 1;
                         if (nextExIdx < currentWorkoutPlan.length && (currentWorkoutPlan[nextExIdx].type === 'exercise' || currentWorkoutPlan[nextExIdx].type?.startsWith('exercise_'))) {
                             const nextEx = currentWorkoutPlan[nextExIdx];
-                            infoHtml = createNextExercisePreviewHtml(nextEx, 'break'); // Utilisation de la nouvelle fonction
+                            const dynamicSetsInfo = getDynamicSetsInfo(nextExIdx);
+                            infoHtml = createNextExercisePreviewHtml(nextEx, 'break', dynamicSetsInfo);
                         } else {
                              infoHtml = `<div class="break-info" style="border-color: var(--color-break);">
                                             <i class="fas ${getIconForType('break')}" style="color: var(--color-break)"></i>
@@ -1655,7 +1681,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v7.7 - UI Préparation Corrigée).");
+            console.log("ArmorWorkout Initialisé (v7.8 - Calcul dynamique des séries).");
         });
     </script>
 </body>
