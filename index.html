@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -380,15 +381,14 @@
         .break-info > i { font-size: 1.2em; margin-bottom: 3px;} 
         .break-info > span { font-weight: 500; color: var(--primary-text-color); } 
         
-        /* NOUVEAU/MODIFIÉ: Styles pour l'aperçu du prochain exercice */
         .next-exercise-preview {
             font-size: 0.85em; color: var(--secondary-text-color); margin-top: 10px; padding: 12px 15px;
-            border: 1px dashed rgba(var(--accent-border-color), 0.4); border-radius: var(--border-radius-sm);
+            border: 1px dashed; border-radius: var(--border-radius-sm);
             background-color: rgba(var(--bg-color-dark-rgb), 0.2);
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
             width: fit-content; max-width: 95%;
         }
-        .next-exercise-preview > i { color: var(--color-break); opacity: 0.8; margin-bottom: 2px; font-size: 1.1em; }
+        .next-exercise-preview > i { opacity: 0.8; margin-bottom: 2px; font-size: 1.1em; }
         .next-exercise-preview strong { color: var(--primary-text-color); font-weight: 600; display: block; font-size: 1.1em;}
         .next-exercise-preview .next-details-grid {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
@@ -1038,7 +1038,7 @@
             timerProgressIndicator.style.stroke = rootStyle.getPropertyValue(progressCircleColorVar.startsWith('var(') ? progressCircleColorVar.slice(4,-1) : progressCircleColorVar).trim();
             if(currentExerciseNameDisplay) {
                 if (state === 'exercise') currentExerciseNameDisplay.style.color = rootStyle.getPropertyValue('--color-exercise').trim();
-                else if (state === 'break') currentExerciseNameDisplay.style.color = rootStyle.getPropertyValue('--color-break').trim();
+                else if (state === 'break' || state === 'preparing') currentExerciseNameDisplay.style.color = rootStyle.getPropertyValue('--color-break').trim();
                 else currentExerciseNameDisplay.style.color = rootStyle.getPropertyValue('--primary-text-color-dark').trim();
             }
         }
@@ -1061,6 +1061,33 @@
             if (item.weight !== undefined && item.weight > 0) return `${item.weight} kg`;
             return "-";
         }
+
+        /** NOUVELLE FONCTION: Crée l'aperçu HTML pour le prochain exercice. */
+        function createNextExercisePreviewHtml(nextExercise, state = 'break') {
+            if (!nextExercise) return '';
+
+            const formattedNextReps = getFormattedReps(nextExercise);
+            const formattedNextWeight = getFormattedWeight(nextExercise);
+            const iconClass = state === 'preparing' ? 'fa-hourglass-start' : 'fa-arrow-right';
+            const borderColorVar = state === 'preparing' ? '--color-prepare' : '--color-break';
+            const iconColor = (state === 'preparing' ? `var(--color-prepare)`: `var(--color-break)`);
+
+            let nextDetailsHtml = '';
+            if (nextExercise.sets_info) {
+                nextDetailsHtml += `<span><i class="fas fa-layer-group"></i> ${nextExercise.sets_info}</span>`;
+            }
+            nextDetailsHtml += `<span><i class="fas fa-repeat"></i> ${formattedNextReps}</span>`;
+            if (formattedNextWeight !== "-") {
+                nextDetailsHtml += `<span><i class="fas fa-weight-hanging"></i> ${formattedNextWeight}</span>`;
+            }
+
+            return `<div class="next-exercise-preview" style="border-color: var(${borderColorVar});">
+                        <i class="fas ${iconClass}" style="color: ${iconColor};"></i>
+                        <strong>À suivre : ${nextExercise.name || '?'}</strong>
+                        <div class="next-details-grid">${nextDetailsHtml}</div>
+                    </div>`;
+        }
+
 
         function updateWorkoutInfo() {
             if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea || !exerciseImageContainer || !exerciseImageDisplay) return;
@@ -1094,7 +1121,7 @@
                 case 'preparing': 
                     const nextItemToPrepare = currentWorkoutPlan[0]; 
                     exerciseName = `Préparation...`; 
-                    infoHtml = `<div class="break-info" style="border-color: var(--color-prepare);"><i class="fas ${getIconForState('preparing')} fa-spin" style="color: var(--color-prepare)"></i><span>Prêt pour <strong>${nextItemToPrepare?.name || 'Exercice'}</strong></span></div>`; 
+                    infoHtml = nextItemToPrepare ? createNextExercisePreviewHtml(nextItemToPrepare, 'preparing') : ''; // Utilisation de la nouvelle fonction
                     progressText = `Prépa... (1/${currentWorkoutPlan.length} étapes)`; 
                     break;
                 case 'exercise': case 'paused': case 'break':
@@ -1118,28 +1145,11 @@
                         if (details) infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`;
                         infoHtml += `</div>`;
                     } else if (item.type === 'break') {
-                        // MODIFIÉ: On ne montre que l'aperçu du prochain exercice, ou un message de repos simple.
-                        infoHtml = ''; // On réinitialise pour construire le nouveau contenu
+                        infoHtml = ''; 
                         const nextExIdx = currentItemIndex + 1;
                         if (nextExIdx < currentWorkoutPlan.length && (currentWorkoutPlan[nextExIdx].type === 'exercise' || currentWorkoutPlan[nextExIdx].type?.startsWith('exercise_'))) {
                             const nextEx = currentWorkoutPlan[nextExIdx];
-                            const formattedNextReps = getFormattedReps(nextEx);
-                            const formattedNextWeight = getFormattedWeight(nextEx);
-                            
-                            let nextDetailsHtml = '';
-                            if (nextEx.sets_info) {
-                                nextDetailsHtml += `<span><i class="fas fa-layer-group"></i> ${nextEx.sets_info}</span>`;
-                            }
-                            nextDetailsHtml += `<span><i class="fas fa-repeat"></i> ${formattedNextReps}</span>`;
-                            if (formattedNextWeight !== "-") {
-                                nextDetailsHtml += `<span><i class="fas fa-weight-hanging"></i> ${formattedNextWeight}</span>`;
-                            }
-
-                            infoHtml = `<div class="next-exercise-preview">
-                                            <i class="fas fa-arrow-right"></i>
-                                            <strong>À suivre : ${nextEx.name || '?'}</strong>
-                                            <div class="next-details-grid">${nextDetailsHtml}</div>
-                                         </div>`;
+                            infoHtml = createNextExercisePreviewHtml(nextEx, 'break'); // Utilisation de la nouvelle fonction
                         } else {
                              infoHtml = `<div class="break-info" style="border-color: var(--color-break);">
                                             <i class="fas ${getIconForType('break')}" style="color: var(--color-break)"></i>
@@ -1645,7 +1655,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v7.6 - Amélioration UI Pause).");
+            console.log("ArmorWorkout Initialisé (v7.7 - UI Préparation Corrigée).");
         });
     </script>
 </body>
