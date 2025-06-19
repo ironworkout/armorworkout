@@ -1063,7 +1063,6 @@
             return "-";
         }
         
-        // NOUVELLE FONCTION HELPER pour calculer dynamiquement les séries
         function getDynamicSetsInfo(targetIndex) {
             if (!currentWorkoutPlan || targetIndex < 0 || targetIndex >= currentWorkoutPlan.length) return '';
             const targetItem = currentWorkoutPlan[targetIndex];
@@ -1073,7 +1072,7 @@
             const allSetsForExercise = currentWorkoutPlan.filter(i => i.name === exName && (i.type === 'exercise' || i.type.startsWith('exercise_')));
             const totalSets = allSetsForExercise.length;
 
-            if (totalSets <= 1) return targetItem.sets_info || ''; // Retourne l'info statique si elle existe et qu'il n'y a qu'une série
+            if (totalSets <= 1) return targetItem.sets_info || '';
 
             let currentSet = 0;
             for (let i = 0; i <= targetIndex; i++) {
@@ -1094,7 +1093,6 @@
             const iconColor = (state === 'preparing' ? `var(--color-prepare)`: `var(--color-break)`);
 
             let nextDetailsHtml = '';
-            // Utilise l'information dynamique des séries si elle est fournie
             if (dynamicSetsInfo) {
                 nextDetailsHtml += `<span><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`;
             }
@@ -1144,7 +1142,7 @@
                     const nextItemToPrepare = currentWorkoutPlan[0]; 
                     exerciseName = `Préparation...`; 
                     if(nextItemToPrepare) {
-                        const dynamicSetsInfo = getDynamicSetsInfo(0); // On calcule pour le premier exercice (index 0)
+                        const dynamicSetsInfo = getDynamicSetsInfo(0);
                         infoHtml = createNextExercisePreviewHtml(nextItemToPrepare, 'preparing', dynamicSetsInfo);
                     }
                     progressText = `Prépa... (1/${currentWorkoutPlan.length} étapes)`; 
@@ -1162,12 +1160,18 @@
                         const dynamicSetsInfo = getDynamicSetsInfo(currentItemIndex) || item.sets_info;
                         
                         infoHtml = `<div class="exercise-details" style="border-color: var(--color-exercise);">`;
-                        if (dynamicSetsInfo) infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`;
+                        if (dynamicSetsInfo) {
+                           infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`;
+                        }
                         infoHtml += `<div class="main-stats">
                                         <span><i class="fas fa-repeat"></i> ${repsDisplay}</span>`;
                         if (weightDisplay !== "-") infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span>`;
                         infoHtml += `</div>`;
-                        if (details) infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`;
+                        
+                        // CORRECTION: On n'affiche les détails que s'ils ne sont pas redondants avec l'info des séries
+                        if (details && details.trim() !== (dynamicSetsInfo || '').trim()) {
+                            infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`;
+                        }
                         infoHtml += `</div>`;
                     } else if (item.type === 'break') {
                         infoHtml = ''; 
@@ -1681,7 +1685,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v7.8 - Calcul dynamique des séries).");
+            console.log("ArmorWorkout Initialisé (v7.9 - Correction affichage redondant).");
         });
     </script>
 </body>
