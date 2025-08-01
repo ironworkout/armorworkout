@@ -497,12 +497,30 @@
         }
         .summary-item:last-child { border-bottom: none; }
         .summary-item .exercise-name { 
-            grid-column: 1 / -1; 
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
             color: var(--primary-text-color); font-weight: 500; font-size: 1.05em; text-align: left; 
             white-space: normal; 
             margin-bottom: 5px; 
         }
         .summary-item .exercise-name i { color: var(--color-exercise); margin-right: 8px; opacity: 0.9; }
+        .summary-item .exercise-name input {
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            width: 100%;
+            padding: 2px 4px;
+            border-radius: var(--border-radius-sm);
+            transition: background-color var(--transition-speed) ease;
+        }
+        .summary-item .exercise-name input:focus {
+            outline: none;
+            background-color: rgba(var(--electric-cyan-rgb), 0.1);
+        }
         
         .summary-item .fields-grid { 
             grid-column: 1 / -1; 
@@ -1417,6 +1435,7 @@
 
                     const progressionNoteText = item.progression_note || "";
 
+                    const nameInputId = `summary-name-${index}`;
                     const repsInputId = `summary-reps-${index}`;
                     const weightInputId = `summary-weight-${index}`;
                     const progressionNoteInputId = `summary-progression-note-${index}`;
@@ -1427,7 +1446,10 @@
                     else if (item.duration !== undefined) repsLabel = `Durée (s)`;
 
                     li.innerHTML = `
-                        <div class="exercise-name"><i class="fas ${getIconForType(item.type)}"></i> ${item.name}</div>
+                        <div class="exercise-name">
+                            <i class="fas ${getIconForType(item.type)}"></i>
+                            <input type="text" id="${nameInputId}" value="${item.name}" placeholder="Nom de l'exercice">
+                        </div>
                         <div class="fields-grid">
                             <div class="input-group">
                                 <label for="${repsInputId}">${repsLabel}</label>
@@ -1462,24 +1484,40 @@
             
             for (let i = 0; i < latestWorkoutEntry.exercises.length; i++) { 
                 let correspondingOriginalExercise = null;
-                let searchIndexInOriginalPlan = 0; 
-                let exerciseCountInOriginalPlan = 0; 
 
                 for(let k=0; k < originalCompletedWorkoutPlan.length; k++) {
+                    if ((originalCompletedWorkoutPlan[k].type === 'exercise' || originalCompletedWorkoutPlan[k].type?.startsWith('exercise_')) && originalPlanExerciseActualIndex === i) {
+                        correspondingOriginalExercise = originalCompletedWorkoutPlan[k];
+                        break;
+                    }
+                    if(originalCompletedWorkoutPlan[k].type === 'exercise' || originalCompletedWorkoutPlan[k].type?.startsWith('exercise_')) {
+                        originalPlanExerciseActualIndex++;
+                    }
+                }
+                originalPlanExerciseActualIndex = 0; // Reset for next iteration of outer loop
+                let exerciseCountInOriginalPlan = 0;
+                 for(let k=0; k < originalCompletedWorkoutPlan.length; k++) {
                     if (originalCompletedWorkoutPlan[k].type === 'exercise' || originalCompletedWorkoutPlan[k].type?.startsWith('exercise_')) {
                         if (exerciseCountInOriginalPlan === i) { 
                             correspondingOriginalExercise = originalCompletedWorkoutPlan[k];
-                            originalPlanExerciseActualIndex = k; 
+                            originalPlanExerciseActualIndex = k;
                             break;
                         }
                         exerciseCountInOriginalPlan++;
                     }
                 }
 
+
                 if (correspondingOriginalExercise) {
+                    const nameInput = document.getElementById(`summary-name-${originalPlanExerciseActualIndex}`);
                     const repsInput = document.getElementById(`summary-reps-${originalPlanExerciseActualIndex}`); 
                     const weightInput = document.getElementById(`summary-weight-${originalPlanExerciseActualIndex}`);
                     const progressionNoteInput = document.getElementById(`summary-progression-note-${originalPlanExerciseActualIndex}`);
+
+                    if (nameInput) {
+                        const finalName = nameInput.value.trim();
+                        if (finalName) latestWorkoutEntry.exercises[i].name = finalName;
+                    }
 
                     if (repsInput) {
                         const finalRepsOrDuration = parseInt(repsInput.value, 10);
@@ -1487,27 +1525,19 @@
                             if (correspondingOriginalExercise.duration !== undefined) { 
                                 latestWorkoutEntry.exercises[i].finalDuration = finalRepsOrDuration;
                                 correspondingOriginalExercise.duration = finalRepsOrDuration;
-                                if (correspondingOriginalExercise.duration_start !== undefined) correspondingOriginalExercise.duration_start = finalRepsOrDuration;
                             } else { 
                                 latestWorkoutEntry.exercises[i].finalReps = finalRepsOrDuration;
-                                correspondingOriginalExercise.reps = finalRepsOrDuration; 
-                                if (correspondingOriginalExercise.reps_start !== undefined) correspondingOriginalExercise.reps_start = finalRepsOrDuration;
-                                if (correspondingOriginalExercise.type.includes("myo_reps") && correspondingOriginalExercise.name.toLowerCase().includes("activation")) {
-                                    correspondingOriginalExercise.activation_reps_start = finalRepsOrDuration;
-                                }
+                                correspondingOriginalExercise.reps = finalRepsOrDuration;
                             }
                         }
                     }
                     if (weightInput) {
                         const finalWeightDesc = weightInput.value.trim();
                         latestWorkoutEntry.exercises[i].finalWeightDescription = finalWeightDesc;
-                        if (correspondingOriginalExercise.unit && (correspondingOriginalExercise.unit.includes("kg") || correspondingOriginalExercise.unit.includes("Élastique") || correspondingOriginalExercise.unit.toLowerCase() === "pdc" || correspondingOriginalExercise.unit.startsWith("Résistance"))) {
-                             correspondingOriginalExercise.unit = finalWeightDesc;
-                        } else if (correspondingOriginalExercise.weight_text !== undefined) {
-                            correspondingOriginalExercise.weight_text = finalWeightDesc;
-                        } else { 
-                            correspondingOriginalExercise.unit = finalWeightDesc; 
-                        }
+                        // Standardize saving to weight_text for consistency
+                        correspondingOriginalExercise.weight_text = finalWeightDesc;
+                        delete correspondingOriginalExercise.unit; // Clean up old fields
+                        delete correspondingOriginalExercise.weight;
                     }
                     if (progressionNoteInput) {
                         const finalProgNote = progressionNoteInput.value.trim();
@@ -1521,7 +1551,7 @@
                 const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
                 if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
                     currentSessionInFullProgram.exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
-                     console.log(`Programme mis à jour localement: ${currentWorkoutType} avec nouvelles notes de progression.`);
+                     console.log(`Programme mis à jour localement: ${currentWorkoutType}`);
                 }
             }
 
@@ -1533,7 +1563,7 @@
             const sessionBaseNameToReload = navButtons.find(b => previouslyActiveWorkoutType.startsWith(b.dataset.sessionName))?.dataset.sessionName;
             setState('idle'); 
             if (sessionBaseNameToReload && loadedFullProgram) loadSession(sessionBaseNameToReload); 
-            showMessage("Entraînement et programme (avec notes de progression) mis à jour sauvegardés !", 3500);
+            showMessage("Entraînement et programme mis à jour sauvegardés !", 3500);
             if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
         }
 
@@ -1693,7 +1723,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v7.10 - Correction finale UI).");
+            console.log("ArmorWorkout Initialisé (v7.11 - Logique UI finalisée).");
         });
     </script>
 </body>
