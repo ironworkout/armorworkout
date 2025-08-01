@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1416,7 +1415,7 @@
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
                     const li = document.createElement('li');
                     li.classList.add('summary-item');
-                    li.dataset.planIndex = index; // Use direct plan index for reliability
+                    li.dataset.planIndex = index;
 
                     let initialRepsForInput = item.duration !== undefined ? item.duration : (item.current_reps !== undefined ? item.current_reps : item.reps || 0);
                     let initialWeightDesc = getFormattedWeight(item);
@@ -1455,21 +1454,22 @@
         }
 
         async function finishSummary() {
-            if (!finishSummaryBtn) return; 
-            finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
-            
+            if (!finishSummaryBtn) return;
+            finishSummaryBtn.disabled = true;
+            finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
+
             const latestWorkoutEntry = workoutHistory[workoutHistory.length - 1];
-            if (!latestWorkoutEntry) { 
-                closeSummary(); showMessage("Erreur: Données d'historique invalides.", 4000, true); 
-                if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; 
+            if (!latestWorkoutEntry) {
+                closeSummary(); showMessage("Erreur: Données d'historique invalides.", 4000, true);
+                if (finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
+                return;
             }
 
             const summaryItems = summaryItemsList.querySelectorAll('.summary-item');
             const nameChanges = new Map();
 
-            // Pass 1: Collect name changes to handle them globally
+            // Pass 1: Collect name changes to handle them globally for the entire plan.
             summaryItems.forEach(li => {
-                const planIndex = parseInt(li.dataset.planIndex, 10);
                 const nameInput = li.querySelector(`input[id^="name-"]`);
                 const originalName = nameInput.dataset.originalName;
                 const newName = nameInput.value.trim();
@@ -1478,10 +1478,10 @@
                 }
             });
 
-            // Apply name changes to the entire plan
+            // Apply name changes to the entire plan in memory.
             if (nameChanges.size > 0) {
                 nameChanges.forEach((newName, originalName) => {
-                    console.log(`Renommage de "${originalName}" en "${newName}" pour toute la séance.`);
+                    console.log(`Renommage global de "${originalName}" en "${newName}"`);
                     originalCompletedWorkoutPlan.forEach(planItem => {
                         if (planItem.name === originalName) {
                             planItem.name = newName;
@@ -1490,20 +1490,20 @@
                 });
             }
 
-            // Pass 2: Update all values (reps, weight, notes)
-            let exerciseCounter = 0;
+            // Pass 2: Iterate through the summary form and update both the plan and the history entry.
+            let historyExerciseIndex = 0;
             summaryItems.forEach(li => {
                 const planIndex = parseInt(li.dataset.planIndex, 10);
                 const itemInPlan = originalCompletedWorkoutPlan[planIndex];
-                const historyExercise = latestWorkoutEntry.exercises[exerciseCounter];
+                const historyExercise = latestWorkoutEntry.exercises[historyExerciseIndex];
 
                 const repsInput = li.querySelector(`input[id^="reps-"]`);
                 const weightInput = li.querySelector(`input[id^="weight-"]`);
                 const noteInput = li.querySelector(`textarea[id^="note-"]`);
-                const nameInput = li.querySelector(`input[id^="name-"]`);
-                
-                // Save potentially changed name to history
-                historyExercise.name = nameInput.value.trim() || historyExercise.name;
+
+                // The name in the plan is already updated from Pass 1.
+                // Just update the history entry with the final name from the input.
+                historyExercise.name = li.querySelector(`input[id^="name-"]`).value.trim() || itemInPlan.name;
 
                 if (repsInput) {
                     const finalValue = parseInt(repsInput.value, 10);
@@ -1529,14 +1529,15 @@
                     historyExercise.finalProgressionNote = finalNote;
                     itemInPlan.progression_note = finalNote;
                 }
-                exerciseCounter++;
+                
+                historyExerciseIndex++;
             });
             
             // Update the main program object before saving
             if (loadedFullProgram && loadedFullProgram.sessions) {
-                const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
-                if (currentSessionInFullProgram) {
-                    currentSessionInFullProgram.exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
+                const sessionIndex = loadedFullProgram.sessions.findIndex(s => s.nom_session === currentWorkoutType);
+                if (sessionIndex !== -1) {
+                    loadedFullProgram.sessions[sessionIndex].exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
                 }
             }
 
@@ -1548,13 +1549,11 @@
             const sessionBaseNameToReload = navButtons.find(b => previouslyActiveWorkoutType.startsWith(b.dataset.sessionName))?.dataset.sessionName;
             setState('idle'); 
             if (sessionBaseNameToReload && loadedFullProgram) {
-                // We need to reload the session from the freshly modified loadedFullProgram
                 loadSession(sessionBaseNameToReload);
             }
             showMessage("Entraînement et programme mis à jour sauvegardés !", 3500);
             if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
         }
-
 
         function closeSummary(updateUIafter = true) { if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUIafter) setState('idle'); }
         async function saveHistoryToDrive() {
@@ -1708,7 +1707,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v8.0 - Sauvegarde des noms et poids améliorée).");
+            console.log("ArmorWorkout Initialisé (v8.1 - Sauvegarde permanente des noms).");
         });
     </script>
 </body>
