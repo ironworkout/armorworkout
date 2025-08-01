@@ -1188,7 +1188,7 @@
                         
                         let isDetailRedundant = false;
                         if (details && dynamicSetsInfo) {
-                            const trimmedDetail = details.trim().replace(/\.$/, ''); // Remove trailing dot for comparison
+                            const trimmedDetail = details.trim().replace(/\.$/, '');
                             const trimmedSetInfo = dynamicSetsInfo.trim();
                             if (trimmedDetail === trimmedSetInfo) {
                                 isDetailRedundant = true;
@@ -1296,10 +1296,6 @@
                     item.finalReps = undefined;
                     item.finalWeightDescription = undefined;
                     item.finalProgressionNote = undefined; 
-                    if (item.type.includes("myo_reps") && item.name.toLowerCase().includes("activation")) {
-                        item.current_activation_reps = item.activation_reps_start || item.reps; 
-                        item.completed_mini_sets = 0; 
-                    }
                 }
             });
             currentItemIndex = 0; workoutStartTime = null; 
@@ -1415,55 +1411,44 @@
         function populateAndShowSummary() {
             if (!postWorkoutSummary || !summaryItemsList || !summaryTitle) return;
             summaryTitle.textContent = `Résumé: ${currentWorkoutType || 'Entraînement'}`; summaryItemsList.innerHTML = '';
-            let exerciseCounterForSummary = 0;
             
             originalCompletedWorkoutPlan.forEach((item, index) => {
                 if (item.type === 'exercise' || item.type?.startsWith('exercise_')) {
-                    const li = document.createElement('li'); li.classList.add('summary-item');
-                    
-                    let initialRepsForInput;
-                    if (item.duration !== undefined) { 
-                        initialRepsForInput = item.duration; 
-                    } else { 
-                        initialRepsForInput = item.current_reps !== undefined ? item.current_reps : (item.reps !== undefined ? item.reps : 0);
-                    }
-                    
+                    const li = document.createElement('li');
+                    li.classList.add('summary-item');
+                    li.dataset.planIndex = index; // Use direct plan index for reliability
+
+                    let initialRepsForInput = item.duration !== undefined ? item.duration : (item.current_reps !== undefined ? item.current_reps : item.reps || 0);
                     let initialWeightDesc = getFormattedWeight(item);
                     if (initialWeightDesc === "-") initialWeightDesc = item.unit || "PDC";
-
                     const progressionNoteText = item.progression_note || "";
 
-                    const nameInputId = `summary-name-${exerciseCounterForSummary}`;
-                    const repsInputId = `summary-reps-${exerciseCounterForSummary}`;
-                    const weightInputId = `summary-weight-${exerciseCounterForSummary}`;
-                    const progressionNoteInputId = `summary-progression-note-${exerciseCounterForSummary}`;
+                    const idSuffix = `summary-item-${index}`;
                     
                     let repsLabel = "Reps";
                     if (item.reps_unit) repsLabel += ` (${item.reps_unit})`;
-                    else if (item.duration !== undefined && item.unit_duration) repsLabel = `Durée (${item.unit_duration})`;
-                    else if (item.duration !== undefined) repsLabel = `Durée (s)`;
+                    else if (item.duration !== undefined) repsLabel = `Durée (${item.unit_duration || 's'})`;
 
                     li.innerHTML = `
                         <div class="exercise-name">
                             <i class="fas ${getIconForType(item.type)}"></i>
-                            <input type="text" id="${nameInputId}" value="${item.name}" placeholder="Nom de l'exercice">
+                            <input type="text" id="name-${idSuffix}" value="${item.name}" data-original-name="${item.name}" placeholder="Nom de l'exercice">
                         </div>
                         <div class="fields-grid">
                             <div class="input-group">
-                                <label for="${repsInputId}">${repsLabel}</label>
-                                <input type="number" id="${repsInputId}" value="${initialRepsForInput}" min="0" step="1">
+                                <label for="reps-${idSuffix}">${repsLabel}</label>
+                                <input type="number" id="reps-${idSuffix}" value="${initialRepsForInput}" min="0" step="1">
                             </div>
                             <div class="input-group">
-                                <label for="${weightInputId}">Poids/Résistance</label>
-                                <input type="text" id="${weightInputId}" value="${initialWeightDesc}">
+                                <label for="weight-${idSuffix}">Poids/Résistance</label>
+                                <input type="text" id="weight-${idSuffix}" value="${initialWeightDesc}">
                             </div>
                             <div class="input-group notes-group">
-                                <label for="${progressionNoteInputId}">Note de Progression (Programme)</label>
-                                <textarea id="${progressionNoteInputId}" placeholder="Sera mis à jour dans le programme...">${progressionNoteText}</textarea>
+                                <label for="note-${idSuffix}">Note de Progression (Programme)</label>
+                                <textarea id="note-${idSuffix}" placeholder="Sera mis à jour dans le programme...">${progressionNoteText}</textarea>
                             </div>
                         </div>`;
                     summaryItemsList.appendChild(li);
-                    exerciseCounterForSummary++;
                 }
             });
             postWorkoutSummary.classList.add('visible');
@@ -1474,77 +1459,102 @@
             finishSummaryBtn.disabled = true; finishSummaryBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`;
             
             const latestWorkoutEntry = workoutHistory[workoutHistory.length - 1];
-            if (!latestWorkoutEntry || !latestWorkoutEntry.exercises) { 
+            if (!latestWorkoutEntry) { 
                 closeSummary(); showMessage("Erreur: Données d'historique invalides.", 4000, true); 
                 if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; } return; 
             }
-            
-            let exerciseCounterForSummary = 0;
-            for (let i = 0; i < originalCompletedWorkoutPlan.length; i++) {
-                const itemInPlan = originalCompletedWorkoutPlan[i];
-                if (itemInPlan.type === 'exercise' || itemInPlan.type?.startsWith('exercise_')) {
-                    const correspondingHistoryExercise = latestWorkoutEntry.exercises[exerciseCounterForSummary];
 
-                    const nameInput = document.getElementById(`summary-name-${exerciseCounterForSummary}`);
-                    const repsInput = document.getElementById(`summary-reps-${exerciseCounterForSummary}`);
-                    const weightInput = document.getElementById(`summary-weight-${exerciseCounterForSummary}`);
-                    const progressionNoteInput = document.getElementById(`summary-progression-note-${exerciseCounterForSummary}`);
+            const summaryItems = summaryItemsList.querySelectorAll('.summary-item');
+            const nameChanges = new Map();
 
-                    if (nameInput) {
-                        const finalName = nameInput.value.trim();
-                        if (finalName) correspondingHistoryExercise.name = finalName;
-                    }
+            // Pass 1: Collect name changes to handle them globally
+            summaryItems.forEach(li => {
+                const planIndex = parseInt(li.dataset.planIndex, 10);
+                const nameInput = li.querySelector(`input[id^="name-"]`);
+                const originalName = nameInput.dataset.originalName;
+                const newName = nameInput.value.trim();
+                if (newName && newName !== originalName && !nameChanges.has(originalName)) {
+                    nameChanges.set(originalName, newName);
+                }
+            });
 
-                    if (repsInput) {
-                        const finalRepsOrDuration = parseInt(repsInput.value, 10);
-                        if (!isNaN(finalRepsOrDuration)) {
-                            if (itemInPlan.duration !== undefined) {
-                                correspondingHistoryExercise.finalDuration = finalRepsOrDuration;
-                                itemInPlan.duration = finalRepsOrDuration;
-                            } else {
-                                correspondingHistoryExercise.finalReps = finalRepsOrDuration;
-                                itemInPlan.reps = finalRepsOrDuration;
-                            }
+            // Apply name changes to the entire plan
+            if (nameChanges.size > 0) {
+                nameChanges.forEach((newName, originalName) => {
+                    console.log(`Renommage de "${originalName}" en "${newName}" pour toute la séance.`);
+                    originalCompletedWorkoutPlan.forEach(planItem => {
+                        if (planItem.name === originalName) {
+                            planItem.name = newName;
+                        }
+                    });
+                });
+            }
+
+            // Pass 2: Update all values (reps, weight, notes)
+            let exerciseCounter = 0;
+            summaryItems.forEach(li => {
+                const planIndex = parseInt(li.dataset.planIndex, 10);
+                const itemInPlan = originalCompletedWorkoutPlan[planIndex];
+                const historyExercise = latestWorkoutEntry.exercises[exerciseCounter];
+
+                const repsInput = li.querySelector(`input[id^="reps-"]`);
+                const weightInput = li.querySelector(`input[id^="weight-"]`);
+                const noteInput = li.querySelector(`textarea[id^="note-"]`);
+                const nameInput = li.querySelector(`input[id^="name-"]`);
+                
+                // Save potentially changed name to history
+                historyExercise.name = nameInput.value.trim() || historyExercise.name;
+
+                if (repsInput) {
+                    const finalValue = parseInt(repsInput.value, 10);
+                    if (!isNaN(finalValue)) {
+                        if (itemInPlan.duration !== undefined) {
+                            historyExercise.finalDuration = finalValue;
+                            itemInPlan.duration = finalValue;
+                        } else {
+                            historyExercise.finalReps = finalValue;
+                            itemInPlan.reps = finalValue;
                         }
                     }
-
-                    if (weightInput) {
-                        const finalWeightDesc = weightInput.value.trim();
-                        correspondingHistoryExercise.finalWeightDescription = finalWeightDesc;
-                        itemInPlan.weight_text = finalWeightDesc;
-                        delete itemInPlan.unit;
-                        delete itemInPlan.weight;
-                    }
-                    
-                    if (progressionNoteInput) {
-                        const finalProgNote = progressionNoteInput.value.trim();
-                        correspondingHistoryExercise.finalProgressionNote = finalProgNote;
-                        itemInPlan.progression_note = finalProgNote;
-                    }
-                    
-                    exerciseCounterForSummary++;
                 }
-            }
+                if (weightInput) {
+                    const finalWeight = weightInput.value.trim();
+                    historyExercise.finalWeightDescription = finalWeight;
+                    itemInPlan.weight_text = finalWeight;
+                    delete itemInPlan.unit; 
+                    delete itemInPlan.weight;
+                }
+                if (noteInput) {
+                    const finalNote = noteInput.value.trim();
+                    historyExercise.finalProgressionNote = finalNote;
+                    itemInPlan.progression_note = finalNote;
+                }
+                exerciseCounter++;
+            });
             
+            // Update the main program object before saving
             if (loadedFullProgram && loadedFullProgram.sessions) {
                 const currentSessionInFullProgram = loadedFullProgram.sessions.find(s => s.nom_session === currentWorkoutType);
-                if (currentSessionInFullProgram && currentSessionInFullProgram.exercices_et_pauses) {
+                if (currentSessionInFullProgram) {
                     currentSessionInFullProgram.exercices_et_pauses = JSON.parse(JSON.stringify(originalCompletedWorkoutPlan));
-                     console.log(`Programme mis à jour localement: ${currentWorkoutType}`);
                 }
             }
 
             await saveHistoryToDrive(); 
-            if (loadedFullProgram) await saveFullProgramToDrive(); 
+            await saveFullProgramToDrive(); 
             
             closeSummary(false); 
             const previouslyActiveWorkoutType = currentWorkoutType; 
             const sessionBaseNameToReload = navButtons.find(b => previouslyActiveWorkoutType.startsWith(b.dataset.sessionName))?.dataset.sessionName;
             setState('idle'); 
-            if (sessionBaseNameToReload && loadedFullProgram) loadSession(sessionBaseNameToReload); 
+            if (sessionBaseNameToReload && loadedFullProgram) {
+                // We need to reload the session from the freshly modified loadedFullProgram
+                loadSession(sessionBaseNameToReload);
+            }
             showMessage("Entraînement et programme mis à jour sauvegardés !", 3500);
             if(finishSummaryBtn) { finishSummaryBtn.disabled = false; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Fin & Sauvegarder`; }
         }
+
 
         function closeSummary(updateUIafter = true) { if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible'); if (updateUIafter) setState('idle'); }
         async function saveHistoryToDrive() {
@@ -1635,25 +1645,21 @@
             const endTime = Date.now(); const durationSeconds = (endTime - workoutStartTime) / 1000;
             const exercisesForHistory = originalCompletedWorkoutPlan
                 .filter(item => item.type === 'exercise' || item.type?.startsWith('exercise_'))
-                .map(ex => {
-                    return { 
-                        name: ex.name, 
-                        type: ex.type, 
-                        reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps),
-                        reps_unit: ex.reps_unit,
-                        unit_duration: ex.unit_duration,
-                        weight_description_target: getFormattedWeight(ex),
-                        
-                        finalReps: ex.duration !== undefined ? undefined : (ex.finalReps !== undefined ? ex.finalReps : ex.reps),
-                        finalDuration: ex.duration !== undefined ? (ex.finalDuration !== undefined ? ex.finalDuration : ex.duration) : undefined,
-                        finalWeightDescription: ex.finalWeightDescription !== undefined ? ex.finalWeightDescription : getFormattedWeight(ex),
-                        finalProgressionNote: ex.finalProgressionNote !== undefined ? ex.finalProgressionNote : (ex.progression_note || ""),
-                        
-                        image_url: ex.image_url,
-                        sets_info: ex.sets_info,
-                        details_original: ex.details 
-                    };
-                });
+                .map(ex => ({ 
+                    name: ex.name, 
+                    type: ex.type, 
+                    reps_target: ex.reps_text || (ex.duration !== undefined ? ex.duration : ex.reps),
+                    reps_unit: ex.reps_unit,
+                    unit_duration: ex.unit_duration,
+                    weight_description_target: getFormattedWeight(ex),
+                    finalReps: ex.finalReps,
+                    finalDuration: ex.finalDuration,
+                    finalWeightDescription: ex.finalWeightDescription,
+                    finalProgressionNote: ex.finalProgressionNote,
+                    image_url: ex.image_url,
+                    sets_info: ex.sets_info,
+                    details_original: ex.details 
+                }));
             const historyEntry = { date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: durationSeconds, exercises: exercisesForHistory };
             workoutHistory.push(historyEntry);
         }
@@ -1702,7 +1708,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v7.12 - Logique de sauvegarde et affichage finalisée).");
+            console.log("ArmorWorkout Initialisé (v8.0 - Sauvegarde des noms et poids améliorée).");
         });
     </script>
 </body>
