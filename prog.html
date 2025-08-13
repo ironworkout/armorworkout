@@ -1,3 +1,17 @@
+Absolument. J'ai réécrit le code HTML/JavaScript pour qu'il intègre dynamiquement les données de votre JSON lors du chargement.
+
+La principale modification se situe dans la fonction JavaScript loadFullProgramFromDrive. Au lieu de simplement charger le JSON, elle va maintenant traduire la structure de votre JSON (avec des clés comme reps_start, weight_text, technique, etc.) vers la structure attendue par l'éditeur (avec des clés comme reps, equipment, details, etc.).
+
+Cela permet de conserver toute la richesse de vos informations tout en les affichant dans les champs de l'éditeur existant.
+
+Voici le code complet et mis à jour :
+
+code
+Html
+download
+content_copy
+expand_less
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -137,7 +151,7 @@
         @keyframes blink-dot { 50% { opacity: 0.3; } }
 
         #program-display { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; min-height: 200px; background-color: rgba(var(--bg-color-dark-rgb), 0.15); border: 1px dashed var(--border-color); border-radius: var(--border-radius-md); padding: 15px; }
-        #program-display:empty::before { content: "Connectez-vous et assurez-vous que '" + FULL_PROGRAM_FILENAME + "' existe sur votre Drive."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
+        #program-display:empty::before { content: "Connectez-vous et assurez-vous que le fichier de programme existe sur votre Drive."; display: block; text-align: center; padding: 50px 20px; color: var(--secondary-text-color); font-style: italic; }
 
         .program-step { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 15px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: start; position: relative; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; cursor: grab; }
         /* La couleur de la bordure gauche sera définie dynamiquement par JS */
@@ -207,7 +221,6 @@
         <div class="header-actions">
             <div class="auth-controls">
                 <button id="signin-button" disabled><i class="fab fa-google"></i> Connecter Drive</button>
-                <!-- Bouton Déconnexion Supprimé -->
             </div>
             <span id="drive-status"></span>
         </div>
@@ -229,9 +242,7 @@
 
         <div id="program-editor-area">
             <div class="program-tabs" id="program-tabs">
-                <button data-session-name="PUSH" disabled>Push</button>
-                <button data-session-name="PULL" disabled>Pull</button>
-                <button data-session-name="LEGS" disabled>Legs</button>
+                <!-- Les onglets seront générés dynamiquement -->
             </div>
 
             <ul id="program-display"></ul>
@@ -264,7 +275,6 @@
 
     let loadedFullProgram = null; 
     const stepColorPalette = ['#22D3EE', '#00BFFF', '#4D94FF', '#FF1493', '#9400D3', '#39FF14', '#A78BFA', '#FF7B72', '#FACC15', '#F0F4F8'];
-
 
     let signInButton, driveStatusElement, 
         signInButtonPrompt, connectionPrompt, programEditorArea,
@@ -329,7 +339,7 @@
         } 
     }
 
-    function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; statusText = 'Autorisation Invalide'; googleAccessToken = null; } showMessage(userMessage, 6000, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
+    function handleTokenError(error) { console.error("Erreur Google Token Client (Éditeur):", error); let userMessage = `Erreur Auth Google: ${error.type || error.error || 'Inconnue'}`; let statusText = 'Erreur Auth'; if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); driveStatusElement.style.display = 'inline-block'; } if (error.error === 'popup_closed_by_user' || error.error === 'user_cancel' || error.type === 'popup_closed') { userMessage = "Connexion Google annulée."; statusText = 'Annulé'; } else if (error.error === 'popup_failed_to_open' || error.type === 'popup_failed_to_open') { userMessage = "Pop-up Google bloquée."; statusText = 'Popup Bloqué'; } else if (error.error === 'access_denied' || error.type === 'access_denied') { userMessage = "Accès Drive refusé."; statusText = 'Accès Refusé'; } else if (error.error === 'token_network_error') { userMessage = "Erreur réseau lors de l'auth."; statusText = 'Erreur Réseau'; } else if (error.error === 'invalid_grant') { userMessage = "Autorisation invalide."; googleAccessToken = null; } showMessage(userMessage, 6000, "error"); if (driveStatusElement) driveStatusElement.textContent = statusText; updateAuthUI(false); }
     
     async function tokenCallback(tokenResponse) { 
         console.log("tokenCallback (Éditeur) déclenché. Réponse:", tokenResponse);
@@ -342,7 +352,8 @@
             try { 
                 const programLoadSuccess = await loadFullProgramFromDrive(); 
                 if (programLoadSuccess && loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) { 
-                    programsLoaded = true; 
+                    programsLoaded = true;
+                    setupTabs();
                     showMessage("Programme chargé depuis Drive.", 3000, "success"); 
                     if (driveStatusElement) { driveStatusElement.textContent = 'Connecté'; driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); } 
                     handleTabClick(loadedFullProgram.sessions[0]?.nom_session); 
@@ -399,10 +410,60 @@
             const content = await readFileContent(programFileId);
             if (content && content.trim() !== "") {
                 try {
-                    const parsedProgram = JSON.parse(content);
+                    let parsedProgram = JSON.parse(content);
                     if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) {
-                        loadedFullProgram = parsedProgram; programsLoaded = true;
-                        console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé avec succès depuis Drive.`);
+
+                        // ================== TRANSFORMATION DU JSON ==================
+                        // Traduit la structure de votre JSON vers celle attendue par l'éditeur.
+                        console.log("Transformation du format JSON du programme...");
+                        parsedProgram.sessions.forEach(session => {
+                            if (session.exercices_et_pauses && Array.isArray(session.exercices_et_pauses)) {
+                                session.exercices_et_pauses = session.exercices_et_pauses.map(originalStep => {
+                                    if (originalStep.type === 'exercise') {
+                                        const newStep = {
+                                            type: 'exercise',
+                                            name: originalStep.name || "Exercice sans nom",
+                                            reps: originalStep.reps_start || originalStep.duration_start || null,
+                                            weight: null, // Pas de champ numérique direct pour le poids
+                                            unit: originalStep.unit_duration || 'reps',
+                                            equipment: originalStep.weight_text || 'Non spécifié',
+                                            details: originalStep.details || '',
+                                            progression_note: '',
+                                            image_url: '',
+                                            step_color: stepColorPalette[3] // Couleur par défaut pour les exercices importés
+                                        };
+
+                                        // Concaténer les infos supplémentaires dans les champs de texte
+                                        if (originalStep.technique) {
+                                            newStep.details += `\n\nTechnique: ${originalStep.technique}`;
+                                        }
+                                        if (originalStep.tempo) {
+                                            newStep.progression_note += `Tempo: ${originalStep.tempo}`;
+                                        }
+                                        if (originalStep.reps_target_max) {
+                                            newStep.progression_note += `\nObjectif Reps: ${originalStep.reps_start}-${originalStep.reps_target_max}`;
+                                        }
+                                        if (originalStep.duration_target_max) {
+                                            newStep.progression_note += `\nObjectif Durée: ${originalStep.duration_start}-${originalStep.duration_target_max} ${originalStep.unit_duration || 's'}`;
+                                        }
+                                        return newStep;
+                                    } else if (originalStep.type === 'break') {
+                                        return {
+                                            type: 'break',
+                                            name: originalStep.name || 'Repos',
+                                            duration: originalStep.duration || 60,
+                                            details: originalStep.details || ''
+                                        };
+                                    }
+                                    return originalStep; // Au cas où un type inconnu existerait
+                                });
+                            }
+                        });
+                        // ================== FIN DE LA TRANSFORMATION ==================
+
+                        loadedFullProgram = parsedProgram; 
+                        programsLoaded = true;
+                        console.log(`Programme global '${FULL_PROGRAM_FILENAME}' chargé et transformé avec succès.`);
                         return true;
                     } else {
                         console.error(`'${FULL_PROGRAM_FILENAME}' malformé. Structure attendue : { "sessions": [...] }.`);
@@ -421,6 +482,18 @@
             showMessage(`Fichier '${FULL_PROGRAM_FILENAME}' non trouvé sur Drive. Veuillez le créer et le remplir.`, 7000, "info"); return false; 
         }
     }
+    
+    function setupTabs() {
+        if (!programTabsContainer || !loadedFullProgram || !loadedFullProgram.sessions) return;
+        programTabsContainer.innerHTML = ''; // Vider les anciens onglets
+        loadedFullProgram.sessions.forEach(session => {
+            const button = document.createElement('button');
+            button.dataset.sessionName = session.nom_session;
+            button.textContent = session.nom_session;
+            button.addEventListener('click', () => handleTabClick(session.nom_session));
+            programTabsContainer.appendChild(button);
+        });
+    }
 
     function displayProgram(sessionName) { 
         if (!programDisplay) { console.error("Élément #program-display non trouvé."); return; }
@@ -435,6 +508,8 @@
         }
         currentEditingSessionName = sessionName; programDisplay.innerHTML = ''; 
         programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === sessionName); btn.disabled = !programsLoaded; }); 
+        
+        // La clé est 'exercices_et_pauses' dans le JSON, c'est ce qu'on utilise ici
         if (sessionToDisplay.exercices_et_pauses && sessionToDisplay.exercices_et_pauses.length > 0) {
             sessionToDisplay.exercices_et_pauses.forEach((step, index) => { const stepElement = renderStep(step, index, sessionName); programDisplay.appendChild(stepElement); });
         } else { programDisplay.innerHTML = `<li style="text-align:center; padding:20px; color:var(--secondary-text-color);">Cette session est vide. Ajoutez des étapes !</li>`; }
@@ -446,7 +521,7 @@
     function renderStep(step, index, sessionNameForDataset) { 
         const li = document.createElement('li'); li.classList.add('program-step', `${step.type}-step`); li.dataset.index = index; li.dataset.session = sessionNameForDataset;
         const isExercise = step.type === 'exercise'; 
-        const defaultColorForNewExercise = stepColorPalette[0]; // Utiliser la première couleur de la palette comme défaut
+        const defaultColorForNewExercise = stepColorPalette[0]; 
         const currentStepColor = step.step_color || defaultColorForNewExercise;
         li.style.borderLeftColor = isExercise ? currentStepColor : 'var(--color-break)';
         
@@ -459,12 +534,12 @@
 
         if (isExercise) {
             exerciseSpecificFields = `
-                <div class="step-field"> <label for="reps-${index}">Reps</label> <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12"> </div>
-                <div class="step-field"> <label for="weight-${index}">Poids/Rés.</label> <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5" placeholder="Ex: 25"> </div>
-                <div class="step-field"> <label for="unit-${index}">Unité</label> <input type="text" id="unit-${index}" data-field="unit" value="${step.unit || ''}" placeholder="kg, PDC, etc."> </div>
-                <div class="step-field"> <label for="equipment-${index}">Équipement</label> <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}" placeholder="Haltères, Élastique"> </div>
+                <div class="step-field"> <label for="reps-${index}">Reps / Durée</label> <input type="number" id="reps-${index}" data-field="reps" value="${step.reps ?? ''}" min="0" step="1" placeholder="Ex: 12"> </div>
+                <div class="step-field"> <label for="weight-${index}">Poids (Num)</label> <input type="number" id="weight-${index}" data-field="weight" value="${step.weight ?? ''}" min="0" step="0.5" placeholder="Ex: 25"> </div>
+                <div class="step-field"> <label for="unit-${index}">Unité</label> <input type="text" id="unit-${index}" data-field="unit" value="${step.unit || ''}" placeholder="kg, s, etc."> </div>
+                <div class="step-field"> <label for="equipment-${index}">Équipement / Poids (Texte)</label> <input type="text" id="equipment-${index}" data-field="equipment" value="${step.equipment || ''}" placeholder="Haltères, Élastique"> </div>
                 <div class="step-field"> <label for="image_url-${index}">URL Image</label> <input type="text" id="image_url-${index}" data-field="image_url" value="${step.image_url || ''}" placeholder="https://..."> </div>
-                <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note Progression</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment progresser...">${step.progression_note || ''}</textarea> </div>
+                <div class="step-field" style="grid-column: 1 / -1;"> <label for="progression_note-${index}">Note Progression / Tempo</label> <textarea id="progression_note-${index}" data-field="progression_note" placeholder="Comment progresser...">${step.progression_note || ''}</textarea> </div>
             `;
             colorPaletteHtml = `<div class="step-field color-palette-container" style="grid-column: 1 / -1;"><label>Couleur de l'étape</label><div class="color-palette">`;
             stepColorPalette.forEach(color => {
@@ -480,6 +555,7 @@
         li.querySelectorAll('.color-swatch').forEach(swatch => { swatch.addEventListener('click', (event) => handleColorChange(index, event.target.dataset.color)); });
         return li; 
     }
+
     function handleColorChange(stepIndex, newColor) {
         if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return;
         const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName);
@@ -495,9 +571,31 @@
     function handleTabClick(sessionName) { initAudioContext(); if (!programsLoaded || !loadedFullProgram) return; if (!sessionName && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) { sessionName = loadedFullProgram.sessions[0].nom_session; } else if (!sessionName) { return; } if (sessionName === currentEditingSessionName) return; if (isDirty) { if (!confirm(`Vous avez des modifications non sauvegardées pour la session "${currentEditingSessionName}". Voulez-vous continuer sans sauvegarder ?`)) { programTabsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('active', btn.dataset.sessionName === currentEditingSessionName); }); return; } } displayProgram(sessionName); }
     function handleAddStep(stepType) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession) return; let newStep = {}; if (stepType === 'exercise') newStep = { type: "exercise", name: "Nouvel Exercice", reps: 10, weight: null, unit: "kg", details: "", equipment: "", image_url: "", progression_note: "", step_color: stepColorPalette[0] }; else newStep = { type: "break", duration: 60, name: "Repos", details: "" }; if (!currentSession.exercices_et_pauses) currentSession.exercices_et_pauses = []; currentSession.exercices_et_pauses.push(newStep); displayProgram(currentEditingSessionName); markAsDirty(true); programDisplay.scrollTop = programDisplay.scrollHeight; showMessage(`${stepType === 'exercise' ? 'Exercice' : 'Pause'} ajouté(e).`, 1500, "success"); }
     function handleDeleteStep(index) { initAudioContext(); if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const stepToDelete = currentSession.exercices_et_pauses[index]; if (confirm(`Êtes-vous sûr de vouloir supprimer l'étape "${stepToDelete.name || 'Pause'}" ?`)) { currentSession.exercices_et_pauses.splice(index, 1); displayProgram(currentEditingSessionName); markAsDirty(true); showMessage("Étape supprimée.", 1500, "info"); } }
-    function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration', 'reps_start', 'reps_target_max']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
+    function handleEditStep(index, field, value) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses || index < 0 || index >= currentSession.exercices_et_pauses.length) return; const step = currentSession.exercices_et_pauses[index]; const numericFields = ['reps', 'weight', 'duration']; let processedValue = value; if (numericFields.includes(field)) processedValue = value.trim() === '' ? null : (isNaN(Number(value)) ? value : Number(value)); if(step.type === 'break' && field === 'name' && value.trim() === '') { processedValue = "Repos"; const inputElement = programDisplay.querySelector(`li[data-index="${index}"] #name-${index}`); if (inputElement) inputElement.value = "Repos"; } step[field] = processedValue; markAsDirty(true); }
     function handleDragEnd(event) { if (!currentEditingSessionName || !loadedFullProgram || !loadedFullProgram.sessions) return; const { oldIndex, newIndex } = event; if (oldIndex === newIndex) return; const currentSession = loadedFullProgram.sessions.find(s => s.nom_session === currentEditingSessionName); if (!currentSession || !currentSession.exercices_et_pauses) return; const itemToMove = currentSession.exercices_et_pauses.splice(oldIndex, 1)[0]; currentSession.exercices_et_pauses.splice(newIndex, 0, itemToMove); displayProgram(currentEditingSessionName); markAsDirty(true); }
-    async function handleSaveProgram() { initAudioContext(); if (!googleAccessToken || !programFileId) { showMessage("Connexion Drive ou ID de fichier programme manquant.", 4000, "error"); return; } if (!isDirty) { showMessage("Aucune modification à sauvegarder.", 2000, "info"); return; } if (!loadedFullProgram) { showMessage("Aucun programme chargé à sauvegarder.", 3000, "error"); return; } console.log(`Sauvegarde du programme global sur Drive...`); showMessage(`Sauvegarde du programme en cours...`, 2000, "info"); if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } const success = await updateFileContent(programFileId, loadedFullProgram); if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; } if (success) { markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); } else { showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, "error"); if(saveProgramBtn) saveProgramBtn.disabled = false; } }
+    
+    async function handleSaveProgram() { 
+        initAudioContext(); 
+        if (!googleAccessToken || !programFileId) { showMessage("Connexion Drive ou ID de fichier programme manquant.", 4000, "error"); return; } 
+        if (!isDirty) { showMessage("Aucune modification à sauvegarder.", 2000, "info"); return; } 
+        if (!loadedFullProgram) { showMessage("Aucun programme chargé à sauvegarder.", 3000, "error"); return; } 
+
+        // NOTE: On sauvegarde l'objet 'loadedFullProgram' qui contient
+        // les données transformées et modifiées dans l'éditeur.
+        // On ne tente PAS de le reconvertir au format original pour éviter les erreurs.
+        console.log(`Sauvegarde du programme (format éditeur) sur Drive...`); 
+        showMessage(`Sauvegarde du programme en cours...`, 2000, "info"); 
+        if(saveProgramBtn) { saveProgramBtn.disabled = true; saveProgramBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sauvegarde...`; } 
+        const success = await updateFileContent(programFileId, loadedFullProgram); 
+        if(saveProgramBtn) { saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; } 
+        if (success) { 
+            markAsDirty(false); showMessage(`Programme sauvegardé sur Drive !`, 3000, "success"); 
+        } else { 
+            showMessage(`Échec de la sauvegarde. Veuillez réessayer.`, 5000, "error"); 
+            if(saveProgramBtn) saveProgramBtn.disabled = false; 
+        } 
+    }
+
     function markAsDirty(dirtyState) { isDirty = dirtyState; updateSaveButtonState(); const currentTab = programTabsContainer.querySelector(`button[data-session-name="${currentEditingSessionName}"]`); if (currentTab) currentTab.classList.toggle('is-dirty', dirtyState); }
     function updateSaveButtonState() { if (!saveProgramBtn) return; saveProgramBtn.disabled = !isDirty || !googleAccessToken || !programFileId ; saveProgramBtn.innerHTML = `<i class="fas fa-save"></i> Sauvegarder Programme Complet`; }
     function updateEditorActionButtonsState() { const enable = googleAccessToken && programsLoaded && !!currentEditingSessionName && loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0; if(addExerciseBtn) addExerciseBtn.disabled = !enable; if(addBreakBtn) addBreakBtn.disabled = !enable; updateSaveButtonState(); }
@@ -526,7 +624,6 @@
     function addEventListeners() {
         if(signInButton) signInButton.addEventListener('click', handleAuthClick);
         if(signInButtonPrompt) signInButtonPrompt.addEventListener('click', handleAuthClick);
-        programTabsContainer?.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => handleTabClick(btn.dataset.sessionName)); });
         if(addExerciseBtn) addExerciseBtn.addEventListener('click', () => handleAddStep('exercise'));
         if(addBreakBtn) addBreakBtn.addEventListener('click', () => handleAddStep('break'));
         if(saveProgramBtn) saveProgramBtn.addEventListener('click', handleSaveProgram);
@@ -540,7 +637,7 @@
         loadSavedTheme();
         updateAuthUI(false); 
         checkAndInitGis(); 
-        console.log("Éditeur ArmorWorkout Initialisé (v10).");
+        console.log("Éditeur ArmorWorkout Initialisé.");
     });
 
 </script>
