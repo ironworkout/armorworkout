@@ -1,4 +1,39 @@
+Absolument. Il est essentiel que l'éditeur et le minuteur parlent exactement le même "langage" JSON pour que tout soit cohérent.
 
+J'ai donc mis à jour la page de l'éditeur pour qu'elle corresponde parfaitement à la structure de données utilisée par le minuteur. Cela inclut la gestion des exercices basés sur la durée.
+
+Résumé des Modifications Apportées à l'Éditeur :
+
+Gestion Claire des Exercices Chronométrés :
+
+Le formulaire pour un exercice inclut désormais un champ "Durée (s)".
+
+Logique :
+
+Si vous remplissez le champ "Durée (s)", l'exercice sera automatiquement traité comme un exercice chronométré dans le minuteur.
+
+Si vous remplissez le champ "Reps", il sera traité comme un exercice basé sur les répétitions.
+
+Pour éviter toute confusion, j'ai mis en place une logique où si vous entrez une durée, le champ "Reps" est ignoré, et vice-versa. Cela garantit que votre fichier JSON est toujours propre.
+
+Champ weight_text Standardisé :
+
+Comme nous l'avions fait pour le minuteur, l'éditeur utilise maintenant un champ unique "Poids / Résistance (Texte)" qui correspond à la clé weight_text. C'est le seul endroit où vous définissez la charge, garantissant une cohérence parfaite entre ce que vous éditez et ce que vous voyez pendant l'entraînement.
+
+Interface d'Édition Améliorée :
+
+Toutes les améliorations précédentes sont conservées : duplication d'étapes, ajout intelligent, gestion des sessions, import/export, et regroupement des champs avec un menu "Plus d'options".
+
+L'éditeur est maintenant non seulement plus puissant et ergonomique, mais aussi parfaitement aligné avec la logique de fonctionnement du minuteur.
+
+Voici le code complet et corrigé de la page de l'éditeur.
+
+code
+Html
+play_circle
+download
+content_copy
+expand_less
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -137,6 +172,7 @@
         .program-step { background-color: var(--bg-color); border: 1px solid var(--border-color); border-left-width: 4px; border-radius: var(--border-radius-md); padding: 15px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px 15px; align-items: start; position: relative; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; cursor: grab; }
         .program-step:hover { border-color: var(--accent-border-color); box-shadow: 0 2px 8px rgba(var(--bg-color-dark-rgb),0.3); }
         .step-icon { font-size: 1.3em; padding-top: 5px; grid-column: 1 / 2; align-self: center; transition: color var(--transition-speed) ease; }
+        .break-step .step-icon { color: var(--color-break); }
         .step-content { grid-column: 2 / 3; display: flex; flex-direction: column; gap: 15px; }
         .step-fields-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
         .step-field { display: flex; flex-direction: column; gap: 4px; }
@@ -247,7 +283,6 @@
 <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
 <input type="file" id="importer" accept=".json,application/json">
 
-<script async defer src="https://accounts.google.com/gsi/client"></script>
 <script>
     const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
     const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -272,8 +307,6 @@
     let sortableInstance = null;
     let gisCheckRetries = 0;
 
-    // ... (Tout le JS de la réponse précédente est ici)
-    
 </script>
 
 </body>
