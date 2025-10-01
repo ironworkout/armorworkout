@@ -947,7 +947,7 @@
             if (currentState === 'idle') {
                 const canStartWorkout = isLoggedIn && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0;
                 if(startPauseBtn) { startPauseBtn.disabled = !canStartWorkout; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.className = ''; }
-            } else if (startPauseBtn) startPauseBtn.disabled = ['preparing', 'finished', 'exercise'].includes(currentState);
+            } else if (startPauseBtn) startPauseBtn.disabled = ['preparing', 'finished'].includes(currentState);
             if(prevBtn) prevBtn.disabled = !(isTimerActive && currentItemIndex > 0);
             if(finishBtn) finishBtn.disabled = !isTimerActive;
             if(resetBtn) resetBtn.disabled = !isTimerActive && !isLoggedIn; 
@@ -1024,14 +1024,29 @@
         }
 
         function updateTimerDisplay() {
-            if (!timeDisplayDiv) return; let timeString = "00:00"; 
+            if (!timeDisplayDiv) return; 
+            let timeString = "00:00"; 
+            const item = currentWorkoutPlan[currentItemIndex];
+
             switch(currentState) {
-                case 'exercise': timeString = "GO!"; break;
-                case 'break': timeString = formatTime(timeLeft); break;
-                case 'paused': timeString = (previousState === 'break') ? formatTime(timeLeft) : "PAUSE"; break;
-                case 'preparing': timeString = formatTime(prepareTimeLeft); break;
-                case 'finished': timeString = "FINI!"; break;
-                default: timeString = formatTime(0); break;
+                case 'exercise':
+                    timeString = (item && item.duration !== undefined) ? formatTime(timeLeft) : "GO!";
+                    break;
+                case 'break':
+                    timeString = formatTime(timeLeft);
+                    break;
+                case 'paused':
+                    timeString = (previousState === 'break' || (item && item.duration !== undefined)) ? formatTime(timeLeft) : "PAUSE";
+                    break;
+                case 'preparing':
+                    timeString = formatTime(prepareTimeLeft);
+                    break;
+                case 'finished':
+                    timeString = "FINI!";
+                    break;
+                default:
+                    timeString = formatTime(0);
+                    break;
             }
             timeDisplayDiv.textContent = timeString; 
             updateOverallWorkoutProgressDisplay();
@@ -1226,13 +1241,45 @@
         function getIconForState(state){ switch(state){ case 'exercise': return 'fa-dumbbell'; case 'break': return 'fa-hourglass-half'; case 'paused': return 'fa-pause-circle'; case 'preparing': return 'fa-spinner'; case 'finished': return 'fa-flag-checkered'; default: return 'fa-clock'; } }
         function getIconForType(type){ if (type?.includes("myo_reps")) return 'fa-bolt'; if (type?.startsWith('exercise_')) return 'fa-dumbbell'; if (type === 'break') return 'fa-coffee'; return 'fa-question-circle'; }
         
+        function startGenericTimer() {
+            const item = currentWorkoutPlan[currentItemIndex];
+            if (!item || item.duration === undefined) { 
+                handleItemCompletion(); 
+                return; 
+            }
+        
+            if (timeLeft <= 0) {
+                totalTime = item.duration;
+                timeLeft = totalTime;
+            }
+            updateTimerDisplay();
+        
+            if (totalTime > 10) {
+                halfwayTimeoutId = setTimeout(() => { playSound(soundWindows); vibrate([50]); }, (totalTime / 2) * 1000);
+            }
+        
+            const sounds = { 5: sound5, 4: sound4, 3: sound3, 2: sound2, 1: sound1 };
+            if (sounds[timeLeft]) playSound(sounds[timeLeft]);
+        
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (sounds[timeLeft]) playSound(sounds[timeLeft]);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    clearTimeout(halfwayTimeoutId);
+                    handleItemCompletion();
+                }
+            }, 1000);
+        }
+
         function setState(newState) {
             if (!startPauseBtn || !skipBtn || !finishBtn || !resetBtn || !timerDisplayElement || !prevBtn || !timeDisplayDiv) return;
             previousState = currentState; currentState = newState; clearInterval(timerInterval); clearInterval(prepareCountdownInterval); clearTimeout(halfwayTimeoutId); 
             
             const body = document.body;
             body.className = Array.from(body.classList).filter(cls => !cls.startsWith('state-')).join(' ') + ` state-${newState}`;
-            body.classList.toggle('workout-active', !['idle', 'finished'].includes(newState));
+            body.classList.toggle('workout-active', !['idle', 'finished'].includes(currentState));
 
             updateWorkoutInfo();
             
@@ -1243,42 +1290,104 @@
             document.querySelectorAll('nav a.nav-link').forEach(link => { link.classList.toggle('disabled-link-look', isTimerActive); });
             if(navHistoryBtn) navHistoryBtn.disabled = isTimerActive;
             
+            const item = currentWorkoutPlan[currentItemIndex];
+
             switch (newState) {
-                case 'idle': isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; const canStartIdle = googleAccessToken && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan && currentWorkoutPlan.length > 0; if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; } if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType); prevBtn.disabled = true; finishBtn.disabled = true; if (wasFinishedState) wasFinishedState = false; break;
-                case 'preparing': isWorkoutActive = true; prepareTimeLeft = PREPARE_DURATION; if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; startPauseBtn.disabled = true; } if(resetBtn) resetBtn.disabled = !googleAccessToken; prevBtn.disabled = true; finishBtn.disabled = true; startPrepareCountdown(); if (!workoutStartTime) { workoutStartTime = Date.now(); } vibrate([50,30,50]); break;
-                case 'exercise': isWorkoutActive = true; isTimerRunning = false; timeLeft = 0; totalTime = 0; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = true; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('exercise')}"></i> En Cours`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } vibrate([150]); playSound(soundLaser); triggerTriangleSpin(); break;
-                case 'break': isTimerRunning = true; isWorkoutActive = true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('paused')}"></i> Pause`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } startBreakTimer(); vibrate([80, 50, 80]); playSound(soundLaser); triggerTriangleSpin(); break;
-                case 'paused': isTimerRunning = false; isWorkoutActive = true; if (googleAccessToken) { if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; } if(skipBtn) skipBtn.disabled = false; if(prevBtn) prevBtn.disabled = currentItemIndex <= 0; if(finishBtn) finishBtn.disabled = false; if(resetBtn) resetBtn.disabled = false; } vibrate(); break;
-                case 'finished': isWorkoutActive = false; isTimerRunning = false; workoutFinished = true; wasFinishedState = true; timeLeft = 0; totalTime = 0; if(startPauseBtn) { startPauseBtn.disabled = true; startPauseBtn.innerHTML = `<i class="fas ${getIconForState('finished')}"></i> Terminé`; } if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = !googleAccessToken; showMessage('Entraînement terminé ! 💪', 3000); vibrate([150, 50, 150]); playSound(soundET); originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan)); saveWorkoutToHistory(); clearInProgressState(); triggerTriangleSpin(); setTimeout(populateAndShowSummary, 500); break;
-                default: currentState = 'idle'; updateAuthUI(!!googleAccessToken); break;
+                case 'idle':
+                    isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null;
+                    const canStartIdle = googleAccessToken && programsLoaded && loadedFullProgram && !!currentWorkoutType && currentWorkoutPlan.length > 0;
+                    if(startPauseBtn) { startPauseBtn.disabled = !canStartIdle; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; }
+                    if(resetBtn) resetBtn.disabled = !(googleAccessToken && !!currentWorkoutType);
+                    prevBtn.disabled = true; finishBtn.disabled = true;
+                    if (wasFinishedState) wasFinishedState = false;
+                    break;
+                case 'preparing':
+                    isWorkoutActive = true; prepareTimeLeft = PREPARE_DURATION;
+                    if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; }
+                    if(resetBtn) resetBtn.disabled = !googleAccessToken;
+                    startPrepareCountdown();
+                    if (!workoutStartTime) { workoutStartTime = Date.now(); }
+                    vibrate([50,30,50]);
+                    break;
+                case 'exercise':
+                    isWorkoutActive = true;
+                    if (item && item.duration !== undefined) {
+                        isTimerRunning = true;
+                        if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-pause"></i> Pause`; }
+                        startGenericTimer();
+                    } else {
+                        isTimerRunning = false;
+                        if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-dumbbell"></i> En Cours`; }
+                    }
+                    if(skipBtn) skipBtn.disabled = false;
+                    if(prevBtn) prevBtn.disabled = currentItemIndex <= 0;
+                    if(finishBtn) finishBtn.disabled = false;
+                    if(resetBtn) resetBtn.disabled = false;
+                    vibrate([150]); playSound(soundLaser); triggerTriangleSpin();
+                    break;
+                case 'break':
+                    isWorkoutActive = true; isTimerRunning = true;
+                    if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-pause"></i> Pause`; }
+                    if(skipBtn) skipBtn.disabled = false;
+                    if(prevBtn) prevBtn.disabled = currentItemIndex <= 0;
+                    if(finishBtn) finishBtn.disabled = false;
+                    if(resetBtn) resetBtn.disabled = false;
+                    startGenericTimer();
+                    vibrate([80, 50, 80]); playSound(soundLaser); triggerTriangleSpin();
+                    break;
+                case 'paused':
+                    isTimerRunning = false; isWorkoutActive = true;
+                    if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; }
+                    if(skipBtn) skipBtn.disabled = false;
+                    if(prevBtn) prevBtn.disabled = currentItemIndex <= 0;
+                    if(finishBtn) finishBtn.disabled = false;
+                    if(resetBtn) resetBtn.disabled = false;
+                    vibrate();
+                    break;
+                case 'finished':
+                    isWorkoutActive = false; isTimerRunning = false; workoutFinished = true; wasFinishedState = true; timeLeft = 0; totalTime = 0;
+                    if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-flag-checkered"></i> Terminé`; }
+                    if(resetBtn) resetBtn.disabled = !googleAccessToken;
+                    showMessage('Entraînement terminé ! 💪', 3000);
+                    vibrate([150, 50, 150]); playSound(soundET);
+                    originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan));
+                    saveWorkoutToHistory();
+                    clearInProgressState();
+                    triggerTriangleSpin();
+                    setTimeout(populateAndShowSummary, 500);
+                    break;
+                default:
+                    currentState = 'idle';
+                    updateAuthUI(!!googleAccessToken);
+                    break;
             }
             updateTimerVisuals(newState); updateTimerDisplay(); 
         }
+
         function startPrepareCountdown() {
             totalTime = PREPARE_DURATION; updateTimerDisplay(); if (prepareTimeLeft === 3) playSound(sound3);
             prepareCountdownInterval = setInterval(() => { prepareTimeLeft--; updateTimerDisplay(); if (prepareTimeLeft === 2) playSound(sound2); if (prepareTimeLeft === 1) playSound(sound1); if (prepareTimeLeft <= 0) { clearInterval(prepareCountdownInterval); setState('exercise'); } }, 1000);
         }
-        function startBreakTimer() {
-            const item = currentWorkoutPlan[currentItemIndex]; if (!item || item.type !== 'break' || !item.duration) { handleItemCompletion(); return; }
-            totalTime = item.duration; timeLeft = totalTime; updateTimerDisplay();
-            if (totalTime > 10) halfwayTimeoutId = setTimeout(() => { playSound(soundWindows); vibrate([50]); }, (totalTime / 2) * 1000);
-            if (timeLeft === 5) playSound(sound5); else if (timeLeft === 4) playSound(sound4); else if (timeLeft === 3) playSound(sound3); else if (timeLeft === 2) playSound(sound2); else if (timeLeft === 1) playSound(sound1);
-            timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft === 5) playSound(sound5); else if (timeLeft === 4) playSound(sound4); else if (timeLeft === 3) playSound(sound3); else if (timeLeft === 2) playSound(sound2); else if (timeLeft === 1) playSound(sound1); if (timeLeft <= 0) { clearInterval(timerInterval); clearTimeout(halfwayTimeoutId); handleItemCompletion(); } }, 1000);
-        }
+
         function handleItemCompletion() {
             if (currentState === 'finished') return; 
             currentItemIndex++;
+            timeLeft = 0; // Reset timer for the next item
             updateOverallWorkoutProgressDisplay(); 
-            if (currentItemIndex >= currentWorkoutPlan.length) setState('finished'); 
-            else { const nextItem = currentWorkoutPlan[currentItemIndex]; setState(nextItem.type === 'break' ? 'break' : 'exercise'); }
+            if (currentItemIndex >= currentWorkoutPlan.length) {
+                setState('finished'); 
+            } else { 
+                const nextItem = currentWorkoutPlan[currentItemIndex]; 
+                setState(nextItem.type === 'break' ? 'break' : 'exercise'); 
+            }
             saveInProgressState(); 
         }
         function handlePreviousClick() {
             if (currentItemIndex > 0) {
                 currentItemIndex--; 
+                timeLeft = 0;
                 updateOverallWorkoutProgressDisplay(); 
                 const prevItem = currentWorkoutPlan[currentItemIndex];
-                if (prevItem.type?.includes("myo_reps") && prevItem.completed_mini_sets) prevItem.completed_mini_sets = 0;
                 setState(prevItem.type === 'break' ? 'break' : 'exercise'); saveInProgressState(); vibrate();
             }
         }
@@ -1466,44 +1575,23 @@
             }
 
             const summaryItems = summaryItemsList.querySelectorAll('.summary-item');
-            const nameChanges = new Map();
-
-            // Pass 1: Collect name changes to handle them globally for the entire plan.
-            summaryItems.forEach(li => {
-                const nameInput = li.querySelector(`input[id^="name-"]`);
-                const originalName = nameInput.dataset.originalName;
-                const newName = nameInput.value.trim();
-                if (newName && newName !== originalName && !nameChanges.has(originalName)) {
-                    nameChanges.set(originalName, newName);
-                }
-            });
-
-            // Apply name changes to the entire plan in memory.
-            if (nameChanges.size > 0) {
-                nameChanges.forEach((newName, originalName) => {
-                    console.log(`Renommage global de "${originalName}" en "${newName}"`);
-                    originalCompletedWorkoutPlan.forEach(planItem => {
-                        if (planItem.name === originalName) {
-                            planItem.name = newName;
-                        }
-                    });
-                });
-            }
-
-            // Pass 2: Iterate through the summary form and update both the plan and the history entry.
+            
             let historyExerciseIndex = 0;
             summaryItems.forEach(li => {
                 const planIndex = parseInt(li.dataset.planIndex, 10);
                 const itemInPlan = originalCompletedWorkoutPlan[planIndex];
                 const historyExercise = latestWorkoutEntry.exercises[historyExerciseIndex];
 
-                const repsInput = li.querySelector(`input[id^="reps-"]`);
+                const nameInput = li.querySelector(`input[id^="name-"]`);
+                const repsInput = li.querySelector(`input[id^="reps-"]`); 
                 const weightInput = li.querySelector(`input[id^="weight-"]`);
                 const noteInput = li.querySelector(`textarea[id^="note-"]`);
 
-                // The name in the plan is already updated from Pass 1.
-                // Just update the history entry with the final name from the input.
-                historyExercise.name = li.querySelector(`input[id^="name-"]`).value.trim() || itemInPlan.name;
+                // Update history with the (potentially edited) name
+                if (nameInput) {
+                    const finalName = nameInput.value.trim();
+                    if (finalName) historyExercise.name = finalName;
+                }
 
                 if (repsInput) {
                     const finalValue = parseInt(repsInput.value, 10);
@@ -1520,7 +1608,7 @@
                 if (weightInput) {
                     const finalWeight = weightInput.value.trim();
                     historyExercise.finalWeightDescription = finalWeight;
-                    itemInPlan.weight_text = finalWeight;
+                    itemInPlan.weight_text = finalWeight; // Standardize saving to weight_text
                     delete itemInPlan.unit; 
                     delete itemInPlan.weight;
                 }
@@ -1686,8 +1774,25 @@
             } catch (e) { document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px;'>Erreur critique chargement. Rafraîchissez.</p>"; }
         }
         function addEventListeners() {
-            if (startPauseBtn) startPauseBtn.addEventListener('click', () => { initAudioContext(); if (currentState === 'idle') setState('preparing'); else if (currentState === 'break') setState('paused'); else if (currentState === 'paused') { const currentPausedItem = currentWorkoutPlan[currentItemIndex]; setState((currentPausedItem?.type === 'exercise' || currentPausedItem?.type?.startsWith('exercise_')) ? 'exercise' : 'break'); } });
-            if (timerDisplayElement) timerDisplayElement.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive && currentState === 'exercise' && currentState !== 'preparing' && currentState !== 'finished') handleItemCompletion(); else if (currentState === 'idle' && startPauseBtn && !startPauseBtn.disabled) setState('preparing'); });
+            if (startPauseBtn) startPauseBtn.addEventListener('click', () => { 
+                initAudioContext();
+                if (currentState === 'idle') { setState('preparing'); return; }
+                const item = currentWorkoutPlan[currentItemIndex];
+                if (currentState === 'paused') {
+                    setState(previousState);
+                } else if (isTimerRunning) {
+                    setState('paused');
+                }
+            });
+            if (timerDisplayElement) timerDisplayElement.addEventListener('click', () => { 
+                initAudioContext(); 
+                const item = currentWorkoutPlan[currentItemIndex];
+                if (isWorkoutActive && currentState === 'exercise' && (item && item.duration === undefined)) {
+                    handleItemCompletion(); 
+                } else if (currentState === 'idle' && startPauseBtn && !startPauseBtn.disabled) {
+                    setState('preparing');
+                }
+            });
             if (skipBtn) skipBtn.addEventListener('click', () => { initAudioContext(); if (isWorkoutActive) handleItemCompletion(); });
             if (prevBtn) prevBtn.addEventListener('click', () => { initAudioContext(); handlePreviousClick(); });
             if (finishBtn) finishBtn.addEventListener('click', () => { initAudioContext(); forceFinishWorkout(); });
@@ -1707,7 +1812,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v8.1 - Sauvegarde permanente des noms).");
+            console.log("ArmorWorkout Initialisé (v8.2 - Timers d'exercice fonctionnels).");
         });
     </script>
 </body>
