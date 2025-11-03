@@ -811,7 +811,7 @@ const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.goo
             navButtons = [], navHistoryBtn, signInButton, driveStatusElement, driveStatusTextElement,
             postWorkoutSummary, summaryTitle, summaryItemsList, finishSummaryBtn, historyDriveStatus,
             currentExerciseNameDisplay, driveConnectionStatusMain, driveConnectionText, timerDisplayElement,
-            progressTextArea, historyActionsContainer,
+            progressTextArea, historyActionsContainer, historyFilterBtns, statsDisplay, statsContentWrapper,
             historyChartCanvasEl, messageArea,
             workoutSection, historySection,
             reactorElement, exerciseImageContainer, exerciseImageDisplay,
@@ -833,6 +833,9 @@ const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.goo
         let messageTimeoutId = null;
         let gisCheckRetries = 0;
         let halfwayTimeoutId = null;
+        
+        // CORRECTION: Déclaration de la variable audioContext au niveau global
+        let audioContext;
 
         let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET, soundComplete, soundScan;
 
@@ -1314,6 +1317,8 @@ const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.goo
             if (currentState === 'idle') {
                 document.querySelectorAll('.launch-session-btn').forEach(btn => {
                     btn.onclick = (e) => { 
+                        // CORRECTION: Ajout de l'initialisation du contexte audio ici
+                        initAudioContext();
                         const sessionName = e.target.dataset.sessionName;
                         const sessionBaseName = sessionName.split(" ")[0]; 
                         loadSession(sessionBaseName);
@@ -1528,7 +1533,7 @@ const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.goo
             }
         }
         function showMessage(msg, duration = 3000, isError = false) { if (!messageArea) return; messageArea.textContent = msg; messageArea.classList.add('visible'); messageArea.classList.toggle('error-message', isError); if (messageTimeoutId) clearTimeout(messageTimeoutId); messageTimeoutId = setTimeout(() => { messageArea.classList.remove('visible'); }, duration); }
-        function applyTheme(theme) { document.body.classList.remove('light-theme', 'dark-theme'); document.body.classList.add(theme + '-theme'); currentTheme = theme; localStorage.setItem('armorWorkoutTheme', theme); updateChartColors(); }
+        function applyTheme(theme) { document.body.classList.remove('light-theme', 'dark-theme'); document.body.classList.add(theme + '-theme'); currentTheme = theme; updateChartColors(); }
         function loadSavedTheme() { const savedTheme = localStorage.getItem('armorWorkoutTheme') || 'dark'; applyTheme(savedTheme); if (document.getElementById('current-year')) document.getElementById('current-year').textContent = new Date().getFullYear(); }
         function showSection(sectionId) {
             [workoutSection, historySection].forEach(section => { if (section && section.id !== sectionId) section.classList.add('section-hidden'); });
@@ -1902,7 +1907,6 @@ const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.goo
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
             console.log("ArmorWorkout Initialisé (v8.5 - Stable).");
         });
-    </script>
     </script>
 </body>
 </html>
