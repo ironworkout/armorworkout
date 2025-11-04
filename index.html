@@ -345,8 +345,7 @@
         .exercise-details[data-timed="true"] .main-stats i { color: var(--color-exercise-timed); }
         .sets-info-text, .details-text { font-size: 0.8em; color: var(--secondary-text-color); opacity: 0.85; text-align: center; width: 100%; letter-spacing: 0.02em; padding: 0 5px; line-height: 1.4; }
         .sets-info-text i { color: var(--electric-cyan); margin-right: 5px; } 
-        .details-text.rep-range-info { color: var(--neon-purple); font-weight: 700; font-size: 0.85em; }
-        .details-text.rep-range-info i { color: var(--neon-purple); }
+        .details-text i { margin-right: 5px; }
         
         .break-info { font-size: 1em; }
         .break-info > i { font-size: 1.2em; margin-bottom: 3px;} 
@@ -428,7 +427,6 @@
         .range-stepper { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
         .range-stepper label { color: var(--secondary-text-color); font-size: 0.8em; min-width: 30px;}
         .range-stepper .stepper-control { flex-grow: 1; }
-        .input-group.notes-group { grid-column: 1 / -1; }
         .summary-controls { padding: 20px 25px; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(var(--bg-color-dark-rgb), 0.2); }
         .summary-controls button { border: none; color: var(--bg-color); min-width: 180px; padding: 12px 25px; border-radius: var(--border-radius-md); font-size: 1em; font-weight: 700; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-transform: uppercase; font-family: var(--font-family-titles); letter-spacing: 0.05em; }
         .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; filter: grayscale(50%); }
@@ -984,12 +982,8 @@
                         infoHtml += `<div class="main-stats"><span><i class="fas fa-repeat"></i> ${repsDisplay}</span>`;
                         if (weightDisplay.trim() !== "💪 Poids du Corps") infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay.replace(/🏋️|🧘|💪|⚡️/g, '').trim()}</span>`;
                         infoHtml += `</div>`;
-                        const isRepRangeDetail = /Rép(s|étitions)?:\s*(\d+)\s*-\s*(\d+)/i.test(details);
-                        const isJustTempo = /^\(\s*\d\s*-\s*\d\s*-\s*\d\s*-\s*\d\s*\)$/.test(details.trim());
-                        if (details && !isJustTempo) {
-                           const detailClass = isRepRangeDetail ? 'rep-range-info' : '';
-                           const detailIcon = isRepRangeDetail ? 'fa-bullseye' : 'fa-info-circle';
-                           infoHtml += `<span class="details-text ${detailClass}"><i class="fas ${detailIcon}"></i> ${details}</span>`;
+                        if (details) {
+                           infoHtml += `<span class="details-text"><i class="fas fa-info-circle"></i> ${details}</span>`;
                         }
                         infoHtml += `</div>`;
                     } else if (item.type === 'break') {
@@ -1198,7 +1192,6 @@
                     li.style.setProperty('--item-accent-color', getColorForExercise(item.name));
                     
                     const { min, max } = parseRepRange(item);
-                    // L'affichage initial des "reps faites" est la cible de la séance (item.reps), pas forcément le min.
                     const initialReps = (item.duration !== undefined && item.duration !== null) ? item.duration : (item.reps || min);
                     const initialWeightDesc = getFormattedWeight(item); const parsedWeight = parseWeightDescription(initialWeightDesc);
                     const dynamicSetsInfo = getDynamicSetsInfo(index, originalCompletedWorkoutPlan);
@@ -1211,7 +1204,7 @@
                         <div class="fields-grid">
                             <div class="input-group">
                                 <label>Répétitions Faites</label>
-                                <div class="stepper-control" data-type="reps" data-min="${min}" data-max="${max}">
+                                <div class="stepper-control" data-type="reps">
                                     <button class="stepper-btn stepper-minus">-</button>
                                     <span class="stepper-value">${initialReps}</span>
                                     <button class="stepper-btn stepper-plus">+</button>
@@ -1304,19 +1297,18 @@
 
                 // --- 3. Mise à jour du programme pour la PROCHAINE séance ---
                 
-                // **CORRECTIF CLÉ 1 : Mettre à jour la cible de reps pour la prochaine fois**
-                // La cible sera ce que vous avez fait cette fois-ci (`repsValue`).
-                if (!isNaN(repsValue)) {
+                // **CORRECTIF 1 : La cible de reps pour la prochaine fois (`itemInPlan.reps`) est mise à jour avec la valeur du NOUVEAU MINIMUM.**
+                if (!isNaN(parseInt(nextMinReps, 10))) {
                      if (itemInPlan.duration !== undefined && itemInPlan.duration !== null) {
-                        itemInPlan.duration = repsValue;
+                        itemInPlan.duration = parseInt(nextMinReps, 10);
                      } else {
-                        itemInPlan.reps = repsValue;
+                        itemInPlan.reps = parseInt(nextMinReps, 10);
                      }
                 }
 
-                // **CORRECTIF CLÉ 2 : Remplacement intelligent et global de la fourchette de répétitions**
+                // **CORRECTIF 2 : Remplacement intelligent et global de la fourchette de répétitions**
                 const newRepRangeString = `Reps: ${nextMinReps}-${nextMaxReps}`;
-                const repRangeRegex = /(Rép(s|étitions)?|Fourchette)\s*:\s*\d+\s*-\s*\d+(\s*reps)?/gi; // Ajout du flag 'g' pour global
+                const repRangeRegex = /(Rép(s|étitions)?|Fourchette)\s*:\s*\d+\s*-\s*\d+(\s*reps)?/gi; // flag 'g' pour global
                 
                 let progNote = itemInPlan.progression_note || '';
                 let detailsText = itemInPlan.details || '';
@@ -1326,13 +1318,13 @@
                     itemInPlan.progression_note = progNote.replace(repRangeRegex, newRepRangeString);
                     rangeUpdated = true;
                 }
-                // Vérifie aussi 'details' même si 'progression_note' a été mis à jour, pour les cas complexes
+                
                 if (detailsText && repRangeRegex.test(detailsText)) {
                     itemInPlan.details = detailsText.replace(repRangeRegex, newRepRangeString);
                     rangeUpdated = true;
                 }
                 
-                if (!rangeUpdated) { // Fallback si aucune fourchette n'a été trouvée à remplacer
+                if (!rangeUpdated) { // Si aucune fourchette n'a été trouvée, on l'ajoute.
                     itemInPlan.progression_note = progNote ? `${progNote} | ${newRepRangeString}` : newRepRangeString;
                 }
                 
@@ -1448,9 +1440,25 @@
                 const control = stepperBtn.closest('.stepper-control'); const valueEl = control.querySelector('.stepper-value'); let value = parseFloat(valueEl.textContent);
                 const type = control.dataset.type; const isPlus = stepperBtn.classList.contains('stepper-plus');
                 let step = 1; if (type === 'weight') step = 0.5;
-                if(type === 'reps') { const min = parseInt(control.dataset.min, 10); const max = parseInt(control.dataset.max, 10); value = isPlus ? Math.min(max, value + step) : Math.max(min, value - step); }
-                else { value = isPlus ? value + step : Math.max(0, value - step); }
-                valueEl.textContent = type === 'weight' ? value.toFixed(1) : value;
+                
+                value = isPlus ? value + step : Math.max(0, value - step);
+                
+                // Si on change l'objectif min, s'assurer que le max est au moins égal
+                if (control.dataset.type === 'rep-range-min') {
+                    const maxEl = control.closest('.range-stepper-control').querySelector('[data-range-type="max"]');
+                    if (maxEl && value > parseFloat(maxEl.textContent)) {
+                        maxEl.textContent = value;
+                    }
+                }
+                // Si on change l'objectif max, s'assurer que le min n'est pas supérieur
+                if (control.dataset.type === 'rep-range-max') {
+                    const minEl = control.closest('.range-stepper-control').querySelector('[data-range-type="min"]');
+                    if (minEl && value < parseFloat(minEl.textContent)) {
+                        value = parseFloat(minEl.textContent);
+                    }
+                }
+
+                valueEl.textContent = type === 'weight' ? value.toFixed(1) : Math.round(value);
             } else if(resistanceSelector) {
                 const selector = resistanceSelector.closest('.resistance-selector');
                 document.querySelectorAll('.resistance-selector.open').forEach(sel => { if(sel !== selector) sel.classList.remove('open'); });
@@ -1470,7 +1478,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v9.6 - Correction Sauvegarde).");
+            console.log("ArmorWorkout Initialisé (v9.7 - Logique de sauvegarde simplifiée).");
         });
     </script>
 </body>
