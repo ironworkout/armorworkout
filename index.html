@@ -429,8 +429,6 @@
         .range-stepper label { color: var(--secondary-text-color); font-size: 0.8em; min-width: 30px;}
         .range-stepper .stepper-control { flex-grow: 1; }
         .input-group.notes-group { grid-column: 1 / -1; }
-        .summary-item textarea { min-height: 45px; background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text-color); border-radius: var(--border-radius-sm); padding: 8px 10px; font-size: 0.95em; width: 100%; resize: vertical; font-family: inherit; }
-        .summary-item textarea:focus { border-color: var(--electric-cyan); background-color: var(--secondary-bg-color); outline: none; box-shadow: 0 0 0 3px rgba(var(--electric-cyan-rgb), 0.3); }
         .summary-controls { padding: 20px 25px; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid var(--border-color); background-color: rgba(var(--bg-color-dark-rgb), 0.2); }
         .summary-controls button { border: none; color: var(--bg-color); min-width: 180px; padding: 12px 25px; border-radius: var(--border-radius-md); font-size: 1em; font-weight: 700; cursor: pointer; transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-transform: uppercase; font-family: var(--font-family-titles); letter-spacing: 0.05em; }
         .summary-controls button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; filter: grayscale(50%); }
@@ -1155,7 +1153,6 @@
         function parseRepRange(item) {
             const sources = [item.progression_note || '', item.details || ''];
             for (const source of sources) {
-                // Regex améliorée pour trouver "Reps: X-Y" ou "Fourchette : X-Y reps" etc.
                 const match = source.match(/(?:Rép(?:s|étitions)?|Fourchette)\s*:\s*(\d+)\s*-\s*(\d+)/i);
                 if (match) {
                     return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
@@ -1201,6 +1198,7 @@
                     li.style.setProperty('--item-accent-color', getColorForExercise(item.name));
                     
                     const { min, max } = parseRepRange(item);
+                    // L'affichage initial des "reps faites" est la cible de la séance (item.reps), pas forcément le min.
                     const initialReps = (item.duration !== undefined && item.duration !== null) ? item.duration : (item.reps || min);
                     const initialWeightDesc = getFormattedWeight(item); const parsedWeight = parseWeightDescription(initialWeightDesc);
                     const dynamicSetsInfo = getDynamicSetsInfo(index, originalCompletedWorkoutPlan);
@@ -1284,11 +1282,14 @@
                 const itemInPlan = originalCompletedWorkoutPlan[planIndex]; 
                 const historyExercise = latestWorkoutEntry.exercises[historyExerciseIndex];
                 
-                // --- 1. Sauvegarde des performances de la séance actuelle (pour l'historique) ---
+                // --- 1. Récupération des données du résumé ---
                 const repsValue = parseInt(li.querySelector('.stepper-control[data-type="reps"] .stepper-value').textContent, 10);
                 const resistanceSelector = li.querySelector('.resistance-selector'); const resistanceType = resistanceSelector.dataset.type;
                 const weightValue = parseFloat(li.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
-                
+                const nextMinReps = li.querySelector('.stepper-value[data-range-type="min"]').textContent;
+                const nextMaxReps = li.querySelector('.stepper-value[data-range-type="max"]').textContent;
+
+                // --- 2. Sauvegarde des performances ACTUELLES (pour l'historique) ---
                 let finalWeightDescription = resistanceTypes[resistanceType].emoji;
                 if (resistanceType === 'poids' || resistanceType === 'poids_elastique') { finalWeightDescription += ` ${weightValue} kg`; }
                 else { finalWeightDescription += ` ${resistanceTypes[resistanceType].text}`; }
@@ -1301,29 +1302,38 @@
                     }
                 }
 
-                // --- 2. Mise à jour du programme pour la prochaine séance ---
-                const nextMinReps = li.querySelector('.stepper-value[data-range-type="min"]').textContent;
-                const nextMaxReps = li.querySelector('.stepper-value[data-range-type="max"]').textContent;
+                // --- 3. Mise à jour du programme pour la PROCHAINE séance ---
                 
-                // Logique de remplacement intelligente de la fourchette de répétitions
+                // **CORRECTIF CLÉ 1 : Mettre à jour la cible de reps pour la prochaine fois**
+                // La cible sera ce que vous avez fait cette fois-ci (`repsValue`).
+                if (!isNaN(repsValue)) {
+                     if (itemInPlan.duration !== undefined && itemInPlan.duration !== null) {
+                        itemInPlan.duration = repsValue;
+                     } else {
+                        itemInPlan.reps = repsValue;
+                     }
+                }
+
+                // **CORRECTIF CLÉ 2 : Remplacement intelligent et global de la fourchette de répétitions**
                 const newRepRangeString = `Reps: ${nextMinReps}-${nextMaxReps}`;
-                const repRangeRegex = /(Rép(s|étitions)?|Fourchette)\s*:\s*\d+\s*-\s*\d+(\s*reps)?/i;
+                const repRangeRegex = /(Rép(s|étitions)?|Fourchette)\s*:\s*\d+\s*-\s*\d+(\s*reps)?/gi; // Ajout du flag 'g' pour global
                 
                 let progNote = itemInPlan.progression_note || '';
                 let detailsText = itemInPlan.details || '';
+                let rangeUpdated = false;
 
-                if (repRangeRegex.test(progNote)) {
+                if (progNote && repRangeRegex.test(progNote)) {
                     itemInPlan.progression_note = progNote.replace(repRangeRegex, newRepRangeString);
-                } else if (repRangeRegex.test(detailsText)) {
+                    rangeUpdated = true;
+                }
+                // Vérifie aussi 'details' même si 'progression_note' a été mis à jour, pour les cas complexes
+                if (detailsText && repRangeRegex.test(detailsText)) {
                     itemInPlan.details = detailsText.replace(repRangeRegex, newRepRangeString);
-                } else {
-                    // Fallback: si aucune fourchette n'est trouvée, on l'ajoute à la note de progression
-                    itemInPlan.progression_note = progNote ? `${progNote} | ${newRepRangeString}` : newRepRangeString;
+                    rangeUpdated = true;
                 }
                 
-                // Mettre à jour la valeur `reps` de base pour qu'elle corresponde au nouveau minimum
-                if (!isNaN(parseInt(nextMinReps, 10))) {
-                    itemInPlan.reps = parseInt(nextMinReps, 10);
+                if (!rangeUpdated) { // Fallback si aucune fourchette n'a été trouvée à remplacer
+                    itemInPlan.progression_note = progNote ? `${progNote} | ${newRepRangeString}` : newRepRangeString;
                 }
                 
                 // Mettre à jour le poids/la résistance pour la prochaine fois
@@ -1460,7 +1470,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v9.5 - Sauvegarde Intelligente).");
+            console.log("ArmorWorkout Initialisé (v9.6 - Correction Sauvegarde).");
         });
     </script>
 </body>
