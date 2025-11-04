@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1154,9 +1155,10 @@
         function parseRepRange(item) {
             const sources = [item.progression_note || '', item.details || ''];
             for (const source of sources) {
-                const match = source.match(/Rép(s|étitions)?:\s*(\d+)\s*-\s*(\d+)/i);
+                // Regex améliorée pour trouver "Reps: X-Y" ou "Fourchette : X-Y reps" etc.
+                const match = source.match(/(?:Rép(?:s|étitions)?|Fourchette)\s*:\s*(\d+)\s*-\s*(\d+)/i);
                 if (match) {
-                    return { min: parseInt(match[1] || match[2], 10), max: parseInt(match[3], 10) };
+                    return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
                 }
             }
             const repValue = item.reps !== undefined ? parseInt(item.reps, 10) : 8;
@@ -1260,10 +1262,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="input-group notes-group">
-                                <label>Note Additionnelle</label>
-                                <textarea placeholder="Ajoutez une note (ex: forme, RPE)...">${(item.progression_note || '').replace(/Rép(s|étitions)?:\s*\d+\s*-\s*\d+\s*\|?/, '').trim()}</textarea>
-                            </div>
                         </div>`;
                     summaryItemsList.appendChild(li);
                 }
@@ -1283,30 +1281,55 @@
             let historyExerciseIndex = 0;
             summaryItems.forEach(li => {
                 const planIndex = parseInt(li.dataset.planIndex, 10);
-                const itemInPlan = originalCompletedWorkoutPlan[planIndex]; const historyExercise = latestWorkoutEntry.exercises[historyExerciseIndex];
+                const itemInPlan = originalCompletedWorkoutPlan[planIndex]; 
+                const historyExercise = latestWorkoutEntry.exercises[historyExerciseIndex];
                 
+                // --- 1. Sauvegarde des performances de la séance actuelle (pour l'historique) ---
                 const repsValue = parseInt(li.querySelector('.stepper-control[data-type="reps"] .stepper-value').textContent, 10);
                 const resistanceSelector = li.querySelector('.resistance-selector'); const resistanceType = resistanceSelector.dataset.type;
                 const weightValue = parseFloat(li.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
-                
-                const nextMinReps = li.querySelector('.stepper-value[data-range-type="min"]').textContent;
-                const nextMaxReps = li.querySelector('.stepper-value[data-range-type="max"]').textContent;
-                const additionalNote = li.querySelector('textarea').value.trim();
                 
                 let finalWeightDescription = resistanceTypes[resistanceType].emoji;
                 if (resistanceType === 'poids' || resistanceType === 'poids_elastique') { finalWeightDescription += ` ${weightValue} kg`; }
                 else { finalWeightDescription += ` ${resistanceTypes[resistanceType].text}`; }
                 
-                historyExercise.finalWeightDescription = finalWeightDescription; itemInPlan.weight_text = finalWeightDescription;
-                delete itemInPlan.unit; delete itemInPlan.weight;
-
-                if (!isNaN(repsValue)) {
-                    if (itemInPlan.duration !== undefined && itemInPlan.duration !== null) { historyExercise.finalDuration = repsValue; itemInPlan.duration = repsValue; }
-                    else { historyExercise.finalReps = repsValue; itemInPlan.reps = repsValue; }
+                if (historyExercise) {
+                    historyExercise.finalWeightDescription = finalWeightDescription;
+                    if (!isNaN(repsValue)) {
+                        if (itemInPlan.duration !== undefined && itemInPlan.duration !== null) { historyExercise.finalDuration = repsValue; }
+                        else { historyExercise.finalReps = repsValue; }
+                    }
                 }
-                const newProgressionNote = `Reps: ${nextMinReps}-${nextMaxReps}${additionalNote ? ' | ' + additionalNote : ''}`;
-                itemInPlan.progression_note = newProgressionNote;
-                historyExercise.finalProgressionNote = newProgressionNote;
+
+                // --- 2. Mise à jour du programme pour la prochaine séance ---
+                const nextMinReps = li.querySelector('.stepper-value[data-range-type="min"]').textContent;
+                const nextMaxReps = li.querySelector('.stepper-value[data-range-type="max"]').textContent;
+                
+                // Logique de remplacement intelligente de la fourchette de répétitions
+                const newRepRangeString = `Reps: ${nextMinReps}-${nextMaxReps}`;
+                const repRangeRegex = /(Rép(s|étitions)?|Fourchette)\s*:\s*\d+\s*-\s*\d+(\s*reps)?/i;
+                
+                let progNote = itemInPlan.progression_note || '';
+                let detailsText = itemInPlan.details || '';
+
+                if (repRangeRegex.test(progNote)) {
+                    itemInPlan.progression_note = progNote.replace(repRangeRegex, newRepRangeString);
+                } else if (repRangeRegex.test(detailsText)) {
+                    itemInPlan.details = detailsText.replace(repRangeRegex, newRepRangeString);
+                } else {
+                    // Fallback: si aucune fourchette n'est trouvée, on l'ajoute à la note de progression
+                    itemInPlan.progression_note = progNote ? `${progNote} | ${newRepRangeString}` : newRepRangeString;
+                }
+                
+                // Mettre à jour la valeur `reps` de base pour qu'elle corresponde au nouveau minimum
+                if (!isNaN(parseInt(nextMinReps, 10))) {
+                    itemInPlan.reps = parseInt(nextMinReps, 10);
+                }
+                
+                // Mettre à jour le poids/la résistance pour la prochaine fois
+                itemInPlan.weight_text = finalWeightDescription;
+                delete itemInPlan.unit; 
+                delete itemInPlan.weight;
                 
                 historyExerciseIndex++;
             });
@@ -1437,7 +1460,7 @@
             initializeDOMReferences(); initSounds(); addEventListeners(); loadSavedTheme(); 
             setState('idle'); updateAuthUI(!!googleAccessToken); checkAndInitGis(); 
             setChartPlaceholder('history-chart-canvas', "Connectez-vous pour voir l'historique.");
-            console.log("ArmorWorkout Initialisé (v9.4 - Résumé Intelligent).");
+            console.log("ArmorWorkout Initialisé (v9.5 - Sauvegarde Intelligente).");
         });
     </script>
 </body>
