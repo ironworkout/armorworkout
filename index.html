@@ -1720,15 +1720,29 @@
 
         function saveWorkoutToHistory() {
             if (!currentWorkoutType || !workoutStartTime || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return;
-            const exercisesSummary = originalCompletedWorkoutPlan.filter(item => item.type.startsWith('exercise')).map(item => ({
-                name: item.name, type: item.type,
-                reps_target: item.reps || item.duration,
-                weight_description_target: getFormattedWeight(item),
-                finalReps: item.reps, finalDuration: item.duration,
-                finalWeightDescription: item.weight_text || getFormattedWeight(item),
-                finalProgressionNote: item.progression_note
-            }));
-            workoutHistory.push({ date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: (Date.now() - workoutStartTime) / 1000, exercises: exercisesSummary });
+            
+            // CORRECTION: Ajouter l'index original du plan pour une identification unique
+            const exercisesSummary = originalCompletedWorkoutPlan
+                .map((item, index) => ({ item, originalIndex: index })) // Conserver l'index original
+                .filter(data => data.item.type.startsWith('exercise'))
+                .map(data => ({
+                    originalPlanIndex: data.originalIndex, // Stocker l'index
+                    name: data.item.name,
+                    type: data.item.type,
+                    reps_target: data.item.reps || data.item.duration,
+                    weight_description_target: getFormattedWeight(data.item),
+                    finalReps: data.item.reps,
+                    finalDuration: data.item.duration,
+                    finalWeightDescription: data.item.weight_text || getFormattedWeight(data.item),
+                    finalProgressionNote: data.item.progression_note
+                }));
+
+            workoutHistory.push({
+                date: new Date().toISOString(),
+                type: currentWorkoutType,
+                durationSeconds: (Date.now() - workoutStartTime) / 1000,
+                exercises: exercisesSummary
+            });
         }
         
         async function deleteWorkoutsByDay(dateString) {
@@ -1798,7 +1812,9 @@
             planToShow.forEach((item, index) => {
                 if (item.type.startsWith('exercise')) {
                     const li = document.createElement('li');
-                    li.classList.add('summary-item'); li.dataset.planIndex = index; li.dataset.exerciseName = item.name;
+                    li.classList.add('summary-item'); 
+                    li.dataset.planIndex = index; // **CRUCIAL**: On stocke l'index exact de l'item
+                    
                     const { min, max } = parseRepRange(item);
                     const isTimed = item.duration !== undefined && item.duration !== null;
                     const initialValue = isTimed ? item.duration : (item.reps || min);
@@ -1835,17 +1851,21 @@
             const sessionName = currentSummaryContext.sessionName;
             const sessionIndex = loadedFullProgram.sessions.findIndex(s => s.nom_session === sessionName);
             
-            if (sessionIndex === -1 && loadedFullProgram.sessions.length > 0) {
-                closeSummary(); showMessage("Erreur: Session introuvable.", 4000, true); return;
+            if (sessionIndex === -1) {
+                closeSummary(); showMessage("Erreur Critique: Session introuvable dans le programme.", 4000, true); return;
             }
 
             const latestWorkoutEntry = isWorkoutMode ? workoutHistory[workoutHistory.length - 1] : null;
             const summaryItems = summaryItemsList.querySelectorAll('.summary-item');
             
             summaryItems.forEach(item => {
-                const exerciseFullName = item.dataset.exerciseName;
-                
-                // 1. Lire toutes les nouvelles valeurs depuis l'interface du résumé
+                const planIndex = parseInt(item.dataset.planIndex, 10);
+                if (isNaN(planIndex)) return; // Sécurité
+
+                // **CORRECTION**: On cible l'item EXACT dans le programme
+                const planItemToUpdate = loadedFullProgram.sessions[sessionIndex].exercices_et_pauses[planIndex];
+                if (!planItemToUpdate) return; // Sécurité supplémentaire
+
                 const resistanceType = item.querySelector('.resistance-selector').dataset.type;
                 const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
                 const newMinReps = parseInt(item.querySelector('.stepper-value[data-range-type="min"]').textContent, 10);
@@ -1853,50 +1873,36 @@
                 const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
                 const baseValueFromEdit = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
 
-                // 2. Préparer les nouvelles chaînes de texte pour le poids et la progression
                 let newWeightText = resistanceTypes[resistanceType].emoji;
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { newWeightText += ` ${weightValue} kg`; }
                 
-                // 3. Mettre à jour TOUS les exercices correspondants dans le programme principal (`loadedFullProgram`)
-                loadedFullProgram.sessions[sessionIndex].exercices_et_pauses.forEach(planItem => {
-                    if (planItem.name === exerciseFullName) {
-                        // Mise à jour de la description du poids et de la note de progression
-                        planItem.weight_text = newWeightText;
-                        planItem.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
-                        
-                        // Nettoyage des anciennes propriétés de poids direct
-                        delete planItem.unit;
-                        delete planItem.weight;
+                // --- Mise à jour de l'item spécifique dans le programme principal ---
+                planItemToUpdate.weight_text = newWeightText;
+                planItemToUpdate.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
+                delete planItemToUpdate.unit;
+                delete planItemToUpdate.weight;
 
-                        // *** DÉBUT DE LA CORRECTION FONDAMENTALE ***
-                        // Déterminer la nouvelle valeur de base pour la prochaine séance.
-                        // En mode "workout", on prend le minimum du nouvel objectif.
-                        // En mode "edit", on prend la valeur explicite du champ "Valeur de Base".
-                        const newBaseValue = isWorkoutMode ? newMinReps : baseValueFromEdit;
+                const newBaseValue = isWorkoutMode ? newMinReps : baseValueFromEdit;
 
-                        if (trackingType === 'time') {
-                            planItem.duration = newBaseValue;
-                            // Nettoyage des propriétés conflictuelles liées aux répétitions
-                            delete planItem.reps;
-                            delete planItem.reps_text;
-                            delete planItem.reps_unit;
-                        } else { // trackingType est 'reps'
-                            planItem.reps = newBaseValue;
-                            // Nettoyage des propriétés conflictuelles liées au temps et au texte
-                            delete planItem.duration;
-                            delete planItem.unit_duration;
-                            delete planItem.reps_text; // Très important pour éviter les conflits
-                        }
-                         // *** FIN DE LA CORRECTION FONDAMENTALE ***
-                    }
-                });
+                if (trackingType === 'time') {
+                    planItemToUpdate.duration = newBaseValue;
+                    delete planItemToUpdate.reps;
+                    delete planItemToUpdate.reps_text;
+                    delete planItemToUpdate.reps_unit;
+                } else {
+                    planItemToUpdate.reps = newBaseValue;
+                    delete planItemToUpdate.duration;
+                    delete planItemToUpdate.unit_duration;
+                    delete planItemToUpdate.reps_text;
+                }
 
-                // 4. Mettre à jour l'entrée de l'historique si on vient de terminer une séance
+                // --- Mise à jour de l'entrée spécifique dans l'historique ---
                 if (isWorkoutMode && latestWorkoutEntry?.exercises) {
                     const perfValueEl = item.querySelector('.stepper-control[data-type="performance"] .stepper-value');
                     const performanceValue = perfValueEl ? parseInt(perfValueEl.textContent, 10) : 0;
-
-                    const exerciseLog = latestWorkoutEntry.exercises.find(ex => ex.name === exerciseFullName);
+                    
+                    // **CORRECTION**: On cible l'exercice EXACT dans l'historique grâce à l'index
+                    const exerciseLog = latestWorkoutEntry.exercises.find(ex => ex.originalPlanIndex === planIndex);
                     if(exerciseLog) {
                         exerciseLog.finalWeightDescription = newWeightText;
                         if (trackingType === 'time') {
@@ -1910,7 +1916,6 @@
                 }
             });
 
-            // 5. Sauvegarder les fichiers mis à jour sur Google Drive
             if (isWorkoutMode) {
                 await saveHistoryToDrive();
             }
@@ -1924,7 +1929,6 @@
                 finishSummaryBtn.innerHTML = isWorkoutMode ? '<i class="fas fa-check"></i> Terminer & Sauvegarder' : '<i class="fas fa-save"></i> Enregistrer';
             }
         }
-
         
         function closeSummary(shouldReset = true) {
             if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible');
