@@ -954,7 +954,7 @@
 
             switch (newState) {
                 case 'idle':
-                    isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null;
+                    isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; currentWorkoutType = null; currentWorkoutPlan = [];
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.classList.add('start-btn'); startPauseBtn.disabled = true; }
                     if(resetBtn) resetBtn.disabled = true;
                     if (wasFinishedState) wasFinishedState = false;
@@ -963,7 +963,7 @@
                 case 'preparing':
                     isWorkoutActive = true; prepareTimeLeft = PREPARE_DURATION;
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; }
-                    if(resetBtn) resetBtn.disabled = !googleAccessToken;
+                    if(resetBtn) resetBtn.disabled = false;
                     startPrepareCountdown();
                     if (!workoutStartTime) { workoutStartTime = Date.now(); }
                     vibrate([50,30,50]);
@@ -1021,7 +1021,7 @@
                 case 'finished':
                     isWorkoutActive = false; isTimerRunning = false; workoutFinished = true; wasFinishedState = true; timeLeft = 0; totalTime = 0;
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-flag-checkered"></i> Terminé`; }
-                    if(resetBtn) resetBtn.disabled = !googleAccessToken;
+                    if(resetBtn) resetBtn.disabled = false;
                     showMessage('Entraînement terminé ! 💪', 3000);
                     vibrate([150, 50, 150]); playSound(soundET);
                     originalCompletedWorkoutPlan = JSON.parse(JSON.stringify(currentWorkoutPlan));
@@ -1078,7 +1078,7 @@
 
         function forceFinishWorkout() { if (confirm("Êtes-vous sûr de vouloir terminer l'entraînement ?")) { setState('finished'); } }
 
-        function resetCurrentWorkout() { if (currentWorkoutType && confirm(`Réinitialiser l'entraînement ${currentWorkoutType} ?`)) { setState('idle'); } }
+        function resetCurrentWorkout() { if (confirm(`Voulez-vous réinitialiser et quitter l'entraînement en cours ?`)) { setState('idle'); } }
 
         // =================================================================================
         // SECTION 6: RENDU DE L'INTERFACE UTILISATEUR (UI)
@@ -1104,10 +1104,20 @@
 
         function updateOverallWorkoutProgressDisplay() {
             if (!timerProgressIndicator || !workoutStepTotalDisplay || !workoutStepCurrentDisplay || !workoutStepInfoDisplay) return;
-            if (isWorkoutActive && currentWorkoutPlan.length > 0) {
+
+            const isWorkoutView = !['idle'].includes(currentState);
+            
+            if (isWorkoutView && currentWorkoutPlan.length > 0) {
                 const totalItemsInPlan = currentWorkoutPlan.length;
-                const currentStepForDisplay = Math.min(currentItemIndex + 1, totalItemsInPlan);
-                const progressPercentage = totalItemsInPlan > 0 ? currentStepForDisplay / totalItemsInPlan : 0;
+                let currentStepForDisplay = Math.min(currentItemIndex + 1, totalItemsInPlan);
+                let progressPercentage = totalItemsInPlan > 0 ? currentStepForDisplay / totalItemsInPlan : 0;
+                
+                // If idle but a workout is loaded, show step 1 of X
+                if (currentState === 'idle' && currentWorkoutType) {
+                    currentStepForDisplay = 1;
+                    progressPercentage = 0; // The circle should be empty before starting
+                }
+
                 const dashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE * (1 - progressPercentage);
                 timerProgressIndicator.style.strokeDashoffset = Math.max(0, dashoffset);
                 workoutStepCurrentDisplay.textContent = `Étape ${currentStepForDisplay}`;
@@ -1123,6 +1133,12 @@
         
         function updateWorkoutInfo() {
             if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea || !exerciseImageContainer || !exerciseImageDisplay || !controls) return;
+            
+            // Si l'état est idle et qu'aucune séance n'est chargée, on s'assure d'être sur l'accueil
+            if (currentState === 'idle' && !currentWorkoutType) {
+                showSection('home-section');
+                return;
+            }
             
             const item = currentWorkoutPlan[currentItemIndex];
             let infoHtml = '', exerciseName = '', progressText = '';
@@ -1153,7 +1169,10 @@
             document.body.dataset.timed = isTimedExo;
 
             switch (currentState) {
-                case 'idle': showSection('home-section'); return; 
+                case 'idle': 
+                    // This case is now handled by the initial check, but we keep it for safety
+                    showSection('home-section'); 
+                    return; 
                 case 'finished':
                     const durationSeconds = workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0;
                     exerciseName = 'Entraînement Terminé !';
@@ -1332,6 +1351,7 @@
         }
         
         function renderHomeScreen() {
+            showSection('home-section');
             if (!homeSection) return;
             homeSection.innerHTML = ''; // Nettoie l'écran d'accueil
             
@@ -1706,6 +1726,48 @@
             }
         }
 
+        // *** FIX STARTS HERE ***
+        function displayPreWorkoutScreen() {
+            if (!currentWorkoutPlan || currentWorkoutPlan.length === 0) return;
+
+            showSection('workout-section');
+            const firstItem = currentWorkoutPlan[0];
+
+            if (currentExerciseNameDisplay) {
+                currentExerciseNameDisplay.textContent = `Prêt : ${currentWorkoutType}`;
+                currentExerciseNameDisplay.style.color = 'var(--primary-text-color)';
+                currentExerciseNameDisplay.style.animation = 'none';
+            }
+            if (currentExerciseContainer) {
+                currentExerciseContainer.innerHTML = createNextExercisePreviewHtml(firstItem, 'preparing', getDynamicSetsInfo(0, currentWorkoutPlan));
+            }
+            if (timeDisplayDiv) {
+                timeDisplayDiv.textContent = "00:00";
+            }
+            if (startPauseBtn) {
+                startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`;
+                startPauseBtn.disabled = false;
+                startPauseBtn.classList.add('start-btn');
+            }
+             if (resetBtn) resetBtn.disabled = false;
+             if (skipBtn) skipBtn.disabled = true;
+             if (prevBtn) prevBtn.disabled = true;
+             if (finishBtn) finishBtn.disabled = true;
+             if (controls) controls.style.display = 'flex';
+             if (timerView) timerView.style.display = 'flex';
+            
+            // Masquer l'image au départ
+            if(exerciseImageContainer) exerciseImageContainer.classList.remove('visible');
+             
+            // Mettre à jour les cercles de progression pour montrer l'étape 1
+            const totalItemsInPlan = currentWorkoutPlan.length;
+            if (workoutStepCurrentDisplay) workoutStepCurrentDisplay.textContent = `Étape 1`;
+            if (workoutStepTotalDisplay) workoutStepTotalDisplay.textContent = `/ ${totalItemsInPlan}`;
+            if (timerProgressIndicator) timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE;
+            if (workoutStepInfoDisplay) workoutStepInfoDisplay.classList.add('visible');
+
+        }
+
         function loadSession(sessionName) {
             if (!loadedFullProgram || !loadedFullProgram.sessions || loadedFullProgram.sessions.length === 0) { 
                 showMessage(`Programme non chargé ou vide.`, 5000, true); return; 
@@ -1714,6 +1776,10 @@
             if (!session || !session.exercices_et_pauses) { 
                 showMessage(`Session "${sessionName}" invalide.`, 4000, true); return; 
             }
+
+            // Réinitialisation avant de charger la nouvelle session
+            setState('idle');
+
             currentWorkoutType = session.nom_session; 
             currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); 
             currentItemIndex = 0; 
@@ -1721,13 +1787,11 @@
             vibrate(); 
             clearInProgressState();
             
-            // Correction du bug : On prépare la séance, mais on ne la lance pas.
-            // On met à jour l'UI pour montrer qu'elle est prête.
-            startPauseBtn.disabled = false;
-            updateWorkoutInfo(); // Met à jour l'info avec le premier exercice
-            timeDisplayDiv.textContent = formatTime(0); // Affiche 00:00
+            // Afficher l'écran de pré-entraînement
+            displayPreWorkoutScreen();
             showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
         }
+        // *** FIX ENDS HERE ***
 
         // =================================================================================
         // SECTION 9: RÉSUMÉ POST-ENTRAÎNEMENT & ÉDITION
