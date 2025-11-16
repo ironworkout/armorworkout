@@ -201,9 +201,17 @@
             box-shadow: 0 5px 25px rgba(var(--bg-color-dark-rgb), 0.5), inset 0 0 15px rgba(var(--electric-blue-rgb), 0.1);
             animation: fadeIn 0.5s ease-out forwards;
         }
-        .sidebar-module h3 { font-family: var(--font-family-titles); color: var(--primary-text-color); font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .sidebar-module h3 i { color: var(--electric-cyan); }
+        .sidebar-module h3, .sidebar-module h4 { font-family: var(--font-family-titles); color: var(--primary-text-color); font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .sidebar-module h3 i, .sidebar-module h4 i { color: var(--electric-cyan); }
+        .sidebar-module h4 { font-size: 1.0em; margin-top: 25px; margin-bottom: 10px; }
         
+        .recent-workouts-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .recent-workouts-list li { display: flex; justify-content: space-between; align-items: center; background-color: rgba(var(--bg-color-dark-rgb), 0.3); padding: 8px 12px; border-radius: var(--border-radius-sm); font-size: 0.9em; border-left: 3px solid var(--border-color); }
+        .recent-workouts-list .workout-info-text .workout-name { color: var(--primary-text-color); font-weight: 500; }
+        .recent-workouts-list .workout-info-text .workout-date { color: var(--secondary-text-color); font-size: 0.9em; display: block; }
+        .delete-recent-workout-btn { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; font-size: 1em; padding: 5px; border-radius: var(--border-radius-sm); transition: color 0.2s, background-color 0.2s; }
+        .delete-recent-workout-btn:hover { color: var(--neon-red); background-color: rgba(var(--neon-red-rgb), 0.1); }
+
         .consistency-info { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 15px;}
         .weekly-goal-progress-bar { width: 100%; height: 8px; background-color: var(--border-color); border-radius: 4px; overflow: hidden; }
         .weekly-goal-progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--electric-blue), var(--electric-cyan)); border-radius: 4px; transition: width 0.5s ease; }
@@ -484,11 +492,6 @@
         footer a:hover { color: var(--primary-text-color); text-decoration: underline; text-shadow: 0 0 8px var(--electric-cyan); }
         footer .fab.fa-google-drive { color: var(--neon-green); } footer .fab.fa-github { color: var(--neon-purple); }
         
-        #debug-toggle { position: absolute; bottom: 20px; right: 20px; background-color: rgba(var(--secondary-bg-color-dark-rgb),0.8); border: 1px solid var(--border-color); color: var(--secondary-text-color); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 4000; display: flex; align-items: center; justify-content: center; font-size: 1.2em; transition: all 0.3s ease; }
-        #debug-toggle:hover { color: var(--electric-cyan); border-color: var(--electric-cyan); }
-        #debug-panel { position: fixed; bottom: 0; left: 0; right: 0; height: 200px; background-color: rgba(var(--bg-color-dark-rgb), 0.95); border-top: 1px solid var(--electric-cyan); z-index: 3999; padding: 10px; overflow-y: scroll; font-family: 'Courier New', Courier, monospace; font-size: 0.8em; color: var(--primary-text-color); transform: translateY(100%); transition: transform 0.3s ease-in-out; }
-        #debug-panel.visible { transform: translateY(0); }
-        #debug-panel pre { white-space: pre-wrap; word-wrap: break-word; }
 
         @media (min-width: 769px) { 
             .timer-and-image-wrapper { flex-direction: row; justify-content: center; align-items: center; gap: 30px; }
@@ -614,8 +617,6 @@
     <footer>
         <p>© <span id="current-year"></span> ArmorWorkout. Sauvegarde sur <i class="fab fa-google-drive" aria-hidden="true"></i> Google Drive.</p>
         <p><a href="https://github.com/ironworkout/armorworkout" target="_blank" rel="noopener noreferrer"><i class="fab fa-github" aria-hidden="true"></i> Voir sur GitHub</a></p>
-        <button id="debug-toggle" title="Afficher/Masquer le panneau de débogage"><i class="fas fa-bug"></i></button>
-        <div id="debug-panel"><pre id="debug-output">Console de débogage initialisée.</pre></div>
     </footer>
 
     <div id="message-area" class="message-area" role="status" aria-live="polite"></div>
@@ -661,7 +662,7 @@
             workoutSection, 
             reactorElement, exerciseImageContainer, exerciseImageDisplay,
             timerProgressIndicator, workoutStepTotalDisplay, workoutStepCurrentDisplay, workoutStepInfoDisplay,
-            timerView, workoutInfoView, controls, debugOutput, debugPanel;
+            timerView, workoutInfoView, controls;
 
         let currentWorkoutType = null, currentWorkoutPlan = [], originalCompletedWorkoutPlan = [];
         let currentItemIndex = 0, timerInterval = null, prepareCountdownInterval = null, getReadyInterval = null;
@@ -687,15 +688,6 @@
         // SECTION 2: FONCTIONS UTILITAIRES ET HELPERS
         // =================================================================================
 
-        function logDebug(message) {
-            if (!debugOutput) return;
-            const timestamp = new Date().toLocaleTimeString();
-            const logMessage = `[${timestamp}] ${message}\n`;
-            debugOutput.textContent += logMessage;
-            debugOutput.parentElement.scrollTop = debugOutput.parentElement.scrollHeight;
-            console.log(message);
-        }
-
         function formatTime(seconds) { 
             const cleanSeconds = Math.max(0, Math.round(seconds)); 
             const minutes = Math.floor(cleanSeconds / 60); 
@@ -715,7 +707,7 @@
                 soundLaser = new Audio(bP + 'laser.mp3'); sound5 = new Audio(bP + '5.mp3'); sound4 = new Audio(bP + '4.mp3'); sound3 = new Audio(bP + '3.mp3');
                 sound2 = new Audio(bP + '2.mp3'); sound1 = new Audio(bP + '1.mp3'); soundWindows = new Audio(bP + 'windows.mp3'); soundET = new Audio(bP + 'e-t.mp3');
                 [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(s => { if (s) s.preload = 'auto'; });
-            } catch (e) { showMessage("Erreur chargement sons.", 5000, true); logDebug(`[ERROR] Sound init failed: ${e.message}`); }
+            } catch (e) { showMessage("Erreur chargement sons.", 5000, true); console.error(`Sound init failed: ${e.message}`); }
         }
 
         function playSound(a) { if (!a || !audioContext || audioContext.state !== 'running') return; a.currentTime = 0; a.play().catch(e => { console.warn("Erreur lecture son:", e.message) }); }
@@ -738,15 +730,14 @@
                     tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES, callback: tokenCallback, error_callback: handleTokenError });
                     if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
                     if (signInButton) signInButton.disabled = false;
-                    logDebug("[Auth] Client Google Identity Services initialisé.");
-                } catch (error) { logDebug(`[ERROR] GIS client init failed: ${error.message}`); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (signInButton) signInButton.disabled = true; }
-            } else { if (signInButton) signInButton.disabled = true; logDebug("[Auth] Librairie Google GIS non encore chargée."); }
+                } catch (error) { console.error(`GIS client init failed: ${error.message}`); showMessage("Erreur initialisation services Google.", 5000, true); updateAuthUI(false); if (signInButton) signInButton.disabled = true; }
+            } else { if (signInButton) signInButton.disabled = true; }
         }
 
         function checkAndInitGis() {
             if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') gisInitInternal();
             else if (gisCheckRetries < GIS_MAX_RETRIES) { gisCheckRetries++; setTimeout(checkAndInitGis, GIS_CHECK_INTERVAL); }
-            else { logDebug("[ERROR] Critique: Librairie GIS non chargée après plusieurs tentatives."); showMessage("Erreur critique: API Google non disponible.", 10000, true); if (signInButton) signInButton.disabled = true; }
+            else { console.error("Critique: Librairie GIS non chargée après plusieurs tentatives."); showMessage("Erreur critique: API Google non disponible.", 10000, true); if (signInButton) signInButton.disabled = true; }
         }
 
         function handleTokenError(error) {
@@ -756,7 +747,6 @@
             else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') msg = "Accès aux données Drive refusé par l'utilisateur.";
             if (driveStatusElement) { driveStatusElement.className = 'error'; driveStatusElement.style.display = 'inline-flex'; }
             showMessage(msg, 7000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Auth'; updateAuthUI(false);
-            logDebug(`[ERROR] Auth token error: ${JSON.stringify(error)}`);
         }
 
         async function tokenCallback(tokenResponse) {
@@ -766,7 +756,6 @@
                 googleAccessToken = tokenResponse.access_token; showMessage("Connecté ! Chargement des données...", 2500);
                 if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
                 if (driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
-                logDebug('[Auth] Access token reçu. Début du chargement des données depuis Drive.');
                 try {
                     await Promise.all([loadHistoryFromDrive(), loadChartDataFromDrive()]);
                     const programLoadSuccess = await loadFullProgramFromDrive();
@@ -775,50 +764,44 @@
                         showMessage("Programme et données chargés depuis votre Drive.", 3000);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                         if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
-                        logDebug('[Drive] Toutes les données ont été chargées avec succès.');
                     } else {
                         showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive. Assurez-vous que le fichier existe.`, 8000, true);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
                         if (driveStatusTextElement) driveStatusTextElement.textContent = 'Prog absent';
-                        logDebug(`[ERROR] Échec du chargement du fichier programme. Fichier absent ou vide sur Drive.`);
                     }
                 } catch (error) {
                     showMessage("Erreur majeure lors du chargement des données.", 6000, true);
                     if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                     if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
-                    logDebug(`[ERROR] Erreur critique pendant le chargement des données: ${error.message}`);
                 } finally { updateAuthUI(true); loadInProgressState(); renderHomeScreen(); }
             } else handleTokenError({ error: "Réponse de token invalide ou vide" });
         }
 
         function handleAuthClick() {
             initAudioContext();
-            if (!tokenClient) { logDebug("[Auth] Bouton cliqué mais client token non prêt."); showMessage("Services Google non prêts. Veuillez patienter.", 3000); checkAndInitGis(); return; }
+            if (!tokenClient) { showMessage("Services Google non prêts. Veuillez patienter.", 3000); checkAndInitGis(); return; }
             if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
             if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connexion...';
-            logDebug("[Auth] Demande d'access token avec popup de consentement.");
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
         async function findOrCreateFile(filename, defaultContentStr = "{}", mimeType = 'application/json', createIfNotExist = false) {
-            if (!googleAccessToken) { logDebug(`[Drive] findOrCreateFile ignoré pour ${filename}: Pas d'access token.`); return null; }
+            if (!googleAccessToken) { return null; }
             const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'+and+trashed=false&spaces=drive&fields=files(id,name)`;
             try {
                 const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!searchRes.ok) { 
                     if (searchRes.status === 401 || searchRes.status === 403) { 
-                        showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); logDebug('[ERROR] Recherche Drive échouée: Token expiré/interdit.'); return null; 
+                        showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; 
                     } 
                     throw new Error(`Recherche échouée (${searchRes.status})`); 
                 }
                 const searchData = await searchRes.json();
                 if (searchData.files && searchData.files.length > 0) { 
-                    logDebug(`[Drive] Fichier trouvé '${filename}' avec ID: ${searchData.files[0].id}`);
                     return searchData.files[0].id; 
                 }
-                if (!createIfNotExist) { logDebug(`[Drive] Fichier '${filename}' non trouvé et createIfNotExist est false.`); return null; }
+                if (!createIfNotExist) { return null; }
                 
-                logDebug(`[Drive] Fichier '${filename}' non trouvé. Création...`);
                 const metadata = { name: filename, mimeType: mimeType };
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
@@ -828,10 +811,8 @@
 
                 if (!createRes.ok) throw new Error(`Création échouée (${createRes.status})`);
                 const createData = await createRes.json();
-                logDebug(`[Drive] Fichier créé '${filename}' avec ID: ${createData.id}`);
                 return createData.id;
             } catch (error) { 
-                logDebug(`[ERROR] Drive findOrCreateFile a échoué pour '${filename}': ${error.message}`); 
                 showMessage(`Erreur Drive (${filename.substring(0, 15)}...): ${error.message}`, 6000, "error"); return null; 
             }
         }
@@ -842,51 +823,46 @@
             try {
                 const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!response.ok) {
-                    if (response.status === 404) { logDebug(`[Drive] readFileContent: Fichier ID ${fileId} (${filename}) non trouvé (404).`); return null; }
-                    if (response.status === 401 || response.status === 403) { showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); logDebug(`[ERROR] readFileContent a échoué pour ${filename}: Token expiré/interdit.`); return null; }
+                    if (response.status === 404) { return null; }
+                    if (response.status === 401 || response.status === 403) { showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; }
                     throw new Error(`Lecture échouée (${response.status})`);
                 }
-                logDebug(`[Drive] Contenu de '${filename}' lu avec succès.`);
                 return await response.text();
-            } catch (error) { logDebug(`[ERROR] Drive readFileContent a échoué pour '${filename}': ${error.message}`); showMessage(`Erreur Lecture Drive: ${error.message}`, 6000, "error"); return null; }
+            } catch (error) { showMessage(`Erreur Lecture Drive: ${error.message}`, 6000, "error"); return null; }
         }
 
         async function updateFileContent(fileId, content, filename) {
             if (!googleAccessToken || !fileId) return false;
-            if (isSavingDriveData) { logDebug(`[Drive] updateFileContent pour '${filename}' ignoré: une autre sauvegarde est en cours.`); return false; }
+            if (isSavingDriveData) { return false; }
             isSavingDriveData = true;
             updateAuthUI(!!googleAccessToken);
             const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
             const contentToSend = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
             let success = false;
-            logDebug(`[Drive] Tentative de sauvegarde de '${filename}'...`);
             try {
                 const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json; charset=UTF-8' }, body: contentToSend });
                 if (!response.ok) { 
                     if (response.status === 401 || response.status === 403) { 
-                        showMessage("Session expirée.", 5000, true); googleAccessToken = null; updateAuthUI(false); logDebug(`[ERROR] updateFileContent a échoué pour ${filename}: Token expiré/interdit.`);
+                        showMessage("Session expirée.", 5000, true); googleAccessToken = null; updateAuthUI(false);
                     } else throw new Error(`Écriture échouée ${response.status}`); 
                 }
-                else { success = true; logDebug(`[Drive] Sauvegarde de '${filename}' réussie.`); }
+                else { success = true; }
             } catch (error) { 
-                logDebug(`[ERROR] updateFileContent a échoué pour '${filename}': ${error.message}`);
                 showMessage(`Erreur sauvegarde fichier Drive.`, 5000, true); 
             }
             finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); } return success;
         }
 
         async function loadHistoryFromDrive() {
-            logDebug(`[Drive] Chargement de '${HISTORY_FILENAME}'...`);
             if (!googleAccessToken) return; historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([]), 'application/json', true);
             if (historyFileId) {
                 const content = await readFileContent(historyFileId, HISTORY_FILENAME);
-                if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); logDebug(`[Drive] Historique chargé avec ${workoutHistory.length} entrées.`); } catch (e) { showMessage("Historique Drive corrompu.", 4000, true); workoutHistory = []; logDebug(`[ERROR] Fichier d'historique corrompu.`);} }
-                else { workoutHistory = []; logDebug(`[Drive] Le contenu du fichier d'historique était null.`); }
-            } else { workoutHistory = []; logDebug(`[ERROR] Impossible de trouver ou créer le fichier d'historique.`);}
+                if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); } catch (e) { showMessage("Historique Drive corrompu.", 4000, true); workoutHistory = []; } }
+                else { workoutHistory = []; }
+            } else { workoutHistory = []; }
         }
 
         async function loadChartDataFromDrive() {
-            logDebug(`[Drive] Chargement de '${CHART_DATA_FILENAME}'...`);
             if (!googleAccessToken) return;
             chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, "{}", 'application/json', true);
             if (chartDataFileId) {
@@ -894,23 +870,18 @@
                 if (content !== null && content.trim() !== "") {
                     try { 
                         chartData = JSON.parse(content);
-                        logDebug(`[Drive] Données de graphiques chargées pour ${Object.keys(chartData).length} exercices.`);
                     } catch(e) { 
                         chartData = {};
-                        logDebug(`[ERROR] Fichier de données de graphiques corrompu. Aucune donnée chargée.`);
                     }
                 } else { 
                     chartData = {}; 
-                    logDebug(`[Drive] Contenu du fichier de graphiques nul ou vide.`); 
                 }
             } else { 
                 chartData = {};
-                logDebug(`[ERROR] Impossible de trouver ou créer le fichier de données de graphiques.`);
             }
         }
 
         async function loadFullProgramFromDrive() {
-            logDebug(`[Drive] Chargement de '${FULL_PROGRAM_FILENAME}'...`);
             programsLoaded = false;
             programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", 'application/json', false); 
             if (programFileId) {
@@ -921,14 +892,12 @@
                         if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { 
                             loadedFullProgram = parsedProgram; 
                             programsLoaded = true; 
-                            logDebug(`[Drive] Programme chargé depuis Drive avec ${loadedFullProgram.sessions.length} sessions.`);
                             return true; 
                         }
-                    } catch (e) { logDebug(`[ERROR] Fichier programme corrompu sur Drive.`); }
-                } else { logDebug(`[Drive] Fichier programme vide sur Drive.`); }
-            } else { logDebug(`[Drive] Fichier programme non trouvé sur Drive.`); }
-            
-            loadedFullProgram = null; // Assure que le programme est bien nul s'il n'est pas chargé
+                    } catch (e) { console.error("Fichier programme corrompu sur Drive."); }
+                }
+            }
+            loadedFullProgram = null;
             return false;
         }
 
@@ -1134,7 +1103,6 @@
         function updateWorkoutInfo() {
             if (!currentExerciseContainer || !currentExerciseNameDisplay || !progressTracker || !progressTextArea || !exerciseImageContainer || !exerciseImageDisplay || !controls) return;
             
-            // Si l'état est idle et qu'aucune séance n'est chargée, on s'assure d'être sur l'accueil
             if (currentState === 'idle' && !currentWorkoutType) {
                 showSection('home-section');
                 return;
@@ -1170,7 +1138,6 @@
 
             switch (currentState) {
                 case 'idle': 
-                    // This case is now handled by the initial check, but we keep it for safety
                     showSection('home-section'); 
                     return; 
                 case 'finished':
@@ -1353,7 +1320,7 @@
         function renderHomeScreen() {
             showSection('home-section');
             if (!homeSection) return;
-            homeSection.innerHTML = ''; // Nettoie l'écran d'accueil
+            homeSection.innerHTML = ''; 
             
             if (!googleAccessToken) {
                 homeSection.innerHTML = `<div class="app-section" style="text-align:center; padding: 40px 20px;"><h2>Bienvenue sur ArmorWorkout</h2><p style="margin-top:15px; max-width: 500px; margin-left: auto; margin-right: auto;">Connectez-vous à Google Drive pour synchroniser votre programme, suivre vos progrès et sauvegarder votre historique d'entraînement.</p></div>`;
@@ -1460,10 +1427,6 @@
 
             const exerciseLabels = [...new Set(sessionTemplate.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(ex => ex.name))];
             
-            const initialHistoryEntry = relevantHistory[0];
-            const medianHistoryEntry = relevantHistory.length > 2 ? relevantHistory[Math.max(0, relevantHistory.length - 6)] : initialHistoryEntry;
-            const currentHistoryEntry = relevantHistory[relevantHistory.length - 1];
-
             const createScoreArray = (historyEntry) => {
                 if (!historyEntry) return new Array(exerciseLabels.length).fill(null);
                 return exerciseLabels.map(exName => {
@@ -1472,27 +1435,39 @@
                 });
             };
 
-            const initialScores = createScoreArray(initialHistoryEntry);
-            const medianScores = createScoreArray(medianHistoryEntry);
-            const currentScores = createScoreArray(currentHistoryEntry);
-            
             const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
             const neonYellowColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-yellow').trim();
             const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
             const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
             const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
+
+            const datasets = [];
+            // Actuel (toujours présent)
+            const currentHistoryEntry = relevantHistory[relevantHistory.length - 1];
+            datasets.push({ label: 'Actuel', data: createScoreArray(currentHistoryEntry), borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 });
+
+            // Initial (si plus d'une séance)
+            if (relevantHistory.length > 1) {
+                const initialHistoryEntry = relevantHistory[0];
+                datasets.push({ label: 'Initial', data: createScoreArray(initialHistoryEntry), borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 });
+            }
+
+            // Médian (si plus de 2 séances et si différent de l'initial/final)
+            if (relevantHistory.length > 2) {
+                const medianIndex = Math.floor((relevantHistory.length - 1) / 2);
+                if (medianIndex > 0 && medianIndex < relevantHistory.length - 1) {
+                    const medianHistoryEntry = relevantHistory[medianIndex];
+                    datasets.push({ label: 'Médian', data: createScoreArray(medianHistoryEntry), borderColor: neonYellowColor, backgroundColor: neonYellowColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 });
+                }
+            }
             
             const ctx = canvasEl.getContext('2d');
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: exerciseLabels.map(name => name.substring(0, 15) + (name.length > 15 ? '...' : '')),
-                    datasets: [
-                        { label: 'Initial', data: initialScores, borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 },
-                        { label: 'Médian', data: medianScores, borderColor: neonYellowColor, backgroundColor: neonYellowColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 },
-                        { label: 'Actuel', data: currentScores, borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 }
-                    ]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -1507,16 +1482,6 @@
                             callbacks: {
                                 title: (tooltipItems) => exerciseLabels[tooltipItems[0].dataIndex],
                                 label: (context) => `${context.dataset.label}: ${context.raw ? context.raw.toFixed(0) : 'N/A'}`,
-                                afterBody: (tooltipItems) => {
-                                    const index = tooltipItems[0].dataIndex;
-                                    const initial = initialScores[index];
-                                    const current = currentScores[index];
-                                    if (initial > 0 && current > 0 && initial !== current) {
-                                        const progress = ((current - initial) / initial) * 100;
-                                        return `\nProgression: ${progress.toFixed(1)}%`;
-                                    }
-                                    return '';
-                                }
                             }
                         }
                     }
@@ -1596,7 +1561,44 @@
                 }
                 calendarGrid.appendChild(dayCell);
             }
+
+            const recentWorkoutsEl = renderRecentWorkoutsList();
+            module.appendChild(recentWorkoutsEl);
+
             return module;
+        }
+
+        function renderRecentWorkoutsList() {
+            const container = document.createElement('div');
+            container.id = "recent-workouts-container";
+            
+            if (workoutHistory.length === 0) return container;
+
+            container.innerHTML = `<h4><i class="fas fa-history"></i> Historique Récent</h4>`;
+            const list = document.createElement('ul');
+            list.className = 'recent-workouts-list';
+
+            const recentWorkouts = workoutHistory.slice().reverse().slice(0, 5);
+
+            recentWorkouts.forEach(workout => {
+                const li = document.createElement('li');
+                const date = new Date(workout.date);
+                const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+
+                li.innerHTML = `
+                    <div class="workout-info-text">
+                        <span class="workout-name">${workout.type}</span>
+                        <span class="workout-date">${formattedDate}</span>
+                    </div>
+                    <button class="delete-recent-workout-btn" data-date-iso="${workout.date}" title="Supprimer cette séance">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+
+            container.appendChild(list);
+            return container;
         }
         
         function calculateWeeklyStreak() {
@@ -1695,7 +1697,7 @@
                         showMessage("Entraînement repris.", 2500);
                         return;
                     }
-                } catch (e) { console.error("Erreur parsing état en cours:", e); logDebug(`[ERROR] Failed to parse in-progress state: ${e.message}`); }
+                } catch (e) { console.error("Erreur parsing état en cours:", e); }
             }
             clearInProgressState();
         }
@@ -1715,18 +1717,27 @@
             workoutHistory.push({ date: new Date().toISOString(), type: currentWorkoutType, durationSeconds: (Date.now() - workoutStartTime) / 1000, exercises: exercisesSummary });
         }
 
-        async function deleteWorkoutFromHistory(dateString) {
+        async function deleteWorkoutsByDay(dateString) {
             const originalLength = workoutHistory.length;
             workoutHistory = workoutHistory.filter(h => h.date.split('T')[0] !== dateString);
             if (workoutHistory.length < originalLength) {
                 await saveHistoryToDrive();
                 showMessage("Séance(s) supprimée(s).", 3000);
-                logDebug(`[Data] Séances supprimées pour la date : ${dateString}.`);
+                renderHomeScreen();
+            }
+        }
+        
+        async function deleteSingleWorkoutFromHistory(isoDateString) {
+            const index = workoutHistory.findIndex(h => h.date === isoDateString);
+            if (index > -1) {
+                workoutHistory.splice(index, 1);
+                await saveHistoryToDrive();
+                showMessage("Séance supprimée.", 3000);
                 renderHomeScreen();
             }
         }
 
-        // *** FIX STARTS HERE ***
+
         function displayPreWorkoutScreen() {
             if (!currentWorkoutPlan || currentWorkoutPlan.length === 0) return;
 
@@ -1756,10 +1767,8 @@
              if (controls) controls.style.display = 'flex';
              if (timerView) timerView.style.display = 'flex';
             
-            // Masquer l'image au départ
             if(exerciseImageContainer) exerciseImageContainer.classList.remove('visible');
              
-            // Mettre à jour les cercles de progression pour montrer l'étape 1
             const totalItemsInPlan = currentWorkoutPlan.length;
             if (workoutStepCurrentDisplay) workoutStepCurrentDisplay.textContent = `Étape 1`;
             if (workoutStepTotalDisplay) workoutStepTotalDisplay.textContent = `/ ${totalItemsInPlan}`;
@@ -1777,7 +1786,6 @@
                 showMessage(`Session "${sessionName}" invalide.`, 4000, true); return; 
             }
 
-            // Réinitialisation avant de charger la nouvelle session
             setState('idle');
 
             currentWorkoutType = session.nom_session; 
@@ -1787,11 +1795,9 @@
             vibrate(); 
             clearInProgressState();
             
-            // Afficher l'écran de pré-entraînement
             displayPreWorkoutScreen();
             showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
         }
-        // *** FIX ENDS HERE ***
 
         // =================================================================================
         // SECTION 9: RÉSUMÉ POST-ENTRAÎNEMENT & ÉDITION
@@ -1936,7 +1942,7 @@
             initSounds();
             checkAndInitGis();
             document.getElementById('current-year').textContent = new Date().getFullYear();
-            setState('idle'); // Affiche l'écran d'accueil initial
+            setState('idle');
         });
 
         function initializeDOMReferences() {
@@ -1958,11 +1964,9 @@
                 timerProgressIndicator = document.getElementById("timer-progress-indicator"); workoutStepTotalDisplay = document.getElementById("workout-step-total-display");
                 workoutStepCurrentDisplay = document.getElementById("workout-step-current-display"); workoutStepInfoDisplay = document.getElementById("workout-step-info-display");
                 timerView = document.getElementById("timer-view"); workoutInfoView = document.getElementById("workout-info");
-                controls = document.querySelector(".controls"); debugOutput = document.getElementById("debug-output");
-                debugPanel = document.getElementById("debug-panel"); document.getElementById('debug-toggle').addEventListener('click', () => debugPanel.classList.toggle('visible'));
+                controls = document.querySelector(".controls");
             } catch(e) {
                 document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px;'>Erreur critique au chargement de l'application. Veuillez rafraîchir la page.</p>";
-                logDebug(`[ERROR] DOM init failed: ${e.message}`);
             }
         }
         
@@ -2007,14 +2011,22 @@
             const card = e.target.closest('.session-card-large');
             const prevMonthBtn = e.target.closest('.prev-month');
             const nextMonthBtn = e.target.closest('.next-month');
-            const deleteBtn = e.target.closest('.delete-workout-btn');
+            const deleteCalendarBtn = e.target.closest('.delete-workout-btn');
+            const deleteRecentBtn = e.target.closest('.delete-recent-workout-btn');
 
-            if (deleteBtn) {
+            if (deleteCalendarBtn) {
                 e.stopPropagation();
-                const date = deleteBtn.dataset.date;
+                const date = deleteCalendarBtn.dataset.date;
                 const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', {day: '2-digit', month: 'long'});
-                if (confirm(`Voulez-vous vraiment supprimer les séances du ${formattedDate} ?`)) {
-                    deleteWorkoutFromHistory(date);
+                if (confirm(`Voulez-vous vraiment supprimer TOUTES les séances du ${formattedDate} ?`)) {
+                    deleteWorkoutsByDay(date);
+                }
+            } else if (deleteRecentBtn) {
+                e.stopPropagation();
+                const isoDate = deleteRecentBtn.dataset.dateIso;
+                const workoutToDelete = workoutHistory.find(h => h.date === isoDate);
+                if (workoutToDelete && confirm(`Voulez-vous vraiment supprimer la séance "${workoutToDelete.type}" du ${new Date(isoDate).toLocaleDateString('fr-FR')} ?`)) {
+                    deleteSingleWorkoutFromHistory(isoDate);
                 }
             } else if (card) {
                 initAudioContext();
