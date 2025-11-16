@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -241,16 +240,6 @@
         .session-card-large:hover, .session-card-large.edit-mode-hover { border-color: var(--electric-cyan); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(var(--electric-cyan-rgb), 0.15); }
         .session-card-large.edit-mode-active { border-color: var(--neon-yellow); box-shadow: 0 8px 25px rgba(var(--neon-yellow-rgb), 0.15); cursor: pointer; }
         
-        .toggle-details-btn {
-            position: absolute; bottom: 15px; right: 15px; z-index: 2;
-            color: var(--secondary-text-color); font-size: 1.2em;
-            padding: 8px; border-radius: 50%; cursor: pointer;
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            transition: color 0.2s, background-color 0.2s, transform 0.2s;
-        }
-        .toggle-details-btn:hover { color: var(--electric-cyan); background-color: rgba(var(--electric-cyan-rgb), 0.1); }
-        .session-card-large.expanded .toggle-details-btn { transform: rotate(90deg); }
-        
         .session-card-summary { padding: 20px; }
         .session-card-header { display: flex; justify-content: space-between; align-items: center; }
         .session-card-header h3 { font-family: var(--font-family-titles); color: var(--electric-cyan); font-size: 1.4em; margin: 0; text-shadow: 0 0 8px rgba(var(--electric-cyan-rgb), 0.5); }
@@ -259,13 +248,6 @@
         
         .global-performance-chart-container { min-height: 220px; position: relative; margin-top: 15px; }
         .chart-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.85em; color: var(--secondary-text-color); padding: 10px; text-align: center; }
-        
-        .session-card-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0 20px; }
-        .session-card-large.expanded .session-card-details { max-height: 2000px; padding: 10px 20px 20px; }
-        .exercise-detail-item { padding: 15px 0; border-top: 1px solid var(--border-color); }
-        .exercise-detail-item:first-child { border-top: none; }
-        .exercise-detail-header { font-weight: 500; color: var(--primary-text-color); margin-bottom: 10px; }
-        .detailed-chart-container { min-height: 180px; position: relative; }
 
         .workout-section { text-align: center; }
         .section-hidden {
@@ -1383,17 +1365,8 @@
                 }
 
                 const globalChartCanvasId = `global-chart-${session.nom_session.replace(/\s+/g, '-')}`;
-                let exerciseDetailsHtml = '<div class="session-card-details">';
-                const uniqueExerciseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => item.name))];
                 
-                uniqueExerciseNames.forEach(exName => {
-                     const detailCanvasId = `detail-chart-${session.nom_session.replace(/\s+/g, '-')}-${getExerciseBaseName(exName).replace(/\s+/g, '-')}`;
-                     exerciseDetailsHtml += `<div class="exercise-detail-item"><div class="exercise-detail-header">${exName}</div><div class="detailed-chart-container"><canvas id="${detailCanvasId}"></canvas><div id="${detailCanvasId}-placeholder" class="chart-placeholder"></div></div></div>`;
-                });
-                exerciseDetailsHtml += '</div>';
-
                 card.innerHTML = `
-                    <div class="toggle-details-btn" title="Afficher/Masquer les graphiques détaillés"><i class="fas fa-bars"></i></div>
                     <div class="session-card-summary">
                         <div class="session-card-header">
                             <h3>${session.nom_session}</h3>
@@ -1404,8 +1377,7 @@
                             <canvas id="${globalChartCanvasId}"></canvas>
                             <div id="${globalChartCanvasId}-placeholder" class="chart-placeholder"></div>
                         </div>
-                    </div>
-                    ${exerciseDetailsHtml}`;
+                    </div>`;
                 mainContent.appendChild(card);
                 
                 setTimeout(() => {
@@ -1518,23 +1490,11 @@
                                     const index = tooltipItems[0].dataIndex;
                                     const initial = initialScores[index];
                                     const current = currentScores[index];
-                                    if (initial > 0 && current > 0) {
+                                    if (initial > 0 && current > 0 && initial !== current) {
                                         const progress = ((current - initial) / initial) * 100;
                                         return `\nProgression: ${progress.toFixed(1)}%`;
                                     }
                                     return '';
-                                },
-                                afterLabel: (context) => {
-                                    const index = context.dataIndex;
-                                    const initial = initialScores[index];
-                                    const current = currentScores[index];
-                                     if (context.dataset.label === 'Actuel' && initial > 0 && current > 0) {
-                                         const progress = ((current - initial) / initial) * 100;
-                                         if(progress !== 0){
-                                            return `Progression: ${progress.toFixed(1)}%`;
-                                         }
-                                     }
-                                     return null;
                                 }
                             }
                         }
@@ -1655,69 +1615,7 @@
             }
             return streak;
         }
-
-        function renderDetailedExerciseChart(canvasEl, exerciseName) {
-            const canvasId = canvasEl.id;
-            destroyChart(canvasId);
-            const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
-            const history = getExerciseChartData(exerciseName);
-
-            if (history.dates.length < 1) {
-                if(placeholderEl) { placeholderEl.textContent = 'Aucune donnée enregistrée pour cet exercice.'; placeholderEl.style.display = 'flex'; }
-                return;
-            }
-            if(placeholderEl) placeholderEl.style.display = 'none';
-
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
-            const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
-            const electricCyanColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-cyan').trim();
-            
-            const ctx = canvasEl.getContext('2d');
-            activeCharts[canvasId] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: history.dates.slice(-10),
-                    datasets: [
-                        { type: 'line', label: 'Charge (kg)', data: history.weights.slice(-10), borderColor: electricCyanColor, tension: 0.3, yAxisID: 'y', pointBackgroundColor: electricCyanColor, borderWidth: 2, fill: false },
-                        { type: 'bar', label: 'Reps/Temps', data: history.reps.slice(-10), backgroundColor: neonGreenColor + '99', borderColor: neonGreenColor, yAxisID: 'y1' }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim() + 'E6',
-                            titleColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color').trim(),
-                            bodyColor: textColor,
-                            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(), borderWidth: 1
-                        }
-                    },
-                    scales: {
-                        y: { position: 'left', title: { display: true, text: 'Charge (kg)', color: textColor }, beginAtZero: false, grid: { color: gridColor }, ticks: { color: textColor } },
-                        y1: { position: 'right', title: { display: true, text: 'Reps/Temps', color: textColor }, beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: textColor } },
-                        x: { grid: { color: gridColor }, ticks: { color: textColor, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 5 } }
-                    }
-                }
-            });
-        }
-
-        function getExerciseChartData(exerciseName) {
-            const data = { weights: [], reps: [], dates: [] };
-            const baseName = getExerciseBaseName(exerciseName);
-            for (const key in chartData) {
-                if (getExerciseBaseName(key) === baseName) {
-                    (chartData[key] || []).forEach(entry => {
-                        data.weights.push(entry.weight || 0);
-                        data.reps.push(entry.reps || entry.duration || 0);
-                        data.dates.push((new Date(entry.date)).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
-                    });
-                }
-            }
-            return data;
-        }
-
+        
         function parseRepRange(item) {
             const note = item.progression_note || '';
             const match = note.match(/Reps:\s*(\d+)\s*-\s*(\d+)/i);
@@ -1808,15 +1706,26 @@
         }
 
         function loadSession(sessionName) {
-            if (!loadedFullProgram || !loadedFullProgram.sessions || loadedFullProgram.sessions.length === 0) { showMessage(`Programme non chargé ou vide.`, 5000, true); return; }
+            if (!loadedFullProgram || !loadedFullProgram.sessions || loadedFullProgram.sessions.length === 0) { 
+                showMessage(`Programme non chargé ou vide.`, 5000, true); return; 
+            }
             const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
-            if (!session || !session.exercices_et_pauses) { showMessage(`Session "${sessionName}" invalide.`, 4000, true); return; }
+            if (!session || !session.exercices_et_pauses) { 
+                showMessage(`Session "${sessionName}" invalide.`, 4000, true); return; 
+            }
             currentWorkoutType = session.nom_session; 
             currentWorkoutPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses)); 
             currentItemIndex = 0; 
             workoutStartTime = null; 
             vibrate(); 
             clearInProgressState();
+            
+            // Correction du bug : On prépare la séance, mais on ne la lance pas.
+            // On met à jour l'UI pour montrer qu'elle est prête.
+            startPauseBtn.disabled = false;
+            updateWorkoutInfo(); // Met à jour l'info avec le premier exercice
+            timeDisplayDiv.textContent = formatTime(0); // Affiche 00:00
+            showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
         }
 
         // =================================================================================
@@ -1995,16 +1904,17 @@
         function addEventListeners() {
             startPauseBtn?.addEventListener('click', () => {
                 initAudioContext();
-                const item = currentWorkoutPlan[currentItemIndex];
-                if (currentState === 'idle') {
-                    if (currentWorkoutType) setState('preparing');
-                    else showMessage("Veuillez d'abord sélectionner une séance.", 3000, true);
-                } else if (currentState === 'paused') {
-                    setState(previousState);
+                if (currentState === 'idle' && currentWorkoutType) {
+                    setState('preparing');
                 } else if (isTimerRunning) {
                     setState('paused');
-                } else if (currentState === 'exercise' && item && (item.duration === undefined || item.duration === null)) {
-                    handleItemCompletion();
+                } else if (currentState === 'paused') {
+                    setState(previousState);
+                } else if (currentState === 'exercise') {
+                    const item = currentWorkoutPlan[currentItemIndex];
+                    if (item && (item.duration === undefined || item.duration === null)) {
+                        handleItemCompletion();
+                    }
                 }
             });
             timerDisplayElement?.addEventListener('click', () => {
@@ -2030,7 +1940,6 @@
 
         function handleHomeInteraction(e) {
             const card = e.target.closest('.session-card-large');
-            const toggleBtn = e.target.closest('.toggle-details-btn');
             const prevMonthBtn = e.target.closest('.prev-month');
             const nextMonthBtn = e.target.closest('.next-month');
             const deleteBtn = e.target.closest('.delete-workout-btn');
@@ -2042,36 +1951,12 @@
                 if (confirm(`Voulez-vous vraiment supprimer les séances du ${formattedDate} ?`)) {
                     deleteWorkoutFromHistory(date);
                 }
-            } else if (toggleBtn && card) {
-                e.stopPropagation(); initAudioContext();
-                const isExpanded = card.classList.toggle('expanded');
-                if (isExpanded) {
-                    const sessionName = card.dataset.sessionName;
-                    const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
-                    if (!session) return;
-                    
-                    const uniqueExerciseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => item.name))];
-                    
-                    uniqueExerciseNames.forEach(exName => {
-                        const canvasId = `detail-chart-${sessionName.replace(/\s+/g, '-')}-${getExerciseBaseName(exName).replace(/\s+/g, '-')}`;
-                        const canvasEl = document.getElementById(canvasId);
-                        if(canvasEl) {
-                            renderDetailedExerciseChart(canvasEl, exName);
-                        } else {
-                            logDebug(`[ERROR] Canvas introuvable pour le graphique détaillé: ${canvasId}`);
-                        }
-                    });
-                }
             } else if (card) {
                 initAudioContext();
                 if (isEditMode) {
                     populateAndShowSummary({mode: 'edit', sessionName: card.dataset.sessionName});
                 } else {
                     loadSession(card.dataset.sessionName);
-                    if (currentWorkoutPlan.length > 0) {
-                        startPauseBtn.disabled = false;
-                        showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
-                    }
                 }
             } else if (prevMonthBtn) {
                 displayedCalendarDate.setMonth(displayedCalendarDate.getMonth() - 1);
