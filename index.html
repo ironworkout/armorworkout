@@ -647,6 +647,7 @@
         const INITIAL_PROGRAM_FILENAME = "initial_program.json";
         const PREPARE_DURATION = 3;
         const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
+        const IN_PROGRESS_VERSION = 1; // AMÉLIORATION: Version de la sauvegarde locale
         const GIS_CHECK_INTERVAL = 100;
         const GIS_MAX_RETRIES = 50;
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
@@ -758,12 +759,11 @@
                 if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
                 if (driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
                 try {
-                    await Promise.all([loadHistoryFromDrive(), loadChartDataFromDrive()]);
+                    await loadHistoryFromDrive(); 
+                    await loadChartDataFromDrive();
                     const programLoadSuccess = await loadFullProgramFromDrive();
                     
-                    if(programLoadSuccess) {
-                        await loadInitialProgramFromDrive();
-                    }
+                    if(programLoadSuccess) await loadInitialProgramFromDrive();
 
                     if (programLoadSuccess) {
                         showMessage("Programme et données chargés depuis votre Drive.", 3000);
@@ -789,6 +789,32 @@
             if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connexion...';
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
+        
+        // AMÉLIORATION: Nouvelle fonction pour gérer la corruption de fichier
+        async function handleCorruptedFile(fileId, filename) {
+            const date = new Date().toISOString().split('T')[0];
+            const newName = `${filename.replace('.json', '')}_CORRUPT_${date}.json`;
+            showMessage(`Fichier '${filename}' corrompu. Sauvegarde de la version corrompue...`, 6000, true);
+            
+            try {
+                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${googleAccessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName })
+                });
+                if (!response.ok) throw new Error(`Échec du renommage (${response.status})`);
+                
+                showMessage(`Fichier corrompu renommé en '${newName}'. Création d'un nouveau fichier.`, 8000);
+                return true; // Succès, on peut maintenant créer un nouveau fichier.
+            } catch (error) {
+                showMessage(`Action impossible sur le fichier corrompu. Veuillez vérifier votre Google Drive.`, 10000, true);
+                console.error("Erreur lors du renommage du fichier corrompu:", error);
+                return false; // Échec, on ne doit pas continuer pour éviter d'écraser.
+            }
+        }
 
         async function findOrCreateFile(filename, defaultContentStr = "{}", mimeType = 'application/json', createIfNotExist = false) {
             if (!googleAccessToken) { return null; }
@@ -797,7 +823,7 @@
                 const searchRes = await fetch(searchUrl, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!searchRes.ok) { 
                     if (searchRes.status === 401 || searchRes.status === 403) { 
-                        showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; 
+                        showMessage("Session Google expirée. Veuillez vous reconnecter.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; 
                     } 
                     throw new Error(`Recherche échouée (${searchRes.status})`); 
                 }
@@ -829,7 +855,7 @@
                 const response = await fetch(url, { headers: { 'Authorization': `Bearer ${googleAccessToken}` } });
                 if (!response.ok) {
                     if (response.status === 404) { return null; }
-                    if (response.status === 401 || response.status === 403) { showMessage("Session Google expirée.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; }
+                    if (response.status === 401 || response.status === 403) { showMessage("Session Google expirée. Veuillez vous reconnecter.", 5000, "error"); googleAccessToken = null; updateAuthUI(false); return null; }
                     throw new Error(`Lecture échouée (${response.status})`);
                 }
                 return await response.text();
@@ -838,6 +864,7 @@
 
         async function updateFileContent(fileId, content, filename) {
             if (!googleAccessToken || !fileId) return false;
+            // AMÉLIORATION: Le verrouillage simple est suffisant avec les sauvegardes séquentielles.
             if (isSavingDriveData) { return false; }
             isSavingDriveData = true;
             updateAuthUI(!!googleAccessToken);
@@ -848,7 +875,7 @@
                 const response = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${googleAccessToken}`, 'Content-Type': 'application/json; charset=UTF-8' }, body: contentToSend });
                 if (!response.ok) { 
                     if (response.status === 401 || response.status === 403) { 
-                        showMessage("Session expirée.", 5000, true); googleAccessToken = null; updateAuthUI(false);
+                        showMessage("Session expirée. Reconnectez-vous pour sauvegarder.", 5000, true); googleAccessToken = null; updateAuthUI(false);
                     } else throw new Error(`Écriture échouée ${response.status}`); 
                 }
                 else { success = true; }
@@ -859,14 +886,28 @@
         }
 
         async function loadHistoryFromDrive() {
-            if (!googleAccessToken) return; historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([]), 'application/json', true);
+            if (!googleAccessToken) return;
+            historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([]), 'application/json', true);
             if (historyFileId) {
                 const content = await readFileContent(historyFileId, HISTORY_FILENAME);
-                if (content !== null) { try { workoutHistory = JSON.parse(content || "[]"); workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); } catch (e) { showMessage("Historique Drive corrompu.", 4000, true); workoutHistory = []; } }
-                else { workoutHistory = []; }
+                if (content !== null) { 
+                    try { 
+                        workoutHistory = JSON.parse(content || "[]"); 
+                        workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); 
+                    } catch (e) { 
+                        // AMÉLIORATION: Gestion de la corruption
+                        const renamed = await handleCorruptedFile(historyFileId, HISTORY_FILENAME);
+                        if(renamed) {
+                             historyFileId = null; // Force la re-création d'un fichier sain
+                             await loadHistoryFromDrive(); // On ré-essaye avec un nouveau fichier
+                        } else {
+                            workoutHistory = []; // Fallback si le renommage échoue
+                        }
+                    } 
+                } else { workoutHistory = []; }
             } else { workoutHistory = []; }
         }
-
+        
         async function loadChartDataFromDrive() {
             if (!googleAccessToken) return;
             chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, "{}", 'application/json', true);
@@ -876,14 +917,17 @@
                     try { 
                         chartData = JSON.parse(content);
                     } catch(e) { 
-                        chartData = {};
+                        // AMÉLIORATION: Gestion de la corruption
+                        const renamed = await handleCorruptedFile(chartDataFileId, CHART_DATA_FILENAME);
+                        if(renamed) {
+                             chartDataFileId = null;
+                             await loadChartDataFromDrive();
+                        } else {
+                            chartData = {};
+                        }
                     }
-                } else { 
-                    chartData = {}; 
-                }
-            } else { 
-                chartData = {};
-            }
+                } else { chartData = {}; }
+            } else { chartData = {}; }
         }
 
         async function loadFullProgramFromDrive() {
@@ -898,8 +942,13 @@
                             loadedFullProgram = parsedProgram; 
                             programsLoaded = true; 
                             return true; 
-                        }
-                    } catch (e) { console.error("Fichier programme corrompu sur Drive."); }
+                        } else throw new Error("Format du programme invalide");
+                    } catch (e) { 
+                        console.error("Fichier programme corrompu sur Drive:", e);
+                        // AMÉLIORATION: Gestion de la corruption du fichier programme principal
+                        await handleCorruptedFile(programFileId, FULL_PROGRAM_FILENAME);
+                        programFileId = null; // On ne veut pas l'utiliser
+                    }
                 }
             }
             loadedFullProgram = null;
@@ -915,6 +964,8 @@
                         loadedInitialProgram = JSON.parse(content);
                     } catch (e) {
                         console.error("Fichier de programme initial corrompu.");
+                        await handleCorruptedFile(initialProgramFileId, INITIAL_PROGRAM_FILENAME);
+                        initialProgramFileId = null; // On le re-créera
                         loadedInitialProgram = null;
                     }
                 } else {
@@ -924,9 +975,10 @@
             
             if (!initialProgramFileId && loadedFullProgram) {
                 showMessage("Création de votre point de départ pour les graphiques...", 4000);
-                initialProgramFileId = await findOrCreateFile(INITIAL_PROGRAM_FILENAME, JSON.stringify(loadedFullProgram, null, 2), 'application/json', true);
+                const initialContent = JSON.stringify(loadedFullProgram, null, 2);
+                initialProgramFileId = await findOrCreateFile(INITIAL_PROGRAM_FILENAME, initialContent, 'application/json', true);
                 if (initialProgramFileId) {
-                    loadedInitialProgram = JSON.parse(JSON.stringify(loadedFullProgram));
+                    loadedInitialProgram = JSON.parse(initialContent);
                 }
             }
         }
@@ -1065,7 +1117,7 @@
 
         function forceFinishWorkout() { if (confirm("Êtes-vous sûr de vouloir terminer l'entraînement ?")) { setState('finished'); } }
 
-        function resetCurrentWorkout() { if (confirm(`Voulez-vous réinitialiser et quitter l'entraînement en cours ?`)) { setState('idle'); } }
+        function resetCurrentWorkout() { if (confirm(`Voulez-vous réinitialiser et quitter l'entraînement en cours ?`)) { setState('idle'); clearInProgressState(); } }
 
         // =================================================================================
         // SECTION 6: RENDU DE L'INTERFACE UTILISATEUR (UI)
@@ -1698,12 +1750,20 @@
         function saveInProgressState() {
             if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; }
             const stateToSave = {
+                version: IN_PROGRESS_VERSION, // AMÉLIORATION: Versioning
                 currentWorkoutType: currentWorkoutType,
                 currentWorkoutPlan: JSON.parse(JSON.stringify(currentWorkoutPlan)),
                 currentItemIndex: currentItemIndex, timeLeft: timeLeft, prepareTimeLeft: prepareTimeLeft,
                 workoutStartTime: workoutStartTime, currentState: currentState, previousState: previousState,
             };
-            localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave));
+            try { // AMÉLIORATION: Gestion des erreurs de quota
+                localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    showMessage("Erreur: Espace de stockage local insuffisant pour sauvegarder la session.", 8000, true);
+                }
+                console.error("Erreur de sauvegarde locale:", e);
+            }
         }
 
         function loadInProgressState() {
@@ -1711,6 +1771,13 @@
             if (savedStateJSON) {
                 try {
                     const savedState = JSON.parse(savedStateJSON);
+                    // AMÉLIORATION: Vérification de la version
+                    if (savedState.version !== IN_PROGRESS_VERSION) {
+                        console.warn(`Version de l'état local (${savedState.version}) obsolète. L'état est ignoré.`);
+                        clearInProgressState();
+                        return;
+                    }
+
                     if (savedState.currentWorkoutType && savedState.currentWorkoutPlan && savedState.currentState && loadedFullProgram) {
                         currentWorkoutType = savedState.currentWorkoutType;
                         currentWorkoutPlan = savedState.currentWorkoutPlan;
@@ -1946,10 +2013,13 @@
                 }
             });
 
-            const savePromises = [saveFullProgramToDrive()];
-            if (isWorkoutMode) { savePromises.push(saveHistoryToDrive(), saveChartDataToDrive()); }
+            // AMÉLIORATION: Correction de la race condition par des sauvegardes séquentielles
+            if (isWorkoutMode) {
+                await saveHistoryToDrive();
+                await saveChartDataToDrive();
+            }
+            await saveFullProgramToDrive();
             
-            await Promise.all(savePromises);
             closeSummary(false);
             setState('idle');
             showMessage("Modifications sauvegardées avec succès !", 3500);
@@ -2010,7 +2080,10 @@
                 } else if (isTimerRunning) {
                     setState('paused');
                 } else if (currentState === 'paused') {
-                    setState('exercise'); // Resume to exercise, not previous state
+                    // Reprend toujours un exercice, jamais une pause
+                    const item = currentWorkoutPlan[currentItemIndex];
+                    if (item && item.type.startsWith('exercise')) setState('exercise');
+                    else if (item && item.type === 'break') setState('break');
                 } else if (currentState === 'exercise') {
                     const item = currentWorkoutPlan[currentItemIndex];
                     if (item && (item.duration === undefined || item.duration === null)) {
