@@ -1845,39 +1845,53 @@
             summaryItems.forEach(item => {
                 const exerciseFullName = item.dataset.exerciseName;
                 
+                // 1. Lire toutes les nouvelles valeurs depuis l'interface du résumé
                 const resistanceType = item.querySelector('.resistance-selector').dataset.type;
                 const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
                 const newMinReps = parseInt(item.querySelector('.stepper-value[data-range-type="min"]').textContent, 10);
                 const newMaxReps = parseInt(item.querySelector('.stepper-value[data-range-type="max"]').textContent, 10);
                 const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
-                
+                const baseValueFromEdit = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
+
+                // 2. Préparer les nouvelles chaînes de texte pour le poids et la progression
                 let newWeightText = resistanceTypes[resistanceType].emoji;
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { newWeightText += ` ${weightValue} kg`; }
                 
+                // 3. Mettre à jour TOUS les exercices correspondants dans le programme principal (`loadedFullProgram`)
                 loadedFullProgram.sessions[sessionIndex].exercices_et_pauses.forEach(planItem => {
                     if (planItem.name === exerciseFullName) {
+                        // Mise à jour de la description du poids et de la note de progression
                         planItem.weight_text = newWeightText;
                         planItem.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
-                        delete planItem.unit; delete planItem.weight;
+                        
+                        // Nettoyage des anciennes propriétés de poids direct
+                        delete planItem.unit;
+                        delete planItem.weight;
 
-                        if (!isWorkoutMode) {
-                            const baseValue = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
-                             if (trackingType === 'time') {
-                                planItem.duration = baseValue; 
-                                delete planItem.reps; 
-                                delete planItem.reps_text; 
-                                delete planItem.reps_unit;
-                            } else { // 'reps'
-                                planItem.reps = baseValue; 
-                                delete planItem.duration; 
-                                delete planItem.unit_duration;
-                                // CORRECTION: Supprimer la propriété textuelle pour éviter les conflits
-                                delete planItem.reps_text;
-                            }
+                        // *** DÉBUT DE LA CORRECTION FONDAMENTALE ***
+                        // Déterminer la nouvelle valeur de base pour la prochaine séance.
+                        // En mode "workout", on prend le minimum du nouvel objectif.
+                        // En mode "edit", on prend la valeur explicite du champ "Valeur de Base".
+                        const newBaseValue = isWorkoutMode ? newMinReps : baseValueFromEdit;
+
+                        if (trackingType === 'time') {
+                            planItem.duration = newBaseValue;
+                            // Nettoyage des propriétés conflictuelles liées aux répétitions
+                            delete planItem.reps;
+                            delete planItem.reps_text;
+                            delete planItem.reps_unit;
+                        } else { // trackingType est 'reps'
+                            planItem.reps = newBaseValue;
+                            // Nettoyage des propriétés conflictuelles liées au temps et au texte
+                            delete planItem.duration;
+                            delete planItem.unit_duration;
+                            delete planItem.reps_text; // Très important pour éviter les conflits
                         }
+                         // *** FIN DE LA CORRECTION FONDAMENTALE ***
                     }
                 });
 
+                // 4. Mettre à jour l'entrée de l'historique si on vient de terminer une séance
                 if (isWorkoutMode && latestWorkoutEntry?.exercises) {
                     const perfValueEl = item.querySelector('.stepper-control[data-type="performance"] .stepper-value');
                     const performanceValue = perfValueEl ? parseInt(perfValueEl.textContent, 10) : 0;
@@ -1896,6 +1910,7 @@
                 }
             });
 
+            // 5. Sauvegarder les fichiers mis à jour sur Google Drive
             if (isWorkoutMode) {
                 await saveHistoryToDrive();
             }
@@ -1909,6 +1924,7 @@
                 finishSummaryBtn.innerHTML = isWorkoutMode ? '<i class="fas fa-check"></i> Terminer & Sauvegarder' : '<i class="fas fa-save"></i> Enregistrer';
             }
         }
+
         
         function closeSummary(shouldReset = true) {
             if(postWorkoutSummary) postWorkoutSummary.classList.remove('visible');
