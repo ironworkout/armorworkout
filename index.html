@@ -1721,12 +1721,11 @@
         function saveWorkoutToHistory() {
             if (!currentWorkoutType || !workoutStartTime || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return;
             
-            // CORRECTION: Ajouter l'index original du plan pour une identification unique
             const exercisesSummary = originalCompletedWorkoutPlan
-                .map((item, index) => ({ item, originalIndex: index })) // Conserver l'index original
+                .map((item, index) => ({ item, originalIndex: index })) 
                 .filter(data => data.item.type.startsWith('exercise'))
                 .map(data => ({
-                    originalPlanIndex: data.originalIndex, // Stocker l'index
+                    originalPlanIndex: data.originalIndex, 
                     name: data.item.name,
                     type: data.item.type,
                     reps_target: data.item.reps || data.item.duration,
@@ -1813,11 +1812,12 @@
                 if (item.type.startsWith('exercise')) {
                     const li = document.createElement('li');
                     li.classList.add('summary-item'); 
-                    li.dataset.planIndex = index; // **CRUCIAL**: On stocke l'index exact de l'item
+                    li.dataset.planIndex = index;
                     
                     const { min, max } = parseRepRange(item);
                     const isTimed = item.duration !== undefined && item.duration !== null;
-                    const initialValue = isTimed ? item.duration : (item.reps || min);
+                    const initialValue = isTimed ? item.duration : (item.reps || 0); // La valeur de base réelle
+                    const performanceValue = isWorkoutMode ? (isTimed ? item.duration : (item.reps || 0)) : 0; // Performance de la session
                     const parsedWeight = parseWeightDescription(getFormattedWeight(item));
                     const dynamicSetsInfo = getDynamicSetsInfo(index, planToShow);
 
@@ -1826,14 +1826,15 @@
                         <div class="fields-grid">
                             <div class="input-group ${!isWorkoutMode ? 'hidden' : ''}" data-field="performance">
                                 <label>Performance Réalisée (${isTimed ? 'secondes' : 'répétitions'})</label>
-                                <div class="stepper-control" data-type="performance"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${initialValue}</span><button class="stepper-btn stepper-plus">+</button></div>
+                                <div class="stepper-control" data-type="performance"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${performanceValue}</span><button class="stepper-btn stepper-plus">+</button></div>
                             </div>
-                             <div class="input-group ${isWorkoutMode ? 'hidden' : ''}" data-field="base-value">
-                                <label>Valeur de Base (${isTimed ? 'secondes' : 'répétitions'})</label>
+                            <!-- CORRECTION: Ce champ est maintenant TOUJOURS visible -->
+                             <div class="input-group" data-field="base-value">
+                                <label>Prochaine Valeur de Base (${isTimed ? 'secondes' : 'répétitions'})</label>
                                 <div class="stepper-control" data-type="base-value"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${initialValue}</span><button class="stepper-btn stepper-plus">+</button></div>
                             </div>
                             <div class="input-group"><label>Résistance</label><div class="resistance-controls"><div class="resistance-selector" data-type="${parsedWeight.type}"><div class="selected-resistance"><span>${resistanceTypes[parsedWeight.type].emoji}</span><i class="fas fa-caret-down"></i></div><ul class="resistance-options">${Object.entries(resistanceTypes).map(([key, val]) => `<li data-value="${key}"><span>${val.emoji}</span> ${val.text}</li>`).join('')}</ul></div><div class="stepper-control resistance-value-stepper" data-type="weight" style="display: ${['poids', 'poids_elastique'].includes(parsedWeight.type) ? 'flex' : 'none'}"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${parsedWeight.value}</span><button class="stepper-btn stepper-plus">+</button></div></div></div>
-                            <div class="input-group"><label>Objectif Prochaine Séance</label><div class="range-stepper-control" data-type="rep-range"><div class="range-stepper"><label>Min</label><div class="stepper-control" data-type="rep-range-min"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="min">${min}</span><button class="stepper-btn stepper-plus">+</button></div></div><div class="range-stepper"><label>Max</label><div class="stepper-control" data-type="rep-range-max"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="max">${max}</span><button class="stepper-btn stepper-plus">+</button></div></div></div></div>
+                            <div class="input-group"><label>Prochain Objectif (Min-Max)</label><div class="range-stepper-control" data-type="rep-range"><div class="range-stepper"><label>Min</label><div class="stepper-control" data-type="rep-range-min"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="min">${min}</span><button class="stepper-btn stepper-plus">+</button></div></div><div class="range-stepper"><label>Max</label><div class="stepper-control" data-type="rep-range-max"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="max">${max}</span><button class="stepper-btn stepper-plus">+</button></div></div></div></div>
                             <div class="input-group"><label>Type de Suivi</label><div class="tracking-type-toggle" data-type="tracking-type"><button class="tracking-reps ${!isTimed ? 'active' : ''}" data-value="reps"><i class="fas fa-repeat"></i> Répétitions</button><button class="tracking-time ${isTimed ? 'active' : ''}" data-value="time"><i class="fas fa-stopwatch"></i> Temps</button></div></div>
                         </div>`;
                     summaryItemsList.appendChild(li);
@@ -1860,48 +1861,52 @@
             
             summaryItems.forEach(item => {
                 const planIndex = parseInt(item.dataset.planIndex, 10);
-                if (isNaN(planIndex)) return; // Sécurité
+                if (isNaN(planIndex)) return; 
 
-                // **CORRECTION**: On cible l'item EXACT dans le programme
                 const planItemToUpdate = loadedFullProgram.sessions[sessionIndex].exercices_et_pauses[planIndex];
-                if (!planItemToUpdate) return; // Sécurité supplémentaire
+                if (!planItemToUpdate) return;
 
-                const resistanceType = item.querySelector('.resistance-selector').dataset.type;
-                const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
+                // 1. Lire TOUTES les valeurs de l'UI de manière indépendante
+                const newBaseValue = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
                 const newMinReps = parseInt(item.querySelector('.stepper-value[data-range-type="min"]').textContent, 10);
                 const newMaxReps = parseInt(item.querySelector('.stepper-value[data-range-type="max"]').textContent, 10);
+                const resistanceType = item.querySelector('.resistance-selector').dataset.type;
+                const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
                 const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
-                const baseValueFromEdit = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
-
+                
+                // 2. Préparer les textes pour la sauvegarde
                 let newWeightText = resistanceTypes[resistanceType].emoji;
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { newWeightText += ` ${weightValue} kg`; }
-                
-                // --- Mise à jour de l'item spécifique dans le programme principal ---
-                planItemToUpdate.weight_text = newWeightText;
+
+                // 3. Appliquer les modifications à l'exercice dans le programme principal
+                // Mise à jour de la note d'objectif (Min/Max)
                 planItemToUpdate.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
+                
+                // Mise à jour de la description du poids
+                planItemToUpdate.weight_text = newWeightText;
+                
+                // Nettoyage des anciennes propriétés de poids pour éviter les conflits
                 delete planItemToUpdate.unit;
                 delete planItemToUpdate.weight;
 
-                const newBaseValue = isWorkoutMode ? newMinReps : baseValueFromEdit;
-
+                // **CORRECTION FONDAMENTALE : Mise à jour de la valeur de base INDÉPENDAMMENT**
                 if (trackingType === 'time') {
-                    planItemToUpdate.duration = newBaseValue;
+                    planItemToUpdate.duration = newBaseValue; // Utilise la nouvelle valeur de base
                     delete planItemToUpdate.reps;
                     delete planItemToUpdate.reps_text;
                     delete planItemToUpdate.reps_unit;
-                } else {
-                    planItemToUpdate.reps = newBaseValue;
+                } else { // trackingType is 'reps'
+                    planItemToUpdate.reps = newBaseValue; // Utilise la nouvelle valeur de base
                     delete planItemToUpdate.duration;
                     delete planItemToUpdate.unit_duration;
                     delete planItemToUpdate.reps_text;
                 }
-
-                // --- Mise à jour de l'entrée spécifique dans l'historique ---
+                
+                // 4. Mettre à jour l'historique de la session si applicable
                 if (isWorkoutMode && latestWorkoutEntry?.exercises) {
                     const perfValueEl = item.querySelector('.stepper-control[data-type="performance"] .stepper-value');
                     const performanceValue = perfValueEl ? parseInt(perfValueEl.textContent, 10) : 0;
                     
-                    // **CORRECTION**: On cible l'exercice EXACT dans l'historique grâce à l'index
                     const exerciseLog = latestWorkoutEntry.exercises.find(ex => ex.originalPlanIndex === planIndex);
                     if(exerciseLog) {
                         exerciseLog.finalWeightDescription = newWeightText;
@@ -1916,6 +1921,7 @@
                 }
             });
 
+            // 5. Sauvegarder les fichiers sur le Drive
             if (isWorkoutMode) {
                 await saveHistoryToDrive();
             }
@@ -2094,14 +2100,8 @@
                 const newType = trackingToggle.dataset.value;
                 const isTimed = newType === 'time';
                 
-                const performanceGroup = summaryItem.querySelector('[data-field="performance"]');
-                if (performanceGroup) {
-                    performanceGroup.querySelector('label').textContent = `Performance Réalisée (${isTimed ? 'secondes' : 'répétitions'})`;
-                }
-                const baseValueGroup = summaryItem.querySelector('[data-field="base-value"]');
-                if (baseValueGroup) {
-                    baseValueGroup.querySelector('label').textContent = `Valeur de Base (${isTimed ? 'secondes' : 'répétitions'})`;
-                }
+                summaryItem.querySelector('[data-field="performance"] label').textContent = `Performance Réalisée (${isTimed ? 'secondes' : 'répétitions'})`;
+                summaryItem.querySelector('[data-field="base-value"] label').textContent = `Prochaine Valeur de Base (${isTimed ? 'secondes' : 'répétitions'})`;
             }
         }
 
