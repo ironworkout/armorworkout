@@ -246,9 +246,10 @@
             color: var(--secondary-text-color); font-size: 1.2em;
             padding: 8px; border-radius: 50%; cursor: pointer;
             width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            transition: color 0.2s, background-color 0.2s;
+            transition: color 0.2s, background-color 0.2s, transform 0.2s;
         }
         .toggle-details-btn:hover { color: var(--electric-cyan); background-color: rgba(var(--electric-cyan-rgb), 0.1); }
+        .session-card-large.expanded .toggle-details-btn { transform: rotate(90deg); }
         
         .session-card-summary { padding: 20px; }
         .session-card-header { display: flex; justify-content: space-between; align-items: center; }
@@ -1442,6 +1443,13 @@
             return score;
         }
 
+        function destroyChart(canvasId) {
+            if (activeCharts[canvasId]) {
+                activeCharts[canvasId].destroy();
+                delete activeCharts[canvasId];
+            }
+        }
+        
         function renderGlobalPerformanceChart(canvasEl, sessionName) {
             const canvasId = canvasEl.id;
             destroyChart(canvasId);
@@ -1475,7 +1483,6 @@
             const medianScores = createScoreArray(medianHistoryEntry);
             const currentScores = createScoreArray(currentHistoryEntry);
             
-            // Récupérer les couleurs pour le graphique
             const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
             const neonYellowColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-yellow').trim();
             const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
@@ -1513,10 +1520,21 @@
                                     const current = currentScores[index];
                                     if (initial > 0 && current > 0) {
                                         const progress = ((current - initial) / initial) * 100;
-                                        const color = progress >= 0 ? getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim() : getComputedStyle(document.documentElement).getPropertyValue('--neon-red').trim();
                                         return `\nProgression: ${progress.toFixed(1)}%`;
                                     }
                                     return '';
+                                },
+                                afterLabel: (context) => {
+                                    const index = context.dataIndex;
+                                    const initial = initialScores[index];
+                                    const current = currentScores[index];
+                                     if (context.dataset.label === 'Actuel' && initial > 0 && current > 0) {
+                                         const progress = ((current - initial) / initial) * 100;
+                                         if(progress !== 0){
+                                            return `Progression: ${progress.toFixed(1)}%`;
+                                         }
+                                     }
+                                     return null;
                                 }
                             }
                         }
@@ -1650,7 +1668,6 @@
             }
             if(placeholderEl) placeholderEl.style.display = 'none';
 
-            // Récupérer les couleurs calculées
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
             const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
             const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
