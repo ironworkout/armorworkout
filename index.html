@@ -1538,35 +1538,54 @@
         function destroyChart(canvasId) { if (activeCharts[canvasId]) { activeCharts[canvasId].destroy(); delete activeCharts[canvasId]; } }
 
         function renderSparklineChart(canvasEl, sessionName) {
-            const canvasId = canvasEl.id; destroyChart(canvasId);
+            const canvasId = canvasEl.id;
+            destroyChart(canvasId);
             const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
             const sessionHistory = workoutHistory.filter(h => h.type === sessionName).slice(-10);
-            if (sessionHistory.length < 2) { if(placeholderEl) { placeholderEl.textContent = 'Effectuez au moins 2 séances pour voir la tendance.'; placeholderEl.style.display = 'flex'; } return; }
-            if(placeholderEl) placeholderEl.style.display = 'none';
+
+            if (sessionHistory.length < 2) {
+                if (placeholderEl) { placeholderEl.textContent = 'Effectuez au moins 2 séances pour voir la tendance.'; placeholderEl.style.display = 'flex'; }
+                return;
+            }
+            if (placeholderEl) placeholderEl.style.display = 'none';
+            
             const labels = sessionHistory.map((_, i) => i + 1);
             const data = sessionHistory.map(h => calculateSessionVolume(h));
+            
+            // **CORRECTION**: Récupérer la couleur calculée depuis le CSS
+            const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
+            // Ajouter de la transparence à une couleur hexadécimale
+            const neonGreenTransparent = neonGreenColor + '26'; // ~15% alpha
+            
             const ctx = canvasEl.getContext('2d');
-            activeCharts[canvasId] = new Chart(ctx, { 
-                type: 'line', 
-                data: { labels, datasets: [{ 
-                    data, 
-                    borderColor: `rgba(var(--neon-green-rgb), 0.8)`, 
-                    borderWidth: 2, 
-                    tension: 0.4, 
-                    pointRadius: 0, 
-                    fill: true, 
-                    backgroundColor: `rgba(var(--neon-green-rgb), 0.1)` 
-                }] }, 
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } } 
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        borderColor: neonGreenColor,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        fill: true,
+                        backgroundColor: neonGreenTransparent
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { display: false }, x: { display: false } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
             });
         }
 
         function renderDetailedExerciseChart(canvasEl, exerciseName) {
-            const canvasId = canvasEl.id; destroyChart(canvasId);
+            const canvasId = canvasEl.id;
+            destroyChart(canvasId);
             const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
             const history = getExerciseChartData(exerciseName);
-
-            logDebug(`[Graph] Rendu pour "${exerciseName}". Données trouvées: ${history.dates.length} points.`);
 
             if (history.dates.length < 1) {
                 if(placeholderEl) { placeholderEl.textContent = 'Aucune donnée enregistrée pour cet exercice.'; placeholderEl.style.display = 'flex'; }
@@ -1574,17 +1593,22 @@
             }
             if(placeholderEl) placeholderEl.style.display = 'none';
 
+            // **CORRECTION**: Récupérer toutes les couleurs calculées depuis le CSS
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80'; // Ajout d'alpha
+            const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
+            const electricCyanColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-cyan').trim();
+            const secondaryBgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
+            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+            
             const ctx = canvasEl.getContext('2d');
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color');
-            const gridColor = `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--electric-blue-rgb')}, 0.15)`;
-
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: history.dates.slice(-10),
                     datasets: [
-                        { type: 'line', label: 'Charge (kg)', data: history.weights.slice(-10), borderColor: `rgba(var(--electric-cyan-rgb), 0.8)`, tension: 0.3, yAxisID: 'y', pointBackgroundColor: `rgba(var(--electric-cyan-rgb), 1)`, borderWidth: 2, fill: false },
-                        { type: 'bar', label: 'Reps/Temps', data: history.reps.slice(-10), backgroundColor: `rgba(var(--neon-green-rgb), 0.6)`, borderColor: `rgba(var(--neon-green-rgb), 1)`, yAxisID: 'y1' }
+                        { type: 'line', label: 'Charge (kg)', data: history.weights.slice(-10), borderColor: electricCyanColor, tension: 0.3, yAxisID: 'y', pointBackgroundColor: electricCyanColor, borderWidth: 2, fill: false },
+                        { type: 'bar', label: 'Reps/Temps', data: history.reps.slice(-10), backgroundColor: neonGreenColor + '99', borderColor: neonGreenColor, yAxisID: 'y1' }
                     ]
                 },
                 options: {
@@ -1592,26 +1616,30 @@
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
-                            titleColor: 'var(--primary-text-color)', bodyColor: 'var(--secondary-text-color)',
-                            backgroundColor: 'rgba(var(--secondary-bg-color-dark-rgb), 0.9)',
-                            borderColor: 'var(--border-color)', borderWidth: 1
+                            titleColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color').trim(),
+                            bodyColor: textColor,
+                            backgroundColor: secondaryBgColor + 'E6', // 90% alpha
+                            borderColor: borderColor, 
+                            borderWidth: 1
                         }
                     },
                     scales: {
                         y: { 
                             position: 'left', 
                             title: { display: true, text: 'Charge (kg)', color: textColor }, 
-                            beginAtZero: false, grid: { color: gridColor }, 
+                            beginAtZero: false, 
+                            grid: { color: gridColor }, 
                             ticks: { color: textColor } 
                         },
                         y1: { 
                             position: 'right', 
                             title: { display: true, text: 'Reps/Temps', color: textColor }, 
-                            beginAtZero: true, grid: { drawOnChartArea: false }, 
+                            beginAtZero: true, 
+                            grid: { drawOnChartArea: false }, 
                             ticks: { color: textColor } 
                         },
                         x: { 
-                            grid: { color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--electric-blue-rgb')}, 0.05)` }, 
+                            grid: { color: gridColor }, 
                             ticks: { color: textColor, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 5 } 
                         }
                     }
