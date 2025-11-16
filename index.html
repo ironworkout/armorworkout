@@ -255,7 +255,8 @@
         .session-card-header h3 { font-family: var(--font-family-titles); color: var(--electric-cyan); font-size: 1.4em; margin: 0; text-shadow: 0 0 8px rgba(var(--electric-cyan-rgb), 0.5); }
         .session-card-header .last-session-info { font-size: 0.8em; font-style: italic; color: var(--secondary-text-color); opacity: 0.8; text-align: right; }
         .session-card-large p { font-size: 0.9em; color: var(--secondary-text-color); margin: 10px 0 0 0; min-height: 20px; }
-        .sparkline-chart-container { min-height: 80px; position: relative; margin-top: 15px; }
+        
+        .global-performance-chart-container { min-height: 220px; position: relative; margin-top: 15px; }
         .chart-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.85em; color: var(--secondary-text-color); padding: 10px; text-align: center; }
         
         .session-card-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0 20px; }
@@ -666,7 +667,7 @@
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
         // Variables d'état globales
-        let loadedFullProgram = null; // Le programme sera chargé exclusivement depuis Google Drive
+        let loadedFullProgram = null; 
 
         let timeDisplayDiv, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
             editProgramBtn, signInButton, driveStatusElement, driveStatusTextElement,
@@ -686,7 +687,7 @@
         let workoutStartTime = null, workoutHistory = [], chartData = {};
         let googleAccessToken = null, tokenClient = null;
         let historyFileId = null, programFileId = null, chartDataFileId = null;
-        let programsLoaded = false; // Initialisé à false, deviendra vrai après un chargement réussi depuis Drive
+        let programsLoaded = false; 
         let isSavingDriveData = false;
         let messageTimeoutId = null;
         let gisCheckRetries = 0;
@@ -1380,22 +1381,35 @@
                     else lastSessionText = `Il y a ${diffDays} j.`;
                 }
 
-                const sparklineCanvasId = `sparkline-chart-${session.nom_session.replace(/\s+/g, '-')}`;
+                const globalChartCanvasId = `global-chart-${session.nom_session.replace(/\s+/g, '-')}`;
                 let exerciseDetailsHtml = '<div class="session-card-details">';
-                const uniqueBaseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => getExerciseBaseName(item.name)))];
+                const uniqueExerciseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => item.name))];
                 
-                uniqueBaseNames.forEach(baseName => {
-                     const detailCanvasId = `detail-chart-${session.nom_session.replace(/\s+/g, '-')}-${baseName.replace(/\s+/g, '-')}`;
-                     exerciseDetailsHtml += `<div class="exercise-detail-item"><div class="exercise-detail-header">${baseName}</div><div class="detailed-chart-container"><canvas id="${detailCanvasId}"></canvas><div id="${detailCanvasId}-placeholder" class="chart-placeholder"></div></div></div>`;
+                uniqueExerciseNames.forEach(exName => {
+                     const detailCanvasId = `detail-chart-${session.nom_session.replace(/\s+/g, '-')}-${getExerciseBaseName(exName).replace(/\s+/g, '-')}`;
+                     exerciseDetailsHtml += `<div class="exercise-detail-item"><div class="exercise-detail-header">${exName}</div><div class="detailed-chart-container"><canvas id="${detailCanvasId}"></canvas><div id="${detailCanvasId}-placeholder" class="chart-placeholder"></div></div></div>`;
                 });
                 exerciseDetailsHtml += '</div>';
 
-                card.innerHTML = `<div class="toggle-details-btn" title="Afficher/Masquer les graphiques détaillés"><i class="fas fa-chart-line"></i></div><div class="session-card-summary"><div class="session-card-header"><h3>${session.nom_session}</h3><div class="last-session-info"><i class="fas fa-history"></i> ${lastSessionText}</div></div><p>${session.description_session || ''}</p><div class="sparkline-chart-container"><canvas id="${sparklineCanvasId}"></canvas><div id="${sparklineCanvasId}-placeholder" class="chart-placeholder"></div></div></div>${exerciseDetailsHtml}`;
+                card.innerHTML = `
+                    <div class="toggle-details-btn" title="Afficher/Masquer les graphiques détaillés"><i class="fas fa-bars"></i></div>
+                    <div class="session-card-summary">
+                        <div class="session-card-header">
+                            <h3>${session.nom_session}</h3>
+                            <div class="last-session-info"><i class="fas fa-history"></i> ${lastSessionText}</div>
+                        </div>
+                        <p>${session.description_session || ''}</p>
+                        <div class="global-performance-chart-container">
+                            <canvas id="${globalChartCanvasId}"></canvas>
+                            <div id="${globalChartCanvasId}-placeholder" class="chart-placeholder"></div>
+                        </div>
+                    </div>
+                    ${exerciseDetailsHtml}`;
                 mainContent.appendChild(card);
                 
                 setTimeout(() => {
-                    const canvasEl = document.getElementById(sparklineCanvasId);
-                    if(canvasEl) renderSparklineChart(canvasEl, session.nom_session);
+                    const canvasEl = document.getElementById(globalChartCanvasId);
+                    if(canvasEl) renderGlobalPerformanceChart(canvasEl, session.nom_session);
                 }, 0);
             });
 
@@ -1413,6 +1427,104 @@
             return fullName.replace(/^(Superset [A-Z]:|Circuit [A-Z]:|FINISHER:)\s*/, '').trim();
         }
 
+        function parseWeightValue(desc) {
+            if (!desc) return 0;
+            const valueMatch = desc.match(/(\d+([.,]\d+)?)/);
+            return valueMatch ? parseFloat(valueMatch[1].replace(',', '.')) : 0;
+        }
+
+        function calculatePerformanceScore(exerciseData) {
+            if (!exerciseData) return null;
+            const charge = parseWeightValue(exerciseData.finalWeightDescription) || 25; // 25kg virtuel pour PDC
+            const repetitions = exerciseData.finalReps || (exerciseData.finalDuration / 3) || 0;
+            if (repetitions === 0) return 0;
+            const score = Math.pow(charge, 1.05) * repetitions;
+            return score;
+        }
+
+        function renderGlobalPerformanceChart(canvasEl, sessionName) {
+            const canvasId = canvasEl.id;
+            destroyChart(canvasId);
+            const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
+            const sessionTemplate = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
+            if (!sessionTemplate) return;
+
+            const relevantHistory = workoutHistory.filter(h => h.type === sessionName).slice(-15);
+            if (relevantHistory.length < 1) {
+                if (placeholderEl) { placeholderEl.textContent = 'Effectuez une séance pour voir le graphique de performance.'; placeholderEl.style.display = 'flex'; }
+                return;
+            }
+
+            if (placeholderEl) placeholderEl.style.display = 'none';
+
+            const exerciseLabels = [...new Set(sessionTemplate.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(ex => ex.name))];
+            
+            const initialHistoryEntry = relevantHistory[0];
+            const medianHistoryEntry = relevantHistory.length > 2 ? relevantHistory[Math.max(0, relevantHistory.length - 6)] : initialHistoryEntry;
+            const currentHistoryEntry = relevantHistory[relevantHistory.length - 1];
+
+            const createScoreArray = (historyEntry) => {
+                if (!historyEntry) return new Array(exerciseLabels.length).fill(null);
+                return exerciseLabels.map(exName => {
+                    const exData = historyEntry.exercises.find(ex => ex.name === exName);
+                    return calculatePerformanceScore(exData);
+                });
+            };
+
+            const initialScores = createScoreArray(initialHistoryEntry);
+            const medianScores = createScoreArray(medianHistoryEntry);
+            const currentScores = createScoreArray(currentHistoryEntry);
+            
+            // Récupérer les couleurs pour le graphique
+            const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
+            const neonYellowColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-yellow').trim();
+            const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
+            const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
+            
+            const ctx = canvasEl.getContext('2d');
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: exerciseLabels.map(name => name.substring(0, 15) + (name.length > 15 ? '...' : '')),
+                    datasets: [
+                        { label: 'Initial', data: initialScores, borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 },
+                        { label: 'Médian', data: medianScores, borderColor: neonYellowColor, backgroundColor: neonYellowColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 },
+                        { label: 'Actuel', data: currentScores, borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { title: { display: true, text: 'Indice de Performance', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor, autoSkip: false, maxRotation: 70, minRotation: 70 } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: textColor } },
+                        tooltip: {
+                            backgroundColor: bgColor + 'E6', titleColor: textColor, bodyColor: textColor,
+                            callbacks: {
+                                title: (tooltipItems) => exerciseLabels[tooltipItems[0].dataIndex],
+                                label: (context) => `${context.dataset.label}: ${context.raw ? context.raw.toFixed(0) : 'N/A'}`,
+                                afterBody: (tooltipItems) => {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const initial = initialScores[index];
+                                    const current = currentScores[index];
+                                    if (initial > 0 && current > 0) {
+                                        const progress = ((current - initial) / initial) * 100;
+                                        const color = progress >= 0 ? getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim() : getComputedStyle(document.documentElement).getPropertyValue('--neon-red').trim();
+                                        return `\nProgression: ${progress.toFixed(1)}%`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         function renderConsistencyCalendarModule(date) {
             let module = document.getElementById('consistency-module');
             if (!module) {
@@ -1525,61 +1637,6 @@
             }
             return streak;
         }
-        
-        function calculateSessionVolume(sessionHistoryEntry) {
-            if (!sessionHistoryEntry || !sessionHistoryEntry.exercises) return 0;
-            return sessionHistoryEntry.exercises.reduce((totalVolume, ex) => {
-                const reps = parseInt(ex.finalReps, 10) || (ex.finalDuration ? ex.finalDuration / 3 : 0) || 0; 
-                const weight = parseWeightDescription(ex.finalWeightDescription).value || 20;
-                return totalVolume + (reps * weight);
-            }, 0);
-        }
-
-        function destroyChart(canvasId) { if (activeCharts[canvasId]) { activeCharts[canvasId].destroy(); delete activeCharts[canvasId]; } }
-
-        function renderSparklineChart(canvasEl, sessionName) {
-            const canvasId = canvasEl.id;
-            destroyChart(canvasId);
-            const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
-            const sessionHistory = workoutHistory.filter(h => h.type === sessionName).slice(-10);
-
-            if (sessionHistory.length < 2) {
-                if (placeholderEl) { placeholderEl.textContent = 'Effectuez au moins 2 séances pour voir la tendance.'; placeholderEl.style.display = 'flex'; }
-                return;
-            }
-            if (placeholderEl) placeholderEl.style.display = 'none';
-            
-            const labels = sessionHistory.map((_, i) => i + 1);
-            const data = sessionHistory.map(h => calculateSessionVolume(h));
-            
-            // **CORRECTION**: Récupérer la couleur calculée depuis le CSS
-            const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
-            // Ajouter de la transparence à une couleur hexadécimale
-            const neonGreenTransparent = neonGreenColor + '26'; // ~15% alpha
-            
-            const ctx = canvasEl.getContext('2d');
-            activeCharts[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        data,
-                        borderColor: neonGreenColor,
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        fill: true,
-                        backgroundColor: neonGreenTransparent
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { display: false }, x: { display: false } },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
-                }
-            });
-        }
 
         function renderDetailedExerciseChart(canvasEl, exerciseName) {
             const canvasId = canvasEl.id;
@@ -1593,13 +1650,11 @@
             }
             if(placeholderEl) placeholderEl.style.display = 'none';
 
-            // **CORRECTION**: Récupérer toutes les couleurs calculées depuis le CSS
+            // Récupérer les couleurs calculées
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80'; // Ajout d'alpha
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
             const neonGreenColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-green').trim();
             const electricCyanColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-cyan').trim();
-            const secondaryBgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
-            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
             
             const ctx = canvasEl.getContext('2d');
             activeCharts[canvasId] = new Chart(ctx, {
@@ -1616,32 +1671,16 @@
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim() + 'E6',
                             titleColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color').trim(),
                             bodyColor: textColor,
-                            backgroundColor: secondaryBgColor + 'E6', // 90% alpha
-                            borderColor: borderColor, 
-                            borderWidth: 1
+                            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(), borderWidth: 1
                         }
                     },
                     scales: {
-                        y: { 
-                            position: 'left', 
-                            title: { display: true, text: 'Charge (kg)', color: textColor }, 
-                            beginAtZero: false, 
-                            grid: { color: gridColor }, 
-                            ticks: { color: textColor } 
-                        },
-                        y1: { 
-                            position: 'right', 
-                            title: { display: true, text: 'Reps/Temps', color: textColor }, 
-                            beginAtZero: true, 
-                            grid: { drawOnChartArea: false }, 
-                            ticks: { color: textColor } 
-                        },
-                        x: { 
-                            grid: { color: gridColor }, 
-                            ticks: { color: textColor, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 5 } 
-                        }
+                        y: { position: 'left', title: { display: true, text: 'Charge (kg)', color: textColor }, beginAtZero: false, grid: { color: gridColor }, ticks: { color: textColor } },
+                        y1: { position: 'right', title: { display: true, text: 'Reps/Temps', color: textColor }, beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: textColor } },
+                        x: { grid: { color: gridColor }, ticks: { color: textColor, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 5 } }
                     }
                 }
             });
@@ -1994,13 +2033,13 @@
                     const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
                     if (!session) return;
                     
-                    const uniqueBaseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => getExerciseBaseName(item.name)))];
+                    const uniqueExerciseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => item.name))];
                     
-                    uniqueBaseNames.forEach(baseName => {
-                        const canvasId = `detail-chart-${sessionName.replace(/\s+/g, '-')}-${baseName.replace(/\s+/g, '-')}`;
+                    uniqueExerciseNames.forEach(exName => {
+                        const canvasId = `detail-chart-${sessionName.replace(/\s+/g, '-')}-${getExerciseBaseName(exName).replace(/\s+/g, '-')}`;
                         const canvasEl = document.getElementById(canvasId);
                         if(canvasEl) {
-                            renderDetailedExerciseChart(canvasEl, baseName);
+                            renderDetailedExerciseChart(canvasEl, exName);
                         } else {
                             logDebug(`[ERROR] Canvas introuvable pour le graphique détaillé: ${canvasId}`);
                         }
