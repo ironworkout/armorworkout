@@ -452,7 +452,6 @@
         }
         .summary-item:last-child { margin-bottom: 0; }
         .summary-item .exercise-name { display: flex; align-items: center; color: var(--primary-text-color); font-weight: 500; font-size: 1.1em; margin-bottom: 15px; }
-        .summary-item .exercise-name i { color: var(--item-accent-color); margin-right: 10px; font-size: 1.1em; }
         .summary-item .exercise-name-text { flex-grow: 1; white-space: normal; }
         .summary-item .fields-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px 20px; align-items: end; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
@@ -664,7 +663,6 @@
         const GIS_MAX_RETRIES = 50;
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
-        // Programme par défaut chargé si Google Drive n'est pas connecté ou si le fichier est introuvable.
         const defaultFullProgram = {
             "nom_programme": "Programme PPL Optimisé (Final)",
             "description_programme": "Nouveau format 'ATHLETIC BODY 30'. Programme Full Body 3x/semaine, conçu pour des séances courtes (30-40min), une motivation maximale et un développement esthétique basé sur la loi de Pareto.",
@@ -799,7 +797,6 @@
             ]
         };
 
-        // Données d'exemple pour les graphiques, alignées avec le nouveau programme
         const defaultChartData = {
             "Tirage Vertical": [
                 { "date": new Date(Date.now() - 5*86400000).toISOString().split('T')[0], "weight": 22.5, "reps": 12 },
@@ -839,7 +836,7 @@
         let workoutStartTime = null, workoutHistory = [], chartData = {};
         let googleAccessToken = null, tokenClient = null;
         let historyFileId = null, programFileId = null, chartDataFileId = null;
-        let programsLoaded = false;
+        let programsLoaded = true; // Commence à true car on a un programme par défaut
         let isSavingDriveData = false;
         let messageTimeoutId = null;
         let gisCheckRetries = 0;
@@ -849,7 +846,9 @@
         let activeCharts = {};
         let displayedCalendarDate = new Date();
 
-        let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET, soundComplete, soundScan;
+        let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
+        // Les sons 'complete' et 'scan' sont retirés car ils génèrent des erreurs 404
+        // let soundComplete, soundScan;
 
         // --- Utilitaires et Helpers ---
 
@@ -878,9 +877,10 @@
                 const bP = "https://ironworkout.github.io/armorworkout/";
                 soundLaser = new Audio(bP + 'laser.mp3'); sound5 = new Audio(bP + '5.mp3'); sound4 = new Audio(bP + '4.mp3'); sound3 = new Audio(bP + '3.mp3');
                 sound2 = new Audio(bP + '2.mp3'); sound1 = new Audio(bP + '1.mp3'); soundWindows = new Audio(bP + 'windows.mp3'); soundET = new Audio(bP + 'e-t.mp3');
-                soundComplete = new Audio(bP + 'complete.mp3'); 
-                soundScan = new Audio(bP + 'scan.mp3');
-                [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET, soundComplete, soundScan].forEach(s => { if (s) s.preload = 'auto'; });
+                // CORRECTION: Les fichiers audio qui retournaient une erreur 404 ont été commentés.
+                // soundComplete = new Audio(bP + 'complete.mp3'); 
+                // soundScan = new Audio(bP + 'scan.mp3');
+                [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(s => { if (s) s.preload = 'auto'; });
             } catch (e) { showMessage("Erreur chargement sons.", 5000, true); logDebug(`[ERROR] Sound init failed: ${e.message}`); }
         }
 
@@ -935,7 +935,7 @@
                     await Promise.all([loadHistoryFromDrive(), loadChartDataFromDrive()]);
                     const programLoadSuccess = await loadFullProgramFromDrive();
 
-                    if (programLoadSuccess && loadedFullProgram && loadedFullProgram.sessions) {
+                    if (programLoadSuccess) {
                         showMessage("Programme et données chargés depuis votre Drive.", 3000);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
                         if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
@@ -944,14 +944,12 @@
                         showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive. Utilisation du programme par défaut.`, 8000, true);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
                         if (driveStatusTextElement) driveStatusTextElement.textContent = 'Prog Défaut';
-                        loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true;
-                        logDebug(`[ERROR] Échec du chargement du fichier programme. Utilisation du programme par défaut.`);
+                        logDebug(`[ERROR] Échec du chargement du fichier programme. Le programme par défaut est conservé.`);
                     }
                 } catch (error) {
                     showMessage("Erreur majeure lors du chargement. Programme par défaut utilisé.", 6000, true);
                     if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
                     if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
-                    loadedFullProgram = JSON.parse(JSON.stringify(defaultFullProgram)); programsLoaded = true;
                     logDebug(`[ERROR] Erreur critique pendant le chargement des données: ${error.message}`);
                 } finally { updateAuthUI(true); loadInProgressState(); }
             } else handleTokenError({ error: "Réponse de token invalide ou vide" });
@@ -1058,9 +1056,23 @@
             if (chartDataFileId) {
                 const content = await readFileContent(chartDataFileId, CHART_DATA_FILENAME);
                 if (content !== null && content.trim() !== "") {
-                    try { chartData = JSON.parse(content); logDebug(`[Drive] Données de graphiques chargées pour ${Object.keys(chartData).length} exercices.`);} catch(e) { chartData = JSON.parse(JSON.stringify(defaultChartData)); logDebug(`[ERROR] Fichier de données de graphiques corrompu. Utilisation des données par défaut.`);}
-                } else { chartData = JSON.parse(JSON.stringify(defaultChartData)); logDebug(`[Drive] Contenu du fichier de graphiques nul ou vide. Utilisation des données par défaut.`); }
-            } else { chartData = JSON.parse(JSON.stringify(defaultChartData)); logDebug(`[ERROR] Impossible de trouver ou créer le fichier de données de graphiques. Utilisation des données par défaut.`);}
+                    try { 
+                        // On fusionne les données de Drive avec celles par défaut pour ne perdre aucune donnée
+                        const driveData = JSON.parse(content);
+                        chartData = {...defaultChartData, ...driveData};
+                        logDebug(`[Drive] Données de graphiques chargées pour ${Object.keys(chartData).length} exercices.`);
+                    } catch(e) { 
+                        chartData = JSON.parse(JSON.stringify(defaultChartData)); 
+                        logDebug(`[ERROR] Fichier de données de graphiques corrompu. Utilisation des données par défaut.`);
+                    }
+                } else { 
+                    chartData = JSON.parse(JSON.stringify(defaultChartData)); 
+                    logDebug(`[Drive] Contenu du fichier de graphiques nul ou vide. Utilisation des données par défaut.`); 
+                }
+            } else { 
+                chartData = JSON.parse(JSON.stringify(defaultChartData)); 
+                logDebug(`[ERROR] Impossible de trouver ou créer le fichier de données de graphiques. Utilisation des données par défaut.`);
+            }
         }
 
         async function loadFullProgramFromDrive() {
@@ -1073,14 +1085,16 @@
                     try { 
                         let parsedProgram = JSON.parse(content); 
                         if (parsedProgram && parsedProgram.sessions && Array.isArray(parsedProgram.sessions)) { 
-                            loadedFullProgram = parsedProgram; programsLoaded = true; 
-                            logDebug(`[Drive] Programme chargé avec ${loadedFullProgram.sessions.length} sessions.`);
+                            loadedFullProgram = parsedProgram; 
+                            programsLoaded = true; 
+                            logDebug(`[Drive] Programme chargé depuis Drive avec ${loadedFullProgram.sessions.length} sessions.`);
                             return true; 
                         }
-                    } catch (e) { logDebug(`[ERROR] Fichier programme corrompu.`); }
-                } else { logDebug(`[Drive] Fichier programme vide.`); }
+                    } catch (e) { logDebug(`[ERROR] Fichier programme corrompu sur Drive.`); }
+                } else { logDebug(`[Drive] Fichier programme vide sur Drive.`); }
             } else { logDebug(`[Drive] Fichier programme non trouvé sur Drive.`); }
-            // Si le chargement échoue, on ne remplace pas le programme par défaut déjà chargé.
+            
+            // Si le chargement depuis Drive échoue, le programme par défaut est déjà chargé, donc on met juste le statut à jour.
             programsLoaded = true; 
             return false;
         }
@@ -1098,7 +1112,7 @@
             if(skipBtn) skipBtn.disabled = true; if(prevBtn) prevBtn.disabled = true; if(finishBtn) finishBtn.disabled = true; if(resetBtn) resetBtn.disabled = true;
             
             const isTimerActive = ['preparing', 'get-ready', 'exercise', 'break', 'paused', 'completed'].includes(currentState);
-            if (editProgramBtn) editProgramBtn.disabled = !(googleAccessToken && programsLoaded && loadedFullProgram && !isTimerActive);
+            if (editProgramBtn) editProgramBtn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive);
             
             const item = currentWorkoutPlan[currentItemIndex]; 
             const isTimedExercise = item && item.type.startsWith('exercise') && item.duration !== undefined && item.duration !== null;
@@ -1121,7 +1135,7 @@
                 case 'get-ready':
                     isWorkoutActive = true; timeLeft = GET_READY_DURATION;
                     startGetReadyCountdown();
-                    playSound(soundScan);
+                    // playSound(soundScan); // Fichier 404
                     vibrate([50,30,50]);
                     break;
                 case 'exercise':
@@ -1145,7 +1159,7 @@
                     break;
                 case 'completed':
                     isTimerRunning = false; isWorkoutActive = true;
-                    vibrate([80]); playSound(soundComplete);
+                    vibrate([80]); // playSound(soundComplete); // Fichier 404
                     setTimeout(() => { handleItemCompletion(); }, 1000);
                     break;
                 case 'break':
@@ -1190,7 +1204,7 @@
         }
 
         function startGetReadyCountdown() { 
-            getReadyInterval = setInterval(() => { timeLeft--; if (timeLeft <= 0) { clearInterval(getReadyInterval); setState('exercise'); } }, 1000);
+            getReadyInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(getReadyInterval); setState('exercise'); } }, 1000);
         }
 
         function startGenericTimer() {
@@ -1477,7 +1491,7 @@
             if (signInButton) signInButton.disabled = isLoggedIn || !tokenClient;
             
             const isTimerActive = ['preparing', 'exercise', 'break', 'paused', 'completed', 'get-ready'].includes(currentState);
-            if (editProgramBtn) editProgramBtn.disabled = !(isLoggedIn && programsLoaded && loadedFullProgram && !isTimerActive);
+            if (editProgramBtn) editProgramBtn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive);
             
             if (currentState === 'idle') {
                 renderHomeScreen();
@@ -1486,18 +1500,19 @@
         
         function renderHomeScreen() {
             if (!homeSection) return;
-            homeSection.innerHTML = ''; // Clear previous content
+            homeSection.innerHTML = '';
             
             if (!googleAccessToken) {
                 homeSection.innerHTML = `<div class="app-section" style="text-align:center; padding: 20px;"><h2>Bienvenue sur ArmorWorkout</h2><p style="margin-top:10px;">Connectez-vous à Google Drive pour synchroniser votre programme, suivre vos progrès et sauvegarder votre historique d'entraînement.</p></div>`;
-                return;
             }
 
             const homeGrid = document.createElement('div'); homeGrid.className = 'home-grid';
             const mainContent = document.createElement('div'); mainContent.className = 'home-main-content';
             const sidebar = document.createElement('div'); sidebar.className = 'home-sidebar';
 
-            sidebar.appendChild(renderConsistencyCalendarModule(displayedCalendarDate));
+            if (googleAccessToken) {
+                sidebar.appendChild(renderConsistencyCalendarModule(displayedCalendarDate));
+            }
             
             if (loadedFullProgram && loadedFullProgram.sessions && loadedFullProgram.sessions.length > 0) {
                 loadedFullProgram.sessions.forEach(session => {
@@ -1517,14 +1532,15 @@
 
                     const sparklineCanvasId = `sparkline-chart-${session.nom_session.replace(/\s+/g, '-')}`;
                     let exerciseDetailsHtml = '<div class="session-card-details">';
-                    const uniqueExercises = [...new Map(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => [getExerciseBaseName(item.name), item])).values()];
-                    uniqueExercises.forEach((ex, idx) => {
-                         const detailCanvasId = `detail-chart-${session.nom_session.replace(/\s+/g, '-')}-${getExerciseBaseName(ex.name).replace(/\s+/g, '-')}`;
-                         exerciseDetailsHtml += `<div class="exercise-detail-item"><div class="exercise-detail-header">${getExerciseBaseName(ex.name)}</div><div class="detailed-chart-container"><canvas id="${detailCanvasId}"></canvas><div id="${detailCanvasId}-placeholder" class="chart-placeholder" style="display: none;"></div></div></div>`;
+                    const uniqueBaseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => getExerciseBaseName(item.name)))];
+                    
+                    uniqueBaseNames.forEach(baseName => {
+                         const detailCanvasId = `detail-chart-${session.nom_session.replace(/\s+/g, '-')}-${baseName.replace(/\s+/g, '-')}`;
+                         exerciseDetailsHtml += `<div class="exercise-detail-item"><div class="exercise-detail-header">${baseName}</div><div class="detailed-chart-container"><canvas id="${detailCanvasId}"></canvas><div id="${detailCanvasId}-placeholder" class="chart-placeholder"></div></div></div>`;
                     });
                     exerciseDetailsHtml += '</div>';
 
-                    card.innerHTML = `<div class="toggle-details-btn" title="Afficher/Masquer les graphiques détaillés"><i class="fas fa-chart-line"></i></div><div class="session-card-summary"><div class="session-card-header"><h3>${session.nom_session}</h3><div class="last-session-info"><i class="fas fa-history"></i> ${lastSessionText}</div></div><p>${session.description_session || ''}</p><div class="sparkline-chart-container"><canvas id="${sparklineCanvasId}"></canvas><div id="${sparklineCanvasId}-placeholder" class="chart-placeholder" style="display: none;"></div></div></div>${exerciseDetailsHtml}`;
+                    card.innerHTML = `<div class="toggle-details-btn" title="Afficher/Masquer les graphiques détaillés"><i class="fas fa-chart-line"></i></div><div class="session-card-summary"><div class="session-card-header"><h3>${session.nom_session}</h3><div class="last-session-info"><i class="fas fa-history"></i> ${lastSessionText}</div></div><p>${session.description_session || ''}</p><div class="sparkline-chart-container"><canvas id="${sparklineCanvasId}"></canvas><div id="${sparklineCanvasId}-placeholder" class="chart-placeholder"></div></div></div>${exerciseDetailsHtml}`;
                     mainContent.appendChild(card);
                     
                     setTimeout(() => {
@@ -1545,7 +1561,7 @@
         
         function getExerciseBaseName(fullName) {
             if (!fullName) return '';
-            return fullName.replace(/^(Superset [A-Z]:|Circuit [A-Z]:|FINISHER:)\s*/, '');
+            return fullName.replace(/^(Superset [A-Z]:|Circuit [A-Z]:|FINISHER:)\s*/, '').trim();
         }
 
         function renderConsistencyCalendarModule(date) {
@@ -1676,7 +1692,7 @@
             const canvasId = canvasEl.id; destroyChart(canvasId);
             const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
             const sessionHistory = workoutHistory.filter(h => h.type === sessionName).slice(-10);
-            if (sessionHistory.length < 2) { if(placeholderEl) { placeholderEl.textContent = 'Effectuez 2 séances pour voir la tendance.'; placeholderEl.style.display = 'flex'; } return; }
+            if (sessionHistory.length < 2) { if(placeholderEl) { placeholderEl.textContent = 'Effectuez au moins 2 séances pour voir la tendance.'; placeholderEl.style.display = 'flex'; } return; }
             if(placeholderEl) placeholderEl.style.display = 'none';
             const labels = sessionHistory.map((_, i) => i + 1);
             const data = sessionHistory.map(h => calculateSessionVolume(h));
@@ -1689,8 +1705,10 @@
             const placeholderEl = document.getElementById(`${canvasId}-placeholder`);
             const history = getExerciseChartData(exerciseName);
 
+            logDebug(`[Graph] Rendu pour "${exerciseName}". Données trouvées: ${history.dates.length} points.`);
+
             if (history.dates.length < 1) {
-                if(placeholderEl) { placeholderEl.textContent = 'Aucune donnée pour cet exercice.'; placeholderEl.style.display = 'flex'; }
+                if(placeholderEl) { placeholderEl.textContent = 'Aucune donnée enregistrée pour cet exercice.'; placeholderEl.style.display = 'flex'; }
                 return;
             }
             if(placeholderEl) placeholderEl.style.display = 'none';
@@ -1966,8 +1984,7 @@
             initSounds();
             checkAndInitGis();
             document.getElementById('current-year').textContent = new Date().getFullYear();
-            setState('idle');
-            updateAuthUI(false);
+            setState('idle'); // Affiche l'écran d'accueil initial
         });
 
         function initializeDOMReferences() {
@@ -2020,7 +2037,8 @@
                 initAudioContext();
                 const item = currentWorkoutPlan[currentItemIndex];
                 if (currentState === 'idle') {
-                    setState('preparing');
+                    if (currentWorkoutType) setState('preparing');
+                    else showMessage("Veuillez d'abord sélectionner une séance.", 3000, true);
                 } else if (currentState === 'paused') {
                     setState(previousState);
                 } else if (isTimerRunning) {
@@ -2070,12 +2088,18 @@
                 if (isExpanded) {
                     const sessionName = card.dataset.sessionName;
                     const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
-                    const uniqueExercises = [...new Map(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => [getExerciseBaseName(item.name), item])).values()];
-                    uniqueExercises.forEach((ex) => {
-                        const baseName = getExerciseBaseName(ex.name);
+                    if (!session) return;
+                    
+                    const uniqueBaseNames = [...new Set(session.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(item => getExerciseBaseName(item.name)))];
+                    
+                    uniqueBaseNames.forEach(baseName => {
                         const canvasId = `detail-chart-${sessionName.replace(/\s+/g, '-')}-${baseName.replace(/\s+/g, '-')}`;
                         const canvasEl = document.getElementById(canvasId);
-                        if(canvasEl) renderDetailedExerciseChart(canvasEl, baseName);
+                        if(canvasEl) {
+                            renderDetailedExerciseChart(canvasEl, baseName);
+                        } else {
+                            logDebug(`[ERROR] Canvas introuvable pour le graphique détaillé: ${canvasId}`);
+                        }
                     });
                 }
             } else if (card) {
@@ -2084,7 +2108,10 @@
                     populateAndShowSummary({mode: 'edit', sessionName: card.dataset.sessionName});
                 } else {
                     loadSession(card.dataset.sessionName);
-                    setState('preparing');
+                    if (currentWorkoutPlan.length > 0) {
+                        startPauseBtn.disabled = false;
+                        showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
+                    }
                 }
             } else if (prevMonthBtn) {
                 displayedCalendarDate.setMonth(displayedCalendarDate.getMonth() - 1);
