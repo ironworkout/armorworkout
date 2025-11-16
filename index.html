@@ -642,9 +642,7 @@
         const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
         const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const HISTORY_FILENAME = "armorworkout_history.json";
-        const CHART_DATA_FILENAME = "armorworkout_chart_data.json";
         const FULL_PROGRAM_FILENAME = "programmeCompletHypertrophieElite_v1.json";
-        const INITIAL_PROGRAM_FILENAME = "initial_program.json";
         const PREPARE_DURATION = 3;
         const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
         const IN_PROGRESS_VERSION = 1;
@@ -654,7 +652,6 @@
 
         // Variables d'état globales
         let loadedFullProgram = null; 
-        let loadedInitialProgram = null;
 
         let timeDisplayDiv, currentExerciseContainer, progressTracker, startPauseBtn, skipBtn, finishBtn, resetBtn, prevBtn,
             editProgramBtn, signInButton, driveStatusElement, driveStatusTextElement,
@@ -671,9 +668,9 @@
         let totalTime = 0, timeLeft = 0, prepareTimeLeft = 0;
         let isTimerRunning = false, isWorkoutActive = false, workoutFinished = false, wasFinishedState = false;
         let currentState = 'idle', previousState = 'idle';
-        let workoutStartTime = null, workoutHistory = [], chartData = {};
+        let workoutStartTime = null, workoutHistory = [];
         let googleAccessToken = null, tokenClient = null;
-        let historyFileId = null, programFileId = null, chartDataFileId = null, initialProgramFileId = null;
+        let historyFileId = null, programFileId = null;
         let programsLoaded = false; 
         let isSavingDriveData = false;
         let messageTimeoutId = null;
@@ -759,12 +756,9 @@
                 if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
                 if (driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
                 try {
-                    await loadHistoryFromDrive(); 
-                    await loadChartDataFromDrive();
+                    await loadHistoryFromDrive();
                     const programLoadSuccess = await loadFullProgramFromDrive();
                     
-                    if(programLoadSuccess) await loadInitialProgramFromDrive();
-
                     if (programLoadSuccess) {
                         showMessage("Programme et données chargés depuis votre Drive.", 3000);
                         if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
@@ -905,27 +899,6 @@
             } else { workoutHistory = []; }
         }
         
-        async function loadChartDataFromDrive() {
-            if (!googleAccessToken) return;
-            chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, "{}", 'application/json', true);
-            if (chartDataFileId) {
-                const content = await readFileContent(chartDataFileId, CHART_DATA_FILENAME);
-                if (content !== null && content.trim() !== "") {
-                    try { 
-                        chartData = JSON.parse(content);
-                    } catch(e) { 
-                        const renamed = await handleCorruptedFile(chartDataFileId, CHART_DATA_FILENAME);
-                        if(renamed) {
-                             chartDataFileId = null;
-                             await loadChartDataFromDrive();
-                        } else {
-                            chartData = {};
-                        }
-                    }
-                } else { chartData = {}; }
-            } else { chartData = {}; }
-        }
-
         async function loadFullProgramFromDrive() {
             programsLoaded = false;
             programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, "{}", 'application/json', false); 
@@ -948,34 +921,6 @@
             }
             loadedFullProgram = null;
             return false;
-        }
-
-        async function loadInitialProgramFromDrive() {
-            initialProgramFileId = await findOrCreateFile(INITIAL_PROGRAM_FILENAME, "{}", 'application/json', false);
-            if (initialProgramFileId) {
-                const content = await readFileContent(initialProgramFileId, INITIAL_PROGRAM_FILENAME);
-                if (content && content.trim() !== "{}") {
-                    try {
-                        loadedInitialProgram = JSON.parse(content);
-                    } catch (e) {
-                        console.error("Fichier de programme initial corrompu.");
-                        await handleCorruptedFile(initialProgramFileId, INITIAL_PROGRAM_FILENAME);
-                        initialProgramFileId = null;
-                        loadedInitialProgram = null;
-                    }
-                } else {
-                     initialProgramFileId = null;
-                }
-            }
-            
-            if (!initialProgramFileId && loadedFullProgram) {
-                showMessage("Création de votre point de départ pour les graphiques...", 4000);
-                const initialContent = JSON.stringify(loadedFullProgram, null, 2);
-                initialProgramFileId = await findOrCreateFile(INITIAL_PROGRAM_FILENAME, initialContent, 'application/json', true);
-                if (initialProgramFileId) {
-                    loadedInitialProgram = JSON.parse(initialContent);
-                }
-            }
         }
 
 
@@ -1452,10 +1397,10 @@
         function calculatePerformanceScore(exerciseData) {
             if (!exerciseData) return null;
             let charge = 25; // Default for Bodyweight
-            if(exerciseData.finalWeightDescription){
-                charge = parseWeightValue(exerciseData.finalWeightDescription) || 25;
-            }
-            const repetitions = exerciseData.finalReps || (exerciseData.finalDuration / 3) || 0;
+            const weightDesc = exerciseData.finalWeightDescription || exerciseData.weight_text || getFormattedWeight(exerciseData);
+            if(weightDesc) charge = parseWeightValue(weightDesc) || 25;
+            
+            const repetitions = exerciseData.finalReps || exerciseData.reps || (exerciseData.finalDuration / 3) || (exerciseData.duration / 3) || 0;
             if (repetitions === 0) return 0;
             return Math.pow(charge, 1.05) * repetitions;
         }
@@ -1474,8 +1419,8 @@
             const sessionTemplate = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
             if (!sessionTemplate) return;
 
-            const relevantHistory = workoutHistory.filter(h => h.type === sessionName).slice(-15);
-            if (relevantHistory.length === 0 && !loadedInitialProgram) {
+            const relevantHistory = workoutHistory.filter(h => h.type === sessionName);
+            if (relevantHistory.length === 0) {
                 if (placeholderEl) { placeholderEl.textContent = 'Effectuez une séance pour voir le graphique de performance.'; placeholderEl.style.display = 'flex'; }
                 return;
             }
@@ -1492,20 +1437,6 @@
                 });
             };
 
-            const createScoreArrayFromProgram = (programSession) => {
-                if (!programSession) return new Array(exerciseLabels.length).fill(null);
-                 return exerciseLabels.map(exName => {
-                    const exTemplate = programSession.exercices_et_pauses.find(ex => ex.name === exName);
-                    if (!exTemplate) return null;
-                    const mockHistoryData = {
-                        finalReps: exTemplate.reps,
-                        finalDuration: exTemplate.duration,
-                        finalWeightDescription: exTemplate.weight_text || getFormattedWeight(exTemplate)
-                    };
-                    return calculatePerformanceScore(mockHistoryData);
-                 });
-            };
-
             const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
             const neonYellowColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-yellow').trim();
             const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
@@ -1514,19 +1445,16 @@
             const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
 
             const datasets = [];
-            // Actuel
-            if(relevantHistory.length > 0) {
-                const currentHistoryEntry = relevantHistory[relevantHistory.length - 1];
-                datasets.push({ label: 'Actuel', data: createScoreArrayFromHistory(currentHistoryEntry), borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 });
-            }
+            
+            // Ligne "Actuel"
+            const lastHistoryEntry = relevantHistory[relevantHistory.length - 1];
+            datasets.push({ label: 'Actuel', data: createScoreArrayFromHistory(lastHistoryEntry), borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 });
+            
+            // Ligne "Initial"
+            const firstHistoryEntry = relevantHistory[0];
+            datasets.push({ label: 'Initial', data: createScoreArrayFromHistory(firstHistoryEntry), borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 });
 
-            // Initial (from dedicated file)
-            const initialSession = loadedInitialProgram?.sessions.find(s => s.nom_session === sessionName);
-            if (initialSession) {
-                 datasets.push({ label: 'Initial', data: createScoreArrayFromProgram(initialSession), borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 });
-            }
-
-            // Médian
+            // Ligne "Médian"
             if (relevantHistory.length > 2) {
                 const medianIndex = Math.floor((relevantHistory.length - 1) / 2);
                 if (medianIndex > 0 && medianIndex < relevantHistory.length - 1) {
@@ -1740,7 +1668,6 @@
 
         async function saveFullProgramToDrive(){ if(!googleAccessToken || !loadedFullProgram) return false; if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true); if(programFileId) return await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME); else { showMessage("Sauvegarde du programme impossible.", 4000, true); return false; } }
         async function saveHistoryToDrive(){ if(!googleAccessToken || !workoutHistory) return false; if(!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, '[]', 'application/json', true); if(historyFileId) return await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME); else { showMessage("Sauvegarde de l'historique impossible.", 4000, true); return false; } }
-        async function saveChartDataToDrive(){ if(!googleAccessToken || !chartData) return false; if(!chartDataFileId) chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, '{}', 'application/json', true); if(chartDataFileId) return await updateFileContent(chartDataFileId, chartData, CHART_DATA_FILENAME); else return false;}
 
         function saveInProgressState() {
             if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; }
@@ -1795,7 +1722,7 @@
             if (!currentWorkoutType || !workoutStartTime || !originalCompletedWorkoutPlan || originalCompletedWorkoutPlan.length === 0) return;
             const exercisesSummary = originalCompletedWorkoutPlan.filter(item => item.type.startsWith('exercise')).map(item => ({
                 name: item.name, type: item.type,
-                reps_target: item.reps_text || (item.duration !== undefined && item.duration !== null ? item.duration : item.reps),
+                reps_target: item.reps || item.duration,
                 weight_description_target: getFormattedWeight(item),
                 finalReps: item.reps, finalDuration: item.duration,
                 finalWeightDescription: item.weight_text || getFormattedWeight(item),
@@ -1954,28 +1881,23 @@
                 if (isWorkoutMode && latestWorkoutEntry?.exercises) {
                     const perfValueEl = item.querySelector('.stepper-control[data-type="performance"] .stepper-value');
                     const performanceValue = perfValueEl ? parseInt(perfValueEl.textContent, 10) : 0;
-                    const baseName = getExerciseBaseName(exerciseFullName);
-                    
-                    if (!chartData[baseName]) chartData[baseName] = [];
-                    chartData[baseName].push({
-                        date: new Date().toISOString().split('T')[0],
-                        weight: weightValue,
-                        reps: trackingType === 'reps' ? performanceValue : null,
-                        duration: trackingType === 'time' ? performanceValue : null
-                    });
-                    
+
                     const exerciseLog = latestWorkoutEntry.exercises.find(ex => ex.name === exerciseFullName);
                     if(exerciseLog) {
                         exerciseLog.finalWeightDescription = newWeightText;
-                        if (trackingType === 'time') exerciseLog.finalDuration = performanceValue;
-                        else exerciseLog.finalReps = performanceValue;
+                        if (trackingType === 'time') {
+                            exerciseLog.finalDuration = performanceValue;
+                            delete exerciseLog.finalReps;
+                        } else {
+                            exerciseLog.finalReps = performanceValue;
+                            delete exerciseLog.finalDuration;
+                        }
                     }
                 }
             });
 
             if (isWorkoutMode) {
                 await saveHistoryToDrive();
-                await saveChartDataToDrive();
             }
             await saveFullProgramToDrive();
             
