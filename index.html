@@ -647,7 +647,7 @@
         const INITIAL_PROGRAM_FILENAME = "initial_program.json";
         const PREPARE_DURATION = 3;
         const IN_PROGRESS_KEY = 'armorWorkoutStateInProgress';
-        const IN_PROGRESS_VERSION = 1; // AMÉLIORATION: Version de la sauvegarde locale
+        const IN_PROGRESS_VERSION = 1;
         const GIS_CHECK_INTERVAL = 100;
         const GIS_MAX_RETRIES = 50;
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
@@ -790,7 +790,6 @@
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
         
-        // AMÉLIORATION: Nouvelle fonction pour gérer la corruption de fichier
         async function handleCorruptedFile(fileId, filename) {
             const date = new Date().toISOString().split('T')[0];
             const newName = `${filename.replace('.json', '')}_CORRUPT_${date}.json`;
@@ -808,11 +807,11 @@
                 if (!response.ok) throw new Error(`Échec du renommage (${response.status})`);
                 
                 showMessage(`Fichier corrompu renommé en '${newName}'. Création d'un nouveau fichier.`, 8000);
-                return true; // Succès, on peut maintenant créer un nouveau fichier.
+                return true;
             } catch (error) {
                 showMessage(`Action impossible sur le fichier corrompu. Veuillez vérifier votre Google Drive.`, 10000, true);
                 console.error("Erreur lors du renommage du fichier corrompu:", error);
-                return false; // Échec, on ne doit pas continuer pour éviter d'écraser.
+                return false;
             }
         }
 
@@ -864,7 +863,6 @@
 
         async function updateFileContent(fileId, content, filename) {
             if (!googleAccessToken || !fileId) return false;
-            // AMÉLIORATION: Le verrouillage simple est suffisant avec les sauvegardes séquentielles.
             if (isSavingDriveData) { return false; }
             isSavingDriveData = true;
             updateAuthUI(!!googleAccessToken);
@@ -895,13 +893,12 @@
                         workoutHistory = JSON.parse(content || "[]"); 
                         workoutHistory.forEach(e => { if (!e.exercises) e.exercises = []; }); 
                     } catch (e) { 
-                        // AMÉLIORATION: Gestion de la corruption
                         const renamed = await handleCorruptedFile(historyFileId, HISTORY_FILENAME);
                         if(renamed) {
-                             historyFileId = null; // Force la re-création d'un fichier sain
-                             await loadHistoryFromDrive(); // On ré-essaye avec un nouveau fichier
+                             historyFileId = null; 
+                             await loadHistoryFromDrive();
                         } else {
-                            workoutHistory = []; // Fallback si le renommage échoue
+                            workoutHistory = [];
                         }
                     } 
                 } else { workoutHistory = []; }
@@ -917,7 +914,6 @@
                     try { 
                         chartData = JSON.parse(content);
                     } catch(e) { 
-                        // AMÉLIORATION: Gestion de la corruption
                         const renamed = await handleCorruptedFile(chartDataFileId, CHART_DATA_FILENAME);
                         if(renamed) {
                              chartDataFileId = null;
@@ -945,9 +941,8 @@
                         } else throw new Error("Format du programme invalide");
                     } catch (e) { 
                         console.error("Fichier programme corrompu sur Drive:", e);
-                        // AMÉLIORATION: Gestion de la corruption du fichier programme principal
                         await handleCorruptedFile(programFileId, FULL_PROGRAM_FILENAME);
-                        programFileId = null; // On ne veut pas l'utiliser
+                        programFileId = null;
                     }
                 }
             }
@@ -965,11 +960,11 @@
                     } catch (e) {
                         console.error("Fichier de programme initial corrompu.");
                         await handleCorruptedFile(initialProgramFileId, INITIAL_PROGRAM_FILENAME);
-                        initialProgramFileId = null; // On le re-créera
+                        initialProgramFileId = null;
                         loadedInitialProgram = null;
                     }
                 } else {
-                     initialProgramFileId = null; // Force recreation if file is empty
+                     initialProgramFileId = null;
                 }
             }
             
@@ -1743,20 +1738,20 @@
         // SECTION 8: GESTION DE SESSION ET SAUVEGARDE
         // =================================================================================
 
-        async function saveFullProgramToDrive(){ if(!googleAccessToken || !loadedFullProgram) return; if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true); if(programFileId) await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME); else showMessage("Sauvegarde du programme impossible.", 4000, true); }
-        async function saveHistoryToDrive(){ if(!googleAccessToken || !workoutHistory) return; if(!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, '[]', 'application/json', true); if(historyFileId) await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME); else showMessage("Sauvegarde de l'historique impossible.", 4000, true); }
-        async function saveChartDataToDrive(){ if(!googleAccessToken || !chartData) return; if(!chartDataFileId) chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, '{}', 'application/json', true); if(chartDataFileId) await updateFileContent(chartDataFileId, chartData, CHART_DATA_FILENAME); }
+        async function saveFullProgramToDrive(){ if(!googleAccessToken || !loadedFullProgram) return false; if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true); if(programFileId) return await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME); else { showMessage("Sauvegarde du programme impossible.", 4000, true); return false; } }
+        async function saveHistoryToDrive(){ if(!googleAccessToken || !workoutHistory) return false; if(!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, '[]', 'application/json', true); if(historyFileId) return await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME); else { showMessage("Sauvegarde de l'historique impossible.", 4000, true); return false; } }
+        async function saveChartDataToDrive(){ if(!googleAccessToken || !chartData) return false; if(!chartDataFileId) chartDataFileId = await findOrCreateFile(CHART_DATA_FILENAME, '{}', 'application/json', true); if(chartDataFileId) return await updateFileContent(chartDataFileId, chartData, CHART_DATA_FILENAME); else return false;}
 
         function saveInProgressState() {
             if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; }
             const stateToSave = {
-                version: IN_PROGRESS_VERSION, // AMÉLIORATION: Versioning
+                version: IN_PROGRESS_VERSION,
                 currentWorkoutType: currentWorkoutType,
                 currentWorkoutPlan: JSON.parse(JSON.stringify(currentWorkoutPlan)),
                 currentItemIndex: currentItemIndex, timeLeft: timeLeft, prepareTimeLeft: prepareTimeLeft,
                 workoutStartTime: workoutStartTime, currentState: currentState, previousState: previousState,
             };
-            try { // AMÉLIORATION: Gestion des erreurs de quota
+            try {
                 localStorage.setItem(IN_PROGRESS_KEY, JSON.stringify(stateToSave));
             } catch (e) {
                 if (e.name === 'QuotaExceededError') {
@@ -1771,7 +1766,6 @@
             if (savedStateJSON) {
                 try {
                     const savedState = JSON.parse(savedStateJSON);
-                    // AMÉLIORATION: Vérification de la version
                     if (savedState.version !== IN_PROGRESS_VERSION) {
                         console.warn(`Version de l'état local (${savedState.version}) obsolète. L'état est ignoré.`);
                         clearInProgressState();
@@ -1830,45 +1824,6 @@
             }
         }
 
-        function displayPreWorkoutScreen() {
-            if (!currentWorkoutPlan || currentWorkoutPlan.length === 0) return;
-
-            showSection('workout-section');
-            const firstItem = currentWorkoutPlan[0];
-
-            if (currentExerciseNameDisplay) {
-                currentExerciseNameDisplay.textContent = `Prêt : ${currentWorkoutType}`;
-                currentExerciseNameDisplay.style.color = 'var(--primary-text-color)';
-                currentExerciseNameDisplay.style.animation = 'none';
-            }
-            if (currentExerciseContainer) {
-                currentExerciseContainer.innerHTML = createNextExercisePreviewHtml(firstItem, 'preparing', getDynamicSetsInfo(0, currentWorkoutPlan));
-            }
-            if (timeDisplayDiv) {
-                timeDisplayDiv.textContent = "00:00";
-            }
-            if (startPauseBtn) {
-                startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`;
-                startPauseBtn.disabled = false;
-                startPauseBtn.classList.add('start-btn');
-            }
-             if (resetBtn) resetBtn.disabled = false;
-             if (skipBtn) skipBtn.disabled = true;
-             if (prevBtn) prevBtn.disabled = true;
-             if (finishBtn) finishBtn.disabled = true;
-             if (controls) controls.style.display = 'flex';
-             if (timerView) timerView.style.display = 'flex';
-            
-            if(exerciseImageContainer) exerciseImageContainer.classList.remove('visible');
-             
-            const totalItemsInPlan = currentWorkoutPlan.length;
-            if (workoutStepCurrentDisplay) workoutStepCurrentDisplay.textContent = `Étape 1`;
-            if (workoutStepTotalDisplay) workoutStepTotalDisplay.textContent = `/ ${totalItemsInPlan}`;
-            if (timerProgressIndicator) timerProgressIndicator.style.strokeDashoffset = TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE;
-            if (workoutStepInfoDisplay) workoutStepInfoDisplay.classList.add('visible');
-
-        }
-
         function loadSession(sessionName) {
             if (!loadedFullProgram || !loadedFullProgram.sessions || loadedFullProgram.sessions.length === 0) { 
                 showMessage(`Programme non chargé ou vide.`, 5000, true); return; 
@@ -1887,8 +1842,9 @@
             vibrate(); 
             clearInProgressState();
             
-            displayPreWorkoutScreen();
-            showMessage(`Séance '${currentWorkoutType}' chargée. Prêt à commencer !`, 3000);
+            // CORRECTION: Démarrage immédiat de la séance
+            showMessage(`Séance '${currentWorkoutType}' lancée !`, 2000);
+            setState('preparing');
         }
 
         // =================================================================================
@@ -1962,7 +1918,6 @@
             
             summaryItems.forEach(item => {
                 const exerciseFullName = item.dataset.exerciseName;
-                const planIndex = parseInt(item.dataset.planIndex, 10);
                 
                 const resistanceType = item.querySelector('.resistance-selector').dataset.type;
                 const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
@@ -1973,19 +1928,24 @@
                 let newWeightText = resistanceTypes[resistanceType].emoji;
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { newWeightText += ` ${weightValue} kg`; }
                 
-                // Find all exercises with the same name to update them (for supersets etc.)
                 loadedFullProgram.sessions[sessionIndex].exercices_et_pauses.forEach(planItem => {
                     if (planItem.name === exerciseFullName) {
                         planItem.weight_text = newWeightText;
                         planItem.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
                         delete planItem.unit; delete planItem.weight;
 
-                        if (!isWorkoutMode) { // Edit mode specific changes
+                        // CORRECTION: Sauvegarde de la valeur de base en mode édition
+                        if (!isWorkoutMode) {
                             const baseValue = parseInt(item.querySelector('[data-type="base-value"] .stepper-value').textContent, 10);
                              if (trackingType === 'time') {
-                                planItem.duration = baseValue; delete planItem.reps; delete planItem.reps_unit;
-                            } else {
-                                planItem.reps = baseValue; delete planItem.duration; delete planItem.unit_duration;
+                                planItem.duration = baseValue; 
+                                delete planItem.reps; 
+                                delete planItem.reps_text; 
+                                delete planItem.reps_unit;
+                            } else { // 'reps'
+                                planItem.reps = baseValue; 
+                                delete planItem.duration; 
+                                delete planItem.unit_duration;
                             }
                         }
                     }
@@ -2013,7 +1973,6 @@
                 }
             });
 
-            // AMÉLIORATION: Correction de la race condition par des sauvegardes séquentielles
             if (isWorkoutMode) {
                 await saveHistoryToDrive();
                 await saveChartDataToDrive();
@@ -2075,17 +2034,13 @@
         function addEventListeners() {
             startPauseBtn?.addEventListener('click', () => {
                 initAudioContext();
-                if (currentState === 'idle' && currentWorkoutType) {
-                    setState('preparing');
-                } else if (isTimerRunning) {
+                const item = currentWorkoutPlan[currentItemIndex];
+                if (isTimerRunning) {
                     setState('paused');
                 } else if (currentState === 'paused') {
-                    // Reprend toujours un exercice, jamais une pause
-                    const item = currentWorkoutPlan[currentItemIndex];
                     if (item && item.type.startsWith('exercise')) setState('exercise');
                     else if (item && item.type === 'break') setState('break');
                 } else if (currentState === 'exercise') {
-                    const item = currentWorkoutPlan[currentItemIndex];
                     if (item && (item.duration === undefined || item.duration === null)) {
                         handleItemCompletion();
                     }
