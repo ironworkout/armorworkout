@@ -230,10 +230,31 @@
         .calendar-title { font-weight: 500; font-family: var(--font-family-titles); }
         .monthly-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
         .calendar-header { font-size: 0.8em; color: var(--secondary-text-color); padding-bottom: 5px; }
-        .calendar-day { position: relative; font-size: 0.9em; padding: 5px 0; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: background-color 0.2s; }
+        .calendar-day { position: relative; font-size: 0.9em; padding: 5px 0; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s; }
         .calendar-day.other-month { color: #4A5568; }
-        .calendar-day.today { background-color: rgba(var(--electric-blue-rgb), 0.2); font-weight: bold; }
-        .day-dot { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background-color: var(--electric-cyan); border-radius: 50%; box-shadow: 0 0 5px var(--electric-cyan); pointer-events: none; }
+        /* MODIFICATION: Style du jour actuel amélioré */
+        .calendar-day.today {
+            font-weight: 700;
+            color: var(--electric-cyan);
+            border: 1px solid var(--electric-cyan);
+            box-shadow: 0 0 8px rgba(var(--electric-cyan-rgb), 0.5);
+            background-color: rgba(var(--electric-cyan-rgb), 0.15);
+        }
+        /* MODIFICATION: Style du point de séance amélioré */
+        .day-dot {
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px; /* Agrandissement */
+            height: 8px; /* Agrandissement */
+            background-color: var(--electric-cyan);
+            border-radius: 50%;
+            /* Lueur plus intense */
+            box-shadow: 0 0 6px var(--electric-cyan), 0 0 10px rgba(var(--electric-cyan-rgb), 0.7);
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.5); /* Bordure pour le contraste */
+        }
         .delete-workout-btn { position: absolute; top: -5px; right: -5px; color: var(--secondary-text-color); background-color: var(--secondary-bg-color); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; cursor: pointer; opacity: 0; visibility: hidden; transform: scale(0.8); transition: all 0.2s ease; border: 1px solid var(--border-color); z-index: 10; }
         .calendar-day:hover .delete-workout-btn { opacity: 1; visibility: visible; transform: scale(1); }
         .delete-workout-btn:hover { color: var(--neon-red); border-color: var(--neon-red); transform: scale(1.1) rotate(5deg); }
@@ -1527,7 +1548,8 @@
                 <div class="monthly-calendar"></div>`;
 
             const calendarGrid = module.querySelector('.monthly-calendar');
-            const workoutDays = new Set(workoutHistory.map(h => (new Date(h.date)).toISOString().split('T')[0]));
+            // MODIFICATION : Assure la compatibilité avec les anciennes dates ISO et les nouvelles dates locales.
+            const workoutDays = new Set(workoutHistory.map(h => h.date.split('T')[0]));
             
             const month = date.getMonth();
             const year = date.getFullYear();
@@ -1547,8 +1569,12 @@
                 const dayCell = document.createElement('div');
                 dayCell.className = 'calendar-day';
                 dayCell.textContent = day;
-                const currentDate = new Date(year, month, day);
-                const dateString = currentDate.toISOString().split('T')[0];
+
+                // MODIFICATION : Construit une chaîne de date locale AAAA-MM-JJ pour la comparaison.
+                const dayString = String(day).padStart(2, '0');
+                const monthString = String(month + 1).padStart(2, '0');
+                const dateString = `${year}-${monthString}-${dayString}`;
+                
                 if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) { dayCell.classList.add('today'); }
                 if (workoutDays.has(dateString)) {
                     const dot = document.createElement('span');
@@ -1557,7 +1583,7 @@
                     const deleteBtn = document.createElement('i');
                     deleteBtn.className = 'fas fa-trash-alt delete-workout-btn';
                     deleteBtn.dataset.date = dateString;
-                    deleteBtn.title = `Supprimer les séances du ${currentDate.toLocaleDateString('fr-FR')}`;
+                    deleteBtn.title = `Supprimer les séances du ${new Date(year, month, day).toLocaleDateString('fr-FR')}`;
                     dayCell.appendChild(deleteBtn);
                 }
                 calendarGrid.appendChild(dayCell);
@@ -1583,7 +1609,8 @@
 
             recentWorkouts.forEach(workout => {
                 const li = document.createElement('li');
-                const date = new Date(workout.date);
+                // MODIFICATION : Ajoute un T00:00:00 pour que le constructeur de date ne soit pas affecté par le fuseau horaire
+                const date = new Date(workout.date + 'T00:00:00'); 
                 const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
 
                 li.innerHTML = `
@@ -1607,11 +1634,11 @@
             const weeklyGoal = 3;
             const workoutsByWeek = {};
             workoutHistory.forEach(h => {
-                const d = new Date(h.date);
+                const d = new Date(h.date + 'T00:00:00'); // Assure l'interprétation locale
                 const firstDayOfWeek = new Date(d);
                 firstDayOfWeek.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1));
                 firstDayOfWeek.setHours(0,0,0,0);
-                const weekKey = firstDayOfWeek.toISOString().split('T')[0];
+                const weekKey = firstDayOfWeek.toLocaleDateString('sv-SE');
                 if (!workoutsByWeek[weekKey]) workoutsByWeek[weekKey] = 0;
                 workoutsByWeek[weekKey]++;
             });
@@ -1621,9 +1648,9 @@
             currentWeek.setDate(currentWeek.getDate() - (currentWeek.getDay() === 0 ? 6 : currentWeek.getDay() - 1));
             currentWeek.setHours(0,0,0,0);
 
-            const currentWeekKey = currentWeek.toISOString().split('T')[0];
+            const currentWeekKey = currentWeek.toLocaleDateString('sv-SE');
             let lastWeek = new Date(currentWeek); lastWeek.setDate(lastWeek.getDate() - 7);
-            const lastWeekKey = lastWeek.toISOString().split('T')[0];
+            const lastWeekKey = lastWeek.toLocaleDateString('sv-SE');
 
             let weekToStart = null;
             if (workoutsByWeek[currentWeekKey] >= weeklyGoal) { weekToStart = currentWeek; } 
@@ -1634,7 +1661,7 @@
             let previousWeek = new Date(weekToStart);
             while (true) {
                 previousWeek.setDate(previousWeek.getDate() - 7);
-                const previousWeekKey = previousWeek.toISOString().split('T')[0];
+                const previousWeekKey = previousWeek.toLocaleDateString('sv-SE');
                 if (workoutsByWeek[previousWeekKey] >= weeklyGoal) { streak++; } else { break; }
             }
             return streak;
@@ -1736,8 +1763,12 @@
                     finalProgressionNote: data.item.progression_note
                 }));
 
+            // MODIFICATION: Enregistre la date locale au format AAAA-MM-JJ pour éviter les problèmes de fuseau horaire.
+            // toLocaleDateString avec le locale 'sv-SE' (suédois) donne ce format de manière fiable.
+            const localDateString = new Date().toLocaleDateString('sv-SE');
+
             workoutHistory.push({
-                date: new Date().toISOString(),
+                date: localDateString,
                 type: currentWorkoutType,
                 durationSeconds: (Date.now() - workoutStartTime) / 1000,
                 exercises: exercisesSummary
@@ -1746,6 +1777,7 @@
         
         async function deleteWorkoutsByDay(dateString) {
             const originalLength = workoutHistory.length;
+            // MODIFICATION: Assure que la comparaison se fait bien sur la partie date uniquement.
             workoutHistory = workoutHistory.filter(h => h.date.split('T')[0] !== dateString);
             if (workoutHistory.length < originalLength) {
                 await saveHistoryToDrive();
@@ -1755,12 +1787,14 @@
         }
         
         async function deleteSingleWorkoutFromHistory(isoDateString) {
-            const index = workoutHistory.findIndex(h => h.date === isoDateString);
-            if (index > -1) {
-                workoutHistory.splice(index, 1);
-                await saveHistoryToDrive();
-                showMessage("Séance supprimée.", 3000);
-                renderHomeScreen();
+            // Cette fonction est tricky si on mixe les formats. On va chercher par index.
+            // On s'attend à recevoir AAAA-MM-JJ.
+            const originalLength = workoutHistory.length;
+            workoutHistory = workoutHistory.filter(h => h.date !== isoDateString);
+            if (workoutHistory.length < originalLength) {
+                 await saveHistoryToDrive();
+                 showMessage("Séance supprimée.", 3000);
+                 renderHomeScreen();
             }
         }
 
@@ -2020,7 +2054,7 @@
                 e.stopPropagation();
                 const isoDate = deleteRecentBtn.dataset.dateIso;
                 const workoutToDelete = workoutHistory.find(h => h.date === isoDate);
-                if (workoutToDelete && confirm(`Voulez-vous vraiment supprimer la séance "${workoutToDelete.type}" du ${new Date(isoDate).toLocaleDateString('fr-FR')} ?`)) {
+                if (workoutToDelete && confirm(`Voulez-vous vraiment supprimer la séance "${workoutToDelete.type}" du ${new Date(isoDate+'T00:00:00').toLocaleDateString('fr-FR')} ?`)) {
                     deleteSingleWorkoutFromHistory(isoDate);
                 }
             } else if (card) {
