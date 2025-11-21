@@ -3,365 +3,391 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout - High Voltage</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>ArmorWorkout - Pro System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* --- PALETTE CŒUR DU RÉACTEUR --- */
+            /* --- COULEURS SYSTÈME --- */
             --bg-deep: #02040a;
-            --bg-panel: #0a101f;
+            --bg-panel: #0b1221;
             --text-main: #e2e8f0;
-            --text-dim: #94a3b8;
+            --text-dim: #64748b;
             
-            /* --- COULEURS ÉLECTRIQUES --- */
+            /* --- PALETTE ÉNERGÉTIQUE --- */
             --cyan-core: #00f3ff;
-            --cyan-glow: #00e1ff;
+            --cyan-dim: rgba(0, 243, 255, 0.1);
             --blue-plasma: #3b82f6;
             --purple-flux: #a855f7;
             --green-stable: #22c55e;
             --yellow-warning: #eab308;
             --red-critical: #ef4444;
-            --neon-pink: #f472b6; /* Spécial Superset */
+            --neon-pink: #f472b6; /* Pour les Supersets */
 
-            /* --- RGB --- */
-            --cyan-rgb: 0, 243, 255;
-            
-            /* --- ÉTATS DU SYSTÈME --- */
+            /* --- VARIABLES D'ÉTAT --- */
             --color-idle: var(--blue-plasma);
             --color-preparing: var(--purple-flux);
             --color-exercise: var(--blue-plasma);
             --color-exercise-timed: var(--yellow-warning);
             --color-break: var(--cyan-core);
-            --color-superset: var(--neon-pink);
             --color-finished: var(--green-stable);
-            --color-paused: #64748b;
+            --color-paused: #94a3b8;
 
-            /* --- UI VARS --- */
+            /* --- TYPOGRAPHIE & UI --- */
             --font-ui: 'Inter', sans-serif;
             --font-hud: 'Orbitron', sans-serif;
-            --radius-ui: 2px; /* Angles vifs style HUD */
-            --hud-border: 1px solid rgba(0, 243, 255, 0.2);
-            --timer-circumference: 289; /* 2 * PI * 46 */
+            --radius-ui: 2px; /* Design angulaire "Tech" */
+            --hud-border: 1px solid rgba(0, 243, 255, 0.15);
+            --chart-grid: rgba(255, 255, 255, 0.05);
         }
 
-        /* --- BASE & AMBIANCE --- */
+        /* --- BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         
         body {
             background-color: var(--bg-deep);
             color: var(--text-main);
             font-family: var(--font-ui);
-            min-height: 100vh;
-            overflow-x: hidden;
+            min-height: 100vh; overflow-x: hidden;
             display: flex; flex-direction: column;
-            /* Grille technique en fond */
+            /* Grille de fond technique */
             background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                radial-gradient(circle at 50% 0%, rgba(0, 191, 255, 0.1), transparent 80%);
+                linear-gradient(var(--cyan-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--cyan-dim) 1px, transparent 1px),
+                radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.08), transparent 80%);
             background-size: 40px 40px, 40px 40px, 100% 100%;
-            transition: background-color 0.1s;
+            transition: background-color 0.2s;
         }
 
-        /* EFFET FLASH ÉCRAN */
-        body.flash-active {
-            background-color: rgba(255, 255, 255, 0.15);
+        /* Effet Flash Électrique */
+        @keyframes flash-bang { 0% { background-color: rgba(255, 255, 255, 0.2); } 100% { background-color: transparent; } }
+        body.flash-active { animation: flash-bang 0.3s ease-out; }
+
+        /* Effet Scanline (Hologramme) */
+        body::after {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; z-index: 9999; pointer-events: none; opacity: 0.3;
         }
 
         /* --- HEADER TACTIQUE --- */
         header {
-            background: rgba(2, 4, 10, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 243, 255, 0.15);
-            padding: 15px 0;
-            position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: rgba(2, 4, 10, 0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--cyan-dim);
+            padding: 15px 0; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        header::after {
+        header::before {
             content:''; position:absolute; bottom:0; left:0; width:100%; height:1px;
             background: linear-gradient(90deg, transparent, var(--cyan-core), transparent); opacity:0.5;
         }
+
         .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         
         h1 { 
-            font-family: var(--font-hud); font-weight: 900; font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px;
-            color: #fff; text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); display: flex; align-items: center; gap: 10px;
+            font-family: var(--font-hud); font-weight: 900; font-size: 1.4em; 
+            text-transform: uppercase; letter-spacing: 2px; color: #fff; 
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4); display: flex; align-items: center; gap: 10px;
         }
-        h1 i { color: var(--cyan-core); animation: pulse-opacity 2s infinite; }
+        h1 i { color: var(--cyan-core); animation: pulse 3s infinite; }
 
-        .header-actions button, .header-actions div {
-            background: rgba(0, 243, 255, 0.05);
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            color: var(--cyan-core);
-            font-family: var(--font-hud);
-            font-size: 0.75em; letter-spacing: 1px; text-transform: uppercase;
-            padding: 8px 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex; align-items: center; gap: 8px;
+        /* Boutons Header */
+        .nav-btn, .auth-btn {
+            background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.2);
+            color: var(--cyan-core); font-family: var(--font-hud); font-size: 0.75em;
+            padding: 8px 16px; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px; letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        #signin-button:hover:not(:disabled) {
-            background: rgba(0, 243, 255, 0.15);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-            border-color: var(--cyan-core);
-            transform: translateY(-1px);
+        .nav-btn:hover:not(:disabled), .auth-btn:hover:not(:disabled) {
+            background: rgba(0, 243, 255, 0.15); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            border-color: var(--cyan-core); transform: translateY(-1px);
         }
-        button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
-        
-        #drive-status.success { color: var(--green-stable); border-color: var(--green-stable); background: rgba(34, 197, 94, 0.05); }
-        #drive-status.loading { color: var(--yellow-warning); border-color: var(--yellow-warning); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); border-color: transparent; }
+        .nav-btn.active { background: var(--cyan-core); color: #000; font-weight: 700; }
+
+        #drive-status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8em; padding: 6px 12px; border: 1px solid; }
+        #drive-status.success { border-color: var(--green-stable); color: var(--green-stable); background: rgba(34, 197, 94, 0.05); }
+        #drive-status.error { border-color: var(--red-critical); color: var(--red-critical); }
+        #drive-status.loading { border-color: var(--yellow-warning); color: var(--yellow-warning); }
 
         /* --- CONTENEUR PRINCIPAL --- */
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; flex-grow: 1; width: 100%; position: relative; }
-        .app-section { width: 100%; animation: fadeIn 0.5s ease-out; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 25px; flex-grow: 1; width: 100%; }
+        .app-section { animation: fadeUp 0.4s ease-out; width: 100%; }
         .section-hidden { display: none !important; }
 
-        /* --- HOME & CALENDRIER --- */
-        .home-grid { display: flex; flex-wrap: wrap; gap: 25px; }
-        .home-main { flex: 1 1 60%; }
-        .home-sidebar { flex: 1 1 35%; min-width: 300px; }
+        /* --- HOME GRID --- */
+        .home-grid { display: flex; gap: 25px; flex-wrap: wrap; }
+        .home-main { flex: 1 1 60%; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+        .home-sidebar { flex: 1 1 30%; min-width: 280px; }
 
-        /* Module Sidebar (Style HUD) */
+        /* --- MODULE SIDEBAR (HUD STYLE) --- */
         .sidebar-module {
-            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px; margin-bottom: 20px; position: relative;
+            background: rgba(11, 18, 33, 0.8); border: 1px solid rgba(255,255,255,0.08);
+            padding: 20px; position: relative;
         }
+        /* Coin technique */
         .sidebar-module::before {
-            content:''; position:absolute; top:-1px; left:-1px; width:10px; height:10px;
+            content:''; position:absolute; top:-1px; left:-1px; width:15px; height:15px;
             border-top: 2px solid var(--cyan-core); border-left: 2px solid var(--cyan-core);
         }
         .sidebar-module h3 { 
             font-family:var(--font-hud); border-bottom:1px solid var(--text-dim); 
             padding-bottom:10px; margin-bottom:15px; color:var(--cyan-core); font-size: 1em;
+            display: flex; align-items: center; gap: 10px;
         }
 
         /* Calendrier */
-        .monthly-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.85em; }
-        .calendar-header { color: var(--text-dim); padding-bottom: 5px; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-family: var(--font-hud); font-size: 0.9em; }
+        .calendar-nav button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.2em; }
+        .calendar-nav button:hover { color: var(--cyan-core); }
+
+        .monthly-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 0.85em; }
+        .calendar-header { color: var(--text-dim); font-size: 0.8em; padding-bottom: 5px; }
         .calendar-day {
-            height: 32px; display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.03); border-radius: 2px; position: relative;
+            height: 34px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.03); position: relative; cursor: default;
             transition: all 0.2s;
         }
+        /* Jour actuel */
         .calendar-day.today {
             border: 1px solid var(--cyan-core); color: var(--cyan-core);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); font-weight: 700;
-            background: rgba(0, 243, 255, 0.1);
+            background: rgba(0, 243, 255, 0.1); font-weight: 700;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
+        /* Point de séance */
         .day-dot {
             width: 6px; height: 6px; background: var(--cyan-core);
-            border-radius: 50%; box-shadow: 0 0 8px var(--cyan-core);
-            position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
-            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 50%; box-shadow: 0 0 6px var(--cyan-core);
+            position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+            border: 1px solid rgba(255,255,255,0.8); pointer-events: none;
         }
+        /* Poubelle au survol */
+        .delete-workout-btn {
+            position: absolute; inset: 0; background: rgba(239, 68, 68, 0.9);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s; cursor: pointer; font-size: 0.9em;
+        }
+        .calendar-day:hover .delete-workout-btn { opacity: 1; }
 
-        /* Cartes Session */
-        .session-card-large {
-            background: linear-gradient(145deg, rgba(10,16,31,0.8), rgba(5,8,15,0.9));
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            margin-bottom: 20px; padding: 0;
+        /* --- CARTES SÉANCES --- */
+        .session-card {
+            background: linear-gradient(145deg, rgba(11,18,33,0.9), rgba(2,4,10,0.95));
+            border: 1px solid rgba(255,255,255,0.05);
             position: relative; overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
+            cursor: pointer; margin-bottom: 0; /* Reset */
         }
-        .session-card-large::before { /* Barre latérale style HUD */
+        .session-card::before { /* Barre latérale */
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
             background: var(--blue-plasma); box-shadow: 0 0 10px var(--blue-plasma);
-            transition: background 0.3s;
+            transition: background 0.3s, box-shadow 0.3s;
         }
-        .session-card-large:hover {
-            transform: translateY(-3px); border-color: var(--cyan-core);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 243, 255, 0.1);
+        .session-card:hover, .session-card.edit-active {
+            transform: translateY(-4px); border-color: var(--cyan-core);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(0, 243, 255, 0.1);
         }
-        .session-card-large:hover::before { background: var(--cyan-core); box-shadow: 0 0 15px var(--cyan-core); }
+        .session-card:hover::before, .session-card.edit-active::before { 
+            background: var(--cyan-core); box-shadow: 0 0 15px var(--cyan-core); 
+        }
         
-        .session-card-summary { padding: 25px; }
-        .session-card-header h3 { font-family: var(--font-hud); font-size: 1.4em; margin-bottom: 5px; color: #fff; }
-        .session-card-large p { color: var(--text-dim); font-size: 0.9em; }
+        .session-content { padding: 25px; }
+        .session-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+        .session-header h3 { font-family: var(--font-hud); font-size: 1.3em; color: #fff; margin: 0; }
+        .last-session-info { font-size: 0.8em; color: var(--text-dim); font-style: italic; }
+        
+        /* Graphique */
+        .chart-container { position: relative; height: 180px; width: 100%; margin-top: 15px; }
+        .chart-placeholder { 
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            color: var(--text-dim); font-size: 0.9em; text-align: center;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
 
-        /* --- MODE WORKOUT (FULL SCREEN) --- */
+        /* --- MODE WORKOUT (FULLSCREEN) --- */
         body.workout-active main { 
             position: fixed; inset: 0; z-index: 2000; 
             background: var(--bg-deep); padding: 10px; 
             overflow-y: auto; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; 
         }
-        /* En mode workout, on cache tout sauf la section workout */
-        body.workout-active header, body.workout-active footer { display: none; }
+        body.workout-active header, body.workout-active footer, body.workout-active .app-section:not(#workout-section) { display: none; }
         #workout-section { width: 100%; max-width: 600px; margin: 0 auto; text-align: center; }
 
         /* --- LE RÉACTEUR ARC (TIMER) --- */
-        .timer-display {
+        .timer-wrapper {
             width: 280px; height: 280px; margin: 0 auto 30px;
             position: relative; display: flex; justify-content: center; align-items: center;
             cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
         }
         
-        .timer-progress-circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
-        .timer-progress-circle {
+        .progress-ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
+        .progress-ring {
             fill: none; stroke-width: 4; stroke-linecap: round;
-            stroke: var(--cyan-core);
-            filter: drop-shadow(0 0 8px var(--cyan-core));
+            stroke: var(--cyan-core); filter: drop-shadow(0 0 8px var(--cyan-core));
             transform-origin: center; transform: rotate(-90deg);
             transition: stroke-dashoffset 0.5s linear, stroke 0.3s ease;
         }
 
-        .reactor {
+        .reactor-core {
             width: 200px; height: 200px; border-radius: 50%;
             position: relative; z-index: 10;
             background: radial-gradient(circle, rgba(10,16,31,0.8) 0%, rgba(2,4,10,1) 100%);
-            box-shadow: inset 0 0 30px rgba(0,0,0,1);
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: inset 0 0 30px #000; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
 
-        /* TRIANGLE CENTRAL (Stabilisé) */
+        /* TRIANGLE (Stable) */
         .triangle {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); /* Centrage strict */
             width: 140px; aspect-ratio: 1;
             background-color: var(--color-idle);
             clip-path: polygon(50% 85%, 0 0, 100% 0);
-            opacity: 0.8;
-            box-shadow: 0 0 20px currentColor;
-            transition: background-color 0.3s ease; /* PAS DE TRANSITION SUR TRANSFORM */
+            opacity: 0.8; box-shadow: 0 0 20px currentColor;
+            transition: background-color 0.3s ease;
         }
         .triangle::after {
-            content: ''; position: absolute; top: 2px; left: 50%; 
-            transform: translateX(-50%);
-            width: 110px; aspect-ratio: 1;
-            background-color: var(--bg-deep);
+            content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+            width: 110px; aspect-ratio: 1; background-color: var(--bg-deep);
             clip-path: polygon(50% 85%, 0 0, 100% 0);
         }
 
         /* Animation Rotation */
-        @keyframes reactor-spin { 
-            from { transform: translate(-50%, -50%) rotate(0deg); } 
-            to { transform: translate(-50%, -50%) rotate(360deg); } 
-        }
+        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
         
-        /* États du triangle */
-        body.state-preparing .triangle { animation: reactor-spin 2s linear infinite; background-color: var(--color-preparing); }
-        body.state-exercise .triangle { background-color: var(--color-exercise); }
-        body.state-exercise[data-timed="true"] .triangle { background-color: var(--color-exercise-timed); }
-        body.state-break .triangle { background-color: var(--color-break); }
-        body.state-finished .triangle { background-color: var(--color-finished); }
+        body.state-preparing .triangle { animation: spin 2s linear infinite; background: var(--color-preparing); }
+        body.state-exercise .triangle { background: var(--color-exercise); }
+        body.state-exercise[data-timed="true"] .triangle { background: var(--color-exercise-timed); }
+        body.state-break .triangle { background: var(--color-break); }
+        body.state-finished .triangle { background: var(--color-finished); }
         
-        #time-left {
-            position: absolute; z-index: 20;
-            font-family: var(--font-hud); font-size: 4em; font-weight: 700;
-            color: #fff; text-shadow: 0 0 15px currentColor; pointer-events: none;
+        #timer-text {
+            position: absolute; z-index: 20; font-family: var(--font-hud); 
+            font-size: 4em; font-weight: 700; color: #fff; 
+            text-shadow: 0 0 15px currentColor; pointer-events: none;
         }
 
         /* --- INFO EXERCICE --- */
-        #current-exercise-name-display {
+        #exercise-title {
             font-family: var(--font-hud); font-size: 1.8em; font-weight: 700;
             color: #fff; text-transform: uppercase; letter-spacing: 1px;
             margin-bottom: 15px; text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
         }
 
-        .exercise-details {
+        .exercise-card {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-            padding: 15px 30px; border-radius: var(--radius-ui);
+            padding: 20px 30px; border-radius: var(--radius-ui);
             display: inline-flex; flex-direction: column; gap: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            position: relative; overflow: hidden; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative; overflow: hidden; margin-bottom: 20px;
         }
-        .exercise-details::after { /* Barre de soulignement couleur */
+        .exercise-card::after {
             content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
             background: currentColor; box-shadow: 0 0 10px currentColor;
         }
-        .main-stats { font-size: 1.4em; font-weight: 600; display: flex; gap: 20px; color: #fff; justify-content: center; }
+        .stats-row { font-size: 1.4em; font-weight: 600; display: flex; gap: 25px; color: #fff; justify-content: center; }
+        .sets-row { font-size: 0.9em; opacity: 0.7; text-align: center; }
 
-        /* --- SUPERSET PREVIEW (Amélioration Demandée) --- */
-        .next-exercise-preview {
-            margin-top: 10px;
-            background: rgba(10, 16, 31, 0.8);
-            border: 1px dashed var(--text-dim);
-            padding: 15px; width: 90%; max-width: 400px; margin-left: auto; margin-right: auto;
-            text-align: left; position: relative;
+        /* --- SUPERSET PREVIEW (Intelligence) --- */
+        .preview-box {
+            margin-top: 15px; background: rgba(11, 18, 33, 0.9);
+            border: 1px dashed var(--text-dim); padding: 15px; 
+            width: 90%; max-width: 400px; margin-inline: auto; text-align: left;
         }
-        
-        /* Style spécial Superset */
-        .next-exercise-preview.is-superset {
-            border: 1px solid var(--color-superset);
-            background: rgba(244, 114, 182, 0.05);
-            box-shadow: 0 0 20px rgba(244, 114, 182, 0.15);
-            animation: pulse-border 2s infinite;
+        .preview-box.superset {
+            border: 1px solid var(--neon-pink); background: rgba(244, 114, 182, 0.05);
+            box-shadow: 0 0 20px rgba(244, 114, 182, 0.1); animation: pulse-border 2s infinite;
         }
         .superset-badge {
-            display: inline-block; background: var(--color-superset); color: #000;
+            display: inline-block; background: var(--neon-pink); color: #000;
             font-family: var(--font-hud); font-weight: 900; font-size: 0.75em;
             padding: 4px 8px; margin-bottom: 10px; border-radius: 2px;
-            text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 0 10px var(--color-superset);
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px var(--neon-pink);
         }
-        
-        .preview-list { list-style: none; padding-left: 0; }
+        .preview-list { list-style: none; }
         .preview-list li {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.95em; color: var(--text-main);
+            display: flex; justify-content: space-between; padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-main); font-size: 0.95em;
         }
         .preview-list li:last-child { border-bottom: none; }
-        .preview-list li i { margin-right: 10px; color: var(--text-dim); width: 20px; text-align: center;}
-        .is-superset .preview-list li i { color: var(--color-superset); }
+        .preview-list i { margin-right: 10px; color: var(--text-dim); width: 20px; text-align: center;}
+        .superset .preview-list i { color: var(--neon-pink); }
 
         /* --- CONTROLS --- */
-        .controls { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .controls button {
+        .controls { margin-top: 25px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .ctrl-btn {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-dim); padding: 15px 20px; font-family: var(--font-hud);
             font-size: 0.9em; cursor: pointer; transition: all 0.2s;
-            border-radius: 2px; text-transform: uppercase;
-            flex: 1; min-width: 100px; max-width: 150px;
+            border-radius: 2px; text-transform: uppercase; flex: 1; min-width: 100px; max-width: 150px;
         }
-        .controls button:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: var(--text-main); color: #fff; }
-        .controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .ctrl-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: #fff; color: #fff; }
+        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         
-        #start-pause-btn.start-btn {
+        #btn-main {
             border-color: var(--cyan-core); color: var(--cyan-core);
             box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
         }
-        #start-pause-btn.start-btn:hover {
-            background: var(--cyan-core); color: #000;
-            box-shadow: 0 0 25px var(--cyan-core);
+        #btn-main:hover:not(:disabled) {
+            background: var(--cyan-core); color: #000; box-shadow: 0 0 25px var(--cyan-core);
         }
+
+        /* --- MODAL RESUME --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(2, 4, 10, 0.9); backdrop-filter: blur(5px);
+            z-index: 3000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        
+        .modal-content {
+            background: var(--bg-panel); border: 1px solid var(--cyan-dim);
+            width: 95%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7); border-radius: var(--radius-ui);
+        }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--text-dim); text-align: center; }
+        .modal-header h2 { font-family: var(--font-hud); color: var(--cyan-core); margin: 0; }
+        
+        .modal-body { overflow-y: auto; padding: 20px; flex-grow: 1; }
+        .summary-item {
+            background: rgba(255,255,255,0.03); padding: 15px; margin-bottom: 15px;
+            border-left: 3px solid var(--blue-plasma);
+        }
+        .summary-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-top: 10px; }
+        .input-group { display: flex; align-items: center; background: #000; border: 1px solid var(--text-dim); border-radius: 2px; }
+        .input-btn { background: none; border: none; color: var(--cyan-core); padding: 8px 12px; cursor: pointer; font-size: 1.1em; }
+        .input-val { color: #fff; width: 50px; text-align: center; font-weight: bold; }
+        .input-label { font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px; display: block; }
+        
+        .modal-footer { padding: 20px; border-top: 1px solid var(--text-dim); text-align: center; }
+
+        /* --- MESSAGES --- */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #fff; color: #000; padding: 12px 25px; font-weight: 700;
+            font-family: var(--font-hud); letter-spacing: 1px;
+            opacity: 0; pointer-events: none; transition: 0.3s; z-index: 9999;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        .toast.visible { opacity: 1; bottom: 40px; }
+        .toast.error { background: var(--red-critical); color: #fff; box-shadow: 0 0 20px rgba(239,68,68,0.5); }
 
         /* --- ANIMATIONS --- */
-        @keyframes pulse-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes pulse-border { 0%, 100% { border-color: var(--color-superset); } 50% { border-color: transparent; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- FOOTER --- */
-        footer { 
-            margin-top: auto; padding: 20px; text-align: center; font-size: 0.8em; color: var(--text-dim);
-            border-top: 1px solid rgba(0,243,255,0.1); background: rgba(2,4,10,0.8);
-        }
-        footer a { color: var(--cyan-core); text-decoration: none; }
-
-        /* --- MESSAGE AREA --- */
-        .message-area {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 16, 31, 0.95); color: #fff;
-            border: 1px solid var(--cyan-core); box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            padding: 15px 30px; border-radius: 2px; font-weight: 600;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            font-family: var(--font-hud); text-transform: uppercase; letter-spacing: 1px;
-        }
-        .message-area.visible { opacity: 1; pointer-events: auto; }
-
-        /* --- RESPONSIVE --- */
-        @media (max-width: 600px) {
-            .timer-display { width: 240px; height: 240px; }
-            .reactor { width: 170px; height: 170px; }
-            #time-left { font-size: 3em; }
-            .triangle { width: 110px; } .triangle::after { width: 85px; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulse-border { 0%, 100% { border-color: var(--neon-pink); } 50% { border-color: transparent; } }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
             .home-grid { flex-direction: column; }
+            .timer-wrapper { width: 240px; height: 240px; }
+            .reactor-core { width: 170px; height: 170px; }
+            #timer-text { font-size: 3em; }
+            .triangle { width: 110px; } .triangle::after { width: 85px; }
         }
     </style>
 </head>
@@ -371,10 +397,11 @@
         <div class="header-content">
             <h1><i class="fas fa-bolt"></i> ArmorWorkout</h1>
             <div class="header-actions">
-                <div id="drive-status" style="display: none; padding: 5px 10px; border: 1px solid; font-size: 0.8em;"> 
-                    <span id="drive-status-text">SYNC</span>
+                <button class="nav-btn" id="btn-edit-mode"><i class="fas fa-edit"></i> Édition</button>
+                <div id="drive-status" style="display: none;">
+                    <i class="fab fa-google-drive"></i> <span id="drive-text">SYNC</span>
                 </div>
-                <button id="signin-button" disabled><i class="fab fa-google"></i> CONNEXION</button>
+                <button class="auth-btn" id="btn-auth"><i class="fab fa-google"></i> Connexion</button>
             </div>
         </div>
     </header>
@@ -383,337 +410,468 @@
         <main>
             <!-- SECTION ACCUEIL -->
             <div id="home-section" class="app-section">
-                <!-- Le contenu sera injecté par JS -->
+                <!-- Contenu injecté par JS -->
                 <div style="text-align: center; padding: 50px;">
                     <i class="fas fa-circle-notch fa-spin" style="color: var(--cyan-core); font-size: 2em;"></i>
-                    <p style="margin-top: 20px; color: var(--text-dim);">Initialisation du système...</p>
+                    <p style="margin-top: 20px; color: var(--text-dim);">Chargement du système...</p>
                 </div>
             </div>
 
-            <!-- SECTION WORKOUT (Active) -->
-            <div class="workout-section app-section section-hidden" id="workout-section">
+            <!-- SECTION WORKOUT -->
+            <div id="workout-section" class="app-section section-hidden">
                 
                 <div id="workout-info">
-                    <div id="current-exercise-name-display">PRÊT ?</div>
-                    <div id="current-exercise-container"></div>
+                    <div id="exercise-title">PRÊT ?</div>
+                    <div id="exercise-container"></div>
                 </div>
 
-                <div class="timer-display" id="timer-display-clickable">
-                    <!-- Cercle SVG -->
+                <div class="timer-wrapper" id="timer-click-area">
+                    <!-- SVG Cercle -->
                     <div style="position: absolute; inset: 0; z-index: 20;">
                         <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                            <circle class="timer-progress-circle-bg" cx="50" cy="50" r="46"></circle>
-                            <circle id="timer-progress-indicator" class="timer-progress-circle" cx="50" cy="50" r="46" stroke-dasharray="289" stroke-dashoffset="0"></circle>
+                            <circle class="progress-ring-bg" cx="50" cy="50" r="46"></circle>
+                            <circle id="progress-ring" class="progress-ring" cx="50" cy="50" r="46" stroke-dasharray="289" stroke-dashoffset="0"></circle>
                         </svg>
                     </div>
                     
-                    <!-- Cœur du réacteur -->
-                    <div class="reactor">
+                    <!-- Cœur -->
+                    <div class="reactor-core">
                         <div class="triangle"></div>
-                        <div id="time-left">00:00</div>
+                        <div id="timer-text">00:00</div>
                     </div>
                 </div>
-    
+
                 <div class="controls">
-                    <button id="prev-btn" disabled><i class="fas fa-backward"></i></button>
-                    <button id="start-pause-btn" disabled class="start-btn">DÉMARRER</button>
-                    <button id="skip-btn" disabled><i class="fas fa-forward"></i></button>
-                    <button id="finish-btn" disabled><i class="fas fa-flag-checkered"></i></button>
-                    <button id="reset-btn" disabled><i class="fas fa-times"></i></button>
+                    <button class="ctrl-btn" id="btn-prev" disabled><i class="fas fa-backward"></i></button>
+                    <button class="ctrl-btn" id="btn-main" disabled>DÉMARRER</button>
+                    <button class="ctrl-btn" id="btn-skip" disabled><i class="fas fa-forward"></i></button>
+                    <button class="ctrl-btn" id="btn-finish" disabled>FINIR</button>
+                    <button class="ctrl-btn" id="btn-quit" disabled>QUITTER</button>
                 </div>
-    
-                <div id="progress-tracker" style="margin-top: 20px; color: var(--text-dim); font-family: var(--font-hud); font-size: 0.8em;">
-                    <span id="progress-text-area">PRÊT AU DÉPART</span>
+
+                <div style="margin-top: 20px; font-family: var(--font-hud); color: var(--text-dim); font-size: 0.8em;">
+                    <span id="progress-text">SESSION EN COURS</span>
                 </div>
             </div>
         </main>
     </div>
-    
-    <div id="message-area" class="message-area"></div>
-    
-    <!-- MODAL RESUME (Simplifiée pour le fichier unique, fonctionnelle) -->
-    <div id="post-workout-summary" style="display:none;"></div>
+
+    <!-- MODAL RÉSUMÉ / ÉDITION -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">RÉSUMÉ</h2>
+            </div>
+            <div class="modal-body" id="modal-list"></div>
+            <div class="modal-footer">
+                <button class="ctrl-btn" id="btn-save-modal" style="background: var(--green-stable); color:#000; border:none; font-weight:bold;">
+                    <i class="fas fa-save"></i> SAUVEGARDER
+                </button>
+                <button class="ctrl-btn" id="btn-close-modal" style="background: transparent; border: 1px solid var(--red-critical); color: var(--red-critical); margin-left: 10px;">
+                    ANNULER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <footer>
-        <p>ARMORWORKOUT OS v2.0 // <a href="https://github.com/ironworkout/armorworkout">GITHUB</a></p>
+        <p>ARMORWORKOUT PRO+ // <a href="https://github.com/ironworkout/armorworkout">GITHUB</a></p>
     </footer>
 
-    <!-- SCRIPTS GOOGLE -->
+    <!-- LOGIQUE JAVASCRIPT -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script>
         "use strict";
 
-        // --- CONFIGURATION ---
-        const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        const FILES = { 
-            HISTORY: "armorworkout_history.json", 
-            PROGRAM: "programmeCompletHypertrophieElite_v1.json" 
+        // --- CONFIG ---
+        const CONFIG = {
+            CLIENT_ID: "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com",
+            SCOPES: 'https://www.googleapis.com/auth/drive.file',
+            FILES: {
+                HISTORY: "armorworkout_history.json",
+                PROGRAM: "programmeCompletHypertrophieElite_v1.json"
+            },
+            PREPARE_SEC: 5,
+            CIRCUMFERENCE: 289
         };
-        const PREPARE_DURATION = 5;
-        const CIRCUMFERENCE = 289; // 2 * PI * 46
 
-        // --- ÉTAT ---
+        // --- ETAT GLOBAL ---
         let state = {
             token: null,
             fullProgram: null,
             history: [],
-            currentPlan: [],
+            
+            // Session active
+            activePlan: [],
             index: 0,
-            status: 'idle',
+            status: 'idle', // idle, preparing, exercise, break, paused, finished
             timeLeft: 0,
             totalTime: 0,
             startTime: null,
-            workoutType: null
+            workoutType: null,
+            
+            // Edit Mode
+            isEditMode: false,
+            charts: {}
         };
         
-        let timers = { main: null };
+        let timerInterval = null;
         let ui = {};
+        let audio = {};
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            initRefs();
-            initSounds();
-            checkGIS();
+            initUI();
+            initAudio();
+            initGoogle();
+            restoreSession();
             
+            document.getElementById('current-year').innerText = new Date().getFullYear();
+        });
+
+        function initUI() {
+            ui = {
+                // Sections
+                home: document.getElementById('home-section'),
+                workout: document.getElementById('workout-section'),
+                body: document.body,
+                
+                // Workout Elements
+                title: document.getElementById('exercise-title'),
+                container: document.getElementById('exercise-container'),
+                timer: document.getElementById('timer-text'),
+                ring: document.getElementById('progress-ring'),
+                progressText: document.getElementById('progress-text'),
+                
+                // Buttons
+                btnMain: document.getElementById('btn-main'),
+                btnSkip: document.getElementById('btn-skip'),
+                btnPrev: document.getElementById('btn-prev'),
+                btnFinish: document.getElementById('btn-finish'),
+                btnQuit: document.getElementById('btn-quit'),
+                btnAuth: document.getElementById('btn-auth'),
+                btnEdit: document.getElementById('btn-edit-mode'),
+                
+                // Modal
+                modal: document.getElementById('modal-overlay'),
+                modalList: document.getElementById('modal-list'),
+                modalTitle: document.getElementById('modal-title'),
+                btnSaveModal: document.getElementById('btn-save-modal'),
+                btnCloseModal: document.getElementById('btn-close-modal'),
+                
+                // Misc
+                driveStatus: document.getElementById('drive-status'),
+                driveText: document.getElementById('drive-text'),
+                toast: document.getElementById('toast')
+            };
+
             // Listeners
-            ui.btnStart.onclick = togglePlayPause;
+            ui.btnAuth.onclick = handleAuth;
+            ui.btnMain.onclick = togglePlayPause;
             ui.btnSkip.onclick = nextStep;
             ui.btnPrev.onclick = prevStep;
             ui.btnFinish.onclick = finishWorkout;
-            ui.btnReset.onclick = resetWorkout;
-            ui.btnAuth.onclick = handleAuthClick;
-            ui.timerArea.onclick = () => { if(state.status === 'exercise' && !ui.body.dataset.timed) nextStep(); };
-
-            // Initialisation Vue
-            renderHome();
-        });
-
-        function initRefs() {
-            ui = {
-                home: document.getElementById('home-section'),
-                workout: document.getElementById('workout-section'),
-                timeLeft: document.getElementById('time-left'),
-                circle: document.getElementById('timer-progress-indicator'),
-                exName: document.getElementById('current-exercise-name-display'),
-                exContainer: document.getElementById('current-exercise-container'),
-                btnStart: document.getElementById('start-pause-btn'),
-                btnSkip: document.getElementById('skip-btn'),
-                btnPrev: document.getElementById('prev-btn'),
-                btnFinish: document.getElementById('finish-btn'),
-                btnReset: document.getElementById('reset-btn'),
-                btnAuth: document.getElementById('signin-button'),
-                driveStatus: document.getElementById('drive-status'),
-                msgArea: document.getElementById('message-area'),
-                body: document.body,
-                timerArea: document.getElementById('timer-display-clickable')
+            ui.btnQuit.onclick = quitWorkout;
+            ui.btnEdit.onclick = toggleEditMode;
+            document.getElementById('timer-click-area').onclick = () => {
+                if(state.status === 'exercise' && !ui.body.dataset.timed) nextStep();
             };
-        }
-
-        // --- SONS ---
-        let sounds = {};
-        function initSounds() {
-            const bp = "https://ironworkout.github.io/armorworkout/";
-            ['laser', '5', '4', '3', '2', '1', 'e-t'].forEach(s => {
-                sounds[s] = new Audio(bp + s + '.mp3');
+            
+            // Modal Listeners
+            ui.btnCloseModal.onclick = closeModal;
+            ui.btnSaveModal.onclick = saveModalChanges;
+            
+            // Delegation pour le calendrier
+            document.addEventListener('click', e => {
+                if(e.target.closest('.delete-workout-btn')) deleteDay(e.target.closest('.delete-workout-btn').dataset.date);
+                if(e.target.closest('.calendar-nav button')) changeMonth(e.target.closest('button').dataset.dir);
             });
         }
-        function play(name) { if(sounds[name]) { sounds[name].currentTime=0; sounds[name].play().catch(()=>{}); } }
 
-        // --- LOGIQUE MOTEUR ---
-        function loadSession(name) {
-            const s = state.fullProgram.sessions.find(x => x.nom_session === name);
-            if(!s) return showMsg("Erreur session", true);
-            
-            state.workoutType = name;
-            state.currentPlan = JSON.parse(JSON.stringify(s.exercices_et_pauses));
-            state.index = 0;
-            state.startTime = Date.now();
-            changeState('preparing');
+        function initAudio() {
+            const path = "https://ironworkout.github.io/armorworkout/";
+            ['laser', '5', '4', '3', '2', '1', 'e-t'].forEach(s => {
+                audio[s] = new Audio(path + s + '.mp3');
+            });
+        }
+        function playSound(name) { 
+            if(audio[name]) { audio[name].currentTime=0; audio[name].play().catch(()=>{}); } 
         }
 
-        function changeState(newStatus) {
-            state.status = newStatus;
-            clearInterval(timers.main);
-            ui.body.className = `workout-active state-${newStatus}`;
-            updateControls();
+        // --- MOTEUR GOOGLE DRIVE ---
+        let tokenClient;
+        function initGoogle() {
+            if(typeof google === 'undefined') { setTimeout(initGoogle, 500); return; }
+            
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.CLIENT_ID,
+                scope: CONFIG.SCOPES,
+                callback: async (resp) => {
+                    if(resp.error) return showToast("Erreur Auth", true);
+                    state.token = resp.access_token;
+                    ui.btnAuth.style.display = 'none';
+                    updateDriveStatus('loading', 'CHARGEMENT');
+                    
+                    await loadAllData();
+                    updateDriveStatus('success', 'CONNECTÉ');
+                }
+            });
+            
+            // Auto-check if already logged in logic omitted for simplicity, usually requires cookie or prompt
+            ui.btnAuth.disabled = false;
+        }
 
+        function handleAuth() { tokenClient.requestAccessToken(); }
+
+        function updateDriveStatus(cls, txt) {
+            ui.driveStatus.style.display = 'inline-flex';
+            ui.driveStatus.className = cls;
+            ui.driveText.innerText = txt;
+        }
+
+        async function loadAllData() {
+            state.history = await getFile(CONFIG.FILES.HISTORY, []);
+            state.fullProgram = await getFile(CONFIG.FILES.PROGRAM, null);
+            renderHome();
+        }
+
+        async function getFile(name, def) {
+            try {
+                const q = `name='${name}' and trashed=false`;
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                const data = await res.json();
+                if(data.files && data.files.length > 0) {
+                    const contentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${data.files[0].id}?alt=media`, {
+                        headers: { 'Authorization': `Bearer ${state.token}` }
+                    });
+                    return await contentRes.json();
+                }
+                return def;
+            } catch(e) { showToast("Erreur chargement " + name, true); return def; }
+        }
+
+        async function saveFile(name, content) {
+            if(!state.token) return;
+            updateDriveStatus('loading', 'SAUVEGARDE...');
+            try {
+                // 1. Find ID
+                const q = `name='${name}' and trashed=false`;
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                const data = await res.json();
+                let fileId;
+                
+                // 2. Create or Update
+                const meta = { name: name, mimeType: 'application/json' };
+                const body = JSON.stringify(content);
+                
+                if(data.files && data.files.length > 0) {
+                    fileId = data.files[0].id;
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                        method: 'PATCH', headers: {'Authorization':`Bearer ${state.token}`, 'Content-Type': 'application/json'}, body: body
+                    });
+                } else {
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(meta)], {type: 'application/json'}));
+                    form.append('file', new Blob([body], {type: 'application/json'}));
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST', headers: {'Authorization':`Bearer ${state.token}`}, body: form
+                    });
+                }
+                updateDriveStatus('success', 'SAUVEGARDÉ');
+            } catch(e) { updateDriveStatus('error', 'ERREUR'); showToast("Erreur sauvegarde", true); }
+        }
+
+        // --- WORKOUT ENGINE ---
+        function loadSession(name) {
+            if(state.isEditMode) { openEditModal(name); return; }
+            
+            const s = state.fullProgram.sessions.find(x => x.nom_session === name);
+            if(!s) return showToast("Session introuvable", true);
+            
+            state.workoutType = name;
+            state.activePlan = JSON.parse(JSON.stringify(s.exercices_et_pauses));
+            state.index = 0;
+            state.startTime = Date.now();
+            
+            saveLocalState();
+            setState('preparing');
+        }
+
+        function setState(newStatus) {
+            state.status = newStatus;
+            clearInterval(timerInterval);
+            ui.body.className = `workout-active state-${newStatus}`;
+            
             if(newStatus === 'idle') {
-                ui.body.className = 'logged-in state-idle'; // Reset
+                ui.body.className = 'logged-out state-idle';
+                localStorage.removeItem('armorState');
                 renderHome();
             }
             else if(newStatus === 'preparing') {
-                state.timeLeft = PREPARE_DURATION;
-                state.totalTime = PREPARE_DURATION;
-                runTimer(nextStep);
+                startTimer(CONFIG.PREPARE_SEC, nextStep);
             }
             else if(newStatus === 'exercise' || newStatus === 'break') {
-                // Flash Effect
+                // Visual Flash
                 ui.body.classList.add('flash-active');
                 setTimeout(() => ui.body.classList.remove('flash-active'), 300);
                 
-                if(newStatus === 'break') play('laser');
+                if(newStatus === 'break') playSound('laser');
 
-                const item = state.currentPlan[state.index];
+                const item = state.activePlan[state.index];
                 const isTimed = (item.duration !== undefined && item.duration !== null);
                 
                 if(isTimed || newStatus === 'break') {
-                    // Utilise la durée de l'item, sinon fallback break
-                    let dur = item.duration;
-                    // Si c'est un break mais pas de durée définie dans le json (rare), défaut 60s
-                    if(newStatus === 'break' && !dur) dur = 60;
-                    
-                    state.timeLeft = dur;
-                    state.totalTime = dur;
-                    runTimer(nextStep);
+                    let dur = item.duration || (newStatus === 'break' ? 60 : 0);
+                    startTimer(dur, nextStep);
                 } else {
                     state.timeLeft = 0;
                     state.totalTime = 0;
-                    updateTimerUI("GO");
-                    ui.circle.style.strokeDashoffset = 0;
+                    updateTimerDisplay("GO");
+                    ui.ring.style.strokeDashoffset = 0;
                 }
+                saveLocalState();
             }
             else if(newStatus === 'finished') {
-                play('e-t');
-                saveWorkout();
-                showMsg("SÉANCE TERMINÉE !", false);
-                setTimeout(() => changeState('idle'), 2000);
+                playSound('e-t');
+                finishWorkoutProcess();
             }
-            updateDisplay();
+            updateWorkoutUI();
+            updateControls();
         }
 
-        function runTimer(onEnd) {
-            updateTimerUI(formatTime(state.timeLeft));
-            timers.main = setInterval(() => {
+        function startTimer(sec, onComplete) {
+            state.timeLeft = sec;
+            state.totalTime = sec;
+            updateTimerDisplay(formatTime(sec));
+            
+            timerInterval = setInterval(() => {
                 state.timeLeft--;
-                updateTimerUI(formatTime(state.timeLeft));
+                updateTimerDisplay(formatTime(state.timeLeft));
                 
-                // Progress
-                const ratio = state.timeLeft / state.totalTime;
-                ui.circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
+                const offset = CONFIG.CIRCUMFERENCE * (1 - (state.timeLeft / state.totalTime));
+                ui.ring.style.strokeDashoffset = offset;
 
-                // Sounds
-                if(state.timeLeft <= 5 && state.timeLeft > 0) play(state.timeLeft.toString());
-                
+                if(state.timeLeft <= 5 && state.timeLeft > 0) playSound(state.timeLeft.toString());
+
                 if(state.timeLeft <= 0) {
-                    clearInterval(timers.main);
-                    onEnd();
+                    clearInterval(timerInterval);
+                    onComplete();
                 }
+                saveLocalState();
             }, 1000);
         }
 
         function nextStep() {
             state.index++;
-            if(state.index >= state.currentPlan.length) changeState('finished');
-            else {
-                const type = state.currentPlan[state.index].type;
-                changeState(type === 'break' ? 'break' : 'exercise');
-            }
+            if(state.index >= state.activePlan.length) setState('finished');
+            else setState(state.activePlan[state.index].type === 'break' ? 'break' : 'exercise');
         }
 
         function prevStep() {
             if(state.index > 0) {
                 state.index--;
-                const type = state.currentPlan[state.index].type;
-                changeState(type === 'break' ? 'break' : 'exercise');
+                setState(state.activePlan[state.index].type === 'break' ? 'break' : 'exercise');
             }
         }
 
         function togglePlayPause() {
             if(state.status === 'paused') {
-                // Resume simple : on relance le timer là où il en était
+                // Resume
                 state.status = ui.body.dataset.prevStatus || 'exercise';
-                ui.body.classList.remove('state-paused');
-                ui.body.classList.add('state-'+state.status);
-                if(state.timeLeft > 0) runTimer(nextStep);
+                ui.body.className = `workout-active state-${state.status}`;
+                if(state.timeLeft > 0) startTimer(state.timeLeft, nextStep);
             } else {
+                // Pause
                 ui.body.dataset.prevStatus = state.status;
                 state.status = 'paused';
-                clearInterval(timers.main);
-                ui.body.className = 'workout-active state-paused';
+                clearInterval(timerInterval);
+                ui.body.className = `workout-active state-paused`;
                 updateControls();
             }
         }
 
-        function finishWorkout() { if(confirm("Finir la séance ?")) changeState('finished'); }
-        function resetWorkout() { if(confirm("Quitter sans sauver ?")) changeState('idle'); }
+        function finishWorkout() { if(confirm("Terminer maintenant ?")) setState('finished'); }
+        function quitWorkout() { if(confirm("Quitter ? Progrès perdu.")) setState('idle'); }
 
-        // --- AFFICHAGE ---
-        function updateDisplay() {
-            if(state.status === 'idle') return;
-            const item = state.currentPlan[state.index] || {};
+        function finishWorkoutProcess() {
+            // 1. Ouvre Modal Résumé
+            openSummaryModal();
+        }
 
-            // TEXTES
+        // --- UI UPDATES ---
+        function updateWorkoutUI() {
+            const item = state.activePlan[state.index] || {};
+            
             if(state.status === 'preparing') {
-                ui.exName.innerText = "PRÉPARATION";
-                ui.exContainer.innerHTML = `<div style="color:var(--color-preparing); font-family:var(--font-hud)">PRÉPAREZ-VOUS</div>`;
+                ui.title.innerText = "PRÉPARATION";
+                ui.container.innerHTML = `<div style="color:var(--color-preparing); font-family:var(--font-hud)">PRÉPAREZ-VOUS</div>`;
             }
             else if(state.status === 'break') {
-                ui.exName.innerText = "REPOS";
-                
-                // --- LOGIQUE SUPERSET (Nouveauté) ---
-                // On regarde les exercices suivants jusqu'au prochain repos
+                ui.title.innerText = "REPOS";
+                // INTELLIGENCE SUPERSET
                 let upcoming = [];
-                for(let i = state.index + 1; i < state.currentPlan.length; i++) {
-                    if(state.currentPlan[i].type === 'break') break;
-                    upcoming.push(state.currentPlan[i]);
+                for(let i = state.index + 1; i < state.activePlan.length; i++) {
+                    if(state.activePlan[i].type === 'break') break;
+                    upcoming.push(state.activePlan[i]);
                 }
-
+                
                 let html = '';
                 if(upcoming.length > 0) {
                     const isSuperset = upcoming.length > 1;
-                    html = `<div class="next-exercise-preview ${isSuperset ? 'is-superset' : ''}">`;
-                    
+                    html = `<div class="preview-box ${isSuperset ? 'superset' : ''}">`;
                     if(isSuperset) html += `<span class="superset-badge"><i class="fas fa-link"></i> SUPERSET DÉTECTÉ</span>`;
-                    else html += `<div style="color:var(--text-dim); font-size:0.8em; margin-bottom:5px;">À SUIVRE :</div>`;
+                    else html += `<div style="color:var(--text-dim); font-size:0.8em; margin-bottom:5px">À SUIVRE :</div>`;
                     
                     html += `<ul class="preview-list">`;
                     upcoming.forEach(ex => {
-                        html += `<li>
-                            <span><i class="fas fa-dumbbell"></i> ${ex.name}</span>
-                            <span style="font-family:var(--font-hud)">${formatReps(ex)}</span>
-                        </li>`;
+                        html += `<li><span><i class="fas fa-dumbbell"></i> ${ex.name}</span><span style="font-family:var(--font-hud)">${formatReps(ex)}</span></li>`;
                     });
                     html += `</ul></div>`;
                 } else {
-                    html = `<div style="color:var(--text-dim)">Dernière ligne droite !</div>`;
+                    html = `<div style="color:var(--text-dim)">Fin de séance proche !</div>`;
                 }
-                ui.exContainer.innerHTML = html;
+                ui.container.innerHTML = html;
             }
-            else {
-                // EXERCISE
-                ui.exName.innerText = item.name || "EXO";
+            else if(state.status === 'exercise') {
+                ui.title.innerText = item.name;
                 const isTimed = (item.duration !== undefined && item.duration !== null);
                 ui.body.dataset.timed = isTimed;
                 
                 const color = isTimed ? 'var(--color-exercise-timed)' : 'var(--color-exercise)';
-                
-                ui.exContainer.innerHTML = `
-                    <div class="exercise-details" style="color:${color}; border-color:${color}; box-shadow: 0 0 10px ${color};">
-                        <div class="main-stats">
+                ui.container.innerHTML = `
+                    <div class="exercise-card" style="color:${color}; border-color:${color}; box-shadow: 0 0 10px ${color}">
+                        <div class="stats-row">
                             <span>${formatReps(item)}</span>
                             <span>${item.weight_text || (item.weight ? item.weight+'kg' : 'PDC')}</span>
                         </div>
-                        <div style="font-size:0.8em; opacity:0.7; text-align:center;">${item.sets_info || ''}</div>
-                    </div>
-                `;
+                        <div class="sets-row">${item.sets_info || ''}</div>
+                    </div>`;
             }
+            
+            // Progress Text
+            const elapsed = Math.floor((Date.now() - state.startTime)/1000);
+            ui.progressText.innerText = `DURÉE: ${formatTime(elapsed)}`;
         }
 
         function updateControls() {
             const active = ['exercise','break','preparing'].includes(state.status);
-            ui.btnStart.disabled = (!active && state.status !== 'paused');
-            ui.btnStart.innerHTML = (state.status === 'paused') ? "REPRENDRE" : "PAUSE";
+            ui.btnMain.disabled = (!active && state.status !== 'paused');
+            ui.btnMain.innerText = (state.status === 'paused') ? "REPRENDRE" : "PAUSE";
             
-            if(state.status === 'exercise' && !ui.body.dataset.timed) ui.btnStart.innerHTML = "VALIDER"; // Exo reps
-            if(state.status === 'idle') ui.btnStart.innerHTML = "DÉMARRER"; // Fallback
-
+            if(state.status === 'exercise' && !ui.body.dataset.timed) ui.btnMain.innerText = "VALIDER";
+            
             ui.btnSkip.disabled = !active;
             ui.btnPrev.disabled = state.index === 0;
             ui.btnFinish.disabled = !active;
         }
 
-        function updateTimerUI(txt) { ui.timeLeft.innerText = txt; }
+        function updateTimerDisplay(txt) { ui.timer.innerText = txt; }
         function formatTime(s) { 
             const m = Math.floor(s/60).toString().padStart(2,'0');
             const sc = (s%60).toString().padStart(2,'0');
@@ -721,172 +879,308 @@
         }
         function formatReps(it) { return it.duration ? it.duration+"s" : (it.reps||"?")+" reps"; }
 
-        // --- DRIVE & DATA ---
-        let tokenClient;
-        function checkGIS() {
-            if(typeof google !== 'undefined') {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: SCOPES,
-                    callback: async (resp) => {
-                        if(resp.access_token) {
-                            state.token = resp.access_token;
-                            ui.btnAuth.style.display = 'none';
-                            ui.driveStatus.style.display = 'inline-flex';
-                            ui.driveStatus.className = 'loading';
-                            document.getElementById('drive-status-text').innerText = "CHARGEMENT...";
-                            
-                            await loadAllData();
-                            
-                            ui.driveStatus.className = 'success';
-                            document.getElementById('drive-status-text').innerText = "SYNC OK";
-                        }
-                    }
-                });
-                ui.btnAuth.disabled = false;
-            } else {
-                setTimeout(checkGIS, 500);
-            }
-        }
-
-        function handleAuthClick() { tokenClient.requestAccessToken(); }
-
-        async function loadAllData() {
-            state.history = await loadFile(FILES.HISTORY, []);
-            state.fullProgram = await loadFile(FILES.PROGRAM, null);
-            renderHome();
-        }
-
-        async function loadFile(name, defaultVal) {
-            // 1. Find ID
-            const q = `name='${name}' and trashed=false`;
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
-                headers: { 'Authorization': `Bearer ${state.token}` }
-            });
-            const data = await res.json();
-            if(data.files && data.files.length > 0) {
-                const id = data.files[0].id;
-                // 2. Read Content
-                const contentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                return await contentRes.json();
-            }
-            return defaultVal;
-        }
-
-        async function saveWorkout() {
-            if(!state.token || !state.workoutType) return;
-            
-            // DATE LOCALE (Fix bug +1 jour)
-            const localDate = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
-            
-            const newEntry = {
-                date: localDate,
-                type: state.workoutType,
-                duration: Math.floor((Date.now() - state.startTime)/1000)
-            };
-            state.history.push(newEntry);
-
-            // Save to Drive (Find ID then Update)
-            const q = `name='${FILES.HISTORY}' and trashed=false`;
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
-                headers: { 'Authorization': `Bearer ${state.token}` }
-            });
-            const data = await res.json();
-            let fileId;
-            
-            if(data.files && data.files.length > 0) fileId = data.files[0].id;
-            else {
-                // Create file logic omitted for brevity in single file, assuming file exists or will be handled manually if missing. 
-                // For robust code, insert creation logic here.
-                showMsg("Historique non trouvé sur Drive", true);
-                return;
-            }
-
-            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${state.token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(state.history)
-            });
-            renderHome(); // Update calendar
-        }
-
-        // --- RENDER HOME ---
+        // --- CALENDRIER & HOME ---
+        let calDate = new Date();
+        
         function renderHome() {
-            if(!state.fullProgram) {
-                ui.home.innerHTML = `<div style="text-align:center; padding:40px;">
-                    <h2 style="color:var(--cyan-core)">SYSTÈME EN ATTENTE</h2>
-                    <p>Connectez-vous au Drive pour initialiser.</p>
-                </div>`;
-                return;
-            }
-
+            if(!state.fullProgram) return;
+            
             let html = `<div class="home-grid">`;
             
-            // CALENDRIER
+            // Calendrier
             html += `<div class="home-sidebar"><div class="sidebar-module">
                 <h3><i class="fas fa-calendar-alt"></i> HISTORIQUE</h3>
-                ${renderCalendar()}
+                <div class="calendar-nav">
+                    <button data-dir="-1"><i class="fas fa-chevron-left"></i></button>
+                    <span>${calDate.toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).toUpperCase()}</span>
+                    <button data-dir="1"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                ${renderCalendarGrid()}
             </div></div>`;
 
-            // SESSIONS
+            // Sessions
             html += `<div class="home-main">`;
             state.fullProgram.sessions.forEach(s => {
+                // Graph Logic
+                const chartId = `chart-${s.nom_session.replace(/\s+/g,'')}`;
                 html += `
-                <div class="session-card-large" onclick="loadSession('${s.nom_session}')">
-                    <div class="session-card-summary">
-                        <div class="session-card-header">
+                <div class="session-card ${state.isEditMode ? 'edit-active' : ''}" onclick="loadSession('${s.nom_session}')">
+                    <div class="session-content">
+                        <div class="session-header">
                             <h3>${s.nom_session}</h3>
-                            <p>${s.description_session || 'Entraînement'}</p>
+                            <div class="last-session-info">
+                                ${getLastDate(s.nom_session)}
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="${chartId}"></canvas>
+                            <div id="${chartId}-ph" class="chart-placeholder">Analyse performance...</div>
                         </div>
                     </div>
                 </div>`;
+                setTimeout(() => renderChart(chartId, s.nom_session), 0);
             });
             html += `</div></div>`;
             ui.home.innerHTML = html;
         }
 
-        function renderCalendar() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth();
+        function renderCalendarGrid() {
+            const year = calDate.getFullYear();
+            const month = calDate.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            const offset = (firstDay + 6) % 7; // Lun = 0
             
-            // Set des dates d'entrainement (Strings YYYY-MM-DD)
-            const workoutDates = new Set(state.history.map(h => h.date));
+            const workoutDates = new Set(state.history.map(h => h.date)); // Format YYYY-MM-DD attendu
+            const today = new Date();
+            const isCurrMonth = (today.getMonth() === month && today.getFullYear() === year);
 
             let grid = `<div class="monthly-calendar">`;
             ['L','M','M','J','V','S','D'].forEach(d => grid+=`<div class="calendar-header">${d}</div>`);
-
-            // Padding jours vides (simplifié, assume start Lundi pour démo, ajuster si besoin)
-            const firstDay = new Date(year, month, 1).getDay(); 
-            const offset = (firstDay + 6) % 7;
             for(let i=0; i<offset; i++) grid+=`<div></div>`;
 
             for(let i=1; i<=daysInMonth; i++) {
-                // Construction string YYYY-MM-DD locale
                 const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                const isToday = (i === today.getDate());
-                const hasWorkout = workoutDates.has(dStr);
-
+                const isToday = (isCurrMonth && i === today.getDate());
+                const hasW = workoutDates.has(dStr);
+                
                 grid += `<div class="calendar-day ${isToday?'today':''}">
                     ${i}
-                    ${hasWorkout ? '<span class="day-dot"></span>' : ''}
+                    ${hasW ? `<span class="day-dot"></span><div class="delete-workout-btn" data-date="${dStr}"><i class="fas fa-trash"></i></div>` : ''}
                 </div>`;
             }
             grid += `</div>`;
             return grid;
         }
 
-        function showMsg(txt, err) {
-            ui.msgArea.textContent = txt;
-            ui.msgArea.style.color = err ? 'var(--red-critical)' : 'var(--green-stable)';
-            ui.msgArea.style.borderColor = err ? 'var(--red-critical)' : 'var(--green-stable)';
-            ui.msgArea.classList.add('visible');
-            setTimeout(() => ui.msgArea.classList.remove('visible'), 3000);
+        function changeMonth(dir) {
+            calDate.setMonth(calDate.getMonth() + parseInt(dir));
+            renderHome();
         }
 
+        function getLastDate(type) {
+            const relevant = state.history.filter(h => h.type === type);
+            if(relevant.length === 0) return "Jamais fait";
+            const last = new Date(relevant[relevant.length-1].date);
+            return last.toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+        }
+
+        async function deleteDay(dateStr) {
+            if(!confirm(`Supprimer séances du ${dateStr} ?`)) return;
+            state.history = state.history.filter(h => h.date !== dateStr);
+            await saveFile(CONFIG.FILES.HISTORY, state.history);
+            renderHome();
+        }
+
+        // --- CHARTS ---
+        function renderChart(canvasId, type) {
+            const canvas = document.getElementById(canvasId);
+            if(!canvas) return;
+            
+            const data = state.history.filter(h => h.type === type).slice(-10); // 10 derniers
+            if(data.length < 2) {
+                document.getElementById(canvasId+'-ph').innerText = "Pas assez de données";
+                return;
+            }
+            document.getElementById(canvasId+'-ph').style.display = 'none';
+
+            // Calcul score simple (Volume total ou durée)
+            const points = data.map(h => h.duration || 0); // Simplifié pour l'exemple
+            const labels = data.map(h => new Date(h.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}));
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume',
+                        data: points,
+                        borderColor: '#00f3ff',
+                        backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#000',
+                        pointBorderColor: '#00f3ff'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: {display: false} },
+                    scales: {
+                        x: { grid: {color: 'rgba(255,255,255,0.05)'}, ticks: {color: '#64748b'} },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- MODAL RÉSUMÉ & ÉDITION ---
+        let currentModalContext = null; // 'workout' ou 'edit'
+
+        function openSummaryModal() {
+            currentModalContext = 'workout';
+            ui.modalTitle.innerText = "RÉSUMÉ SÉANCE";
+            renderModalItems(state.activePlan);
+            ui.modal.classList.add('visible');
+        }
+
+        function openEditModal(name) {
+            currentModalContext = 'edit';
+            ui.modalTitle.innerText = "ÉDITION : " + name;
+            const s = state.fullProgram.sessions.find(x => x.nom_session === name);
+            state.activePlan = JSON.parse(JSON.stringify(s.exercices_et_pauses)); // Temp
+            renderModalItems(state.activePlan);
+            ui.modal.classList.add('visible');
+        }
+
+        function renderModalItems(plan) {
+            let html = '';
+            plan.forEach((item, idx) => {
+                if(item.type.startsWith('exercise')) {
+                    const isTimed = (item.duration !== undefined && item.duration !== null);
+                    const val = isTimed ? item.duration : item.reps;
+                    // Parsing poids (simple)
+                    let weight = 0;
+                    if(item.weight) weight = item.weight;
+                    else if(item.weight_text) {
+                        const m = item.weight_text.match(/(\d+)/);
+                        if(m) weight = parseInt(m[1]);
+                    }
+
+                    html += `
+                    <div class="summary-item" data-idx="${idx}">
+                        <div style="color:#fff; font-weight:600;">${item.name}</div>
+                        <div class="summary-row">
+                            <div class="input-group">
+                                <button class="input-btn" onclick="modVal(this, -1, 'perf')">-</button>
+                                <div>
+                                    <span class="input-label">${isTimed?'SEC':'REPS'}</span>
+                                    <div class="input-val data-perf">${val}</div>
+                                </div>
+                                <button class="input-btn" onclick="modVal(this, 1, 'perf')">+</button>
+                            </div>
+                            <div class="input-group">
+                                <button class="input-btn" onclick="modVal(this, -1, 'weight')">-</button>
+                                <div>
+                                    <span class="input-label">KG</span>
+                                    <div class="input-val data-weight">${weight}</div>
+                                </div>
+                                <button class="input-btn" onclick="modVal(this, 1, 'weight')">+</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+            });
+            ui.modalList.innerHTML = html;
+        }
+
+        // Fonctions globales pour onclick HTML
+        window.modVal = function(btn, dir, type) {
+            const valDiv = btn.parentElement.querySelector(`.data-${type}`);
+            let v = parseInt(valDiv.innerText);
+            v = Math.max(0, v + dir);
+            valDiv.innerText = v;
+        };
+
+        async function saveModalChanges() {
+            // Récupérer les valeurs du DOM
+            const items = ui.modalList.querySelectorAll('.summary-item');
+            items.forEach(row => {
+                const idx = parseInt(row.dataset.idx);
+                const perf = parseInt(row.querySelector('.data-perf').innerText);
+                const weight = parseInt(row.querySelector('.data-weight').innerText);
+                
+                // Update plan object
+                const item = state.activePlan[idx];
+                if(item.duration !== undefined) item.duration = perf;
+                else item.reps = perf;
+                
+                if(weight > 0) {
+                    item.weight = weight;
+                    item.weight_text = `🏋️ ${weight} kg`;
+                }
+            });
+
+            if(currentModalContext === 'workout') {
+                // Save History
+                // DATE LOCALE FIX
+                const localDate = new Date().toLocaleDateString('sv-SE');
+                const entry = {
+                    date: localDate,
+                    type: state.workoutType,
+                    duration: Math.floor((Date.now() - state.startTime)/1000),
+                    details: state.activePlan // On sauve le détail ajusté
+                };
+                state.history.push(entry);
+                await saveFile(CONFIG.FILES.HISTORY, state.history);
+                
+                // Update Program Bases too? (Optionnel, on le fait ici pour progresser)
+                const sIdx = state.fullProgram.sessions.findIndex(s => s.nom_session === state.workoutType);
+                state.fullProgram.sessions[sIdx].exercices_et_pauses = state.activePlan;
+                await saveFile(CONFIG.FILES.PROGRAM, state.fullProgram);
+
+                showToast("SÉANCE SAUVEGARDÉE");
+                setState('idle');
+            } 
+            else if (currentModalContext === 'edit') {
+                // Update Program Only
+                // Trouver la session (attention on a perdu le nom si on ne l'a pas stocké, 
+                // mais ui.modalTitle contient le nom après "ÉDITION : ")
+                const name = ui.modalTitle.innerText.replace("ÉDITION : ", "");
+                const sIdx = state.fullProgram.sessions.findIndex(s => s.nom_session === name);
+                if(sIdx >= 0) {
+                    state.fullProgram.sessions[sIdx].exercices_et_pauses = state.activePlan;
+                    await saveFile(CONFIG.FILES.PROGRAM, state.fullProgram);
+                    showToast("PROGRAMME MODIFIÉ");
+                    renderHome();
+                }
+            }
+            closeModal();
+        }
+
+        function closeModal() { ui.modal.classList.remove('visible'); }
+        function toggleEditMode() {
+            state.isEditMode = !state.isEditMode;
+            ui.btnEdit.classList.toggle('active');
+            renderHome();
+            showToast(state.isEditMode ? "MODE ÉDITION ACTIVÉ" : "MODE ÉDITION DÉSACTIVÉ");
+        }
+
+        // --- UTILITAIRES ---
+        function saveLocalState() {
+            localStorage.setItem('armorState', JSON.stringify({
+                type: state.workoutType,
+                plan: state.activePlan,
+                idx: state.index,
+                start: state.startTime
+            }));
+        }
+        function restoreSession() {
+            const saved = localStorage.getItem('armorState');
+            if(saved && confirm("Reprendre la séance précédente ?")) {
+                const d = JSON.parse(saved);
+                state.workoutType = d.type;
+                state.activePlan = d.plan;
+                state.index = d.idx;
+                state.startTime = d.start;
+                setState('preparing'); // ou reprendre exact status
+            } else {
+                localStorage.removeItem('armorState');
+            }
+        }
+
+        function showToast(msg, isErr) {
+            ui.toast.innerText = msg;
+            ui.toast.className = `toast visible ${isErr?'error':''}`;
+            setTimeout(() => ui.toast.className = 'toast', 3000);
+        }
+        
+        // Helper pour date
+        Date.prototype.currDate = function() { return this.toISOString().split('T')[0]; }
+
     </script>
+    
+    <div id="current-year" style="display:none"></div>
 </body>
 </html>
