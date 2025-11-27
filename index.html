@@ -4,14 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmorWorkout - Électrique</title>
+    <title>ArmorWorkout - Unstable Core</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&family=Black+Ops+One&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* --- ORIGINAL VARIABLES --- */
             --bg-color-dark: #030712; 
             --secondary-bg-color-dark: #0B132B; 
             --primary-text-color-dark: #F0F4F8; 
@@ -86,13 +87,33 @@
             --current-timer-state-color: var(--idle-color-val);
             --current-timer-state-color-rgb: var(--idle-color-rgb);
             --timer-text-color-main: #FFFFFF;
-            --timer-text-glow-main: 0 0 5px #fff, 
-                                    0 0 8px #fff, 
-                                    0 0 12px rgba(var(--electric-cyan-rgb), 0.6), 
-                                    0 0 18px rgba(var(--electric-cyan-rgb), 0.4);
+            --timer-text-glow-main: 0 0 5px #fff, 0 0 8px #fff, 0 0 12px rgba(var(--electric-cyan-rgb), 0.6), 0 0 18px rgba(var(--electric-cyan-rgb), 0.4);
             --timer-progress-circle-color: var(--electric-cyan);
+
+            /* --- UNSTABLE CORE VARIABLES (NEW) --- */
+            --c-t0: 80, 80, 80;       /* T0: Offline */
+            --c-t1: 0, 255, 255;      /* T1: Stable (Cyan) */
+            --c-t2: 50, 100, 255;     /* T2: Active (Blue) */
+            --c-t3: 255, 0, 255;      /* T3: Overload (Magenta) */
+            --c-t4: 255, 165, 0;      /* T4: Critical (Orange) */
+            --c-t5: 255, 0, 0;        /* T5: Meltdown (Red) */
+            --c-t6: 255, 255, 255;    /* T6: Singularity (White) */
+            
+            --core-rgb: var(--c-t0); /* Updated by JS */
+            --shake-x: 0px;
+            --shake-y: 0px;
+            --glitch-skew: 0deg;
+            --core-brightness: 1;
+            --rot-speed: 20s;
+            --font-display: 'Black Ops One', cursive;
         }
 
+        /* --- UNSTABLE CORE ANIMATIONS (NEW) --- */
+        @keyframes spin-core { to { transform: rotate(360deg); } }
+        @keyframes spin-core-rev { to { transform: rotate(-360deg); } }
+        @keyframes pulse-scale { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
+
+        /* Existing Animations */
         @keyframes subtlePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
         @keyframes electricBorder {
             0% { box-shadow: 0 0 6px rgba(var(--electric-cyan-rgb), 0.6), inset 0 0 4px rgba(var(--electric-cyan-rgb), 0.4); border-color: rgba(var(--electric-cyan-rgb), 0.7); }
@@ -217,13 +238,43 @@
         .weekly-goal-progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--electric-blue), var(--electric-cyan)); border-radius: 4px; transition: width 0.5s ease; }
         .consistency-text { font-size: 0.9em; color: var(--secondary-text-color); }
         .consistency-text strong { color: var(--primary-text-color); }
-        .streak-counter { font-size: 1.1em; font-weight: 700; transition: color 0.5s ease; }
-        .streak-counter i { margin-right: 5px; }
-        .streak-bronze { color: #CD7F32; }
-        .streak-silver { color: #C0C0C0; }
-        .streak-gold { color: #FFD700; animation: gold-glow 2s infinite ease-in-out; }
-        .streak-gold i { animation: slow-rotate 4s infinite ease-in-out; }
-
+        
+        /* UNSTABLE CORE STYLES */
+        .core-housing {
+            width: 200px; height: 200px; position: relative;
+            display: flex; justify-content: center; align-items: center;
+            margin: 20px auto;
+            transform: translate(var(--shake-x), var(--shake-y)); /* DYNAMIC SHAKE */
+        }
+        #particle-canvas { position: absolute; top: -50px; left: -50px; width: 300px; height: 300px; z-index: 0; pointer-events: none; opacity: 0.8; }
+        .ring { position: absolute; border-radius: 50%; transition: all 0.5s; }
+        .r-1 { 
+            width: 100%; height: 100%; border: 2px solid rgba(var(--core-rgb), 0.1);
+            border-top: 4px solid rgba(var(--core-rgb), 0.8);
+            animation: spin-core var(--rot-speed) linear infinite;
+            box-shadow: 0 0 calc(20px * var(--core-brightness)) rgba(var(--core-rgb), 0.3);
+        }
+        .r-2 {
+            width: 80%; height: 80%; border: 1px dashed rgba(var(--core-rgb), 0.5);
+            animation: spin-core-rev calc(var(--rot-speed) * 0.7) linear infinite;
+        }
+        .r-3 {
+            width: 60%; height: 60%; background: radial-gradient(circle, rgba(var(--core-rgb), 0.2), transparent 70%);
+            border: 2px solid rgba(var(--core-rgb), 0.6);
+            animation: pulse-scale 1s infinite alternate;
+        }
+        .core-val {
+            position: absolute; z-index: 10; font-family: var(--font-display);
+            font-size: 4em; color: #fff; 
+            text-shadow: 2px 0 red, -2px 0 blue, 0 0 30px rgb(var(--core-rgb));
+            transform: skew(var(--glitch-skew)); /* GLITCH */
+        }
+        .tier-display { width: 100%; text-align: left; border-left: 3px solid rgb(var(--core-rgb)); padding-left: 15px; margin-bottom: 20px; }
+        .tier-name { font-size: 1.2em; font-weight: 800; color: rgb(var(--core-rgb)); text-transform: uppercase; letter-spacing: 2px; }
+        .tier-desc { font-size: 0.9em; color: #aaa; font-style: italic; margin-top: 5px; }
+        .wk-prog-wrap { width: 100%; background: #222; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .wk-prog-fill { height: 100%; width: 0%; background: rgb(var(--core-rgb)); box-shadow: 0 0 10px rgb(var(--core-rgb)); transition: width 0.8s ease; }
+        
         .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .calendar-nav button { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; font-size: 1.2em; padding: 5px; border-radius: 50%; width: 30px; height: 30px; transition: background-color 0.2s, color 0.2s; }
         .calendar-nav button:hover { background-color: var(--border-color); color: var(--primary-text-color); }
@@ -671,6 +722,17 @@
         const GIS_MAX_RETRIES = 50;
         const TIMER_PROGRESS_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 45;
 
+        // --- NEW: UNSTABLE CORE CONFIGURATION ---
+        const TIERS = [
+            { min: 0, name: "INERTE", color: "var(--c-t0)", speed: "0s", shake: 0, msg: "Aucune énergie détectée." },
+            { min: 2, name: "STABLE", color: "var(--c-t1)", speed: "10s", shake: 1, msg: "Système nominal." },
+            { min: 5, name: "ACTIF", color: "var(--c-t2)", speed: "5s", shake: 3, msg: "Augmentation de la puissance." },
+            { min: 10, name: "SURCHARGE", color: "var(--c-t3)", speed: "3s", shake: 6, msg: "Fuite radioactive mineure." },
+            { min: 20, name: "CRITIQUE", color: "var(--c-t4)", speed: "1s", shake: 12, msg: "Fusion du noyau imminente." },
+            { min: 40, name: "SINGULARITÉ", color: "var(--c-t5)", speed: "0.2s", shake: 20, msg: "EFFONDREMENT DE LA RÉALITÉ." },
+            { min: 999, name: "DIVIN", color: "var(--c-t6)", speed: "0.05s", shake: 0, msg: "TRANSCENDANCE." }
+        ];
+
         // Variables d'état globales
         let loadedFullProgram = null; 
 
@@ -701,6 +763,9 @@
         let currentSummaryContext = { mode: 'workout', sessionName: null };
         let activeCharts = {};
         let displayedCalendarDate = new Date();
+        
+        // State for Unstable Core
+        let coreState = { tier: 0, streak: 0 };
 
         let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
 
@@ -1338,6 +1403,52 @@
             if (editProgramBtn) editProgramBtn.disabled = !(googleAccessToken && programsLoaded && !isTimerActive);
         }
         
+        // --- NEW: ADVANCED STREAK CALCULATION ---
+        function calculateAdvancedStreak() {
+            // Logic: Consecutive weeks with >= 3 workouts
+            const weeks = {};
+            if(!workoutHistory) return {streak: 0, currentWeekCount: 0, tierIdx: 0};
+
+            workoutHistory.forEach(h => {
+                const d = new Date(h.date + 'T00:00:00');
+                d.setHours(0,0,0,0);
+                d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+                const yearStart = new Date(d.getFullYear(),0,1);
+                const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+                const k = `${d.getFullYear()}-${weekNo}`;
+                weeks[k] = (weeks[k] || 0) + 1;
+            });
+
+            let streak = 0;
+            let currentWeekCount = 0;
+            let check = new Date();
+            
+            // Loop 52 weeks back
+            for(let i=0; i<52; i++) {
+                const d = new Date(check);
+                d.setHours(0,0,0,0);
+                d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+                const yearStart = new Date(d.getFullYear(),0,1);
+                const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+                const k = `${d.getFullYear()}-${weekNo}`;
+                
+                const c = weeks[k] || 0;
+                
+                if(i===0) {
+                    currentWeekCount = c;
+                    if(c >= 3) streak++;
+                } else {
+                    if(c >= 3) streak++; else break;
+                }
+                check.setDate(check.getDate() - 7);
+            }
+
+            let tierIdx = 0;
+            TIERS.forEach((t, i) => { if(streak >= t.min) tierIdx = i; });
+            
+            return { streak, currentWeekCount, tierIdx };
+        }
+
         function renderHomeScreen() {
             showSection('home-section');
             if (!homeSection) return;
@@ -1519,33 +1630,51 @@
                 module.id = 'consistency-module';
             }
 
-            const streak = calculateWeeklyStreak();
-            let streakClass = '';
-            if (streak >= 2 && streak <= 3) streakClass = 'streak-bronze';
-            else if (streak >= 4 && streak <= 7) streakClass = 'streak-silver';
-            else if (streak >= 8) streakClass = 'streak-gold';
+            // --- REPLACING OLD STREAK LOGIC WITH UNSTABLE CORE UI ---
+            const { streak, currentWeekCount, tierIdx } = calculateAdvancedStreak();
+            coreState.tier = tierIdx;
             
-            const today = new Date();
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
-            startOfWeek.setHours(0, 0, 0, 0);
+            const tierData = TIERS[tierIdx];
+            const progressPct = Math.min((currentWeekCount / 3) * 100, 100);
+            
+            // Set CSS Variables for Tier
+            const root = document.documentElement;
+            root.style.setProperty('--core-rgb', tierData.color.replace('var(','').replace(')',''));
+            root.style.setProperty('--rot-speed', tierData.speed);
 
-            const workoutsThisWeek = workoutHistory.filter(h => new Date(h.date) >= startOfWeek).length;
-            const weeklyGoal = 3;
-            const progressPercent = Math.min((workoutsThisWeek / weeklyGoal) * 100, 100);
-
-            module.innerHTML = `<h3><i class="fas fa-calendar-check"></i> Régularité</h3>
-                <div class="consistency-info">
-                    <div class="consistency-text">Objectif semaine : <strong>${workoutsThisWeek} / ${weeklyGoal}</strong></div>
-                    <div class="weekly-goal-progress-bar"><div class="weekly-goal-progress" style="width: ${progressPercent}%;"></div></div>
-                    ${streak > 0 ? `<div class="streak-counter ${streakClass}"><i class="fas fa-fire-alt"></i> ${streak} sem. de suite !</div>` : ''}
+            module.innerHTML = `
+                <h3><i class="fas fa-radiation"></i> Unstable Core</h3>
+                
+                <div class="core-housing">
+                    <canvas id="particle-canvas"></canvas>
+                    <div class="ring r-1"></div>
+                    <div class="ring r-2"></div>
+                    <div class="ring r-3"></div>
+                    <div class="core-val">${streak}</div>
                 </div>
+
+                <div class="tier-display">
+                    <div class="tier-name">TIER ${tierIdx}: ${tierData.name}</div>
+                    <div class="tier-desc">${tierData.msg}</div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8em; color:#888;">
+                        <span>ACTIVITÉ HEBDO</span>
+                        <span>${currentWeekCount} / 3</span>
+                    </div>
+                    <div class="wk-prog-wrap">
+                        <div class="wk-prog-fill" style="width: ${progressPct}%"></div>
+                    </div>
+                </div>
+
                 <div class="calendar-nav">
                     <button class="prev-month"><i class="fas fa-chevron-left"></i></button>
                     <span class="calendar-title">${date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}</span>
                     <button class="next-month"><i class="fas fa-chevron-right"></i></button>
                 </div>
-                <div class="monthly-calendar"></div>`;
+                <div class="monthly-calendar"></div>
+            `;
 
             const calendarGrid = module.querySelector('.monthly-calendar');
             // MODIFICATION : Assure la compatibilité avec les anciennes dates ISO et les nouvelles dates locales.
@@ -1591,8 +1720,73 @@
 
             const recentWorkoutsEl = renderRecentWorkoutsList();
             module.appendChild(recentWorkoutsEl);
+            
+            // Initialize Core Animation Engine if canvas exists
+            setTimeout(() => {
+                if(document.getElementById('particle-canvas')) startUnstableEngine();
+            }, 100);
 
             return module;
+        }
+
+        // --- NEW: PARTICLE ENGINE ---
+        function startUnstableEngine() {
+            const canvas = document.getElementById('particle-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const root = document.documentElement;
+
+            canvas.width = 300; canvas.height = 300;
+
+            function createParticle() {
+                return {
+                    x: 150, y: 150,
+                    angle: Math.random() * Math.PI * 2,
+                    speed: Math.random() * (coreState.tier + 1),
+                    life: Math.random(),
+                    size: Math.random() * 3
+                };
+            }
+
+            function loop() {
+                const tier = TIERS[coreState.tier];
+                
+                // Shake Logic
+                if(tier.shake > 0) {
+                    const x = (Math.random() - 0.5) * tier.shake;
+                    const y = (Math.random() - 0.5) * tier.shake;
+                    root.style.setProperty('--shake-x', x + 'px');
+                    root.style.setProperty('--shake-y', y + 'px');
+                    if(coreState.tier >= 3) root.style.setProperty('--glitch-skew', (Math.random()-0.5)*10 + 'deg');
+                } else {
+                    root.style.setProperty('--shake-x', '0px');
+                    root.style.setProperty('--shake-y', '0px');
+                }
+
+                // Particles
+                ctx.clearRect(0,0,300,300);
+                const pCount = coreState.tier * 15;
+                const style = getComputedStyle(root).getPropertyValue('--core-rgb').trim();
+
+                while(particles.length < pCount) particles.push(createParticle());
+                while(particles.length > pCount) particles.pop();
+
+                particles.forEach(p => {
+                    p.x += Math.cos(p.angle) * p.speed;
+                    p.y += Math.sin(p.angle) * p.speed;
+                    p.life -= 0.01;
+                    if(p.life <= 0) Object.assign(p, createParticle());
+                    
+                    ctx.fillStyle = `rgba(${style}, ${p.life})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                });
+
+                if(document.getElementById('particle-canvas')) requestAnimationFrame(loop);
+            }
+            loop();
         }
 
         function renderRecentWorkoutsList() {
@@ -1630,6 +1824,7 @@
         }
         
         function calculateWeeklyStreak() {
+            // Keep this for legacy support if needed, but UI uses calculateAdvancedStreak now
             if (workoutHistory.length < 3) return 0;
             const weeklyGoal = 3;
             const workoutsByWeek = {};
@@ -2096,10 +2291,20 @@
                 let value = parseFloat(valueEl.textContent);
                 const type = stepperControl.dataset.type;
                 const isPlus = stepperBtn.classList.contains('stepper-plus');
-                const step = (type === 'weight') ? 0.5 : 1;
+                
+                // MODIFICATION: Step de 0.1 pour le poids, 1 pour le reste
+                const step = (type === 'weight') ? 0.1 : 1;
                 
                 value = isPlus ? value + step : Math.max(0, value - step);
-                valueEl.textContent = (type === 'weight') ? value.toFixed(1).replace(/\.0$/, '') : value;
+                
+                // MODIFICATION: Arrondi pour éviter les erreurs de virgule flottante
+                if (type === 'weight') {
+                    value = Math.round(value * 10) / 10;
+                    valueEl.textContent = value.toFixed(1).replace(/\.0$/, '');
+                } else {
+                    valueEl.textContent = value;
+                }
+
             } else if (resistanceSelect) {
                 const selector = resistanceSelect.closest('.resistance-selector');
                 document.querySelectorAll('.resistance-selector.open').forEach(el => { if(el !== selector) el.classList.remove('open'); });
