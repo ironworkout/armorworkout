@@ -1477,8 +1477,15 @@
                 const lastSession = workoutHistory.slice().reverse().find(h => h.type === session.nom_session);
                 let lastSessionText = "Aucun historique.";
                 if (lastSession) {
-                    const lastDate = new Date(lastSession.date); const now = new Date();
-                    const diffDays = Math.round((now - lastDate) / (1000 * 60 * 60 * 24));
+                    // FIX: Strict Midnight comparison to solve "Yesterday" vs "Today" bug
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+                    const lastDate = new Date(lastSession.date + 'T00:00:00');
+                    lastDate.setHours(0,0,0,0);
+
+                    const diffTime = now.getTime() - lastDate.getTime();
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
                     if (diffDays === 0) lastSessionText = "Aujourd'hui";
                     else if (diffDays === 1) lastSessionText = "Hier";
                     else lastSessionText = `Il y a ${diffDays} j.`;
@@ -1623,6 +1630,9 @@
         }
         
         function renderConsistencyCalendarModule(date) {
+            // FIX: Define 'today' immediately to prevent ReferenceError
+            const today = new Date();
+
             let module = document.getElementById('consistency-module');
             if (!module) {
                 module = document.createElement('div');
@@ -1721,10 +1731,10 @@
             const recentWorkoutsEl = renderRecentWorkoutsList();
             module.appendChild(recentWorkoutsEl);
             
-            // Initialize Core Animation Engine if canvas exists
+            // Initialize Core Animation Engine
             setTimeout(() => {
                 if(document.getElementById('particle-canvas')) startUnstableEngine();
-            }, 100);
+            }, 50);
 
             return module;
         }
@@ -1958,8 +1968,7 @@
                     finalProgressionNote: data.item.progression_note
                 }));
 
-            // MODIFICATION: Enregistre la date locale au format AAAA-MM-JJ pour éviter les problèmes de fuseau horaire.
-            // toLocaleDateString avec le locale 'sv-SE' (suédois) donne ce format de manière fiable.
+            // FIX: Enregistre la date locale au format YYYY-MM-DD pour éviter les problèmes de timezone
             const localDateString = new Date().toLocaleDateString('sv-SE');
 
             workoutHistory.push({
