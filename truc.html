@@ -3,639 +3,730 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#0a0a0a">
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>THE HUNTER v20</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Guide Michelin SIL</title>
     
-    <!-- Libraries -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Fonts: Playfair (Titre) & Inter (Texte) -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* --- THEME SYSTEM --- */
+        /* --- VARIABLES THEME --- */
         :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --glass: rgba(20, 20, 20, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
-            --primary: #4f46e5; /* Indigo */
-            --accent: #ef4444;  /* Red */
-            --success: #10b981; /* Green */
-            --gold: #f59e0b;    /* Gold */
-            --text: #ffffff;
-            --text-muted: #a3a3a3;
-            --font: 'Inter', sans-serif;
-            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-            
-            /* Dimensions responsive */
-            --hud-width: 100%;
-            --hud-left: 0;
-            --hud-top: 0;
-            --list-width: 100%;
+            --primary: #bd0000; /* Rouge Michelin */
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --text-light: #666666;
+            --border: #e0e0e0;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --font-title: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+            --z-map: 1;
+            --z-ui: 1000;
+            --z-modal: 5000;
         }
 
-        /* --- RESET & BASE --- */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); 
-            height: 100dvh; width: 100vw; overflow: hidden; position: fixed; 
-        }
-
-        /* Input Fixes for interactivity */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        
+        /* Inputs doivent être sélectionnables */
         input, textarea { user-select: text !important; -webkit-user-select: text !important; }
 
-        /* --- MAP --- */
-        #map { width: 100%; height: 100%; z-index: 0; background: #0a0a0a; }
-        .leaflet-container { background: #0a0a0a; font-family: var(--font); }
-        .leaflet-tile { filter: brightness(0.8) contrast(1.2) grayscale(0.2); }
+        body { 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; 
+            background: var(--bg); color: var(--text); font-family: var(--font-body);
+            overflow: hidden; position: fixed;
+        }
+
+        /* --- MAP FIX (Position Absolue) --- */
+        #map { 
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+            z-index: var(--z-map); background: #e5e5e5; 
+        }
+        .leaflet-container { font-family: var(--font-body); }
         .leaflet-control-attribution { display: none; }
 
-        /* --- RESPONSIVE LAYOUT (PC vs MOBILE) --- */
-        @media (min-width: 768px) {
-            :root {
-                --hud-width: 400px;
-                --hud-left: 20px;
-                --hud-top: 20px;
-                --list-width: 450px;
-            }
-            /* Sur PC, la nav est flottante en bas */
-            .nav { 
-                width: 300px !important; 
-                left: 50% !important; 
-                transform: translateX(-50%); 
-                bottom: 30px !important; 
-                border-radius: 30px !important; 
-                border: 1px solid var(--border) !important;
-            }
-            .brand-bar { border-radius: 16px; margin-bottom: 10px; }
-            .hud-container { border-radius: 16px; }
-            /* Liste en panneau latéral */
-            .list-view { 
-                width: var(--list-width) !important; 
-                border-right: 1px solid var(--border);
-                transform: translateX(-100%) !important;
-            }
-            .list-view.active { transform: translateX(0) !important; }
-            .side-stack { right: 30px; top: 30px; }
-        }
-
-        /* --- BRANDING BAR --- */
-        .hud-wrapper {
-            position: absolute; top: var(--hud-top); left: var(--hud-left); 
-            width: var(--hud-width); z-index: 3000; padding: 10px;
-            pointer-events: none; /* Let clicks pass through gaps */
-            display: flex; flex-direction: column; gap: 8px;
-        }
-
-        .brand-bar {
-            background: var(--glass); border: 1px solid var(--border);
-            padding: 12px 20px; width: 100%; pointer-events: auto;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            /* Mobile rounded adjustments handled by default, PC overrides above */
-        }
-        .brand-logo { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
-        .brand-logo i { color: var(--accent); }
-        .brand-logo span { color: var(--text-muted); font-weight: 400; font-size: 14px; margin-left: 5px; }
-
-        /* --- SEARCH & FILTER --- */
-        .controls-row { display: flex; gap: 8px; width: 100%; pointer-events: auto; }
-        
-        .pill {
-            height: 48px; border-radius: 12px;
-            background: var(--glass); border: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: 0.2s;
-            backdrop-filter: blur(20px); flex: 1;
-        }
-        .pill:focus-within { border-color: var(--primary); background: #1a1a1a; }
-        .pill i { color: #666; margin-right: 10px; font-size: 14px; }
-        .pill input { background: transparent; border: none; color: white; width: 100%; font-weight: 600; font-family: var(--font); font-size: 14px; }
-        .pill input::placeholder { color: #555; font-weight: 500; }
-
-        .suggestions-list {
-            background: #1a1a1a; border: 1px solid var(--border); border-radius: 12px;
-            max-height: 200px; overflow-y: auto; display: none;
-            flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            margin-top: 5px; pointer-events: auto;
-        }
-        .suggestions-list.active { display: flex; }
-        .sugg-item { padding: 12px 16px; border-bottom: 1px solid #333; font-size: 13px; color: #ccc; cursor: pointer; display: flex; gap: 10px; align-items: center; }
-        .sugg-item:hover { background: #222; }
-
-        /* --- MAP CONTROLS --- */
-        .side-stack {
-            position: absolute; bottom: 120px; right: 16px; z-index: 900;
-            display: flex; flex-direction: column; gap: 12px; pointer-events: auto;
-        }
-        .btn-round {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: var(--glass); border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 18px; cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-            transition: 0.2s;
-        }
-        .btn-round:active { transform: scale(0.95); }
-        .btn-round.white { background: white; color: black; border: none; }
-
-        /* --- MARKERS --- */
-        .pin-wrap { width: 40px; height: 40px; pointer-events: none; transition: 0.4s var(--ease); }
-        
-        /* GHOST MODE (Filtered out) */
-        .pin-wrap.ghost { opacity: 0.15; filter: grayscale(1); transform: scale(0.7); }
-        
-        .pin-body {
-            width: 32px; height: 32px; border-radius: 50% 50% 0 50%; transform: rotate(45deg); 
-            position: absolute; left: 4px; top: 0; border: 2px solid #fff; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            background: #333; pointer-events: auto; transition: 0.3s;
-        }
-        .pin-body i { transform: rotate(-45deg); font-size: 14px; color: #fff; }
-        
-        /* Pin Colors based on Filter */
-        .pin-saved .pin-body { background: var(--gold); border-color: #fff; z-index: 200; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
-        .pin-saved .pin-body i { color: black; font-weight: bold; }
-        
-        .pin-match .pin-body { background: var(--primary); border-color: #fff; box-shadow: 0 0 15px rgba(79, 70, 229, 0.4); }
-
-        /* --- BANNER --- */
-        .banner {
-            position: absolute; bottom: 100px; left: 16px; right: 16px;
-            background: rgba(20, 20, 20, 0.95); border-radius: 16px; padding: 16px;
-            display: flex; align-items: center; gap: 15px; z-index: 1100;
-            transform: translateY(150%); transition: 0.4s var(--ease); 
-            border: 1px solid var(--border); backdrop-filter: blur(20px);
-            max-width: 500px; margin: 0 auto; /* Centered on big screens */
-        }
-        .banner.active { transform: translateY(0); }
-        .banner-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: #333; }
-        .banner-info { flex: 1; overflow: hidden; }
-        .banner-title { margin: 0; font-size: 15px; font-weight: 700; }
-        .banner-addr { font-size: 11px; color: #888; margin-top: 3px; }
-        .btn-fab { 
-            width: 40px; height: 40px; border-radius: 10px; background: #333; color: white; 
-            border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; 
-        }
-        .banner.saved .btn-fab { background: var(--gold); color: black; }
-
-        /* --- LIST VIEW (Panel) --- */
-        .list-view {
-            position: absolute; inset: 0; background: #0a0a0a; z-index: 2500;
-            padding-top: 20px; transform: translateX(100%); transition: 0.4s var(--ease);
+        /* --- UI LAYER --- */
+        .ui-layer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: var(--z-ui); pointer-events: none;
             display: flex; flex-direction: column;
         }
-        .list-view.active { transform: translateX(0); }
-        
-        .list-header { 
-            padding: 20px 24px; font-size: 24px; font-weight: 800; border-bottom: 1px solid #222; 
-            display: flex; justify-content: space-between; align-items: center;
+
+        /* --- HEADER --- */
+        .header-wrapper {
+            padding: max(15px, env(safe-area-inset-top)) 15px 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0) 100%);
+            pointer-events: auto; display: flex; flex-direction: column; gap: 10px;
         }
-        .list-scroll { overflow-y: auto; flex: 1; padding-bottom: 100px; }
-        
-        .city-group { margin-bottom: 10px; }
-        .city-header { 
-            position: sticky; top: 0; background: rgba(10,10,10,0.95); z-index: 10;
-            padding: 10px 24px; font-size: 12px; font-weight: 700; color: var(--primary);
-            border-bottom: 1px solid #222; backdrop-filter: blur(10px); text-transform: uppercase; letter-spacing: 1px;
+
+        .brand-badge {
+            background: #fff; border: 1px solid var(--border); padding: 8px 16px; 
+            border-radius: 30px; align-self: center; box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 8px;
+            font-family: var(--font-title); font-weight: 900; color: var(--primary); font-size: 16px;
         }
+
+        .search-row { display: flex; gap: 10px; max-width: 600px; margin: 0 auto; width: 100%; }
         
-        .list-item { 
-            padding: 16px 24px; border-bottom: 1px solid #1a1a1a; display: flex; gap: 15px; 
-            cursor: pointer; transition: 0.2s; 
+        .pill {
+            flex: 1; height: 46px; background: #fff; border: 1px solid var(--border);
+            border-radius: 12px; display: flex; align-items: center; padding: 0 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: 0.2s;
         }
-        .list-item:hover { background: #111; }
-        .list-thumb { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #222; }
-        .tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: #222; color: #888; display: inline-block; margin-top: 6px; }
-        .tag.saved { background: rgba(245, 158, 11, 0.15); color: var(--gold); }
+        .pill:focus-within { border-color: var(--primary); transform: translateY(-1px); }
+        .pill i { color: #999; margin-right: 10px; font-size: 14px; }
+        .pill input { 
+            border: none; background: transparent; width: 100%; font-family: var(--font-body);
+            font-size: 14px; font-weight: 600; color: var(--text);
+        }
+
+        .suggestions-box {
+            background: white; border-radius: 12px; margin-top: 5px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15); max-height: 200px; overflow-y: auto;
+            display: none; pointer-events: auto; width: 100%; max-width: 600px; align-self: center;
+        }
+        .suggestions-box.active { display: block; }
+        .sugg-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; font-size: 13px; }
+        .sugg-item:hover { background: #f9f9f9; }
+
+        /* --- SIDE CONTROLS --- */
+        .controls-stack {
+            position: absolute; bottom: 110px; right: 15px; pointer-events: auto;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .fab {
+            width: 48px; height: 48px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); cursor: pointer; color: #333;
+            transition: 0.2s; border: 1px solid var(--border);
+        }
+        .fab:active { transform: scale(0.9); }
+        .fab i { font-size: 18px; }
+        .fab.primary { color: var(--primary); }
+
+        /* --- BOTTOM BANNER --- */
+        .banner {
+            position: absolute; bottom: 95px; left: 15px; right: 15px; margin: 0 auto; max-width: 500px;
+            background: white; padding: 12px; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; pointer-events: auto;
+            transform: translateY(150%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .banner.active { transform: translateY(0); }
+        
+        .banner-img { width: 50px; height: 50px; border-radius: 10px; background: #eee; object-fit: cover; }
+        .banner-content { flex: 1; overflow: hidden; }
+        .banner-title { font-family: var(--font-title); font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .banner-rating { color: var(--primary); font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+        
+        .btn-edit { width: 36px; height: 36px; border-radius: 10px; background: #333; color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* --- CREATION UI --- */
+        .creation-ui {
+            position: absolute; bottom: 100px; left: 0; right: 0; 
+            display: flex; flex-direction: column; align-items: center; pointer-events: none;
+            opacity: 0; transition: 0.3s;
+        }
+        .creation-ui.active { opacity: 1; pointer-events: auto; }
+        .btn-validate {
+            background: var(--primary); color: white; padding: 12px 24px; border-radius: 30px;
+            font-weight: 700; border: none; box-shadow: 0 5px 20px rgba(189,0,0,0.4);
+            font-size: 14px; cursor: pointer; margin-bottom: 10px;
+        }
+        .btn-cancel { background: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        /* --- MARKERS --- */
+        .pin-wrap { width: 32px; height: 32px; pointer-events: none; transition: 0.3s; }
+        .pin-wrap.ghost { opacity: 0.2; filter: grayscale(1); transform: scale(0.8); }
+        .pin-head {
+            width: 32px; height: 32px; background: #444; border: 2px solid white;
+            border-radius: 50% 50% 0 50%; transform: rotate(45deg);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+            pointer-events: auto;
+        }
+        .pin-head i { transform: rotate(-45deg); color: white; font-size: 12px; }
+        
+        .pin-wrap.saved .pin-head { background: var(--primary); z-index: 100; box-shadow: 0 4px 15px rgba(189,0,0,0.4); }
+        
+        /* Target Marker */
+        .pin-target { margin-left: -20px; margin-top: -20px; pointer-events: none; z-index: 2000 !important; }
+        .pin-target .pin-head { width: 40px; height: 40px; background: var(--primary); border: 3px solid white; }
+
+        /* --- LIST OVERLAY --- */
+        .list-overlay {
+            position: fixed; inset: 0; background: #f8f9fa; z-index: 4500;
+            transform: translateY(100%); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex; flex-direction: column; pointer-events: auto;
+        }
+        .list-overlay.open { transform: translateY(0); }
+        
+        .list-nav { padding: 40px 20px 15px; background: white; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .list-nav h2 { margin: 0; font-family: var(--font-title); color: var(--primary); }
+        .list-close { font-size: 24px; cursor: pointer; color: #333; padding: 5px; }
+        
+        .list-content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+        .list-card {
+            background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px;
+            display: flex; gap: 12px; border: 1px solid var(--border); cursor: pointer;
+        }
+        .list-card img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: #eee; }
+
+        /* --- MODAL EDIT --- */
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: var(--z-modal);
+            display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .sheet {
+            background: white; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 24px 24px 0 0;
+            max-height: 90vh; display: flex; flex-direction: column; transform: translateY(100%); transition: 0.3s;
+        }
+        .modal.open .sheet { transform: translateY(0); }
+        .sheet-scroll { overflow-y: auto; padding: 24px; padding-bottom: 50px; }
+
+        .form-section { margin-bottom: 20px; }
+        .lbl { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .inp-text { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fcfcfc; font-family: var(--font-body); margin-bottom: 10px; }
+        
+        /* Note UI */
+        .score-circle {
+            width: 80px; height: 80px; background: var(--primary); color: white; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin: 0 auto 20px; font-family: var(--font-title);
+        }
+        .score-val { font-size: 28px; font-weight: 700; line-height: 1; }
+        .score-lbl { font-size: 10px; font-family: var(--font-body); opacity: 0.8; }
+        
+        .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .range-wrap span { width: 70px; font-size: 13px; font-weight: 600; }
+        input[type=range] { flex: 1; accent-color: var(--primary); }
+        .val-disp { font-weight: 700; color: var(--primary); width: 25px; text-align: right; }
+
+        /* Photo Upload */
+        .photo-area {
+            width: 100%; height: 140px; border: 2px dashed #ddd; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+            cursor: pointer; background: #fafafa; position: relative; overflow: hidden;
+        }
+        .photo-area img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+        .photo-label { z-index: 2; color: #888; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; }
+
+        .btn-block { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
+        .btn-save { background: var(--primary); color: white; box-shadow: 0 5px 15px rgba(189,0,0,0.3); }
+        .btn-del { background: transparent; color: #ef4444; margin-top: 5px; font-size: 13px; }
 
         /* --- NAV --- */
-        .nav { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; 
-            background: rgba(10,10,10,0.95); display: flex; justify-content: space-around; 
-            padding-top: 15px; border-top: 1px solid #222; z-index: 4000; 
-            backdrop-filter: blur(20px);
+        .nav-bar {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: white;
+            border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+            padding-top: 12px; z-index: 4000; padding-bottom: env(safe-area-inset-bottom);
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #555; font-size: 10px; font-weight: 600; cursor: pointer; width: 60px; }
-        .nav-item i { font-size: 20px; transition: 0.2s; }
-        .nav-item.active { color: white; }
-        .nav-item.active i { color: var(--primary); transform: translateY(-2px); }
-
-        /* --- MODAL --- */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .modal.open { opacity: 1; pointer-events: auto; }
-        .sheet { background: #141414; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 24px 24px 0 0; padding: 24px; transform: translateY(100%); transition: 0.3s var(--ease); border-top: 1px solid #333; }
-        .modal.open .sheet { transform: translateY(0); }
-        .inp { width: 100%; background: #222; border: 1px solid #333; padding: 14px; border-radius: 12px; margin-bottom: 10px; color: white; font-family: var(--font); }
-        .btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; margin-top: 10px; cursor: pointer; }
-
-        /* --- LOADER --- */
-        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid #333; z-index: 2000; display: none; color: white; font-size: 12px; gap: 10px; align-items: center; }
-        .loader.active { display: flex; }
-
-        /* --- CREATION --- */
-        .creation-ui { position: absolute; bottom: 100px; left: 0; right: 0; text-align: center; pointer-events: none; opacity: 0; z-index: 2000; transition: 0.3s; }
-        .creation-ui.active { opacity: 1; pointer-events: auto; }
-        .btn-confirm { background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; border: none; font-weight: bold; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); cursor: pointer; pointer-events: auto; }
-        .pin-target { margin-top: -24px; margin-left: -24px; pointer-events: none; }
-        .pin-target .pin-body { width: 48px; height: 48px; background: var(--accent); border: 3px solid white; box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #aaa; cursor: pointer; width: 70px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; }
+        .nav-item span { font-size: 10px; font-weight: 600; }
 
     </style>
 </head>
 <body>
 
-    <!-- MAP LAYER -->
+    <!-- 1. MAP LAYER (Absolute priority) -->
     <div id="map"></div>
 
-    <!-- LOADER -->
-    <div class="loader" id="loader"><i class="fa-solid fa-spinner fa-spin" style="color:var(--primary)"></i> <span>Recherche en cours...</span></div>
-
-    <!-- BRANDING & SEARCH WRAPPER -->
-    <div class="hud-wrapper" id="hud">
-        <!-- BRAND BAR -->
-        <div class="brand-bar">
-            <div class="brand-logo">THE HUNTER <span>v20</span></div>
-            <i class="fa-solid fa-crosshairs" style="color:var(--accent)"></i>
-        </div>
+    <!-- 2. UI LAYER -->
+    <div class="ui-layer">
         
-        <!-- SEARCH & FILTER -->
-        <div class="controls-row">
-            <!-- VILLE -->
-            <div class="search-group" style="flex: 2;">
+        <!-- HEADER -->
+        <div class="header-wrapper" id="hud">
+            <div class="brand-badge"><i class="fa-solid fa-star"></i> Guide Michelin SIL</div>
+            <div class="search-row">
                 <div class="pill">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <input type="text" id="inp-city" placeholder="Ville..." autocomplete="off">
+                    <i class="fa-solid fa-location-arrow"></i>
+                    <input type="text" id="inp-city" placeholder="Ville...">
                 </div>
-                <div class="suggestions-list" id="sugg-list"></div>
-            </div>
-            <!-- FILTRE -->
-            <div class="search-group" style="flex: 1.5;">
                 <div class="pill">
-                    <i class="fa-solid fa-filter" style="color:var(--primary)"></i>
-                    <input type="text" id="inp-filter" placeholder="Sushi, Bar..." oninput="App.applyFilters()">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="inp-filter" placeholder="Nom du restaurant..." oninput="App.applyFilters()">
                 </div>
             </div>
+            <!-- Suggestion dropdown inside header flow -->
+            <div class="suggestions-box" id="sugg-box"></div>
         </div>
-    </div>
 
-    <!-- MAP CONTROLS -->
-    <div class="side-stack" id="side-ui">
-        <div class="btn-round white" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></div>
-        <div class="btn-round" onclick="App.locate()"><i class="fa-solid fa-location-arrow"></i></div>
-    </div>
-
-    <!-- CREATION MODE -->
-    <div class="creation-ui" id="creation-ui">
-        <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER CE LIEU</button>
-        <div style="margin-top:10px;"><span onclick="App.cancelCreation()" style="background:rgba(0,0,0,0.6); padding:5px 10px; border-radius:10px; font-size:12px; cursor:pointer;">Annuler</span></div>
-    </div>
-
-    <!-- BANNER -->
-    <div class="banner" id="banner">
-        <img src="" class="banner-img" id="ban-img">
-        <div class="banner-info">
-            <h3 class="banner-title" id="ban-title">...</h3>
-            <div class="banner-addr" id="ban-addr">...</div>
+        <!-- SIDE CONTROLS -->
+        <div class="controls-stack" id="side-ctrl">
+            <div class="fab primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></div>
+            <div class="fab" onclick="App.locate()"><i class="fa-solid fa-crosshairs"></i></div>
         </div>
-        <button class="btn-fab" id="btn-action" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
-    </div>
 
-    <!-- LIST VIEW PANEL -->
-    <div class="list-view" id="view-list">
-        <div class="list-header">
-            <span>Carnet</span>
-            <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer; opacity:0.5;" onclick="App.nav('map')"></i>
+        <!-- CREATION UI -->
+        <div class="creation-ui" id="creation-ui">
+            <button class="btn-validate" onclick="App.confirmCreation()">VALIDER L'EMPLACEMENT</button>
+            <div class="btn-cancel" onclick="App.cancelCreation()">Annuler</div>
         </div>
-        <div class="list-scroll" id="list-container"></div>
+
+        <!-- BANNER -->
+        <div class="banner" id="banner">
+            <img src="" class="banner-img" id="ban-img">
+            <div class="banner-content">
+                <div class="banner-title" id="ban-title">...</div>
+                <div class="banner-rating" id="ban-rating"></div>
+            </div>
+            <button class="btn-edit" id="btn-edit" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
+        </div>
+
     </div>
 
-    <!-- MODAL EDIT -->
+    <!-- 3. OVERLAYS (Outside UI Layer for interaction) -->
+    
+    <!-- LIST OVERLAY -->
+    <div class="list-overlay" id="list-overlay">
+        <div class="list-nav">
+            <h2>Mon Carnet</h2>
+            <i class="fa-solid fa-xmark list-close" onclick="App.nav('map')"></i>
+        </div>
+        <div class="list-content" id="list-container"></div>
+    </div>
+
+    <!-- MODAL FORM -->
     <div class="modal" id="modal">
         <div class="sheet">
-            <h3 style="margin-top:0">Détails du Lieu</h3>
-            <input type="text" class="inp" id="edit-name" placeholder="Nom du lieu">
-            <input type="text" class="inp" id="edit-addr" placeholder="Adresse">
-            <textarea class="inp" id="edit-memo" rows="3" placeholder="Notes persos..."></textarea>
-            <button class="btn-main" onclick="App.save()">ENREGISTRER</button>
-            <button class="btn-main" onclick="App.removePlace()" style="background:#222; color:#ef4444; margin-top:8px">SUPPRIMER</button>
-            <div style="text-align:center; margin-top:15px; opacity:0.5; font-size:12px; cursor:pointer" onclick="App.closeModal()">Fermer</div>
+            <div class="sheet-scroll">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2 style="margin:0; font-family:var(--font-title)">Le Restaurant</h2>
+                    <i class="fa-solid fa-xmark" onclick="App.closeModal()" style="font-size:24px; cursor:pointer; padding:5px"></i>
+                </div>
+
+                <!-- PHOTO -->
+                <div class="photo-area" onclick="document.getElementById('file-inp').click()">
+                    <img id="edit-img-preview" style="display:none">
+                    <div class="photo-label" id="edit-img-lbl">
+                        <i class="fa-solid fa-camera" style="font-size:24px"></i>
+                        <span>Ajouter une photo</span>
+                    </div>
+                </div>
+                <input type="file" id="file-inp" accept="image/*" hidden onchange="App.handleImage(this)">
+
+                <div class="form-section">
+                    <label class="lbl">Informations</label>
+                    <input type="text" class="inp-text" id="edit-name" placeholder="Nom du restaurant">
+                    <input type="text" class="inp-text" id="edit-addr" placeholder="Adresse complète">
+                </div>
+
+                <div class="form-section">
+                    <label class="lbl">La Note du Chef</label>
+                    <div class="score-circle">
+                        <div class="score-val" id="score-total">0.0</div>
+                        <div class="score-lbl">/ 10</div>
+                    </div>
+
+                    <div class="range-wrap">
+                        <span>Qualité/Prix</span>
+                        <input type="range" min="0" max="10" step="0.5" id="rng-qp" oninput="App.calcScore()">
+                        <div class="val-disp" id="val-qp">5</div>
+                    </div>
+                    <div class="range-wrap">
+                        <span>Goût</span>
+                        <input type="range" min="0" max="10" step="0.5" id="rng-taste" oninput="App.calcScore()">
+                        <div class="val-disp" id="val-taste">5</div>
+                    </div>
+                    <div class="range-wrap">
+                        <span>Ambiance</span>
+                        <input type="range" min="0" max="10" step="0.5" id="rng-vibe" oninput="App.calcScore()">
+                        <div class="val-disp" id="val-vibe">5</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label class="lbl">Budget (€)</label>
+                    <div style="display:flex; gap:10px">
+                        <input type="number" class="inp-text" id="price-min" placeholder="Min">
+                        <input type="number" class="inp-text" id="price-max" placeholder="Max">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label class="lbl">Notes Perso</label>
+                    <textarea class="inp-text" id="edit-memo" rows="3" placeholder="Plats, code wifi, avis..."></textarea>
+                </div>
+
+                <button class="btn-block btn-save" onclick="App.save()">ENREGISTRER</button>
+                <button class="btn-block btn-del" onclick="App.removePlace()">Supprimer ce lieu</button>
+            </div>
         </div>
     </div>
 
-    <!-- NAVIGATION -->
-    <nav class="nav" id="nav">
-        <div class="nav-item active" onclick="App.nav('map')" id="nav-map"><i class="fa-solid fa-map"></i><span>Explorer</span></div>
-        <div class="nav-item" onclick="App.nav('list')" id="nav-list"><i class="fa-solid fa-book-bookmark"></i><span>Carnet</span></div>
-    </nav>
+    <!-- NAV BAR -->
+    <div class="nav-bar">
+        <div class="nav-item active" id="nav-map" onclick="App.nav('map')">
+            <i class="fa-solid fa-map-location-dot"></i> <span>Carte</span>
+        </div>
+        <div class="nav-item" id="nav-list" onclick="App.nav('list')">
+            <i class="fa-solid fa-book-open"></i> <span>Carnet</span>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const App = (() => {
             let map, db;
             let markers = [];
-            let allPlaces = []; 
-            let savedPlaces = [];
+            let allPlaces = [], savedPlaces = [];
             let selectedPlace = null;
             let creationMarker = null;
-            let cityDebounce;
-            let isScanning = false;
+            let currentImg = null;
+            let searchTimeout;
 
-            const normalize = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-            const getImage = (id) => `https://picsum.photos/seed/${id}/150/150`;
+            const DEFAULT_IMG = "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=300&q=80";
 
+            // --- INIT ---
             const init = async () => {
+                initMap(); // Map first for visual speed
                 await initDB();
                 await loadSaved();
-                initMap();
-                
-                // Event Listeners
-                document.getElementById('inp-city').addEventListener('input', (e) => fetchCitySuggestions(e.target.value));
-                document.getElementById('modal').addEventListener('click', (e) => { if(e.target.id === 'modal') closeModal(); });
+                updateMapMarkers(); // Refresh with DB data
+
+                // Events
+                document.getElementById('inp-city').addEventListener('input', e => searchCity(e.target.value));
             };
 
-            const initDB = () => new Promise(r => {
-                const req = indexedDB.open('HunterV20', 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
-                req.onsuccess = e => { db = e.target.result; r(); };
+            // --- DATABASE ---
+            const initDB = () => new Promise(resolve => {
+                const r = indexedDB.open('GuideMichelinDB', 1);
+                r.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
+                r.onsuccess = e => { db = e.target.result; resolve(); };
+                r.onerror = () => resolve(); // Fail grace
             });
-
-            const loadSaved = () => new Promise(r => {
+            const loadSaved = () => new Promise(resolve => {
+                if(!db) return resolve();
                 db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => {
                     savedPlaces = e.target.result || [];
-                    r();
+                    resolve();
                 };
             });
 
+            // --- MAP ---
             const initMap = () => {
                 map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
                 
-                updateAll([]);
-                if(savedPlaces.length === 0) setTimeout(() => scan(true), 1500);
-                else setTimeout(() => {
-                    if(savedPlaces.length > 0) {
-                        const group = new L.featureGroup(markers.map(m=>m.marker));
-                        map.fitBounds(group.getBounds(), {padding: [50,50]});
-                    }
-                }, 500);
+                // CARTO POSITRON (Light & Clean)
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    subdomains: 'abcd'
+                }).addTo(map);
 
-                map.on('moveend', () => { if(map.getZoom()>=14) scan(false); });
+                // Auto Scan on move
+                map.on('moveend', () => { if(map.getZoom() > 14) scan(); });
+                // Initial Scan delay
+                setTimeout(() => scan(), 1000);
             };
 
-            // --- FILTER LOGIC (Improved) ---
-            const applyFilters = () => {
-                const term = normalize(document.getElementById('inp-filter').value);
-                
-                markers.forEach(obj => {
-                    const p = obj.data;
-                    const isSaved = savedPlaces.find(s => s.id === p.id);
-                    
-                    // Match Logic: If no term, everything is visible. If term, must match blob.
-                    const isMatch = !term || p.blob.includes(term);
-                    
-                    // Visual States
-                    const div = obj.marker.getElement();
-                    if(!div) return; // Not rendered yet
-                    
-                    if (isMatch) {
-                        // Highlighted State
-                        div.classList.remove('ghost');
-                        div.style.zIndex = isSaved ? 300 : 100; // Bring matches to front
-                        
-                        // Update color based on match
-                        if(term) div.querySelector('.pin-wrap').classList.add('pin-match');
-                        else div.querySelector('.pin-wrap').classList.remove('pin-match');
-                        
-                    } else {
-                        // Ghost State (Filtered out)
-                        if (isSaved) {
-                            // Saved items are never completely hidden, just dimmed if not matching
-                             div.classList.add('ghost'); 
-                        } else {
-                            // Non-saved items are heavily ghosted
-                            div.classList.add('ghost');
-                        }
-                        div.style.zIndex = 10; // Send to back
-                    }
-                });
-            };
-
-            // --- SCANNING ---
-            const scan = async (manual) => {
+            // --- SCANNING (Overpass) ---
+            let isScanning = false;
+            const scan = async () => {
                 if(isScanning) return;
                 isScanning = true;
-                setLoading(manual);
-
+                
                 const b = map.getBounds();
-                const q = `[out:json][timeout:10];node["amenity"~"restaurant|bar|cafe|fast_food|pub"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
-
+                const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
+                
                 try {
-                    const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
-                    const d = await r.json();
+                    const res = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
+                    const data = await res.json();
                     
-                    const apiData = d.elements.map(el => {
-                        const t = el.tags;
-                        const addr = [t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' ') || "";
-                        return {
-                            id: el.id, name: t.name || "Inconnu", addr: addr,
-                            blob: normalize(`${t.name} ${addr} ${t.cuisine} ${t.amenity}`),
-                            lat: el.lat, lon: el.lon, img: getImage(el.id),
-                            type: t.amenity
-                        };
+                    const newItems = data.elements.map(el => ({
+                        id: el.id, 
+                        name: el.tags.name || "Inconnu",
+                        addr: (el.tags['addr:street'] || "") + " " + (el.tags['addr:city'] || ""),
+                        lat: el.lat, lon: el.lon,
+                        saved: false
+                    }));
+                    
+                    // Merge
+                    allPlaces = [...savedPlaces]; // Start with saved
+                    newItems.forEach(ni => {
+                        if(!savedPlaces.find(s => s.id === ni.id)) allPlaces.push(ni);
                     });
-                    updateAll(apiData);
+                    
+                    updateMapMarkers();
                 } catch(e) {}
-                setLoading(false); isScanning = false;
+                isScanning = false;
             };
 
-            const updateAll = (apiData) => {
-                // Merge data
-                allPlaces = [...savedPlaces];
-                apiData.forEach(p => { if(!savedPlaces.find(s=>s.id === p.id)) allPlaces.push(p); });
+            const updateMapMarkers = () => {
+                // Clear
+                markers.forEach(m => map.removeLayer(m.marker));
+                markers = [];
                 
-                // Rebuild Markers (Clean slate needed for complex state)
+                applyFilters(); // Filter & Rebuild
+            };
+
+            const applyFilters = () => {
+                const term = document.getElementById('inp-filter').value.toLowerCase();
+
+                // Clean existing layer
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
 
                 allPlaces.forEach(p => {
                     const isSaved = savedPlaces.find(s => s.id === p.id);
                     
-                    const div = document.createElement('div');
-                    div.className = `pin-wrap ${isSaved ? 'pin-saved' : ''}`;
+                    // STRICT FILTER: Match Name OR Saved
+                    // If filter exists: Show matches. If not matches but saved -> show ghosted? No, let's show ghosted.
+                    const match = !term || (p.name && p.name.toLowerCase().includes(term));
                     
-                    let icon = 'fa-utensils';
-                    if(p.type === 'bar' || p.type === 'pub') icon = 'fa-martini-glass';
-                    if(p.type === 'cafe') icon = 'fa-mug-hot';
-
-                    div.innerHTML = `<div class="pin-body"><i class="fa-solid ${isSaved ? 'fa-check' : icon}"></i></div>`;
+                    // Marker HTML
+                    const div = document.createElement('div');
+                    div.className = `pin-wrap ${isSaved ? 'saved' : ''} ${!match ? 'ghost' : ''}`;
+                    // If not match and not saved, don't show to avoid clutter? 
+                    // Let's show filtered items as very faint ghosts
+                    
+                    div.innerHTML = `<div class="pin-head"><i class="fa-solid ${isSaved?'fa-star':'fa-utensils'}"></i></div>`;
                     
                     const m = L.marker([p.lat, p.lon], {
-                        icon: L.divIcon({className:'c', html:div.outerHTML, iconAnchor:[20,40]})
+                        icon: L.divIcon({className:'c', html:div.outerHTML, iconAnchor:[16,32]}),
+                        zIndexOffset: isSaved ? 1000 : 0
                     }).addTo(map);
-                    
-                    m.on('click', () => select(p, isSaved));
-                    markers.push({id:p.id, marker:m, data:p});
+
+                    m.on('click', () => selectPlace(p, isSaved));
+                    markers.push({marker: m});
                 });
-                
-                applyFilters(); // Re-apply current filter
             };
 
             // --- CITY SEARCH ---
-            const fetchCitySuggestions = (val) => {
-                const list = document.getElementById('sugg-list');
-                clearTimeout(cityDebounce);
-                if(!val || val.length < 3) { list.classList.remove('active'); return; }
+            const searchCity = (val) => {
+                const box = document.getElementById('sugg-box');
+                clearTimeout(searchTimeout);
+                if(val.length < 3) { box.classList.remove('active'); return; }
 
-                cityDebounce = setTimeout(async () => {
-                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${val}&addressdetails=1&limit=4&accept-language=fr`);
-                    const data = await r.json();
-                    list.innerHTML = '';
-                    if(data.length) {
-                        data.forEach(item => {
-                            const d = document.createElement('div');
-                            d.className = 'sugg-item';
-                            d.innerHTML = `<i class="fa-solid fa-map-pin" style="color:#666"></i> ${item.display_name.split(',')[0]} <span style="opacity:0.5;font-size:11px">${item.address.country||''}</span>`;
-                            d.onclick = () => {
-                                document.getElementById('inp-city').value = item.display_name.split(',')[0];
-                                list.classList.remove('active');
-                                map.setView([item.lat, item.lon], 15);
-                            }
-                            list.appendChild(d);
-                        });
-                        list.classList.add('active');
-                    }
-                }, 400);
-            };
-
-            // --- LIST & GROUPING ---
-            const renderList = () => {
-                const c = document.getElementById('list-container');
-                if(!savedPlaces.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#666">Carnet vide.</div>'; return; }
-                
-                // Group by City (Basic Heuristic)
-                const groups = {};
-                savedPlaces.forEach(p => {
-                    let city = "Divers";
-                    if(p.addr && p.addr.length > 5) {
-                        // Mockup extraction. Real extraction needs geocoding details stored.
-                        // Here we assume if filtering works, we group by generic "Saved" if no city field.
-                        // Let's create a fake grouping for UI demo
-                        city = "Mes Favoris"; 
-                    }
-                    if(!groups[city]) groups[city] = [];
-                    groups[city].push(p);
-                });
-
-                let html = '';
-                for(const [city, items] of Object.entries(groups)) {
-                    html += `<div class="city-group"><div class="city-header">${city}</div>`;
-                    items.forEach(s => {
-                        html += `
-                        <div class="list-item" onclick="App.goto(${s.id})">
-                            <img src="${s.img}" class="list-thumb">
-                            <div style="flex:1">
-                                <div style="font-weight:700">${s.name}</div>
-                                <div style="font-size:12px;color:#888">${s.addr}</div>
-                                <div class="tag saved"><i class="fa-solid fa-check"></i> Enregistré</div>
-                            </div>
-                        </div>`;
+                searchTimeout = setTimeout(async () => {
+                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${val}&limit=3&accept-language=fr`);
+                    const d = await r.json();
+                    box.innerHTML = '';
+                    d.forEach(city => {
+                        const div = document.createElement('div');
+                        div.className = 'sugg-item';
+                        div.innerHTML = `<span>${city.display_name.split(',')[0]}</span>`;
+                        div.onclick = () => {
+                            map.setView([city.lat, city.lon], 14);
+                            box.classList.remove('active');
+                            document.getElementById('inp-city').value = city.display_name.split(',')[0];
+                        };
+                        box.appendChild(div);
                     });
-                    html += '</div>';
-                }
-                c.innerHTML = html;
+                    box.classList.add('active');
+                }, 500);
             };
 
-            // --- STANDARD UI FUNCTIONS ---
-            const locate = () => navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude], 16));
-            
-            const startCreation = () => {
-                document.getElementById('hud').style.display='none';
-                document.getElementById('side-ui').style.display='none';
-                document.getElementById('creation-ui').classList.add('active');
-                creationMarker = L.marker(map.getCenter(), {draggable:true, icon: L.divIcon({className:'pin-target', html:'<div class="pin-body"></div>'}), zIndexOffset:10000}).addTo(map);
+            // --- SELECTION & BANNER ---
+            const selectPlace = (p, saved) => {
+                selectedPlace = saved || p; // Use saved version if exists
+                
+                // Fly to
+                map.flyTo([p.lat - 0.002, p.lon], 16);
+
+                // Update Banner
+                document.getElementById('ban-title').innerText = p.name;
+                document.getElementById('ban-img').src = selectedPlace.img || DEFAULT_IMG;
+                
+                const score = selectedPlace.score?.total;
+                document.getElementById('ban-rating').innerHTML = score 
+                    ? `<i class="fa-solid fa-star"></i> ${score} / 10` 
+                    : `<span style="color:#999;font-weight:400">Non noté</span>`;
+                
+                document.getElementById('btn-edit').innerHTML = saved ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
+                
+                document.getElementById('banner').classList.add('active');
             };
-            
+
+            // --- CREATION MODE ---
+            const startCreation = () => {
+                document.getElementById('hud').style.display = 'none';
+                document.getElementById('side-ctrl').style.display = 'none';
+                document.getElementById('banner').classList.remove('active');
+                document.getElementById('creation-ui').classList.add('active');
+                
+                creationMarker = L.marker(map.getCenter(), {
+                    zIndexOffset: 5000,
+                    icon: L.divIcon({className:'pin-target', html:'<div class="pin-head"></div>'})
+                }).addTo(map);
+                
+                // Keep marker centered
+                map.on('move', () => creationMarker.setLatLng(map.getCenter()));
+            };
+
             const cancelCreation = () => {
                 if(creationMarker) map.removeLayer(creationMarker);
-                creationMarker = null;
-                document.getElementById('hud').style.display='flex';
-                document.getElementById('side-ui').style.display='flex';
+                map.off('move');
+                document.getElementById('hud').style.display = 'flex';
+                document.getElementById('side-ctrl').style.display = 'flex';
                 document.getElementById('creation-ui').classList.remove('active');
             };
 
-            const confirmCreation = async () => {
-                if(!creationMarker) return;
+            const confirmCreation = () => {
                 const pos = creationMarker.getLatLng();
-                const newPlace = { id: Date.now(), name: "Nouveau Lieu", addr: "Position épinglée", blob: "nouveau lieu", lat: pos.lat, lon: pos.lng, img: getImage(Date.now()), type: 'custom' };
+                const newObj = {
+                    id: Date.now(), name: "", addr: "Position repérée",
+                    lat: pos.lat, lon: pos.lng, img: null
+                };
                 cancelCreation();
-                savedPlaces.push(newPlace);
-                updateAll([]);
-                select(newPlace, newPlace);
+                // Select it immediately to allow edit
+                selectPlace(newObj, false); 
                 openModal();
             };
 
-            const select = (p, saved) => {
-                selectedPlace = p;
-                map.flyTo([p.lat - 0.002, p.lon], 16); // Offset for banner
-                document.getElementById('ban-title').innerText = p.name;
-                document.getElementById('ban-addr').innerText = p.addr;
-                document.getElementById('ban-img').src = saved?.customImg || p.img;
-                const b = document.getElementById('banner');
-                if(saved) b.classList.add('saved'); else b.classList.remove('saved');
-                b.classList.add('active');
-                document.getElementById('btn-action').innerHTML = saved ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
-            };
-
+            // --- MODAL & LOGIC ---
             const openModal = () => {
-                const s = savedPlaces.find(x=>x.id===selectedPlace.id) || selectedPlace;
-                document.getElementById('edit-name').value = s.name;
-                document.getElementById('edit-addr').value = s.addr;
-                document.getElementById('edit-memo').value = s.memo || "";
+                const p = selectedPlace;
+                
+                document.getElementById('edit-name').value = p.name || "";
+                document.getElementById('edit-addr').value = p.addr || "";
+                document.getElementById('edit-memo').value = p.memo || "";
+                document.getElementById('price-min').value = p.price?.min || "";
+                document.getElementById('price-max').value = p.price?.max || "";
+
+                // Scores
+                const s = p.score || {qp:5, taste:5, vibe:5, total:5};
+                document.getElementById('rng-qp').value = s.qp;
+                document.getElementById('rng-taste').value = s.taste;
+                document.getElementById('rng-vibe').value = s.vibe;
+                
+                // Image
+                currentImg = p.img || DEFAULT_IMG;
+                if(p.img) {
+                    document.getElementById('edit-img-preview').src = p.img;
+                    document.getElementById('edit-img-preview').style.display='block';
+                    document.getElementById('edit-img-lbl').style.display='none';
+                } else {
+                    document.getElementById('edit-img-preview').style.display='none';
+                    document.getElementById('edit-img-lbl').style.display='flex';
+                }
+
+                calcScore();
                 document.getElementById('modal').classList.add('open');
             };
-            const closeModal = () => document.getElementById('modal').classList.remove('open');
-            
+
+            const calcScore = () => {
+                const qp = parseFloat(document.getElementById('rng-qp').value);
+                const taste = parseFloat(document.getElementById('rng-taste').value);
+                const vibe = parseFloat(document.getElementById('rng-vibe').value);
+                
+                document.getElementById('val-qp').innerText = qp;
+                document.getElementById('val-taste').innerText = taste;
+                document.getElementById('val-vibe').innerText = vibe;
+
+                const total = ((qp + taste + vibe) / 3).toFixed(1);
+                document.getElementById('score-total').innerText = total;
+                return {qp, taste, vibe, total};
+            };
+
+            const handleImage = (input) => {
+                if(input.files && input.files[0]) {
+                    const r = new FileReader();
+                    r.onload = e => {
+                        currentImg = e.target.result;
+                        document.getElementById('edit-img-preview').src = currentImg;
+                        document.getElementById('edit-img-preview').style.display='block';
+                        document.getElementById('edit-img-lbl').style.display='none';
+                    };
+                    r.readAsDataURL(input.files[0]);
+                }
+            };
+
             const save = () => {
-                const name = document.getElementById('edit-name').value;
-                const entry = { ...selectedPlace, name, addr: document.getElementById('edit-addr').value, memo: document.getElementById('edit-memo').value, blob: normalize(name) };
+                const name = document.getElementById('edit-name').value || "Sans nom";
+                
+                const finalObj = {
+                    ...selectedPlace,
+                    name: name,
+                    addr: document.getElementById('edit-addr').value,
+                    memo: document.getElementById('edit-memo').value,
+                    price: { min: document.getElementById('price-min').value, max: document.getElementById('price-max').value },
+                    score: calcScore(),
+                    img: currentImg === DEFAULT_IMG ? null : currentImg
+                };
+
+                // DB Save
                 const tx = db.transaction('places', 'readwrite');
-                tx.objectStore('places').put(entry);
+                tx.objectStore('places').put(finalObj);
+
+                // Local Update
+                const idx = savedPlaces.findIndex(s=>s.id===finalObj.id);
+                if(idx>-1) savedPlaces[idx] = finalObj; else savedPlaces.push(finalObj);
                 
-                const idx = savedPlaces.findIndex(s=>s.id===entry.id);
-                if(idx>-1) savedPlaces[idx]=entry; else savedPlaces.push(entry);
-                
-                closeModal(); updateAll([]); select(entry, entry);
+                closeModal();
+                updateMapMarkers();
+                selectPlace(finalObj, finalObj);
             };
 
             const removePlace = () => {
-                if(!confirm('Supprimer ?')) return;
-                db.transaction('places', 'readwrite').objectStore('places').delete(selectedPlace.id);
-                savedPlaces = savedPlaces.filter(s=>s.id!==selectedPlace.id);
-                closeModal(); document.getElementById('banner').classList.remove('active');
-                updateAll([]);
+                if(!confirm("Supprimer ?")) return;
+                const tx = db.transaction('places', 'readwrite');
+                tx.objectStore('places').delete(selectedPlace.id);
+                
+                savedPlaces = savedPlaces.filter(s=>s.id !== selectedPlace.id);
+                closeModal();
+                document.getElementById('banner').classList.remove('active');
+                updateMapMarkers();
             };
 
+            const closeModal = () => document.getElementById('modal').classList.remove('open');
+
+            // --- LIST & NAV ---
             const nav = (view) => {
-                document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-                document.getElementById('nav-'+view).classList.add('active');
-                if(view==='list') { renderList(); document.getElementById('view-list').classList.add('active'); }
-                else document.getElementById('view-list').classList.remove('active');
+                document.getElementById('nav-map').classList.toggle('active', view==='map');
+                document.getElementById('nav-list').classList.toggle('active', view==='list');
+                
+                if(view === 'list') {
+                    renderList();
+                    document.getElementById('list-overlay').classList.add('open');
+                } else {
+                    document.getElementById('list-overlay').classList.remove('open');
+                }
+            };
+
+            const renderList = () => {
+                const c = document.getElementById('list-container');
+                if(!savedPlaces.length) { c.innerHTML = '<div style="text-align:center;color:#999;margin-top:40px">Carnet vide.</div>'; return; }
+                
+                c.innerHTML = savedPlaces.map(s => `
+                    <div class="list-card" onclick="App.goto(${s.id})">
+                        <img src="${s.img || DEFAULT_IMG}">
+                        <div style="flex:1">
+                            <div style="font-weight:700; font-size:16px">${s.name}</div>
+                            <div style="font-size:12px; color:#666">${s.addr}</div>
+                            <div style="margin-top:6px; font-weight:700; color:var(--primary); font-size:12px">
+                                <i class="fa-solid fa-star"></i> ${s.score?.total || '-'} / 10
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
             };
 
             const goto = (id) => {
                 const s = savedPlaces.find(x=>x.id===id);
-                if(s) { nav('map'); select(s, s); }
+                nav('map');
+                setTimeout(() => selectPlace(s, s), 400);
             };
 
-            const setLoading = (show) => {
-                const l = document.getElementById('loader');
-                if(show) l.classList.add('active'); else l.classList.remove('active');
+            const locate = () => {
+                navigator.geolocation.getCurrentPosition(p => {
+                    map.setView([p.coords.latitude, p.coords.longitude], 16);
+                });
             };
 
-            return { init, scan, locate, applyFilters, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, removePlace, nav, goto };
+            return { 
+                init, searchCity, applyFilters, locate, 
+                startCreation, cancelCreation, confirmCreation, 
+                openModal, closeModal, save, removePlace, 
+                calcScore, handleImage, nav, goto 
+            };
         })();
 
         window.onload = App.init;
