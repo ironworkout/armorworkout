@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>THE HUNTER v19</title>
+    
+    <!-- Libs -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- THEME NEON v2 --- */
+        :root {
+            --bg: #050505;
+            --surface: #121214;
+            --glass: rgba(20, 20, 25, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1; 
+            --primary-light: #818cf8;
+            --accent: #f43f5e;
+            --gold: #fbbf24;
+            --text: #ffffff;
+            --text-sec: #9ca3af;
+            --font: 'Plus Jakarta Sans', sans-serif;
+            --ease: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+        
+        body { 
+            margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); 
+            height: 100dvh; width: 100vw; overflow: hidden; position: fixed; 
+        }
+
+        /* --- MAP --- */
+        #map { width: 100%; height: 100%; z-index: 0; background: #111; }
+        .leaflet-container { background: #111; font-family: var(--font); }
+        .leaflet-control-attribution { display: none; }
+        .leaflet-tile { filter: contrast(1.1) saturate(1.1); }
+
+        /* --- UI GLOBAL --- */
+        .loader-pill {
+            position: absolute; top: 110px; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: rgba(10,10,10,0.9); border: 1px solid var(--glass-border); 
+            padding: 8px 20px; border-radius: 30px; 
+            display: flex; align-items: center; gap: 10px;
+            font-size: 12px; font-weight: 700; z-index: 2000; opacity: 0; pointer-events: none; 
+            transition: 0.3s var(--ease); color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .loader-pill.active { opacity: 1; transform: translateX(-50%) scale(1); top: 125px; }
+        .spin { animation: spin 1s infinite linear; color: var(--primary); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* HUD */
+        .hud-top {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 3000;
+            padding: max(15px, env(safe-area-inset-top)) 16px 10px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            display: flex; gap: 12px; pointer-events: none;
+        }
+        .search-group { position: relative; flex: 1; pointer-events: auto; }
+        
+        .pill {
+            height: 52px; border-radius: 16px; width: 100%;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); transition: 0.3s;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+        .pill:focus-within { border-color: var(--primary); background: #1e1e24; }
+        .pill i { color: var(--text-sec); margin-right: 12px; font-size: 16px; }
+        .pill input { background: transparent; border: none; color: white; width: 100%; font-weight: 600; font-family: var(--font); font-size: 15px; }
+
+        .suggestions-list {
+            position: absolute; top: 60px; left: 0; right: 0;
+            background: #1c1c1f; border: 1px solid var(--glass-border); border-radius: 16px;
+            max-height: 250px; overflow-y: auto; display: none;
+            flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.9); z-index: 4000;
+        }
+        .suggestions-list.active { display: flex; }
+        .sugg-item {
+            padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); 
+            font-size: 13px; color: #ddd; cursor: pointer; display: flex; align-items: center; gap: 12px;
+        }
+        .sugg-item:active { background: rgba(255,255,255,0.1); }
+
+        /* Side & Pins */
+        .side-stack { position: absolute; top: 170px; right: 16px; z-index: 900; display: flex; flex-direction: column; gap: 12px; pointer-events: auto; }
+        .btn-round {
+            width: 50px; height: 50px; border-radius: 16px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 20px; cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+        }
+        .btn-round:active { transform: scale(0.92); }
+        .btn-round.primary { background: white; color: black; border: none; }
+
+        .pin-wrap { width: 40px; height: 40px; pointer-events: none; transition: 0.3s; }
+        .pin-wrap.dimmed { opacity: 0.3; filter: grayscale(1); }
+        .pin-body {
+            width: 32px; height: 32px; border-radius: 50% 50% 0 50%; transform: rotate(45deg); 
+            position: absolute; left: 4px; top: 0; border: 2px solid #fff; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            background: #27272a; pointer-events: auto; transition: 0.3s;
+        }
+        .pin-body:active { transform: rotate(45deg) scale(0.8); }
+        .pin-body i { transform: rotate(-45deg); font-size: 13px; color: #fff; }
+        .pin-saved .pin-body { background: var(--gold); border-color: #fff; z-index: 200; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+        .pin-saved .pin-body i { color: #000; font-weight: 800; }
+        
+        /* Banner */
+        .banner {
+            position: absolute; bottom: 100px; left: 16px; right: 16px;
+            background: rgba(25, 25, 30, 0.9); border-radius: 20px; padding: 16px;
+            display: flex; align-items: center; gap: 16px; z-index: 1100;
+            transform: translateY(150%); transition: 0.4s var(--ease); 
+            border: 1px solid var(--glass-border); backdrop-filter: blur(25px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .banner.active { transform: translateY(0); }
+        .banner-img { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; background: #333; }
+        .banner-info { flex: 1; overflow: hidden; }
+        .banner-title { margin: 0; font-size: 16px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .banner-addr { font-size: 12px; color: var(--text-sec); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+        .btn-fab { 
+            width: 46px; height: 46px; border-radius: 14px; border: none; 
+            background: #333; color: white; display: flex; align-items: center; justify-content: center; 
+            font-size: 18px; cursor: pointer; transition: 0.2s;
+        }
+        .banner.saved .btn-fab { background: var(--gold); color: black; }
+
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 5000; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .sheet { 
+            background: #151518; width: 100%; border-radius: 32px 32px 0 0; 
+            border-top: 1px solid #333; padding: 30px 24px 50px; 
+            transform: translateY(100%); transition: 0.4s var(--ease); 
+        }
+        .modal.open .sheet { transform: translateY(0); }
+        .inp { 
+            width: 100%; background: #222; border: 1px solid #333; 
+            color: white; padding: 16px; border-radius: 16px; margin-bottom: 12px; 
+            font-family: var(--font); font-size: 15px;
+        }
+        .btn-save { 
+            width: 100%; padding: 16px; background: var(--primary); color: white; 
+            font-weight: 800; border: none; border-radius: 18px; font-size: 15px; margin-top: 10px;
+        }
+
+        /* --- LIST VIEW AMELIOREE --- */
+        .list-view { 
+            position: absolute; inset: 0; background: #050505; z-index: 800; 
+            padding: 120px 0 100px; transform: translateX(20%); opacity: 0; 
+            pointer-events: none; transition: 0.4s var(--ease); overflow-y: auto; 
+        }
+        .list-view.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        
+        .list-header-main { padding: 0 24px 20px; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+
+        /* Group Header (Ville) */
+        .group-header {
+            position: sticky; top: 0; z-index: 10;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 24px;
+            font-size: 14px; font-weight: 700;
+            color: var(--primary-light);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .group-count { background: rgba(99, 102, 241, 0.2); color: var(--primary-light); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+        /* List Item Card */
+        .list-item { 
+            background: #121214; margin: 16px 20px; padding: 16px; 
+            border-radius: 20px; display: flex; gap: 16px; align-items: flex-start;
+            border: 1px solid #222; transition: 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .list-item:active { transform: scale(0.98); background: #18181b; }
+        
+        .list-img { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; background: #222; flex-shrink: 0; }
+        
+        .list-content { flex: 1; min-width: 0; }
+        .list-name { font-weight: 700; font-size: 16px; color: white; margin-bottom: 4px; }
+        .list-addr { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Tags & Memo */
+        .list-meta { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag {
+            font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 8px;
+            text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;
+        }
+        .tag.bar { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.2); }
+        .tag.food { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); }
+        .tag.cafe { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
+        
+        .memo-preview {
+            margin-top: 8px; padding: 8px 12px; background: rgba(255,255,255,0.03); 
+            border-radius: 10px; font-size: 12px; color: #aaa; font-style: italic;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .memo-preview i { font-size: 10px; margin-right: 5px; color: #666; }
+
+        /* Nav */
+        .nav { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; 
+            background: rgba(10,10,12, 0.95); display: flex; justify-content: space-around; 
+            padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); z-index: 1000; 
+            backdrop-filter: blur(25px); padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #555; font-size: 11px; font-weight: 700; gap: 6px; width: 70px; }
+        .nav-item.active { color: white; }
+        .nav-item.active i { color: var(--primary); transform: translateY(-4px); text-shadow: 0 4px 15px rgba(99, 102, 241, 0.6); }
+        .nav-item i { font-size: 22px; transition: 0.3s; }
+        
+        /* Creation UI */
+        .creation-ui { position: absolute; bottom: 120px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .creation-ui.active { opacity: 1; pointer-events: auto; }
+        .btn-confirm { background: var(--accent); color: white; padding: 0 32px; height: 50px; border-radius: 25px; border: none; font-weight: 800; font-size: 14px; box-shadow: 0 10px 30px rgba(244, 63, 94, 0.5); cursor: pointer; text-transform: uppercase; }
+        .btn-cancel { background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; color: white; font-size: 12px; cursor: pointer; backdrop-filter: blur(4px); }
+        
+        /* Specific Pins */
+        .pin-target { z-index: 9999 !important; margin-top: -26px; margin-left: -20px; pointer-events: none; }
+        .pin-target .pin-body { background: var(--accent); width: 48px; height: 48px; border-width: 3px; box-shadow: 0 0 30px rgba(244, 63, 94, 0.7); }
+
+    </style>
+</head>
+<body>
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- LOADER -->
+    <div class="loader-pill" id="loader">
+        <i class="fa-solid fa-circle-notch spin"></i>
+        <span id="loader-txt">Chargement...</span>
+    </div>
+
+    <!-- HUD TOP -->
+    <div class="hud-top" id="hud">
+        <div class="search-group">
+            <div class="pill">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="inp-city" placeholder="Ville..." autocomplete="off">
+            </div>
+            <div class="suggestions-list" id="sugg-list"></div>
+        </div>
+        <div class="pill" style="width: 120px; flex: none;">
+            <i class="fa-solid fa-filter" style="color:var(--primary)"></i>
+            <input type="text" id="inp-filter" placeholder="Filtre..." oninput="App.applyFilters()">
+        </div>
+    </div>
+
+    <!-- SIDE UI -->
+    <div class="side-stack" id="side-ui">
+        <div class="btn-round primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></div>
+        <div class="btn-round" onclick="App.locate()"><i class="fa-solid fa-location-crosshairs"></i></div>
+    </div>
+
+    <!-- CREATION -->
+    <div class="creation-ui" id="creation-ui">
+        <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER</button>
+        <div class="btn-cancel" onclick="App.cancelCreation()">Annuler</div>
+    </div>
+
+    <!-- BANNER -->
+    <div class="banner" id="banner">
+        <img src="" class="banner-img" id="ban-img">
+        <div class="banner-info">
+            <h3 class="banner-title" id="ban-title">...</h3>
+            <div class="banner-addr" id="ban-addr">...</div>
+        </div>
+        <button class="btn-fab" id="btn-action" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="sheet">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0; font-size:20px;">Détails</h3>
+                <i class="fa-solid fa-xmark" onclick="App.closeModal()" style="padding:5px; opacity:0.6; cursor:pointer"></i>
+            </div>
+            <input type="text" class="inp" id="edit-name" placeholder="Nom...">
+            <input type="text" class="inp" id="edit-addr" placeholder="Adresse...">
+            <textarea class="inp" id="edit-memo" rows="4" placeholder="Notes..."></textarea>
+            <button class="btn-save" onclick="App.save()">ENREGISTRER</button>
+            <div style="text-align:center; margin-top:20px; color:#ef4444; font-size:13px; cursor:pointer" onclick="App.removePlace()">Supprimer</div>
+        </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="list-view" id="view-list">
+        <div class="list-header-main">Carnet</div>
+        <div id="list-container"></div>
+        <div style="height:120px"></div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav" id="nav">
+        <div class="nav-item active" onclick="App.nav('map')" id="nav-map"><i class="fa-solid fa-map"></i><span>Carte</span></div>
+        <div class="nav-item" onclick="App.nav('list')" id="nav-list"><i class="fa-solid fa-bookmark"></i><span>Liste</span></div>
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const App = (() => {
+            let map, db;
+            let markers = [];
+            let allPlaces = []; 
+            let savedPlaces = [];
+            let selectedPlace = null;
+            let creationMarker = null;
+            let cityDebounce;
+            let isScanning = false;
+            let isCreating = false;
+
+            const normalize = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+            const getImage = (id) => `https://picsum.photos/seed/${id}/150/150`;
+
+            const init = async () => {
+                await initDB();
+                await loadSaved();
+                initMap();
+                
+                document.getElementById('inp-city').addEventListener('input', (e) => fetchCitySuggestions(e.target.value));
+                document.getElementById('modal').addEventListener('click', (e) => { if(e.target.id === 'modal') closeModal(); });
+            };
+
+            const initDB = () => new Promise(r => {
+                const req = indexedDB.open('HunterV19', 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
+                req.onsuccess = e => { db = e.target.result; r(); };
+            });
+
+            const loadSaved = () => new Promise(r => {
+                db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => {
+                    savedPlaces = e.target.result || [];
+                    r();
+                };
+            });
+
+            const initMap = () => {
+                map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
+                updateAll([]); 
+                if(savedPlaces.length === 0) setTimeout(() => scan(true), 1500);
+                else {
+                     setTimeout(() => {
+                        if(savedPlaces.length>0) {
+                            const group = new L.featureGroup(markers.map(m=>m.marker));
+                            map.fitBounds(group.getBounds(), {padding:[50,50]});
+                        }
+                     }, 500);
+                }
+                map.on('moveend', () => { if(map.getZoom()>=14 && !isCreating) scan(false); });
+            };
+
+            const fetchCitySuggestions = (val) => {
+                const list = document.getElementById('sugg-list');
+                clearTimeout(cityDebounce);
+                if(!val || val.length < 3) { list.classList.remove('active'); return; }
+
+                cityDebounce = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${val}&addressdetails=1&limit=5&accept-language=fr`);
+                        const data = await r.json();
+                        list.innerHTML = '';
+                        if(data.length > 0) {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'sugg-item';
+                                div.innerHTML = `<div>${item.display_name.split(',')[0]} <small style="opacity:0.5">${item.address.country||''}</small></div>`;
+                                div.onclick = () => {
+                                    document.getElementById('inp-city').value = item.display_name.split(',')[0];
+                                    list.classList.remove('active');
+                                    map.setView([item.lat, item.lon], 15);
+                                };
+                                list.appendChild(div);
+                            });
+                            list.classList.add('active');
+                        } else list.classList.remove('active');
+                    } catch(e) {}
+                }, 400);
+            };
+
+            const locate = () => {
+                setLoading(true, "Localisation...");
+                navigator.geolocation.getCurrentPosition(p => {
+                    map.setView([p.coords.latitude, p.coords.longitude], 16);
+                    setLoading(false);
+                }, () => setLoading(false));
+            };
+
+            const scan = async (manual) => {
+                if(isScanning) return;
+                isScanning = true;
+                if(manual) setLoading(true, "Exploration...");
+                else {
+                    const l = document.getElementById('loader');
+                    document.getElementById('loader-txt').innerText = "Mise à jour...";
+                    l.classList.add('active');
+                }
+
+                const b = map.getBounds();
+                const q = `[out:json][timeout:10];node["amenity"~"restaurant|bar|cafe|fast_food|pub"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
+
+                try {
+                    const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
+                    const d = await r.json();
+                    const apiData = d.elements.map(el => {
+                        const t = el.tags;
+                        const addr = [t['addr:housenumber'], t['addr:street'], t['addr:city']].filter(Boolean).join(' ') || "Adresse inconnue";
+                        return {
+                            id: el.id, name: t.name || "Sans nom", addr: addr,
+                            blob: normalize(`${t.name} ${addr} ${t.cuisine} ${t.amenity}`),
+                            lat: el.lat, lon: el.lon, img: getImage(el.id),
+                            type: t.amenity // Pour classifier
+                        };
+                    });
+                    updateAll(apiData);
+                } catch(e) {}
+                setLoading(false); isScanning = false;
+            };
+
+            const updateAll = (apiData) => {
+                allPlaces = [...savedPlaces];
+                apiData.forEach(p => { if(!savedPlaces.find(s=>s.id === p.id)) allPlaces.push(p); });
+                applyFilters();
+            };
+
+            const applyFilters = () => {
+                const term = normalize(document.getElementById('inp-filter').value);
+                markers.forEach(o => map.removeLayer(o.marker));
+                markers = [];
+
+                allPlaces.forEach(p => {
+                    const isSaved = savedPlaces.find(x => x.id === p.id);
+                    const match = !term || p.blob.includes(term);
+                    if(term && !match && !isSaved) return;
+
+                    const div = document.createElement('div');
+                    div.className = `pin-wrap ${(!match && term) ? 'dimmed' : ''}`;
+                    let icon = 'fa-utensils';
+                    if(p.blob.includes('bar') || p.blob.includes('pub')) icon = 'fa-martini-glass';
+                    if(p.blob.includes('cafe')) icon = 'fa-mug-hot';
+                    
+                    div.innerHTML = `<div class="pin-body"><i class="fa-solid ${isSaved ? 'fa-check' : icon}"></i></div>`;
+                    if(isSaved) div.classList.add('pin-saved');
+                    
+                    const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:'c', html:div.outerHTML, iconAnchor:[20,40]})}).addTo(map);
+                    m.on('click', () => select(p, isSaved));
+                    markers.push({id:p.id, marker:m});
+                });
+            };
+
+            // --- LIST & GROUPING ---
+            const extractCity = (addr) => {
+                if(!addr) return "Inconnu";
+                const parts = addr.split(',');
+                // Simple heuristic: la ville est souvent le dernier bloc de texte non numérique
+                // Si l'adresse est simple (ex: 12 rue de la Paix, Paris), on prend la fin
+                // Si format simple sans virgule, on essaie de deviner
+                if(parts.length > 1) {
+                    let city = parts[parts.length - 1].trim(); 
+                    // Si c'est un pays ou code postal, on remonte
+                    if(!isNaN(parseInt(city)) || city.length < 2) city = parts[parts.length - 2]?.trim() || "Divers";
+                    // Nettoyage code postal (75000 Paris -> Paris)
+                    return city.replace(/[0-9]/g, '').trim();
+                } 
+                // Fallback: Si adresse contient "Paris", "Lille"... (basique)
+                const known = ["Paris", "Lyon", "Marseille", "Lille", "Bordeaux", "Toulouse"];
+                for(let k of known) if(addr.includes(k)) return k;
+                return "Divers";
+            };
+
+            const renderList = () => {
+                const container = document.getElementById('list-container');
+                if(savedPlaces.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;color:#666;margin-top:50px">Aucun lieu favori.</div>';
+                    return;
+                }
+
+                // Group by City
+                const grouped = {};
+                savedPlaces.forEach(p => {
+                    const city = extractCity(p.addr);
+                    if(!grouped[city]) grouped[city] = [];
+                    grouped[city].push(p);
+                });
+
+                // Sort cities alphabetically
+                const sortedCities = Object.keys(grouped).sort();
+
+                let html = '';
+                sortedCities.forEach(city => {
+                    const items = grouped[city];
+                    html += `
+                        <div class="group-header">
+                            <span>${city.toUpperCase()}</span>
+                            <span class="group-count">${items.length}</span>
+                        </div>
+                    `;
+                    
+                    items.forEach(s => {
+                        // Determine tag
+                        let tag = {cls:'food', txt:'Resto', i:'fa-utensils'};
+                        const b = s.blob || "";
+                        if(b.includes('bar') || b.includes('pub')) tag = {cls:'bar', txt:'Bar', i:'fa-martini-glass'};
+                        else if(b.includes('cafe')) tag = {cls:'cafe', txt:'Café', i:'fa-mug-hot'};
+
+                        // Memo preview
+                        const memoHtml = s.memo ? `<div class="memo-preview"><i class="fa-solid fa-quote-left"></i>${s.memo}</div>` : '';
+
+                        html += `
+                        <div class="list-item" onclick="App.goto(${s.id})">
+                            <img src="${s.img}" class="list-img">
+                            <div class="list-content">
+                                <div class="list-name">${s.name}</div>
+                                <div class="list-addr">${s.addr}</div>
+                                <div class="list-meta">
+                                    <div class="tag ${tag.cls}"><i class="fa-solid ${tag.i}"></i> ${tag.txt}</div>
+                                </div>
+                                ${memoHtml}
+                            </div>
+                        </div>`;
+                    });
+                });
+                container.innerHTML = html;
+            };
+
+            // --- CREATION & EDIT ---
+            const startCreation = () => {
+                isCreating = true;
+                document.getElementById('hud').style.display = 'none';
+                document.getElementById('side-ui').style.display = 'none';
+                document.getElementById('banner').classList.remove('active');
+                document.getElementById('creation-ui').classList.add('active');
+                const center = map.getCenter();
+                creationMarker = L.marker(center, {draggable:true, icon: L.divIcon({className:'pin-target', html:'<div class="pin-body"><i class="fa-solid fa-plus"></i></div>', iconAnchor:[24,48]}), zIndexOffset:10000}).addTo(map);
+            };
+
+            const cancelCreation = () => {
+                if(creationMarker) map.removeLayer(creationMarker);
+                creationMarker = null; isCreating = false;
+                document.getElementById('hud').style.display = 'flex';
+                document.getElementById('side-ui').style.display = 'flex';
+                document.getElementById('creation-ui').classList.remove('active');
+            };
+
+            const confirmCreation = async () => {
+                if(!creationMarker) return;
+                const pos = creationMarker.getLatLng();
+                let addr = "Position repérée";
+                setLoading(true, "Analyse...");
+                try {
+                    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`);
+                    const d = await r.json();
+                    if(d.display_name) addr = d.display_name;
+                } catch(e){}
+                setLoading(false);
+
+                const id = Date.now();
+                const newPlace = { id, name: "Nouveau Lieu", addr, blob: normalize("Nouveau Lieu " + addr), lat: pos.lat, lon: pos.lng, img: getImage(id) };
+                cancelCreation();
+                savedPlaces.push(newPlace);
+                updateAll([]);
+                select(newPlace, newPlace);
+                setTimeout(openModal, 400);
+            };
+
+            const select = (p, saved) => {
+                selectedPlace = p;
+                map.flyTo([p.lat - 0.002, p.lon], 16);
+                document.getElementById('ban-title').innerText = p.name;
+                document.getElementById('ban-addr').innerText = p.addr;
+                document.getElementById('ban-img').src = saved?.customImg || p.img;
+                const b = document.getElementById('banner');
+                if(saved) b.classList.add('saved'); else b.classList.remove('saved');
+                b.classList.add('active');
+                document.getElementById('btn-action').innerHTML = saved ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
+            };
+
+            const openModal = () => {
+                const s = savedPlaces.find(x=>x.id===selectedPlace.id) || selectedPlace;
+                document.getElementById('edit-name').value = s.name;
+                document.getElementById('edit-addr').value = s.addr;
+                document.getElementById('edit-memo').value = s.memo || "";
+                document.getElementById('modal').classList.add('open');
+            };
+            const closeModal = () => document.getElementById('modal').classList.remove('open');
+            
+            const save = () => {
+                const name = document.getElementById('edit-name').value;
+                const addr = document.getElementById('edit-addr').value;
+                const entry = {
+                    ...selectedPlace, name, addr,
+                    memo: document.getElementById('edit-memo').value,
+                    blob: normalize(name + " " + addr)
+                };
+                const tx = db.transaction('places', 'readwrite');
+                tx.objectStore('places').put(entry);
+                const idx = savedPlaces.findIndex(s=>s.id===entry.id);
+                if(idx>-1) savedPlaces[idx]=entry; else savedPlaces.push(entry);
+                closeModal(); updateAll([]); select(entry, entry);
+            };
+
+            const removePlace = () => {
+                if(!confirm("Supprimer ?")) return;
+                db.transaction('places', 'readwrite').objectStore('places').delete(selectedPlace.id);
+                savedPlaces = savedPlaces.filter(s=>s.id!==selectedPlace.id);
+                allPlaces = allPlaces.filter(p=>p.id!==selectedPlace.id);
+                closeModal(); document.getElementById('banner').classList.remove('active'); applyFilters();
+            };
+
+            const goto = (id) => {
+                const s = savedPlaces.find(x=>x.id===id);
+                if(s) { nav('map'); select(s, s); }
+            };
+
+            const nav = (v) => {
+                document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+                document.getElementById('nav-'+v).classList.add('active');
+                if(v==='list'){ renderList(); document.getElementById('view-list').classList.add('active'); }
+                else document.getElementById('view-list').classList.remove('active');
+            };
+
+            const setLoading = (b, txt="...") => {
+                const l = document.getElementById('loader');
+                if(b) { document.getElementById('loader-txt').innerText=txt; l.classList.add('active'); }
+                else l.classList.remove('active');
+            };
+
+            return { init, scan, locate, applyFilters, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, removePlace, nav, goto };
+        })();
+        window.onload = App.init;
+    </script>
+</body>
+</html>
