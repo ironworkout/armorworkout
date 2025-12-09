@@ -5,418 +5,438 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Guide Michelin du SIL59 v23</title>
+    <title>Guide Michelin SIL - v26</title>
     
-    <!-- Libraries -->
+    <!-- Leaflet & FontAwesome -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Identity Services -->
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         /* --- VARIABLES --- */
         :root {
-            --primary: #bd0000; /* Rouge Guide */
+            --primary: #bd0000;
             --bg: #ffffff;
             --text: #1a1a1a;
-            --border: #e5e7eb;
-            --shadow: 0 8px 30px rgba(0,0,0,0.12);
+            --border: #e0e0e0;
             --font-title: 'Playfair Display', serif;
             --font-body: 'Inter', sans-serif;
-            
-            /* Couleurs Notes */
-            --score-high: #059669; /* Vert */
-            --score-mid: #d97706;  /* Jaune/Orange */
-            --score-low: #ef4444;  /* Rouge */
+            --z-map: 0;
+            --z-ui: 1000;
+            --z-modal: 9999;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        input, textarea { user-select: text !important; -webkit-user-select: text !important; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { margin: 0; width: 100vw; height: 100dvh; background: var(--bg); font-family: var(--font-body); overflow: hidden; position: fixed; }
 
-        body { 
-            margin: 0; padding: 0; width: 100vw; height: 100dvh; 
-            background: var(--bg); color: var(--text); font-family: var(--font-body);
-            overflow: hidden; position: fixed;
-        }
-
-        /* --- MAP --- */
-        #map { position: absolute; inset: 0; z-index: 1; background: #e5e5e5; }
-        .leaflet-container { font-family: var(--font-body); }
-        .leaflet-control-attribution { display: none; }
-
-        /* --- LOADER --- */
-        .loader-pill {
-            position: absolute; top: 110px; left: 50%; transform: translateX(-50%) translateY(-20px);
-            background: rgba(255,255,255,0.95); padding: 10px 20px; border-radius: 30px;
-            box-shadow: var(--shadow); border: 1px solid var(--border);
-            z-index: 2000; display: flex; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 700; color: var(--primary);
-            opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .loader-pill.active { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .spin { animation: spin 1s infinite linear; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* --- UI LAYER --- */
-        .ui-layer { position: absolute; inset: 0; z-index: 1000; pointer-events: none; }
-
-        /* HEADER */
-        .header-wrap {
-            padding: max(15px, env(safe-area-inset-top)) 15px 10px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.9) 60%, rgba(255,255,255,0) 100%);
-            display: flex; flex-direction: column; gap: 12px; pointer-events: auto;
-        }
-        .brand {
-            align-self: center; background: white; padding: 8px 18px; border-radius: 30px;
-            border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            font-family: var(--font-title); font-weight: 900; color: var(--primary); font-size: 17px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .search-bar { display: flex; gap: 10px; max-width: 600px; margin: 0 auto; width: 100%; }
-        .pill {
-            flex: 1; height: 48px; background: white; border-radius: 12px;
-            border: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: 0.2s;
-        }
-        .pill:focus-within { border-color: var(--primary); box-shadow: 0 4px 15px rgba(189,0,0,0.1); }
-        .pill i { color: #9ca3af; margin-right: 12px; }
-        .pill input { border: none; width: 100%; font-size: 14px; font-weight: 600; color: var(--text); background: transparent; }
+        /* --- MAP FIX --- */
+        #map { position: absolute; inset: 0; z-index: var(--z-map); background: #e5e5e5; }
         
-        /* SUGGESTIONS */
-        .sugg-box {
-            background: white; border-radius: 12px; box-shadow: var(--shadow); margin: 0 auto; width: 100%; max-width: 600px;
-            overflow: hidden; display: none; margin-top: 5px; border: 1px solid var(--border);
-        }
-        .sugg-box.active { display: block; }
-        .sugg-item { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; }
-        .sugg-item:hover { background: #f9fafb; }
+        /* FORCE CLICKABILITY ON MARKERS */
+        .leaflet-interactive { cursor: pointer !important; pointer-events: auto !important; }
+        .leaflet-pane { z-index: 100 !important; } /* Ensure map panes are layered correctly */
+        .leaflet-bottom, .leaflet-top { z-index: 500 !important; } /* Controls above markers */
 
-        /* FABs */
-        .fabs { position: absolute; bottom: 110px; right: 16px; display: flex; flex-direction: column; gap: 12px; pointer-events: auto; }
+        /* --- UI LAYER (CLICK THROUGH) --- */
+        .ui-layer {
+            position: absolute; inset: 0; z-index: var(--z-ui); pointer-events: none;
+            display: flex; flex-direction: column;
+        }
+        /* Allow clicks on specific UI elements */
+        .pointer-auto { pointer-events: auto; }
+
+        /* --- HEADER & DRIVE BTN --- */
+        .header-bar {
+            padding: max(15px, env(safe-area-inset-top)) 15px 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95) 60%, rgba(255,255,255,0) 100%);
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+
+        .brand-title {
+            font-family: var(--font-title); font-size: 18px; font-weight: 800; color: var(--primary);
+            background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid #eee;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 8px;
+        }
+
+        /* DRIVE BUTTON (FIXED POSITION) */
+        .btn-drive {
+            position: absolute; top: max(15px, env(safe-area-inset-top)); right: 15px;
+            width: 40px; height: 40px; background: white; border-radius: 50%;
+            border: 2px solid #ccc; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: #999; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: 0.3s; pointer-events: auto; z-index: 2000;
+        }
+        .btn-drive.connected { border-color: #059669; color: #059669; }
+        .btn-drive.syncing { border-color: #f59e0b; color: #f59e0b; animation: spin 1s infinite linear; }
+
+        .search-container { width: 100%; max-width: 500px; display: flex; gap: 8px; }
+        .search-inp {
+            flex: 1; height: 44px; background: white; border: 1px solid #ddd; border-radius: 12px;
+            padding: 0 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .search-inp input { border: none; width: 100%; font-family: var(--font-body); font-weight: 600; color: #333; }
+        
+        /* --- SIDE CONTROLS --- */
+        .side-btns { position: absolute; bottom: 120px; right: 15px; display: flex; flex-direction: column; gap: 12px; }
         .fab {
-            width: 50px; height: 50px; border-radius: 50%; background: white; border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #374151;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s;
+            width: 48px; height: 48px; background: white; border-radius: 50%; border: 1px solid #eee;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); cursor: pointer;
         }
         .fab:active { transform: scale(0.9); }
-        .fab.main { color: var(--primary); }
 
-        /* BANNER */
-        .banner {
-            position: absolute; bottom: 100px; left: 16px; right: 16px; margin: 0 auto; max-width: 500px;
-            background: white; padding: 14px; border-radius: 16px; border: 1px solid var(--border);
-            box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
-            transform: translateY(150%); transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto;
-        }
-        .banner.active { transform: translateY(0); }
-        .ban-img { width: 56px; height: 56px; border-radius: 10px; background: #eee; object-fit: cover; }
-        .ban-info { flex: 1; overflow: hidden; }
-        .ban-title { font-family: var(--font-title); font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ban-note { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; margin-top: 4px; }
-        .note-badge { padding: 2px 6px; border-radius: 6px; color: white; background: #ccc; }
-        .btn-open { width: 40px; height: 40px; border-radius: 10px; background: #111; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
-
-        /* CREATION UI */
-        .creation-ui {
-            position: absolute; bottom: 120px; left: 0; right: 0;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            pointer-events: none; opacity: 0; transition: 0.3s;
-        }
-        .creation-ui.active { opacity: 1; pointer-events: auto; }
-        .btn-confirm {
-            background: var(--primary); color: white; padding: 14px 28px; border-radius: 30px;
-            border: none; font-weight: 800; font-size: 13px; letter-spacing: 0.5px;
-            box-shadow: 0 10px 30px rgba(189,0,0,0.3); cursor: pointer;
-        }
-        .btn-cancel { background: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
-        /* MARKERS */
-        .pin-wrap { width: 36px; height: 36px; pointer-events: none; transition: 0.3s; }
-        .pin-wrap.ghost { opacity: 0.2; filter: grayscale(1); transform: scale(0.8); }
+        /* --- MARKER STYLES --- */
+        .pin-outer { width: 34px; height: 34px; transition: 0.3s; }
+        .pin-outer.dimmed { opacity: 0.2; filter: grayscale(1); }
         .pin-inner {
-            width: 100%; height: 100%; background: #4b5563; border: 2px solid white;
+            width: 100%; height: 100%; background: #444; border: 2px solid white;
             border-radius: 50% 50% 0 50%; transform: rotate(45deg);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
         }
         .pin-inner i { transform: rotate(-45deg); color: white; font-size: 14px; }
-        .pin-wrap.saved .pin-inner { background: var(--primary); z-index: 100; box-shadow: 0 5px 20px rgba(189,0,0,0.4); }
+        .pin-outer.saved .pin-inner { background: var(--primary); box-shadow: 0 0 15px rgba(189,0,0,0.4); z-index: 500; }
 
-        /* Target Marker (Draggable) */
-        .pin-target { pointer-events: auto !important; margin-top: -24px; margin-left: -24px; z-index: 5000 !important; cursor: grab; }
-        .pin-target:active { cursor: grabbing; }
-        .pin-target .pin-inner { width: 48px; height: 48px; background: var(--primary); border-width: 3px; box-shadow: 0 10px 30px rgba(189,0,0,0.5); }
+        /* --- TARGET (Creation) --- */
+        .target-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1500; pointer-events: none; display: none; }
+        .target-marker.visible { display: block; }
+        .target-pin { width: 44px; height: 44px; background: var(--primary); border: 3px solid white; border-radius: 50% 50% 0 50%; transform: rotate(45deg); box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-top: -44px; }
 
-        /* --- LIST OVERLAY --- */
-        .list-view {
-            position: fixed; inset: 0; background: #f9fafb; z-index: 3000;
-            transform: translateY(100%); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: flex; flex-direction: column; pointer-events: auto;
+        /* --- CREATION UI --- */
+        .creation-panel {
+            position: absolute; bottom: 100px; left: 0; right: 0; text-align: center;
+            display: none; flex-direction: column; align-items: center; gap: 10px;
         }
-        .list-view.open { transform: translateY(0); }
-        
-        .list-head { 
-            padding: 50px 24px 20px; background: white; border-bottom: 1px solid var(--border); 
-            display: flex; justify-content: space-between; align-items: center;
+        .creation-panel.visible { display: flex; }
+        .btn-confirm { background: var(--primary); color: white; padding: 12px 24px; border-radius: 30px; border: none; font-weight: 700; box-shadow: 0 5px 20px rgba(189,0,0,0.3); }
+        .btn-cancel { background: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; }
+
+        /* --- BANNER --- */
+        .banner {
+            position: absolute; bottom: 90px; left: 15px; right: 15px; margin: 0 auto; max-width: 500px;
+            background: white; border-radius: 16px; padding: 12px; border: 1px solid #eee;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; align-items: center; gap: 12px;
+            animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .list-head h2 { margin: 0; font-family: var(--font-title); font-size: 28px; color: var(--text); }
+        .banner.active { display: flex; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        .list-body { flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        
-        /* City Groups */
-        .city-group { margin-bottom: 20px; }
-        .city-header {
-            position: sticky; top: 0; background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px); padding: 12px 24px;
-            font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;
-            border-bottom: 1px solid #f3f4f6; z-index: 10;
-        }
-        
-        .list-item {
-            display: flex; gap: 16px; padding: 16px 24px; background: white;
-            border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: 0.2s;
-            animation: fadeIn 0.5s ease backwards;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .list-item:active { background: #f3f4f6; }
-        .li-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background: #eee; }
-        .li-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .li-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; color: #111; }
-        .li-addr { font-size: 12px; color: #6b7280; }
-        .li-meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-        
-        .score-pill { 
-            font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; color: white; 
-            display: flex; align-items: center; gap: 4px;
-        }
-        .score-pill.high { background: var(--score-high); }
-        .score-pill.mid { background: var(--score-mid); }
-        .score-pill.low { background: var(--score-low); }
+        .ban-img { width: 54px; height: 54px; border-radius: 10px; background: #eee; object-fit: cover; }
+        .ban-info { flex: 1; overflow: hidden; }
+        .ban-title { font-family: var(--font-title); font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ban-rating { font-size: 12px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+        .btn-edit { width: 36px; height: 36px; border-radius: 10px; background: #222; color: white; border: none; display: flex; align-items: center; justify-content: center; }
 
         /* --- MODAL --- */
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 5000;
-            display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: 0.3s;
-            backdrop-filter: blur(4px);
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: var(--z-modal);
+            display: none; align-items: flex-end; backdrop-filter: blur(4px);
         }
-        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-overlay.open { display: flex; }
         .sheet {
             background: white; width: 100%; max-width: 600px; margin: 0 auto;
-            border-radius: 24px 24px 0 0; max-height: 90vh; display: flex; flex-direction: column;
-            transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-radius: 24px 24px 0 0; max-height: 90vh; overflow-y: auto; padding: 24px;
+            animation: slideUp 0.3s ease;
         }
-        .modal.open .sheet { transform: translateY(0); }
-        .sheet-body { overflow-y: auto; padding: 24px; padding-bottom: 50px; }
-
-        .form-row { margin-bottom: 20px; }
-        .lbl { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .inp { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: #f9fafb; font-family: var(--font-body); font-size: 14px; }
+        
+        /* FORM ELEMENTS */
+        .lbl { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .inp { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; font-family: var(--font-body); margin-bottom: 15px; }
         
         /* Note UI */
-        .score-circle {
-            width: 90px; height: 90px; border-radius: 50%; background: var(--primary); color: white;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            margin: 0 auto 20px; font-family: var(--font-title); box-shadow: 0 10px 25px rgba(189,0,0,0.3);
+        .score-wrap { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .score-circle { width: 70px; height: 70px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; font-family: var(--font-title); }
+        
+        .range-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .range-row span { width: 80px; font-size: 13px; font-weight: 600; }
+        input[type=range] { flex: 1; accent-color: var(--primary); }
+
+        .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 10px; }
+        .btn-del { width: 100%; padding: 10px; background: transparent; color: #ef4444; border: none; font-weight: 600; margin-top: 5px; }
+
+        /* --- CARNET (LIST) --- */
+        .list-view {
+            position: fixed; inset: 0; background: #f8f9fa; z-index: 3000;
+            display: none; flex-direction: column; animation: fadeIn 0.3s;
         }
-        .sc-val { font-size: 32px; font-weight: 700; line-height: 1; }
-        .sc-sub { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+        .list-view.open { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .list-head { padding: 50px 20px 20px; background: white; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .list-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .city-group { margin-bottom: 15px; }
+        .city-title { position: sticky; top: 0; background: rgba(255,255,255,0.95); padding: 10px 20px; font-weight: 700; color: var(--primary); border-bottom: 1px solid #eee; }
+        .list-item { display: flex; gap: 12px; padding: 15px 20px; background: white; border-bottom: 1px solid #f0f0f0; }
+        .li-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #eee; }
 
-        .range-box { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
-        .range-box span { width: 80px; font-size: 13px; font-weight: 600; color: #374151; }
-        input[type=range] { flex: 1; accent-color: var(--primary); height: 4px; }
-        .range-val { font-weight: 800; color: var(--primary); width: 25px; text-align: right; }
-
-        /* Photo */
-        .photo-up {
-            width: 100%; height: 160px; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 16px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden;
-            margin-bottom: 24px; transition: 0.2s;
-        }
-        .photo-up:active { background: #e5e7eb; }
-        .photo-up img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-        .photo-lbl { z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #6b7280; font-size: 12px; }
-
-        .btn-main { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
-        .btn-save { background: var(--primary); color: white; box-shadow: 0 5px 20px rgba(189,0,0,0.25); }
-        .btn-del { background: transparent; color: #ef4444; font-size: 13px; }
-
-        /* NAV */
+        /* --- NAV --- */
         .nav {
             position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: white;
-            border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+            border-top: 1px solid #eee; display: flex; justify-content: space-around;
             padding-top: 12px; z-index: 4000; padding-bottom: env(safe-area-inset-bottom);
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #9ca3af; width: 70px; cursor: pointer; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #bbb; width: 70px; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 20px; transition: 0.2s; }
-        .nav-item.active i { transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; }
         .nav-item span { font-size: 10px; font-weight: 600; }
+
+        /* MSG TOAST */
+        .toast { position: fixed; top: 120px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000; }
+        .toast.show { opacity: 1; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
 <body>
 
-    <!-- MAP -->
+    <!-- 1. MAP (BACK LAYER) -->
     <div id="map"></div>
 
-    <!-- LOADER -->
-    <div class="loader-pill" id="loader">
-        <i class="fa-solid fa-circle-notch spin"></i>
-        <span>Exploration...</span>
-    </div>
-
-    <!-- UI -->
+    <!-- 2. UI LAYER (POINTER EVENTS NONE EXCEPT CHILDREN) -->
     <div class="ui-layer">
         
         <!-- HEADER -->
-        <div class="header-wrap" id="hud">
-            <div class="brand"><i class="fa-solid fa-star"></i> Guide Michelin SIL</div>
-            <div class="search-bar">
-                <div class="pill">
-                    <i class="fa-solid fa-location-dot"></i>
+        <div class="header-bar pointer-auto">
+            <div class="brand-title"><i class="fa-solid fa-star"></i> Guide Michelin SIL</div>
+            <!-- BOUTON DRIVE ABSOLU -->
+            <button class="btn-drive pointer-auto" id="drive-btn" onclick="Drive.handleAuth()" title="Sync Drive">
+                <i class="fa-brands fa-google-drive"></i>
+            </button>
+
+            <div class="search-container pointer-auto">
+                <div class="search-inp">
+                    <i class="fa-solid fa-location-dot" style="color:#999"></i>
                     <input type="text" id="inp-city" placeholder="Ville...">
                 </div>
-                <div class="pill">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="inp-filter" placeholder="Nom du restaurant..." oninput="App.applyFilters()">
+                <div class="search-inp">
+                    <i class="fa-solid fa-magnifying-glass" style="color:#999"></i>
+                    <input type="text" id="inp-filter" placeholder="Nom..." oninput="App.applyFilters()">
                 </div>
             </div>
-            <div class="sugg-box" id="sugg-box"></div>
         </div>
 
-        <!-- CONTROLS -->
-        <div class="fabs" id="side-ui">
-            <div class="fab main" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></div>
+        <!-- SIDE CONTROLS -->
+        <div class="side-btns pointer-auto" id="main-ctrls">
+            <div class="fab" onclick="App.startCreation()" style="color:var(--primary)"><i class="fa-solid fa-plus"></i></div>
             <div class="fab" onclick="App.locate()"><i class="fa-solid fa-location-crosshairs"></i></div>
         </div>
 
-        <!-- CREATION -->
-        <div class="creation-ui" id="creation-ui">
-            <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER POSITION</button>
+        <!-- CREATION PANEL -->
+        <div class="creation-panel pointer-auto" id="creation-ui">
+            <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER ICI</button>
             <div class="btn-cancel" onclick="App.cancelCreation()">Annuler</div>
         </div>
 
         <!-- BANNER -->
-        <div class="banner" id="banner">
+        <div class="banner pointer-auto" id="banner">
             <img src="" class="ban-img" id="ban-img">
             <div class="ban-info">
                 <div class="ban-title" id="ban-title">...</div>
-                <div class="ban-note" id="ban-rating"></div>
+                <div class="ban-rating" id="ban-rating"></div>
             </div>
-            <button class="btn-open" id="btn-action" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-edit" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
         </div>
+
     </div>
 
-    <!-- CARNET (LIST) -->
+    <!-- TARGET MARKER (CENTER OF SCREEN) -->
+    <div class="target-marker" id="target-marker">
+        <div class="target-pin"></div>
+    </div>
+
+    <!-- LISTE (FULLSCREEN) -->
     <div class="list-view" id="list-view">
         <div class="list-head">
-            <h2>Mon Carnet</h2>
-            <i class="fa-solid fa-xmark" style="font-size:24px; cursor:pointer;" onclick="App.nav('map')"></i>
+            <h2 style="margin:0; font-family:var(--font-title)">Mon Carnet</h2>
+            <i class="fa-solid fa-xmark" style="font-size:24px" onclick="App.nav('map')"></i>
         </div>
-        <div class="list-body" id="list-body"></div>
+        <div class="list-scroll" id="list-body"></div>
     </div>
 
     <!-- MODAL -->
-    <div class="modal" id="modal">
+    <div class="modal-overlay" id="modal">
         <div class="sheet">
-            <div class="sheet-body">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px">
-                    <h2 style="margin:0; font-family:var(--font-title)">Édition</h2>
-                    <i class="fa-solid fa-xmark" onclick="App.closeModal()" style="font-size:24px; cursor:pointer"></i>
-                </div>
-
-                <div class="photo-up" onclick="document.getElementById('file-in').click()">
-                    <img id="prev-img" style="display:none">
-                    <div class="photo-lbl" id="lbl-img">
-                        <i class="fa-solid fa-camera" style="font-size:24px"></i>
-                        <span>Ajouter une photo</span>
-                    </div>
-                </div>
-                <input type="file" id="file-in" hidden accept="image/*" onchange="App.handleImage(this)">
-
-                <div class="form-row">
-                    <label class="lbl">Détails</label>
-                    <input type="text" class="inp" id="edit-name" placeholder="Nom..." style="margin-bottom:10px">
-                    <input type="text" class="inp" id="edit-addr" placeholder="Adresse...">
-                </div>
-
-                <div class="form-row">
-                    <label class="lbl">Notation</label>
-                    <div class="score-circle">
-                        <div class="sc-val" id="score-disp">0.0</div>
-                        <div class="sc-sub">/ 10</div>
-                    </div>
-                    
-                    <div class="range-box">
-                        <span>Qualité/Prix</span>
-                        <input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()">
-                        <div class="range-val" id="v-qp">5</div>
-                    </div>
-                    <div class="range-box">
-                        <span>Goût</span>
-                        <input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()">
-                        <div class="range-val" id="v-taste">5</div>
-                    </div>
-                    <div class="range-box">
-                        <span>Ambiance</span>
-                        <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()">
-                        <div class="range-val" id="v-vibe">5</div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <label class="lbl">Budget (€)</label>
-                    <div style="display:flex; gap:10px">
-                        <input type="number" class="inp" id="p-min" placeholder="Min">
-                        <input type="number" class="inp" id="p-max" placeholder="Max">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <label class="lbl">Notes</label>
-                    <textarea class="inp" id="edit-memo" rows="3"></textarea>
-                </div>
-
-                <button class="btn-main btn-save" onclick="App.save()">ENREGISTRER</button>
-                <button class="btn-main btn-del" onclick="App.removePlace()">Supprimer</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px">
+                <h2 style="margin:0; font-family:var(--font-title)">Édition</h2>
+                <i class="fa-solid fa-xmark" style="font-size:24px" onclick="App.closeModal()"></i>
             </div>
+
+            <!-- PHOTO -->
+            <div style="text-align:center; margin-bottom:20px" onclick="document.getElementById('file').click()">
+                <img id="prev-img" style="width:100%; height:160px; object-fit:cover; border-radius:12px; background:#eee; display:none">
+                <div id="lbl-img" style="padding:40px; background:#f9f9f9; border:2px dashed #ddd; border-radius:12px">
+                    <i class="fa-solid fa-camera" style="font-size:24px; color:#999"></i><br>
+                    <span style="font-size:12px; color:#999">Ajouter photo</span>
+                </div>
+            </div>
+            <input type="file" id="file" hidden accept="image/*" onchange="App.handleImage(this)">
+
+            <label class="lbl">Infos</label>
+            <input type="text" class="inp" id="e-name" placeholder="Nom">
+            <input type="text" class="inp" id="e-addr" placeholder="Adresse">
+
+            <label class="lbl">Note du Chef</label>
+            <div class="score-wrap">
+                <div class="score-circle" id="score-display">0.0</div>
+            </div>
+            <div class="range-row"><span>Qualité</span><input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()"></div>
+            <div class="range-row"><span>Goût</span><input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()"></div>
+            <div class="range-row"><span>Ambiance</span><input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()"></div>
+
+            <label class="lbl" style="margin-top:15px">Budget (€)</label>
+            <div style="display:flex; gap:10px">
+                <input type="number" class="inp" id="p-min" placeholder="Min">
+                <input type="number" class="inp" id="p-max" placeholder="Max">
+            </div>
+
+            <button class="btn-save" onclick="App.save()">ENREGISTRER</button>
+            <button class="btn-del" onclick="App.remove()">Supprimer</button>
         </div>
     </div>
 
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
     <!-- NAV -->
     <div class="nav">
-        <div class="nav-item active" id="nav-map" onclick="App.nav('map')">
-            <i class="fa-solid fa-map-location-dot"></i><span>Carte</span>
-        </div>
-        <div class="nav-item" id="nav-list" onclick="App.nav('list')">
-            <i class="fa-solid fa-book-open"></i><span>Carnet</span>
-        </div>
+        <div class="nav-item active" id="nav-map" onclick="App.nav('map')"><i class="fa-solid fa-map-location-dot"></i><span>Carte</span></div>
+        <div class="nav-item" id="nav-list" onclick="App.nav('list')"><i class="fa-solid fa-book-open"></i><span>Carnet</span></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // --- GOOGLE DRIVE ---
+        const Drive = (() => {
+            const CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
+            const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+            const FILE_NAME = "guide_michelin_sil_db.json";
+            
+            let tokenClient, token;
+            let fileId = null;
+
+            const init = () => {
+                if(typeof google === 'undefined') return setTimeout(init, 500);
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID, scope: SCOPES,
+                    callback: async (resp) => {
+                        if(resp.error) return App.toast("Erreur Auth Google");
+                        token = resp.access_token;
+                        document.getElementById('drive-btn').classList.add('connected');
+                        App.toast("Connecté au Drive ! Sync...");
+                        await sync();
+                    }
+                });
+            };
+
+            const handleAuth = () => {
+                if(token) {
+                    if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-drive'; }
+                } else {
+                    if(tokenClient) tokenClient.requestAccessToken({prompt: 'consent'});
+                    else App.toast("Google API non chargé");
+                }
+            };
+
+            // 1. Find or Create File
+            const getFileId = async () => {
+                const q = `name='${FILE_NAME}' and trashed=false`;
+                const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const d = await r.json();
+                if(d.files && d.files.length) return d.files[0].id;
+                
+                // Create
+                const meta = { name: FILE_NAME, mimeType: 'application/json' };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+                form.append('file', new Blob([JSON.stringify([])], {type:'application/json'}));
+                const cr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+                });
+                const cd = await cr.json();
+                return cd.id;
+            };
+
+            // 2. Sync Logic
+            const sync = async () => {
+                if(!token) return;
+                const btn = document.getElementById('drive-btn');
+                btn.classList.add('syncing');
+                
+                try {
+                    if(!fileId) fileId = await getFileId();
+                    
+                    // Read Drive Data
+                    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const driveData = await r.json();
+                    
+                    // Merge (Simple: Drive adds to Local if missing)
+                    const localData = await App.getData();
+                    let changed = false;
+                    driveData.forEach(d => {
+                        if(!localData.find(l=>l.id===d.id)) {
+                            localData.push(d);
+                            changed = true;
+                        }
+                    });
+
+                    if(changed) {
+                        await App.saveAll(localData);
+                        App.refresh();
+                    }
+                } catch(e) { console.error(e); }
+                
+                btn.classList.remove('syncing');
+            };
+
+            // 3. Save to Drive
+            const save = async (data) => {
+                if(!token) return;
+                const btn = document.getElementById('drive-btn');
+                btn.classList.add('syncing');
+                try {
+                    if(!fileId) fileId = await getFileId();
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                        method: 'PATCH',
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } catch(e){}
+                btn.classList.remove('syncing');
+            };
+
+            return { init, handleAuth, save, sync };
+        })();
+
+        // --- APP CORE ---
         const App = (() => {
             let map, db;
             let markers = [];
             let allPlaces = [], savedPlaces = [];
-            let selectedPlace = null, creationMarker = null;
+            let selectedPlace = null;
             let currentImg = null;
-            let searchTimeout, isScanning = false;
+            let isCreating = false;
 
             const DEF_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80";
 
-            // --- INIT ---
             const init = async () => {
                 initMap();
                 await initDB();
                 await loadSaved();
                 updateMap();
-                document.getElementById('inp-city').addEventListener('input', e => searchCity(e.target.value));
+                
+                document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
+                Drive.init();
             };
 
-            // --- DB ---
+            // DB
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_v23', 1);
+                const req = indexedDB.open('GuideSil_v26', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
@@ -427,41 +447,42 @@
                     r();
                 };
             });
+            const getData = () => new Promise(r => {
+                db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => r(e.target.result || []);
+            });
+            const saveAll = (data) => new Promise(r => {
+                const tx = db.transaction('places', 'readwrite');
+                data.forEach(d => tx.objectStore('places').put(d));
+                tx.oncomplete = () => { savedPlaces = data; r(); };
+            });
 
-            // --- MAP ---
+            // MAP
             const initMap = () => {
                 map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
-                map.on('moveend', () => { if(map.getZoom()>=14) scan(); });
+                
+                // Event listener on move to scan area
+                map.on('moveend', () => { if(!isCreating && map.getZoom() > 13) scan(); });
                 setTimeout(scan, 1000);
             };
 
-            // --- SCANNING (+50% PADDING) ---
             const scan = async () => {
-                if(isScanning) return;
-                isScanning = true;
-                showLoader(true);
-
-                // Use PAD(0.5) to scan 50% larger area
-                const b = map.getBounds().pad(0.5);
-                const q = `[out:json][timeout:6];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
-
+                const b = map.getBounds();
+                const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
                 try {
                     const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
                     const d = await r.json();
-                    const newItems = d.elements.map(el => ({
-                        id: el.id, name: el.tags.name || "Inconnu",
-                        addr: (el.tags['addr:street']||"")+" "+(el.tags['addr:city']||""),
-                        lat: el.lat, lon: el.lon
+                    
+                    const newP = d.elements.map(e => ({
+                        id: e.id, name: e.tags.name || "Inconnu",
+                        addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
+                        lat: e.lat, lon: e.lon
                     }));
                     
                     allPlaces = [...savedPlaces];
-                    newItems.forEach(n => { if(!savedPlaces.find(s=>s.id===n.id)) allPlaces.push(n); });
+                    newP.forEach(n => { if(!savedPlaces.find(s=>s.id===n.id)) allPlaces.push(n); });
                     updateMap();
-                } catch(e) {}
-                
-                showLoader(false);
-                isScanning = false;
+                } catch(e){}
             };
 
             const updateMap = () => {
@@ -473,6 +494,7 @@
             const applyFilters = () => {
                 const term = document.getElementById('inp-filter').value.toLowerCase();
                 
+                // Clear again just in case
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
 
@@ -481,54 +503,26 @@
                     const match = !term || (p.name && p.name.toLowerCase().includes(term));
                     
                     const div = document.createElement('div');
-                    div.className = `pin-wrap ${isSaved?'saved':''} ${!match?'ghost':''}`;
+                    // CSS Handles 'dimmed' opacity. Pointer events auto on 'pin-outer' helps.
+                    div.className = `pin-outer ${isSaved?'saved':''} ${!match?'dimmed':''}`;
                     div.innerHTML = `<div class="pin-inner"><i class="fa-solid ${isSaved?'fa-star':'fa-utensils'}"></i></div>`;
                     
                     const m = L.marker([p.lat, p.lon], {
-                        icon: L.divIcon({className:'c', html:div.outerHTML, iconAnchor:[18,36]}),
+                        icon: L.divIcon({className:'c', html:div.outerHTML, iconAnchor:[17,34]}),
                         zIndexOffset: isSaved ? 1000 : 0
                     }).addTo(map);
                     
-                    m.on('click', () => select(p, isSaved));
+                    // CLICK HANDLER: Critical Fix
+                    m.on('click', () => {
+                        if(!match) return; // Ignore filtered
+                        select(p, isSaved);
+                    });
+                    
                     markers.push({marker:m});
                 });
             };
 
-            // --- CREATION (DRAGGABLE) ---
-            const startCreation = () => {
-                document.getElementById('hud').style.display='none';
-                document.getElementById('side-ui').style.display='none';
-                document.getElementById('banner').classList.remove('active');
-                document.getElementById('creation-ui').classList.add('active');
-                
-                creationMarker = L.marker(map.getCenter(), {
-                    draggable: true, // IMPORTANT: Draggable enabled
-                    icon: L.divIcon({className:'pin-target', html:'<div class="pin-inner"></div>'}),
-                    zIndexOffset: 10000
-                }).addTo(map);
-            };
-
-            const cancelCreation = () => {
-                if(creationMarker) map.removeLayer(creationMarker);
-                creationMarker = null;
-                document.getElementById('hud').style.display='flex';
-                document.getElementById('side-ui').style.display='flex';
-                document.getElementById('creation-ui').classList.remove('active');
-            };
-
-            const confirmCreation = () => {
-                const pos = creationMarker.getLatLng();
-                const newPlace = { 
-                    id: Date.now(), name: "", addr: "Position repérée", lat: pos.lat, lon: pos.lng,
-                    img: null, score: {qp:5, taste:5, vibe:5, total:5}, price: {min:'', max:''}
-                };
-                cancelCreation();
-                savedPlaces.push(newPlace);
-                select(newPlace, newPlace);
-                openModal();
-            };
-
-            // --- DETAILS ---
+            // SELECTION
             const select = (p, saved) => {
                 selectedPlace = saved || p;
                 map.flyTo([p.lat-0.002, p.lon], 16);
@@ -537,21 +531,44 @@
                 document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
                 
                 const s = selectedPlace.score?.total;
-                const noteHtml = s ? `<span class="note-badge" style="background:${getColor(s)}">${s}</span>` : `<span style="color:#999;font-weight:400">Non noté</span>`;
-                document.getElementById('ban-rating').innerHTML = noteHtml;
-
-                document.getElementById('btn-action').innerHTML = saved ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
+                const html = s ? `<span style="color:var(--primary)"><i class="fa-solid fa-star"></i> ${s}/10</span>` : `<span style="color:#999">Non noté</span>`;
+                document.getElementById('ban-rating').innerHTML = html;
+                
                 document.getElementById('banner').classList.add('active');
             };
 
-            // --- MODAL & LOGIC ---
+            // CREATION
+            const startCreation = () => {
+                isCreating = true;
+                document.getElementById('hud').style.display='none';
+                document.getElementById('main-ctrls').style.display='none';
+                document.getElementById('banner').classList.remove('active');
+                document.getElementById('target-marker').classList.add('visible');
+                document.getElementById('creation-ui').classList.add('visible');
+            };
+
+            const cancelCreation = () => {
+                isCreating = false;
+                document.getElementById('hud').style.display='flex';
+                document.getElementById('main-ctrls').style.display='flex';
+                document.getElementById('target-marker').classList.remove('visible');
+                document.getElementById('creation-ui').classList.remove('visible');
+            };
+
+            const confirmCreation = () => {
+                const c = map.getCenter();
+                const newP = { id: Date.now(), name:"", addr:"Position repérée", lat:c.lat, lon:c.lng, img:null, score:{qp:5, taste:5, vibe:5, total:5}, price:{min:'', max:''} };
+                cancelCreation();
+                savedPlaces.push(newP);
+                select(newP, newP);
+                openModal();
+            };
+
+            // MODAL
             const openModal = () => {
                 const p = selectedPlace;
-                document.getElementById('edit-name').value = p.name || "";
-                document.getElementById('edit-addr').value = p.addr || "";
-                document.getElementById('edit-memo').value = p.memo || "";
-                document.getElementById('p-min').value = p.price?.min || "";
-                document.getElementById('p-max').value = p.price?.max || "";
+                document.getElementById('e-name').value = p.name || "";
+                document.getElementById('e-addr').value = p.addr || "";
                 
                 const s = p.score || {qp:5, taste:5, vibe:5};
                 document.getElementById('r-qp').value = s.qp;
@@ -565,9 +582,9 @@
                     document.getElementById('lbl-img').style.display='none';
                 } else {
                     document.getElementById('prev-img').style.display='none';
-                    document.getElementById('lbl-img').style.display='flex';
+                    document.getElementById('lbl-img').style.display='block';
                 }
-
+                
                 calc();
                 document.getElementById('modal').classList.add('open');
             };
@@ -576,23 +593,9 @@
                 const qp = parseFloat(document.getElementById('r-qp').value);
                 const t = parseFloat(document.getElementById('r-taste').value);
                 const v = parseFloat(document.getElementById('r-vibe').value);
-                
-                document.getElementById('v-qp').innerText = qp;
-                document.getElementById('v-taste').innerText = t;
-                document.getElementById('v-vibe').innerText = v;
-                
                 const total = ((qp+t+v)/3).toFixed(1);
-                const disp = document.getElementById('score-disp');
-                disp.innerText = total;
-                disp.parentElement.style.background = getColor(total);
-                
+                document.getElementById('score-display').innerText = total;
                 return {qp, taste:t, vibe:v, total};
-            };
-
-            const getColor = (n) => {
-                if(n >= 8) return 'var(--score-high)';
-                if(n >= 5) return 'var(--score-mid)';
-                return 'var(--score-low)';
             };
 
             const handleImage = (inp) => {
@@ -600,7 +603,7 @@
                     const r = new FileReader();
                     r.onload = e => {
                         currentImg = e.target.result;
-                        document.getElementById('prev-img').src=currentImg;
+                        document.getElementById('prev-img').src = currentImg;
                         document.getElementById('prev-img').style.display='block';
                         document.getElementById('lbl-img').style.display='none';
                     };
@@ -611,9 +614,8 @@
             const save = () => {
                 const obj = {
                     ...selectedPlace,
-                    name: document.getElementById('edit-name').value,
-                    addr: document.getElementById('edit-addr').value,
-                    memo: document.getElementById('edit-memo').value,
+                    name: document.getElementById('e-name').value,
+                    addr: document.getElementById('e-addr').value,
                     price: { min: document.getElementById('p-min').value, max: document.getElementById('p-max').value },
                     score: calc(),
                     img: currentImg
@@ -623,89 +625,69 @@
                 tx.objectStore('places').put(obj);
                 
                 const i = savedPlaces.findIndex(x=>x.id===obj.id);
-                if(i>-1) savedPlaces[i]=obj; else savedPlaces.push(obj);
+                if(i>-1) savedPlaces[i] = obj; else savedPlaces.push(obj);
                 
-                document.getElementById('modal').classList.remove('open');
+                closeModal();
                 updateMap();
                 select(obj, obj);
+                Drive.save(savedPlaces);
+                toast("Sauvegardé");
             };
 
-            const removePlace = () => {
+            const remove = () => {
                 if(!confirm("Supprimer ?")) return;
                 db.transaction('places', 'readwrite').objectStore('places').delete(selectedPlace.id);
                 savedPlaces = savedPlaces.filter(s=>s.id!==selectedPlace.id);
-                document.getElementById('modal').classList.remove('open');
+                closeModal();
                 document.getElementById('banner').classList.remove('active');
                 updateMap();
+                Drive.save(savedPlaces);
             };
-            
+
             const closeModal = () => document.getElementById('modal').classList.remove('open');
 
-            // --- CARNET GROUPING & SORT ---
-            const extractCity = (addr) => {
-                if(!addr) return "Autres";
-                // Simple heuristic
-                const parts = addr.split(' ');
-                // Try to find postcode
-                const pcIdx = parts.findIndex(p => /^\d{5}$/.test(p));
-                if(pcIdx > -1 && parts[pcIdx+1]) return parts[pcIdx+1].toUpperCase();
-                
-                // Fallback: Check common cities
-                const known = ["PARIS","LYON","MARSEILLE","LILLE","BORDEAUX","TOULOUSE","NICE"];
-                const up = addr.toUpperCase();
-                for(let k of known) if(up.includes(k)) return k;
-                
-                return "DIVERS";
-            };
-
+            // LIST
             const renderList = () => {
                 const c = document.getElementById('list-body');
-                if(!savedPlaces.length) { c.innerHTML='<div style="text-align:center;padding:40px;color:#999">Carnet vide</div>'; return; }
+                if(!savedPlaces.length) { c.innerHTML='<div style="padding:40px; text-align:center; color:#999">Vide</div>'; return; }
                 
-                // Group
+                // Group by City
                 const groups = {};
                 savedPlaces.forEach(p => {
-                    const city = extractCity(p.addr);
+                    let city = "DIVERS";
+                    if(p.addr) {
+                        const parts = p.addr.toUpperCase().split(' ');
+                        const i = parts.findIndex(x=>/^\d{5}$/.test(x));
+                        if(i>-1 && parts[i+1]) city = parts[i+1];
+                    }
                     if(!groups[city]) groups[city] = [];
                     groups[city].push(p);
                 });
-                
-                const sortedCities = Object.keys(groups).sort();
-                
-                c.innerHTML = sortedCities.map(city => `
+
+                c.innerHTML = Object.keys(groups).sort().map(city => `
                     <div class="city-group">
-                        <div class="city-header">${city}</div>
-                        ${groups[city].map(s => {
-                            const score = s.score?.total || 0;
-                            let cls = 'low';
-                            if(score>=8) cls='high'; else if(score>=5) cls='mid';
-                            
-                            return `
+                        <div class="city-title">${city}</div>
+                        ${groups[city].map(s => `
                             <div class="list-item" onclick="App.goto(${s.id})">
-                                <img src="${s.img || DEF_IMG}" class="li-img">
-                                <div class="li-info">
-                                    <div class="li-name">${s.name}</div>
-                                    <div class="li-addr">${s.addr}</div>
-                                    <div class="li-meta">
-                                        <div class="score-pill ${cls}">
-                                            <i class="fa-solid fa-star"></i> ${score}
-                                        </div>
-                                        <div style="font-size:11px; font-weight:600; color:#666">
-                                            ${s.price?.min ? s.price.min+'€ - '+s.price.max+'€' : ''}
-                                        </div>
+                                <img src="${s.img||DEF_IMG}" class="li-img">
+                                <div style="flex:1">
+                                    <div style="font-weight:700">${s.name}</div>
+                                    <div style="font-size:12px;color:#666">${s.addr}</div>
+                                    <div style="font-size:11px;font-weight:700;color:var(--primary);margin-top:4px">
+                                        <i class="fa-solid fa-star"></i> ${s.score?.total||'-'}
                                     </div>
                                 </div>
-                            </div>`;
-                        }).join('')}
+                            </div>
+                        `).join('')}
                     </div>
                 `).join('');
             };
 
-            const nav = (view) => {
-                document.getElementById('nav-map').classList.toggle('active', view==='map');
-                document.getElementById('nav-list').classList.toggle('active', view==='list');
+            const nav = (v) => {
+                document.getElementById('nav-map').classList.toggle('active', v==='map');
+                document.getElementById('nav-list').classList.toggle('active', v==='list');
                 const lv = document.getElementById('list-view');
-                if(view==='list') { renderList(); lv.classList.add('open'); }
+                if(v==='list') { renderList(); lv.classList.add('open'); }
                 else lv.classList.remove('open');
             };
 
@@ -715,28 +697,24 @@
                 setTimeout(()=>select(s,s), 400);
             };
 
+            const toast = (m) => {
+                const t = document.getElementById('toast');
+                t.innerText = m; t.classList.add('show');
+                setTimeout(()=>t.classList.remove('show'), 3000);
+            };
+
             const locate = () => navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude], 16));
             
-            const searchCity = (v) => {
-                const b = document.getElementById('sugg-box');
-                clearTimeout(searchTimeout);
-                if(v.length<3){ b.classList.remove('active'); return; }
-                searchTimeout = setTimeout(async()=>{
-                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=3`);
-                    const d = await r.json();
-                    b.innerHTML = d.map(i=>`<div class="sugg-item" onclick="App.pickCity(${i.lat},${i.lon},'${i.display_name.split(',')[0]}')"><span>${i.display_name.split(',')[0]}</span></div>`).join('');
-                    b.classList.add('active');
-                }, 500);
-            };
-            const pickCity = (lat,lon,name) => {
-                map.setView([lat,lon], 14);
-                document.getElementById('inp-city').value=name;
-                document.getElementById('sugg-box').classList.remove('active');
+            const searchCity = async (v) => {
+                if(v.length < 3) return;
+                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
+                const d = await r.json();
+                if(d.length) map.setView([d[0].lat, d[0].lon], 14);
             };
 
-            const showLoader = (b) => document.getElementById('loader').classList.toggle('active', b);
+            const refresh = () => { updateMap(); toast("Données mises à jour"); };
 
-            return { init, searchCity, pickCity, applyFilters, locate, startCreation, cancelCreation, confirmCreation, openModal, closeModal, handleImage, calc, save, removePlace, nav, goto };
+            return { init, getData, saveAll, refresh, searchCity, applyFilters, locate, startCreation, cancelCreation, confirmCreation, openModal, closeModal, handleImage, calc, save, remove, nav, goto, toast };
         })();
 
         window.onload = App.init;
