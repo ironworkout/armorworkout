@@ -1,10 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArmorWorkout - Intelligence Athlétique</title>
-    <!-- Correction Favicon 404 -->
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -12,246 +11,227 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            /* --- COULEURS DYNAMIQUES DE LIGUE --- */
-            /* Ces variables sont mises à jour par le JS selon l'assiduité */
+            /* --- VARIABLES DYNAMIQUES (LIGUES) --- */
             --theme-color: #22D3EE; 
             --theme-rgb: 34, 211, 238;
-            --reactor-speed: 10s; 
-            
+            --reactor-speed: 10s;
+
             /* --- BASE --- */
-            --bg-color-dark: #030712; 
-            --secondary-bg-color-dark: #0B132B; 
-            --primary-text-color-dark: #F0F4F8; 
-            --secondary-text-color-dark: #A0AEC0; 
-            --border-color-dark: #1E293B; 
+            --bg-dark: #030712; 
+            --bg-panel: #0B132B; 
+            --text-main: #F0F4F8; 
+            --text-muted: #A0AEC0; 
+            --border: #1E293B; 
             
-            /* --- ACCENTS STATIQUES --- */
-            --electric-blue: #00BFFF; 
+            /* --- STATUS --- */
             --neon-green: #39FF14; 
             --neon-red: #FF3131; 
             --neon-yellow: #FFF01F; 
-            --neon-purple: #9400D3; 
-            --neon-green-rgb: 57, 255, 20;
-            --neon-red-rgb: 255, 49, 49;
-
-            /* --- MAPPING POUR ANCIEN CODE (COMPATIBILITÉ) --- */
-            --electric-cyan: var(--theme-color);
-            --electric-cyan-rgb: var(--theme-rgb);
             
-            /* --- STATUS --- */
-            --exercise-color-val: var(--theme-color);
+            /* --- CONFIG --- */
+            --font-main: 'Inter', sans-serif;
+            --font-tech: 'Orbitron', sans-serif;
+            --radius: 12px;
+            
+            /* Mapping Compatibilité */
+            --electric-blue-rgb: 0, 191, 255;
             --break-color-val: #38bdf8;
-            --paused-color-val: #A78BFA;
-            --finished-color-val: var(--neon-green);
-            --preparing-color-val: var(--theme-color);
-
-            /* --- FONTS & UI --- */
-            --font-family-main: 'Inter', sans-serif;
-            --font-family-timer: 'Orbitron', sans-serif;
-            --font-family-titles: 'Orbitron', sans-serif; 
-            --border-radius-lg: 10px;
-            --border-radius-md: 8px;
-            --border-radius-sm: 6px;
-            --transition-speed: 0.3s;
         }
 
-        /* --- ANIMATIONS COMPLEXES (RETROUVÉES) --- */
-        @keyframes subtlePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
-        @keyframes electricBorder {
-            0% { box-shadow: 0 0 6px rgba(var(--theme-rgb), 0.6), inset 0 0 4px rgba(var(--theme-rgb), 0.4); border-color: rgba(var(--theme-rgb), 0.7); }
-            50% { box-shadow: 0 0 18px rgba(var(--theme-rgb), 0.8), inset 0 0 10px rgba(var(--theme-rgb), 0.6); border-color: rgba(var(--theme-rgb), 0.9); }
-            100% { box-shadow: 0 0 6px rgba(var(--theme-rgb), 0.6), inset 0 0 4px rgba(var(--theme-rgb), 0.4); border-color: rgba(var(--theme-rgb), 0.7); }
-        }
-        @keyframes textGlowPulseState {
-            0%, 100% { text-shadow: 0 0 5px rgba(var(--theme-rgb), 0.7), 0 0 10px rgba(var(--theme-rgb), 0.5); }
-            50% { text-shadow: 0 0 8px rgba(var(--theme-rgb), 0.9), 0 0 15px rgba(var(--theme-rgb), 0.7), 0 0 25px rgba(var(--theme-rgb), 0.5); }
-        }
-        @keyframes completed-pulse {
-            0% { transform: scale(1); box-shadow: 0 0 10px 10px rgba(var(--neon-green-rgb), 0.2); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px 25px rgba(var(--neon-green-rgb), 0.4); }
-            100% { transform: scale(1); box-shadow: 0 0 10px 10px rgba(var(--neon-green-rgb), 0.2); }
-        }
-        @keyframes rotate-right { to { transform: rotate(360deg); } } 
-        @keyframes rotate-left { to { transform: rotate(-360deg); } }
-        @keyframes rotate-left-right { 0% { transform: translate(-50%, -50%) rotate(0deg); } 50% { transform: translate(-50%, -50%) rotate(-180deg); } 100% { transform: translate(-50%, -50%) rotate(0deg); } }
+        /* --- ANIMATIONS --- */
+        @keyframes rotate-right { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes rotate-left { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
+        @keyframes pulse-theme { 0%, 100% { box-shadow: 0 0 10px rgba(var(--theme-rgb), 0.2); } 50% { box-shadow: 0 0 25px rgba(var(--theme-rgb), 0.6); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes textGlow { 0%, 100% { text-shadow: 0 0 5px rgba(var(--theme-rgb), 0.5); } 50% { text-shadow: 0 0 15px rgba(var(--theme-rgb), 0.9); } }
 
-        /* --- GLOBAL LAYOUT --- */
+        /* --- GLOBAL --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; font-size: 16px; }
         body {
-            font-family: var(--font-family-main); background-color: var(--bg-color-dark); color: var(--primary-text-color-dark); 
-            line-height: 1.65; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden;
-            background-image: radial-gradient(ellipse at center, rgba(var(--theme-rgb), 0.08) 0%, transparent 60%), linear-gradient(0deg, rgba(3,7,18, 0.5) 0%, rgba(3,7,18, 0.9) 100%);
+            font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-main);
+            min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 50% 0%, rgba(var(--theme-rgb), 0.1) 0%, transparent 70%), linear-gradient(0deg, #020617 0%, #0f172a 100%);
             transition: background-image 1s ease;
         }
         body::before { 
-            content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-image: linear-gradient(rgba(var(--theme-rgb), 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--theme-rgb), 0.05) 1px, transparent 1px);
-            background-size: 30px 30px; z-index: -1; opacity: 0.7; pointer-events: none;
+            content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px; 
         }
-        
-        /* Transition Workout Mode */
-        body.workout-active { overflow: hidden; }
-        body.workout-active header { transform: translateY(-100%); opacity: 0; visibility: hidden; transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out; }
-        body.workout-active footer { display: none; }
-        body.workout-active main { position: fixed; inset: 0; padding: 20px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; z-index: 100; background: var(--bg-color-dark); }
-        body.workout-active .app-section:not(#workout-section) { display: none; }
-        body.workout-active #workout-section { margin: auto 0; border: none; background: transparent; box-shadow: none; padding: 0; max-height: 100%; }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 30px 25px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
-        
+        /* Mode Workout */
+        body.workout-active header, body.workout-active footer { display: none; }
+        body.workout-active main { position: fixed; inset: 0; z-index: 100; background: var(--bg-dark); padding: 0; display: flex; justify-content: center; }
+        body.workout-active .app-section:not(#workout-section) { display: none; }
+        body.workout-active #workout-section { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; flex-grow: 1; }
+
         /* --- HEADER --- */
         header {
-            padding: 15px 0; background-color: rgba(11, 19, 43, 0.5); backdrop-filter: blur(8px) saturate(150%);
-            border-bottom: 1px solid rgba(var(--theme-rgb), 0.3); box-shadow: 0 2px 15px rgba(var(--theme-rgb), 0.1);
-            position: sticky; top:0; z-index: 1000; 
+            padding: 15px 0; background: rgba(11, 19, 43, 0.8); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(var(--theme-rgb), 0.3); position: sticky; top: 0; z-index: 100;
         }
-        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 25px; flex-wrap: wrap; gap: 15px 20px; }
-        header h1 { font-size: 1.6em; color: var(--primary-text-color-dark); margin: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; font-family: var(--font-family-titles); text-shadow: 0 0 8px rgba(var(--theme-rgb), 0.7); }
-        header h1 i { color: var(--theme-color); animation: subtlePulse 3s infinite ease-in-out; }
-        
-        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        #drive-status-text, #signin-button {
-            background-color: transparent; border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark);
-            padding: 5px 12px; border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer;
-            transition: all var(--transition-speed) ease; display: inline-flex; align-items: center; gap: 5px;
-        }
-        #signin-button:disabled { opacity: 0.5; cursor: not-allowed; }
-        #drive-status-text:hover, #signin-button:not(:disabled):hover { border-color: var(--theme-color); color: var(--theme-color); background-color: rgba(var(--theme-rgb), 0.1); }
-        #drive-status.success #drive-status-text { border-color: var(--neon-green); color: var(--neon-green); cursor: default; }
-        #drive-status { display: inline-flex; align-items: center; gap: 10px; margin-left: 10px; padding: 0; background: none; border: none; font-size: 1em; color: inherit; }
-        body.logged-out #signin-button { display: inline-flex; } body.logged-out #drive-status { display: none; }
-        body.logged-in #signin-button { display: none; } body.logged-in #drive-status { display: inline-flex; }
-        
-        /* --- MAIN SECTIONS --- */
-        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding-top: 40px; position: relative; transition: all 0.3s ease-in-out; }
-        
-        .app-section {
-            background-color: rgba(11, 19, 43, 0.6); backdrop-filter: blur(10px) saturate(130%);
-            border: 1px solid rgba(var(--theme-rgb), 0.2); width: 100%; 
-            transition: opacity 0.4s ease-in-out, transform 0.3s ease-in-out;
-            opacity: 1; border-radius: var(--border-radius-lg);
-            box-shadow: 0 5px 25px rgba(3, 7, 18, 0.5), inset 0 0 15px rgba(var(--theme-rgb), 0.1);
-        }
-        #home-section { padding: 0; background: transparent; border: none; box-shadow: none; backdrop-filter: none; }
-        
-        .home-grid { display: flex; flex-wrap: wrap; gap: 30px; width: 100%; }
-        .home-main-content { flex: 1 1 60%; min-width: 300px; display: flex; flex-direction: column; gap: 25px; }
-        .home-sidebar { flex: 1 1 35%; min-width: 280px; display: flex; flex-direction: column; gap: 25px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        header h1 { font-family: var(--font-tech); font-size: 1.5em; letter-spacing: 2px; text-shadow: 0 0 10px rgba(var(--theme-rgb), 0.5); display: flex; gap: 10px; align-items: center; }
+        header h1 i { color: var(--theme-color); }
 
-        .sidebar-module {
-            background-color: rgba(11, 19, 43, 0.6); backdrop-filter: blur(10px) saturate(130%);
-            padding: 20px; border: 1px solid rgba(var(--theme-rgb), 0.2);
-            border-radius: var(--border-radius-lg);
-            box-shadow: 0 5px 25px rgba(3, 7, 18, 0.5), inset 0 0 15px rgba(var(--theme-rgb), 0.1);
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        .sidebar-module h3 { font-family: var(--font-family-titles); color: var(--primary-text-color-dark); font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid var(--border-color-dark); padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .sidebar-module h3 i { color: var(--theme-color); }
+        .header-actions { display: flex; gap: 15px; align-items: center; }
         
-        /* --- CALENDAR & CONSISTENCY --- */
-        .consistency-info { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 15px;}
-        .weekly-goal-progress-bar { width: 100%; height: 8px; background-color: var(--border-color-dark); border-radius: 4px; overflow: hidden; }
-        .weekly-goal-progress { height: 100%; width: 0%; background: var(--theme-color); box-shadow: 0 0 10px var(--theme-color); transition: width 0.5s ease; }
+        #edit-program-btn {
+            background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted);
+            padding: 8px 12px; border-radius: 6px; cursor: pointer; font-family: var(--font-tech); transition: 0.3s;
+        }
+        #edit-program-btn.active { border-color: var(--neon-yellow); color: var(--neon-yellow); box-shadow: 0 0 10px rgba(255, 240, 31, 0.2); }
+
+        #signin-button { 
+            background: transparent; border: 1px solid var(--theme-color); color: var(--theme-color);
+            padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-family: var(--font-tech);
+        }
+        #signin-button:hover { background: rgba(var(--theme-rgb), 0.15); box-shadow: 0 0 15px var(--theme-color); }
+        
+        #drive-status { display: none; align-items: center; gap: 8px; color: var(--neon-green); font-family: var(--font-tech); font-size: 0.9em; }
+        body.logged-in #drive-status { display: flex; }
+        body.logged-in #signin-button { display: none; }
+
+        /* --- HOME --- */
+        .app-section { animation: fadeIn 0.6s ease-out; width: 100%; }
+        .section-hidden { display: none !important; opacity: 0; }
+
+        .home-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 20px; }
+        @media (max-width: 900px) { .home-grid { grid-template-columns: 1fr; } }
+
+        .session-card {
+            background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border);
+            padding: 25px; border-radius: var(--radius); cursor: pointer; transition: 0.3s;
+            position: relative; overflow: hidden; margin-bottom: 20px;
+        }
+        .session-card:hover { 
+            border-color: var(--theme-color); transform: translateY(-4px); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(var(--theme-rgb), 0.1); 
+        }
+        .session-card.edit-mode { border-color: var(--neon-yellow); border-style: dashed; }
+        .session-card h3 { font-family: var(--font-tech); color: var(--theme-color); font-size: 1.4em; margin-bottom: 8px; }
+        .session-card .meta { margin-top: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; opacity: 0.8; }
+
+        /* Sidebar */
+        .sidebar-module {
+            background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border);
+            padding: 20px; border-radius: var(--radius); margin-bottom: 20px;
+        }
+        .sidebar-module h3 { font-family: var(--font-tech); font-size: 1em; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; color: #fff; }
+
+        .league-badge { text-align: center; padding: 10px; }
+        .league-icon { font-size: 4em; color: var(--theme-color); margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(var(--theme-rgb), 0.8)); animation: pulse-theme 3s infinite; }
+        .league-name { font-family: var(--font-tech); font-weight: 900; font-size: 1.4em; text-transform: uppercase; color: var(--theme-color); letter-spacing: 1px; }
         
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; margin-top: 15px; }
-        .calendar-day { position: relative; font-size: 0.9em; padding: 5px 0; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: 0.2s; }
-        .calendar-day.today { font-weight: 700; color: var(--theme-color); border: 1px solid var(--theme-color); box-shadow: 0 0 8px rgba(var(--theme-rgb), 0.5); background-color: rgba(var(--theme-rgb), 0.15); }
-        .day-dot { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background-color: var(--theme-color); border-radius: 50%; box-shadow: 0 0 6px var(--theme-color); }
+        .cal-day { padding: 5px 0; border-radius: 4px; color: var(--text-muted); font-size: 0.8em; position: relative; }
+        .cal-day.today { border: 1px solid var(--theme-color); color: #fff; font-weight: bold; background: rgba(var(--theme-rgb), 0.1); }
+        .cal-day.active::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--theme-color); border-radius: 50%; box-shadow: 0 0 5px var(--theme-color); }
 
-        /* --- SESSION CARDS --- */
-        .session-card-large {
-            background-color: rgba(11, 19, 43, 0.7); border: 1px solid var(--border-color-dark);
-            border-radius: var(--border-radius-lg); transition: all 0.3s ease; 
-            animation: fadeIn 0.5s ease-out forwards;
-            position: relative; cursor: pointer; padding: 25px;
+        /* --- ARC REACTOR --- */
+        .timer-display { position: relative; width: 300px; height: 300px; margin: 0 auto 40px; display: flex; align-items: center; justify-content: center; }
+        
+        .reactor { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 10; }
+        
+        /* Cercles Complexes */
+        .circle-1 { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(var(--theme-rgb), 0.3); animation: rotate-right var(--reactor-speed) linear infinite; }
+        .circle-2 { position: absolute; width: 90%; height: 90%; border-radius: 50%; border: 4px solid var(--theme-color); border-left-color: transparent; border-right-color: transparent; animation: rotate-left 5s linear infinite; box-shadow: 0 0 15px rgba(var(--theme-rgb), 0.3); }
+        .circle-3 { position: absolute; width: 80%; height: 80%; border-radius: 50%; border: 2px dashed rgba(var(--theme-rgb), 0.6); animation: rotate-right 12s linear infinite; }
+        .circle-4 { position: absolute; width: 60%; height: 60%; border-radius: 50%; background: radial-gradient(circle, rgba(var(--theme-rgb), 0.2) 0%, transparent 70%); }
+        
+        .triangle { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 160px; 
+            background: var(--theme-color); clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
+            opacity: 0.15; animation: rotate-right var(--reactor-speed) linear infinite; z-index: 1;
         }
-        .session-card-large:hover { border-color: var(--theme-color); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(var(--theme-rgb), 0.15); }
-        .session-card-header h3 { font-family: var(--font-family-titles); color: var(--theme-color); font-size: 1.4em; margin: 0; text-shadow: 0 0 8px rgba(var(--theme-rgb), 0.5); }
-        .session-card-large p { font-size: 0.95em; color: var(--secondary-text-color-dark); margin: 10px 0; }
-        .global-performance-chart-container { min-height: 200px; position: relative; margin-top: 15px; }
 
-        /* --- ARC REACTOR (THE COMPLEX CORE) --- */
-        .workout-section { text-align: center; }
-        .section-hidden { opacity: 0; visibility: hidden; display: none; }
-        
-        .timer-and-image-wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 25px; }
-        .timer-display { position: relative; display: flex; justify-content: center; align-items: center; width: 300px; height: 300px; margin: 0 auto; cursor: pointer; user-select: none; }
-        
-        /* 8-Circle Layered Reactor */
-        .reactor { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; z-index: 10; background-color: transparent; }
-        .reactor::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(3, 7, 18, 0.3); z-index: 1; border-radius: 50%; }
-        
-        .triangle { z-index: 5; position: absolute; top: 66%; left: 50%; transform: translate(-50%, -50%); width: 155px; aspect-ratio: 1; background-color: var(--theme-color); -webkit-clip-path: polygon(50% 88%, 0 0, 100% 0); clip-path: polygon(50% 88%, 0 0, 100% 0); transition: 0.5s; opacity: 0.8; }
-        
-        .circle-1 { z-index: 2; position: absolute; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(rgba(var(--theme-rgb), 0.8), rgba(var(--electric-blue-rgb), 0.8)); animation: rotate-right var(--reactor-speed) linear infinite; }
-        .circle-2 { z-index: 4; position: absolute; top: 30px; left: 30px; width: calc(100% - 60px); height: calc(100% - 60px); border-radius: 50%; border: 10px solid var(--theme-color); box-shadow: 0 0 30px 30px rgba(var(--theme-rgb), 0.2); animation: rotate-left 4s linear infinite; }
-        .circle-3 { z-index: 7; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; box-shadow: 0 0 10px 10px rgba(var(--theme-rgb), 0.2); }
-        .circle-3::after { content: ''; display: block; width: 115px; height: 115px; border-radius: 50%; border: 3px dotted rgba(var(--theme-rgb), 0.8); animation: rotate-right 10s linear infinite; }
-        .circle-4 { z-index: 8; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border-radius: 50%; box-shadow: 0 0 10px 10px rgba(var(--theme-rgb), 0.1); animation: rotate-left-right 20s infinite ease-in; }
-        .circle-5 { z-index: 9; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; border-radius: 50%; animation: rotate-left-right 10s infinite ease-in; background-color: rgba(var(--theme-rgb), 0.2); box-shadow: 0 0 20px 20px rgba(var(--theme-rgb), 0.2); }
-        
-        #time-left { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; font-family: var(--font-family-timer); font-size: 3.6em; font-weight: 700; color: #FFFFFF; text-shadow: 0 0 15px rgba(var(--theme-rgb), 0.8); pointer-events: none; white-space: nowrap; }
+        #time-left { 
+            position: relative; z-index: 20; font-family: var(--font-tech); font-size: 3.8em; font-weight: 700; color: #fff;
+            text-shadow: 0 0 15px rgba(var(--theme-rgb), 0.8); 
+        }
 
-        .timer-progress-circle-container { position: absolute; top: 50%; left: 50%; width: 250px; height: 250px; transform: translate(-50%, -50%); pointer-events: none; }
-        .timer-progress-circle { fill: none; stroke: var(--theme-color); stroke-width: 6; stroke-linecap: round; transform-origin: center; transform: rotate(-90deg); transition: stroke-dashoffset 0.3s linear, stroke 0.3s ease; }
-        .timer-progress-circle-bg { fill: none; stroke: rgba(var(--theme-rgb), 0.15); stroke-width: 6; }
+        .timer-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
+        .timer-track { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
+        .timer-fill { fill: none; stroke: var(--theme-color); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s linear; filter: drop-shadow(0 0 5px var(--theme-color)); }
 
-        /* --- WORKOUT UI --- */
-        .workout-info { margin-bottom: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        #current-exercise-name-display { display: block; font-size: 1.5em; font-weight: 600; color: var(--theme-color); margin-bottom: 8px; text-shadow: 0 0 10px rgba(var(--theme-rgb), 0.3); }
-        body.state-exercise #current-exercise-name-display { animation: textGlowPulseState 2s infinite ease-in-out; }
+        /* --- WORKOUT INFO --- */
+        .workout-info { text-align: center; margin-bottom: 30px; width: 100%; }
+        #current-ex-name { font-family: var(--font-tech); font-size: 1.6em; color: var(--theme-color); margin-bottom: 10px; animation: textGlow 3s infinite; }
         
-        .exercise-details, .break-info { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; background-color: rgba(11, 19, 43, 0.6); padding: 15px 20px; border-radius: var(--border-radius-sm); border: 1px solid rgba(var(--theme-rgb), 0.3); width: fit-content; max-width: 95%; box-shadow: 0 2px 5px rgba(3, 7, 18, 0.2); }
-        .exercise-details .main-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 20px; font-size: 1.2em; font-weight: 500; color: var(--primary-text-color-dark); }
-        .exercise-details .main-stats i { color: var(--theme-color); opacity: 0.9; }
-        
-        .controls { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-        .controls button { background-color: rgba(11, 19, 43, 0.6); border: 1px solid var(--border-color-dark); color: var(--secondary-text-color-dark); padding: 10px 20px; border-radius: var(--border-radius-md); font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 100px; }
-        .controls button:not(:disabled):hover { border-color: var(--theme-color); color: var(--theme-color); background-color: rgba(var(--theme-rgb), 0.1); transform: translateY(-2px); }
-        #start-pause-btn { min-width: 140px; border-color: var(--theme-color); color: #fff; background-color: rgba(var(--theme-rgb), 0.2); font-weight: bold; }
-        
-        /* --- SUMMARY & MODALS --- */
-        .post-workout-summary { position: fixed; inset: 0; background-color: rgba(3, 7, 18, 0.95); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s; }
-        .post-workout-summary.visible { opacity: 1; visibility: visible; pointer-events: auto; }
-        .post-workout-summary-content { background-color: var(--secondary-bg-color-dark); border: 1px solid var(--theme-color); border-radius: var(--border-radius-lg); box-shadow: 0 0 30px rgba(var(--theme-rgb), 0.2); width: 100%; max-width: 680px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: 0.3s; }
-        .post-workout-summary.visible .post-workout-summary-content { transform: scale(1); }
-        .post-workout-summary h2 { color: var(--theme-color); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color-dark); text-align: center; background: rgba(0,0,0,0.2); text-shadow: 0 0 10px rgba(var(--theme-rgb), 0.5); }
-        .summary-items-list { list-style: none; padding: 15px 25px; overflow-y: auto; flex-grow: 1; background: var(--bg-color-dark); }
-        
-        .summary-item { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid var(--theme-color); }
-        .summary-item .exercise-name { font-weight: 500; font-size: 1.1em; margin-bottom: 10px; }
-        .summary-item .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stepper-control { display: flex; align-items: center; background: #030712; border: 1px solid var(--border-color-dark); border-radius: 6px; }
-        .stepper-btn { background: transparent; border: none; color: var(--theme-color); font-size: 1.2em; padding: 5px 10px; cursor: pointer; }
-        .stepper-value { flex-grow: 1; text-align: center; font-weight: bold; color: #fff; }
-        
-        .summary-controls { padding: 20px; border-top: 1px solid var(--border-color-dark); display: flex; justify-content: center; }
-        #finish-summary-btn { background: var(--neon-green); color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: var(--font-family-titles); font-size: 1.1em; transition: 0.2s; }
-        #finish-summary-btn:hover { box-shadow: 0 0 20px var(--neon-green); transform: scale(1.05); }
+        .ex-stats { 
+            background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-left: 4px solid var(--theme-color);
+            padding: 15px 30px; border-radius: 8px; display: inline-flex; gap: 30px; align-items: center; 
+            font-family: var(--font-tech); font-size: 1.3em; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .ex-stats i { color: var(--theme-color); margin-right: 8px; font-size: 0.8em; }
 
-        .message-area { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid var(--theme-color); color: #fff; padding: 12px 25px; border-radius: 8px; z-index: 3000; opacity: 0; transition: 0.3s; pointer-events: none; }
-        .message-area.visible { opacity: 1; bottom: 40px; }
-
-        footer { padding: 25px; text-align: center; font-size: 0.9em; color: var(--secondary-text-color-dark); border-top: 1px solid rgba(var(--theme-rgb), 0.2); margin-top: 50px; background: rgba(11, 19, 43, 0.8); }
+        /* --- CONTROLS --- */
+        .controls { display: flex; justify-content: center; gap: 15px; width: 100%; flex-wrap: wrap; }
+        .btn-ctrl {
+            background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 15px 25px; border-radius: 8px; font-family: var(--font-tech); cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px; min-width: 120px; justify-content: center;
+        }
+        .btn-ctrl:hover:not(:disabled) { border-color: var(--theme-color); color: #fff; background: rgba(var(--theme-rgb), 0.1); transform: translateY(-2px); }
+        .btn-ctrl:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        @media (max-width: 900px) { .home-grid { flex-direction: column; } }
-        @media (max-width: 480px) { .timer-display { width: 250px; height: 250px; } .reactor { width: 150px; height: 150px; } }
+        #btn-main { 
+            background: var(--theme-color); color: #000; border: none; font-weight: 900; 
+            box-shadow: 0 0 20px rgba(var(--theme-rgb), 0.4); min-width: 160px;
+        }
+        #btn-main:hover { box-shadow: 0 0 30px rgba(var(--theme-rgb), 0.7); transform: scale(1.05); }
+
+        /* --- MODALE --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        }
+        .modal-overlay.visible { display: flex; animation: fadeIn 0.3s ease-out; }
+        
+        .modal-content {
+            background: var(--bg-panel); width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+            border: 1px solid var(--theme-color); border-radius: var(--radius); padding: 25px;
+            box-shadow: 0 0 40px rgba(var(--theme-rgb), 0.2);
+        }
+        
+        .summary-item {
+            background: rgba(255,255,255,0.03); margin-bottom: 12px; padding: 15px; border-radius: 8px;
+            border-left: 3px solid var(--theme-color);
+        }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+        
+        .stepper { display: flex; align-items: center; background: #020617; border: 1px solid var(--border); border-radius: 6px; padding: 2px; }
+        .stepper button { background: none; border: none; color: var(--theme-color); width: 30px; height: 30px; cursor: pointer; font-size: 1.2em; }
+        .stepper span { font-family: var(--font-tech); font-weight: bold; width: 50px; text-align: center; font-size: 0.9em; }
+        
+        .btn-finish { width: 100%; padding: 15px; margin-top: 20px; background: var(--neon-green); color: #000; border: none; border-radius: 8px; font-weight: 900; font-family: var(--font-tech); cursor: pointer; }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 50px;
+            border: 1px solid var(--theme-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-weight: 500; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 9999;
+        }
+        .toast.visible { opacity: 1; bottom: 40px; }
+
+        footer { padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.8em; border-top: 1px solid var(--border); margin-top: 40px; }
     </style>
 </head>
-<body class="logged-out dark-theme state-idle">
+<body class="logged-out state-idle">
+
     <header>
         <div class="header-content">
-            <h1><i class="fas fa-shield-alt"></i> ARMORWORKOUT</h1>
-            <nav>
-                <ul><li><button id="edit-program-btn" disabled><i class="fas fa-edit"></i> ÉDITION</button></li></ul>
-            </nav>
+            <h1><i class="fas fa-shield-alt"></i> ARMOR<span>WORKOUT</span></h1>
             <div class="header-actions">
-                <div id="drive-status" style="display: none;"> <span id="drive-status-text">CONNECTÉ</span> </div>
-                <button id="signin-button"><i class="fab fa-google"></i> DRIVE</button>
+                <button id="edit-program-btn">ÉDITION</button>
+                <button id="signin-button"><i class="fab fa-google"></i> CONNEXION</button>
+                <div id="drive-status"><i class="fas fa-satellite-dish"></i> SYNC ACTIVE</div>
             </div>
         </div>
     </header>
@@ -261,110 +241,101 @@
             <!-- ACCUEIL -->
             <div id="home-section" class="app-section">
                 <div class="home-grid">
-                    <div class="home-main-content" id="session-cards-container">
-                        <!-- JS Generated Cards -->
+                    <div id="session-cards-container">
+                        <!-- JS Inject -->
                     </div>
                     <div class="home-sidebar">
                         <div class="sidebar-module" style="text-align:center;">
-                            <div class="league-badge" id="league-display">
-                                <!-- JS Generated League -->
-                            </div>
+                            <div class="league-badge" id="league-display"></div>
                         </div>
                         <div class="sidebar-module">
-                            <h3><i class="fas fa-calendar-check"></i> ASSIDUITÉ</h3>
+                            <h3><i class="fas fa-calendar-check"></i> CIBLE HEBDO</h3>
                             <div class="consistency-info">
-                                <div style="display:flex; justify-content:space-between; font-size:0.9em;">
-                                    <span>Objectif Semaine</span>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span>Objectif</span>
                                     <strong id="weekly-count-display">0 / 2</strong>
                                 </div>
-                                <div class="weekly-goal-progress-bar"><div class="weekly-goal-progress" id="weekly-progress-bar"></div></div>
-                                <p id="streak-display" style="font-size:0.85em; margin-top:5px; opacity:0.7;">Série actuelle : 0 semaines</p>
-                                <!-- Mini Calendrier 14 jours -->
+                                <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                                    <div id="weekly-progress-bar" style="height:100%; width:0%; background:var(--theme-color); transition:1s;"></div>
+                                </div>
+                                <p id="streak-display" style="margin-top:10px; font-size:0.8em; color:var(--text-muted)"></p>
                                 <div class="calendar-grid" id="calendar-grid"></div>
                             </div>
                         </div>
                         <div class="sidebar-module">
-                            <h3><i class="fas fa-history"></i> HISTORIQUE</h3>
-                            <ul id="recent-history-list" style="list-style:none; padding:0; font-size:0.9em; color:var(--secondary-text-color-dark);"></ul>
+                            <h3><i class="fas fa-history"></i> LOGS</h3>
+                            <ul id="history-list" style="list-style:none; font-size:0.85em; opacity:0.8; padding:0;"></ul>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- WORKOUT -->
-            <div class="workout-section app-section section-hidden" id="workout-section">
-                <div class="timer-and-image-wrapper" id="timer-view">
-                    <div class="timer-display" id="timer-display-clickable">
-                        <div class="timer-progress-circle-container">
-                            <svg viewBox="0 0 100 100">
-                                <circle class="timer-progress-circle-bg" cx="50" cy="50" r="45"></circle>
-                                <circle id="timer-progress-indicator" class="timer-progress-circle" cx="50" cy="50" r="45" stroke-dasharray="282.74" stroke-dashoffset="282.74"></circle>
-                            </svg>
-                        </div>
-                        <div class="reactor">
-                            <div class="triangle"></div>
-                            <div class="circle-1"><span></span><span></span><span></span><span></span></div>
-                            <div class="circle-2"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                            <div class="circle-3"></div>
-                            <div class="circle-4"><span></span><span></span><span></span></div>
-                            <div class="circle-5"><span></span><span></span><span></span></div>
-                            <div class="circle-6"></div>
-                            <div class="circle-7"></div>
-                            <div id="time-left">00:00</div>
-                        </div>
+            <div id="workout-section" class="app-section section-hidden">
+                <div class="timer-display">
+                    <svg class="timer-svg" viewBox="0 0 100 100">
+                        <circle class="timer-track" cx="50" cy="50" r="45"></circle>
+                        <circle id="timer-progress" class="timer-fill" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="reactor">
+                        <div class="circle-1"></div>
+                        <div class="circle-2"></div>
+                        <div class="circle-3"></div>
+                        <div class="circle-4"></div>
+                        <div class="triangle"></div>
+                        <div id="time-left">00:00</div>
                     </div>
                 </div>
-    
-                <div class="workout-info" id="workout-info">
-                    <div id="current-exercise-name-display">-</div>
-                    <div id="current-exercise-container"></div>
+
+                <div class="workout-info">
+                    <h2 id="current-ex-name">-</h2>
+                    <div id="current-ex-container"></div>
+                    <p id="current-ex-details" style="margin-top:15px; opacity:0.7; font-size:0.9em;">-</p>
                 </div>
-    
+
                 <div class="controls">
-                    <button id="prev-btn"><i class="fas fa-backward"></i> PRÉCÉDENT</button>
-                    <button id="start-pause-btn">DÉMARRER</button>
-                    <button id="skip-btn">SUIVANT <i class="fas fa-forward"></i></button>
-                    <button id="finish-btn" style="color:var(--neon-green)"><i class="fas fa-flag-checkered"></i> FINIR</button>
-                    <button id="reset-btn" style="color:var(--neon-red)"><i class="fas fa-times"></i></button>
+                    <button class="btn-ctrl" id="prev-btn"><i class="fas fa-backward"></i></button>
+                    <button class="btn-ctrl" id="btn-main">DÉMARRER</button>
+                    <button class="btn-ctrl" id="skip-btn"><i class="fas fa-forward"></i></button>
+                    <button class="btn-ctrl" id="quit-btn" style="color:var(--neon-red)"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
         </main>
     </div>
-    
-    <footer>
-        <p>© <span id="current-year"></span> ArmorWorkout. Powered by Arc Reactor Core.</p>
-    </footer>
 
-    <div id="message-area" class="message-area"></div>
-
-    <div id="post-workout-summary" class="post-workout-summary">
-        <div class="post-workout-summary-content">
-            <h2 id="summary-title">RAPPORT DE MISSION</h2>
-            <ul id="summary-items-list" class="summary-items-list"></ul>
-            <div class="summary-controls">
-                <button id="finish-summary-btn"><i class="fas fa-save"></i> SYNCHRONISER & QUITTER</button>
+    <!-- MODAL -->
+    <div id="summary-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="text-align:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:15px;">
+                <h2 id="modal-title" style="font-family:var(--font-tech); color:var(--theme-color)">Rapport</h2>
+                <p style="font-size:0.9em; color:var(--text-muted)">Ajustez les valeurs pour la surcharge progressive.</p>
             </div>
+            <div id="summary-list"></div>
+            <button id="save-btn" class="btn-finish">VALIDER</button>
         </div>
     </div>
-    
+
+    <div id="toast" class="toast"><span>Info</span></div>
+
+    <footer>
+        <p>&copy; 2026 ARMORWORKOUT | Protocol Arc Reactor v6.0</p>
+    </footer>
+
+    <!-- GOOGLE -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
+    
     <script>
         "use strict";
 
         // =================================================================================
-        // 1. CONFIGURATION & CONSTANTES
+        // 1. CONSTANTES & CONFIGURATION
         // =================================================================================
         const GOOGLE_CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
-        const GOOGLE_DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        
-        // CIBLES FICHIERS MODIFIÉES (IMPORTANT)
-        const PROGRAM_FILENAME = "programme.json";
-        const HISTORY_FILENAME = "armorworkout_history.json";
-        
-        const WORKOUT_GOAL = 2; // Objectif 2 séances / semaine
-        const TIMER_CIRCUMFERENCE = 2 * Math.PI * 45;
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const PROGRAM_FILE = "programme.json";
+        const HISTORY_FILE = "armorworkout_history.json";
+        const WEEKLY_GOAL = 2;
 
-        // SYSTÈME DE LIGUES (GAMIFICATION)
         const LEAGUES = [
             { name: "Bois", min: 0, color: "#A0522D", rgb: "160, 82, 45", speed: "12s" },
             { name: "Pierre", min: 2, color: "#78909C", rgb: "120, 144, 156", speed: "10s" },
@@ -378,122 +349,130 @@
             { name: "Vibranium", min: 32, color: "#FFFFFF", rgb: "255, 255, 255", speed: "1s" }
         ];
 
-        // Programme par défaut (Sécurité Anti-Crash)
         const DEFAULT_PROGRAM = {
             "nom_programme": "ROI VÊTU 2025",
             "sessions": [
-                { "nom_session": "SÉANCE A : V-FRAME", "exercices_et_pauses": [] },
-                { "nom_session": "SÉANCE B : THICKNESS", "exercices_et_pauses": [] }
+                { "nom_session": "SÉANCE A : V-FRAME", "description_session": "Focus Épaules & Dos", "exercices_et_pauses": [] },
+                { "nom_session": "SÉANCE B : THICKNESS", "description_session": "Focus Pecs & Bras", "exercices_et_pauses": [] }
             ]
         };
 
-        // ÉTAT GLOBAL
-        let loadedProgram = null;
-        let workoutHistory = [];
+        // --- VARIABLES GLOBALES (DÉCLARATION EXPLIQUEE POUR EVITER ERREURS) ---
         let googleAccessToken = null;
         let tokenClient = null;
+        let loadedProgram = null;
+        let workoutHistory = [];
         let programFileId = null;
         let historyFileId = null;
-        let currentLeague = LEAGUES[0];
 
-        // ÉTAT SÉANCE
-        let currentSessionName = "";
+        // Variables de session
         let currentPlan = [];
         let currentIdx = 0;
-        let timer = null;
+        let currentSessionName = "";
+        let timerInterval = null;
         let timeLeft = 0;
         let totalTime = 0;
-        let isRunning = false;
-        let workoutStartTime = null;
+        let isTimerRunning = false;
         let isEditMode = false;
-        let currentState = 'idle';
+        let currentSummaryContext = { mode: '', sessionName: '' }; // Déclaration explicite
 
         // =================================================================================
-        // 2. INITIALISATION & AUTH ROBUSTE
+        // 2. INITIALISATION
         // =================================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('current-year').textContent = new Date().getFullYear();
-            
-            // Attente active du chargement de la lib Google (Fix "google is not defined")
-            const checkGoogle = setInterval(() => {
+            // Attente active de la lib Google
+            const checkG = setInterval(() => {
                 if (typeof google !== 'undefined' && google.accounts) {
-                    clearInterval(checkGoogle);
+                    clearInterval(checkG);
                     initGis();
                 }
             }, 200);
 
-            addListeners();
-            updateTheme(LEAGUES[0]); // Thème par défaut
+            // Setup UI
+            updateTheme(LEAGUES[0]);
+            renderHome();
+            setupEventListeners();
         });
 
-        function addListeners() {
-            document.getElementById('signin-button').onclick = handleAuth;
-            document.getElementById('start-pause-btn').onclick = toggleTimer;
+        function setupEventListeners() {
+            document.getElementById('signin-button').onclick = () => tokenClient.requestAccessToken();
+            document.getElementById('btn-main').onclick = toggleTimer;
             document.getElementById('skip-btn').onclick = () => navigate(1);
             document.getElementById('prev-btn').onclick = () => navigate(-1);
-            document.getElementById('finish-btn').onclick = () => showSummary();
-            document.getElementById('reset-btn').onclick = quitWorkout;
-            document.getElementById('finish-summary-btn').onclick = saveWorkout;
+            document.getElementById('quit-btn').onclick = quitWorkout;
+            document.getElementById('save-btn').onclick = finishWorkout;
             document.getElementById('edit-program-btn').onclick = toggleEditMode;
             
-            // Délégation pour le stepper du résumé
-            document.getElementById('summary-items-list').addEventListener('click', handleStepper);
+            // Délégation d'événements pour le stepper (Plus robuste)
+            document.getElementById('summary-list').addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                const stepper = btn.closest('.stepper');
+                const span = stepper.querySelector('span');
+                let val = parseFloat(span.textContent);
+                const isWeight = stepper.dataset.type === 'weight';
+                const step = isWeight ? 0.5 : 1;
+                
+                if (btn.classList.contains('minus')) val = Math.max(0, val - step);
+                else val += step;
+                
+                span.textContent = Number.isInteger(val) ? val : val.toFixed(1);
+            });
         }
 
         function initGis() {
             tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_DRIVE_SCOPES,
+                client_id: GOOGLE_CLIENT_ID, scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.access_token) {
                         googleAccessToken = resp.access_token;
                         document.body.classList.replace('logged-out', 'logged-in');
-                        document.getElementById('drive-status').style.display = 'inline-flex';
-                        showMessage("ArmorOS Connecté. Initialisation...");
+                        document.getElementById('drive-status').style.display = 'flex';
+                        showToast("Connexion réussie. Synchronisation...");
                         await syncDrive();
                     }
                 }
             });
         }
 
-        function handleAuth() { if(tokenClient) tokenClient.requestAccessToken(); }
-
         // =================================================================================
-        // 3. DRIVE SYNC (CORRIGÉ HTTP 400 + ESPACES)
+        // 3. DRIVE SYNC (CORRECTION ERREUR 400)
         // =================================================================================
         async function syncDrive() {
             try {
-                // Programme
-                programFileId = await findFile(PROGRAM_FILENAME);
+                // Chargement Programme
+                programFileId = await findFile(PROGRAM_FILE);
                 if (programFileId) {
-                    const content = await downloadFile(programFileId);
-                    loadedProgram = JSON.parse(content);
+                    const txt = await downloadFile(programFileId);
+                    loadedProgram = JSON.parse(txt);
                 } else {
                     loadedProgram = DEFAULT_PROGRAM;
-                    programFileId = await createFile(PROGRAM_FILENAME, JSON.stringify(DEFAULT_PROGRAM));
-                    showMessage("Fichier Programme créé sur Drive.");
+                    programFileId = await createFile(PROGRAM_FILE, JSON.stringify(DEFAULT_PROGRAM));
+                    showToast("Programme créé.");
                 }
 
-                // Historique
-                historyFileId = await findFile(HISTORY_FILENAME);
+                // Chargement Historique
+                historyFileId = await findFile(HISTORY_FILE);
                 if (historyFileId) {
-                    const content = await downloadFile(historyFileId);
-                    workoutHistory = JSON.parse(content);
+                    const txt = await downloadFile(historyFileId);
+                    workoutHistory = JSON.parse(txt);
                 } else {
-                    historyFileId = await createFile(HISTORY_FILENAME, "[]");
                     workoutHistory = [];
+                    historyFileId = await createFile(HISTORY_FILE, "[]");
                 }
 
-                calculateLeague(); // Recalculer la ligue après chargement
+                calculateLeague();
                 renderHome();
+                showToast("Données synchronisées.");
             } catch (e) {
                 console.error(e);
-                showMessage("Erreur de synchronisation Drive.");
+                showToast("Erreur Drive.");
             }
         }
 
-        // --- Helpers Drive Corrects ---
         async function findFile(name) {
-            // CORRECTION : encodeURIComponent pour éviter l'erreur 400 avec les espaces/+
+            // FIX CRITIQUE : encodeURIComponent pour les espaces
             const q = `name = '${name}' and trashed = false`;
             const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${googleAccessToken}` } });
@@ -526,103 +505,89 @@
         }
 
         // =================================================================================
-        // 4. MOTEUR LIGUES (GAMIFICATION 2/SEMAINE)
+        // 4. LIGUES & THEMES
         // =================================================================================
         function calculateLeague() {
-            if (workoutHistory.length === 0) return updateTheme(LEAGUES[0]);
+            if (!workoutHistory.length) return updateTheme(LEAGUES[0]);
 
-            // Grouper par semaine
             const weeks = {};
             workoutHistory.forEach(h => {
                 const d = new Date(h.date);
-                const k = getWeekKey(d);
+                const k = `${d.getFullYear()}-${getWeek(d)}`;
                 weeks[k] = (weeks[k] || 0) + 1;
             });
 
-            // Calculer Streak
             let streak = 0;
-            let checkDate = new Date();
+            let d = new Date();
+            const currK = `${d.getFullYear()}-${getWeek(d)}`;
             
-            // Mise à jour barre progression semaine courante
-            const currentWeekKey = getWeekKey(checkDate);
-            const countThisWeek = weeks[currentWeekKey] || 0;
-            updateWeeklyBar(countThisWeek);
+            // UI Hebdo
+            const count = weeks[currK] || 0;
+            document.getElementById('weekly-count-display').textContent = `${count} / ${WEEKLY_GOAL}`;
+            document.getElementById('weekly-progress-bar').style.width = Math.min((count/WEEKLY_GOAL)*100, 100) + "%";
 
-            // Remonter le temps pour le streak
+            // Calcul Streak
             while(true) {
-                const key = getWeekKey(checkDate);
-                if (weeks[key] >= WORKOUT_GOAL) {
+                const k = `${d.getFullYear()}-${getWeek(d)}`;
+                if (weeks[k] >= WEEKLY_GOAL) {
                     streak++;
-                    checkDate.setDate(checkDate.getDate() - 7);
+                    d.setDate(d.getDate() - 7);
                 } else {
-                    // Tolérance pour la semaine en cours si pas finie
-                    if (key === currentWeekKey && streak === 0) {
-                        checkDate.setDate(checkDate.getDate() - 7);
-                        continue;
-                    }
+                    if (k === currK && streak === 0) { d.setDate(d.getDate() - 7); continue; }
                     break;
                 }
             }
 
-            // Déterminer Ligue
-            let newLeague = LEAGUES[0];
-            for (let l of LEAGUES) { if (streak >= l.min) newLeague = l; }
-            
-            // UI
-            document.getElementById('streak-display').textContent = `Série actuelle : ${streak} semaine(s)`;
-            updateTheme(newLeague);
+            let league = LEAGUES[0];
+            for(let l of LEAGUES) { if(streak >= l.min) league = l; }
+
+            document.getElementById('streak-display').textContent = `Série : ${streak} semaine(s)`;
+            updateTheme(league);
         }
 
-        function updateWeeklyBar(count) {
-            const el = document.getElementById('weekly-progress-bar');
-            const txt = document.getElementById('weekly-count-display');
-            const pct = Math.min((count / WORKOUT_GOAL) * 100, 100);
-            el.style.width = pct + '%';
-            txt.textContent = `${count} / ${WORKOUT_GOAL}`;
+        function getWeek(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
-        function updateTheme(league) {
-            currentLeague = league;
+        function updateTheme(l) {
             const r = document.documentElement;
-            r.style.setProperty('--theme-color', league.color);
-            r.style.setProperty('--theme-rgb', league.rgb);
-            r.style.setProperty('--reactor-speed', league.speed);
+            const hex = l.color.replace('#','');
+            const rgb = `${parseInt(hex.substring(0,2),16)}, ${parseInt(hex.substring(2,4),16)}, ${parseInt(hex.substring(4,6),16)}`;
             
-            // Mettre à jour le badge
+            r.style.setProperty('--theme-color', l.color);
+            r.style.setProperty('--theme-rgb', rgb);
+            r.style.setProperty('--reactor-speed', l.speed);
+
             document.getElementById('league-display').innerHTML = `
-                <i class="fas ${league.icon || 'fa-trophy'}" style="font-size:3em; color:${league.color}; margin-bottom:10px; filter:drop-shadow(0 0 10px ${league.color})"></i>
-                <h3 style="color:${league.color}; margin:0; text-transform:uppercase">${league.name}</h3>
+                <i class="fas ${l.icon || 'fa-trophy'} league-icon"></i>
+                <div class="league-name">${l.name}</div>
             `;
         }
 
-        function getWeekKey(d) {
-            const date = new Date(d.getTime());
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-            const week1 = new Date(date.getFullYear(), 0, 4);
-            return date.getFullYear() + "-" + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-        }
-
         // =================================================================================
-        // 5. MOTEUR D'ENTRAÎNEMENT (ARC REACTOR)
+        // 5. WORKOUT ENGINE (CORRECTION VARIABLES)
         // =================================================================================
         function renderHome() {
             const container = document.getElementById('session-cards-container');
             container.innerHTML = '';
-
+            
             if (!loadedProgram) return;
 
             loadedProgram.sessions.forEach(session => {
                 const card = document.createElement('div');
-                card.className = 'session-card-large';
+                card.className = `session-card ${isEditMode ? 'edit-mode' : ''}`;
                 const count = session.exercices_et_pauses.filter(e => e.type === 'exercise').length;
                 card.innerHTML = `
                     <h3>${session.nom_session}</h3>
-                    <p>${session.description_session || ''}</p>
-                    <div style="margin-top:15px; color:var(--theme-color); font-weight:bold"><i class="fas fa-dumbbell"></i> ${count} Exercices</div>
+                    <p>${session.description_session || 'Aucune description'}</p>
+                    <div class="meta"><span><i class="fas fa-dumbbell"></i> ${count} Exos</span><span>GO <i class="fas fa-play"></i></span></div>
                 `;
                 card.onclick = () => {
-                    if (isEditMode) showSummaryModal(session.nom_session, 'edit');
+                    // FIX: Gestion correcte du clic en mode édition
+                    if (isEditMode) openSummary(session.nom_session, 'edit');
                     else startSession(session);
                 };
                 container.appendChild(card);
@@ -633,7 +598,7 @@
             list.innerHTML = '';
             workoutHistory.slice(-5).reverse().forEach(h => {
                 const li = document.createElement('li');
-                li.style.marginBottom = "8px";
+                li.style.marginBottom = "5px";
                 li.innerHTML = `<span style="color:var(--theme-color)">${h.date}</span> ${h.type}`;
                 list.appendChild(li);
             });
@@ -646,16 +611,10 @@
                 const d = new Date(); d.setDate(now.getDate() - i);
                 const iso = d.toISOString().split('T')[0];
                 const dayEl = document.createElement('div');
-                dayEl.className = 'calendar-day';
+                dayEl.className = 'cal-day';
                 if(i===0) dayEl.classList.add('today');
+                if(workoutHistory.some(h => h.date === iso)) dayEl.classList.add('active');
                 dayEl.textContent = d.getDate();
-                
-                // Dot si séance ce jour là
-                if(workoutHistory.some(h => h.date === iso)) {
-                    const dot = document.createElement('div');
-                    dot.className = 'day-dot';
-                    dayEl.appendChild(dot);
-                }
                 grid.appendChild(dayEl);
             }
         }
@@ -664,11 +623,10 @@
             currentSessionName = session.nom_session;
             currentPlan = JSON.parse(JSON.stringify(session.exercices_et_pauses));
             currentIdx = 0;
-            workoutStartTime = new Date();
             
+            document.body.classList.add('workout-active');
             document.getElementById('home-section').classList.add('section-hidden');
             document.getElementById('workout-section').classList.remove('section-hidden');
-            document.body.classList.add('workout-active');
             
             loadStep();
         }
@@ -676,84 +634,67 @@
         function loadStep() {
             const item = currentPlan[currentIdx];
             const isRest = item.type === 'break';
-            const nameEl = document.getElementById('current-exercise-name-display');
-            const contEl = document.getElementById('current-exercise-container');
-            const btn = document.getElementById('start-pause-btn');
+            const btn = document.getElementById('btn-main');
+            
+            // FIX: Réinitialisation explicite du flag timer
+            isTimerRunning = false;
 
-            nameEl.textContent = item.name || (isRest ? "RÉCUPÉRATION" : "Exercice");
+            document.getElementById('current-ex-name').textContent = item.name || (isRest ? "RÉCUPÉRATION" : "Exercice");
+            document.getElementById('current-ex-details').textContent = item.details || "";
+            
+            const cont = document.getElementById('current-ex-container');
             
             if (isRest) {
                 totalTime = item.duration || 60;
-                timeLeft = totalTime;
-                contEl.innerHTML = `<div class="exercise-details" style="border-color:var(--break-color-val)">Respirez calmement...</div>`;
                 btn.innerHTML = `<i class="fas fa-play"></i> CHRONO`;
-                isTimerRunning = false;
-                document.body.className = "workout-active state-break";
+                cont.innerHTML = `<div class="exercise-details" style="border-color:var(--break-color-val)">Respirez...</div>`;
             } else {
-                // Parsing du matériel (Sac 🎒, Bandes 🟪🟦)
+                // Parsing Matériel
                 const wTxt = item.weight_text || "";
-                let displayWeight = wTxt;
-                if (wTxt.includes('Sac')) displayWeight = wTxt.replace('Sac', '🎒');
-                else if (wTxt.includes('Élastique')) displayWeight = wTxt.replace('Élastique', '🧘');
-                else if (!wTxt || wTxt.includes('PDC')) displayWeight = "💪 PDC";
-                else displayWeight = `🏋️ ${parseFloat(wTxt) || 0} kg`;
+                let displayW = wTxt;
+                if (wTxt.includes('Sac')) displayW = wTxt.replace('Sac', '🎒');
+                else if (wTxt.includes('Élastique')) displayW = wTxt.replace('Élastique', '🧘');
+                else if (!wTxt || wTxt.includes('PDC')) displayW = "💪 PDC";
+                
+                const reps = item.reps || (item.duration ? item.duration+"s" : "-");
 
-                const reps = item.reps || (item.duration ? item.duration + "s" : "-");
-
-                contEl.innerHTML = `
-                    <div class="exercise-details">
-                        <div class="main-stats">
-                            <span><i class="fas fa-repeat"></i> ${reps}</span>
-                            <span>${displayWeight}</span>
-                        </div>
-                        <p style="margin-top:10px; opacity:0.7; font-size:0.9em;">${item.details || ''}</p>
+                cont.innerHTML = `
+                    <div class="ex-stats">
+                        <span><i class="fas fa-repeat"></i> ${reps}</span>
+                        <span>${displayW}</span>
                     </div>
                 `;
                 
                 if (item.duration) {
                     totalTime = item.duration;
-                    timeLeft = totalTime;
                     btn.innerHTML = `<i class="fas fa-play"></i> GO`;
-                    document.body.className = "workout-active state-exercise";
-                    document.body.dataset.timed = "true";
                 } else {
                     totalTime = 0;
-                    timeLeft = 0;
                     btn.innerHTML = `<i class="fas fa-check"></i> VALIDÉ`;
-                    document.body.className = "workout-active state-exercise";
-                    document.body.dataset.timed = "false";
                 }
-                isTimerRunning = false;
             }
+            timeLeft = totalTime;
             updateTimerDisplay();
         }
 
         function toggleTimer() {
-            const item = currentPlan[currentIdx];
-            // Si pas de temps (reps), on valide direct
-            if (item.type !== 'break' && !item.duration) {
-                navigate(1);
-                return;
-            }
-
+            if (totalTime === 0) { navigate(1); return; }
+            
+            const btn = document.getElementById('btn-main');
             if (isTimerRunning) {
-                clearInterval(timer);
+                clearInterval(timerInterval);
                 isTimerRunning = false;
-                document.getElementById('start-pause-btn').innerHTML = `<i class="fas fa-play"></i> REPRENDRE`;
-                document.body.classList.add('state-paused');
+                btn.innerHTML = `<i class="fas fa-play"></i> REPRENDRE`;
             } else {
                 isTimerRunning = true;
-                document.getElementById('start-pause-btn').innerHTML = `<i class="fas fa-pause"></i> PAUSE`;
-                document.body.classList.remove('state-paused');
-                
-                timer = setInterval(() => {
+                btn.innerHTML = `<i class="fas fa-pause"></i> PAUSE`;
+                timerInterval = setInterval(() => {
                     timeLeft--;
                     updateTimerDisplay();
                     if (timeLeft <= 0) {
-                        clearInterval(timer);
+                        clearInterval(timerInterval);
                         isTimerRunning = false;
-                        if (item.type === 'break') navigate(1); // Auto-skip break
-                        else document.getElementById('start-pause-btn').innerHTML = `<i class="fas fa-check"></i> FINI`;
+                        navigate(1);
                     }
                 }, 1000);
             }
@@ -761,23 +702,22 @@
 
         function updateTimerDisplay() {
             const el = document.getElementById('time-left');
-            const circle = document.getElementById('timer-progress-indicator');
+            const ring = document.getElementById('timer-progress');
             
             if (totalTime > 0) {
-                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const s = (timeLeft % 60).toString().padStart(2, '0');
+                const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+                const s = (timeLeft%60).toString().padStart(2,'0');
                 el.textContent = `${m}:${s}`;
-                
-                const pct = timeLeft / totalTime;
-                circle.style.strokeDashoffset = TIMER_CIRCUMFERENCE * (1 - pct);
+                const offset = 283 * (1 - timeLeft/totalTime);
+                ring.style.strokeDashoffset = offset;
             } else {
-                el.textContent = "00:00";
-                circle.style.strokeDashoffset = 0;
+                el.textContent = "PRÊT";
+                ring.style.strokeDashoffset = 0;
             }
         }
 
         function navigate(dir) {
-            clearInterval(timer);
+            clearInterval(timerInterval);
             currentIdx += dir;
             if (currentIdx >= currentPlan.length) showSummary();
             else if (currentIdx < 0) { currentIdx = 0; loadStep(); }
@@ -785,39 +725,37 @@
         }
 
         function quitWorkout() {
-            if(confirm("Quitter la séance ?")) {
-                clearInterval(timer);
-                document.body.className = "logged-in state-idle";
+            if(confirm("Quitter ?")) {
+                clearInterval(timerInterval);
+                document.body.classList.remove('workout-active');
                 document.getElementById('workout-section').classList.add('section-hidden');
                 document.getElementById('home-section').classList.remove('section-hidden');
             }
         }
 
         // =================================================================================
-        // 6. RÉSUMÉ & ÉDITION
+        // 6. MODALE DE FIN / ÉDITION (FIXED)
         // =================================================================================
         function showSummary() {
-            currentSummaryContext = { mode: 'workout', sessionName: currentSessionName };
             openSummary(currentSessionName, 'workout');
         }
 
         function openSummary(sessionName, mode) {
+            // FIX: Initialisation correcte du contexte
             currentSummaryContext = { mode: mode, sessionName: sessionName };
             
             const session = loadedProgram.sessions.find(s => s.nom_session === sessionName);
-            // Mode workout = plan modifié, Mode edit = plan original
             const plan = (mode === 'workout') ? currentPlan : JSON.parse(JSON.stringify(session.exercices_et_pauses));
             
-            const list = document.getElementById('summary-items-list');
+            const list = document.getElementById('summary-list');
             list.innerHTML = '';
+            
+            document.getElementById('modal-title').textContent = (mode === 'workout') ? "Rapport de Mission" : "Édition du Programme";
 
-            plan.forEach((item, idx) => {
+            plan.forEach((item, i) => {
                 if (item.type === 'exercise') {
-                    const li = document.createElement('li');
-                    li.className = 'summary-item';
-                    
-                    // Extraction valeur poids et emoji
-                    let weightVal = 0;
+                    // Extraction Poids/Type
+                    let wVal = 0;
                     let emoji = "🏋️";
                     const wTxt = item.weight_text || "";
                     
@@ -825,121 +763,92 @@
                     else if (wTxt.includes('Élastique') || wTxt.includes('Band')) emoji = "🧘";
                     else if (wTxt.includes('PDC')) emoji = "💪";
                     
-                    weightVal = parseFloat(wTxt.replace(/[^0-9.]/g, '')) || 0;
+                    wVal = parseFloat(wTxt.replace(/[^0-9.]/g, '')) || 0;
 
-                    li.innerHTML = `
+                    const div = document.createElement('div');
+                    div.className = 'summary-item';
+                    div.innerHTML = `
                         <div class="exercise-name">${item.name}</div>
-                        <div class="fields-grid">
-                            <div class="input-group">
-                                <label>Reps / Temps</label>
-                                <div class="stepper-control" data-type="reps" data-idx="${idx}">
-                                    <button class="stepper-btn minus">-</button>
-                                    <span class="stepper-value">${item.reps || item.duration || 0}</span>
-                                    <button class="stepper-btn plus">+</button>
-                                </div>
+                        <div class="summary-row">
+                            <div class="stepper" data-idx="${i}" data-type="reps">
+                                <button class="minus">-</button>
+                                <span>${item.reps || item.duration || 0}</span>
+                                <button class="plus">+</button>
                             </div>
-                            <div class="input-group">
-                                <label>Charge (${emoji})</label>
-                                <div class="stepper-control" data-type="weight" data-idx="${idx}" data-emoji="${emoji}">
-                                    <button class="stepper-btn minus">-</button>
-                                    <span class="stepper-value">${weightVal}</span>
-                                    <button class="stepper-btn plus">+</button>
-                                </div>
+                            <div class="stepper" data-idx="${i}" data-type="weight" data-emoji="${emoji}">
+                                <button class="minus">-</button>
+                                <span>${wVal}</span>
+                                <button class="plus">+</button>
+                                <span style="font-size:1.2em">${emoji}</span>
                             </div>
                         </div>
                     `;
-                    list.appendChild(li);
+                    list.appendChild(div);
                 }
             });
 
-            const btn = document.getElementById('finish-summary-btn');
-            btn.innerHTML = (mode === 'workout') ? `<i class="fas fa-check"></i> VALIDER & SAUVEGARDER` : `<i class="fas fa-save"></i> ENREGISTRER MODIFICATIONS`;
-            document.getElementById('post-workout-summary').classList.add('visible');
+            document.getElementById('summary-modal').classList.add('visible');
         }
 
-        function handleStepper(e) {
-            const btn = e.target.closest('.stepper-btn');
-            if (!btn) return;
-            
-            const parent = btn.parentElement;
-            const span = parent.querySelector('.stepper-value');
-            let val = parseFloat(span.textContent);
-            const isWeight = parent.dataset.type === 'weight';
-            const step = isWeight ? 0.5 : 1;
+        async function finishWorkout() {
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true; btn.textContent = "SAUVEGARDE...";
 
-            if (btn.classList.contains('minus')) val = Math.max(0, val - step);
-            else val += step;
-
-            // Arrondi propre
-            span.textContent = Number.isInteger(val) ? val : val.toFixed(1);
-        }
-
-        async function saveWorkout() {
-            const btn = document.getElementById('finish-summary-btn');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SAUVEGARDE...`;
-
-            // 1. Appliquer les valeurs du formulaire au programme en mémoire
             const sessionIdx = loadedProgram.sessions.findIndex(s => s.nom_session === currentSummaryContext.sessionName);
             const items = document.querySelectorAll('.summary-item');
             
-            // On reconstruit un plan propre
+            // Reconstitution du plan avec les nouvelles valeurs
+            // FIX: Utilisation du bon plan source selon le mode
             let planToSave = (currentSummaryContext.mode === 'workout') ? currentPlan : JSON.parse(JSON.stringify(loadedProgram.sessions[sessionIdx].exercices_et_pauses));
 
-            items.forEach((div) => {
-                const repEl = div.querySelector('[data-type="reps"]');
-                const wEl = div.querySelector('[data-type="weight"]');
+            items.forEach(div => {
+                const repEl = div.querySelector('.stepper[data-type="reps"]');
+                const wEl = div.querySelector('.stepper[data-type="weight"]');
                 const idx = parseInt(repEl.dataset.idx);
                 
-                const rVal = parseFloat(repEl.querySelector('.stepper-value').textContent);
-                const wVal = parseFloat(wEl.querySelector('.stepper-value').textContent);
+                const rVal = parseFloat(repEl.querySelector('span').textContent);
+                const wVal = parseFloat(wEl.querySelector('span').textContent);
                 const emoji = wEl.dataset.emoji;
 
                 const ex = planToSave[idx];
                 if (ex.reps) ex.reps = rVal;
                 else if (ex.duration) ex.duration = rVal;
 
-                // Reconstruction string poids
+                // Reconstruction texte poids
                 if (emoji === "🎒") ex.weight_text = `🎒 Sac ${wVal} kg`;
                 else if (emoji === "🧘") ex.weight_text = `🧘 Élastique ${wVal} kg`;
                 else if (emoji === "💪") ex.weight_text = `💪 PDC`;
                 else ex.weight_text = `🏋️ ${wVal} kg`;
             });
 
-            // Si c'était un vrai workout, on met à jour le programme principal ET l'historique
+            // Sauvegarde Local
+            loadedProgram.sessions[sessionIdx].exercices_et_pauses = planToSave;
+
+            // Ajout Historique si Workout
             if (currentSummaryContext.mode === 'workout') {
-                loadedProgram.sessions[sessionIdx].exercices_et_pauses = planToSave;
-                
                 workoutHistory.push({
                     date: new Date().toISOString().split('T')[0],
                     type: currentSessionName,
                     exercises: planToSave.filter(e => e.type === 'exercise').map(e => ({
-                        name: e.name,
-                        reps: e.reps || e.duration,
-                        weight: e.weight_text
+                        name: e.name, reps: e.reps || e.duration, weight: e.weight_text
                     }))
                 });
-                
                 if (googleAccessToken) await updateFile(historyFileId, workoutHistory);
-            } else {
-                // Mode édition simple
-                loadedProgram.sessions[sessionIdx].exercices_et_pauses = planToSave;
             }
 
             // Sauvegarde Programme
             if (googleAccessToken) await updateFile(programFileId, loadedProgram);
 
-            // Reset UI
-            document.getElementById('post-workout-summary').classList.remove('visible');
-            btn.disabled = false;
-            
+            // UI Reset
+            document.getElementById('summary-modal').classList.remove('visible');
+            btn.disabled = false; btn.textContent = "VALIDER";
+
             if (currentSummaryContext.mode === 'workout') {
                 quitWorkout();
             } else {
-                renderHome();
-                showMessage("Modifications enregistrées !");
-                isEditMode = false;
-                document.getElementById('edit-program-btn').classList.remove('active');
+                renderHome(); // Rafraîchir les cartes avec les nouvelles valeurs
+                showToast("Modifications enregistrées !");
+                toggleEditMode(); // Quitter le mode édition
             }
         }
 
@@ -947,24 +856,17 @@
             isEditMode = !isEditMode;
             const btn = document.getElementById('edit-program-btn');
             btn.classList.toggle('active', isEditMode);
-            btn.innerHTML = isEditMode ? `<i class="fas fa-check"></i> TERMINER` : `<i class="fas fa-edit"></i> ÉDITION`;
-            
-            const cards = document.querySelectorAll('.session-card-large');
-            cards.forEach(c => {
-                c.style.borderColor = isEditMode ? "var(--neon-yellow)" : "var(--border-color-dark)";
-                c.querySelector('h3').innerHTML = isEditMode ? `<i class="fas fa-pen"></i> ` + c.querySelector('h3').textContent : c.querySelector('h3').textContent;
-            });
-            showMessage(isEditMode ? "Mode Édition Activé" : "Mode Édition Désactivé");
+            renderHome(); // Re-render pour appliquer la classe CSS edit-mode
+            showToast(isEditMode ? "Mode Édition Activé" : "Mode Édition Désactivé");
         }
 
-        function showMessage(txt, duration = 3000) {
-            const el = document.getElementById('message-area');
-            el.textContent = txt;
-            el.classList.add('visible');
-            setTimeout(() => el.classList.remove('visible'), duration);
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.querySelector('span').textContent = msg;
+            t.classList.add('visible');
+            setTimeout(() => t.classList.remove('visible'), 3000);
         }
 
     </script>
 </body>
-</html>
-  
+    </html>
