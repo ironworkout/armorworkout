@@ -109,7 +109,7 @@
         body.league-9 { --theme-color: #00FF00; --reactor-speed: 2s; } /* Apex */
         body.league-10 { --theme-color: #FFFFFF; --reactor-speed: 1s; } /* Legend */
 
-        /* --- VIBRANIUM DESIGN SYSTEM (New Integration) --- */
+        /* --- VIBRANIUM DESIGN SYSTEM & HUD --- */
         .vibranium-mastered {
             background: linear-gradient(135deg, rgba(11, 19, 43, 0.9) 0%, rgba(20, 0, 30, 0.95) 100%) !important;
             border: 1px solid var(--neon-purple) !important;
@@ -148,6 +148,25 @@
             50% { filter: brightness(1.3); transform: scale(1.05); }
             100% { filter: brightness(1); transform: scale(1); }
         }
+
+        .chart-no-data-message {
+            position: absolute;
+            inset: 0;
+            background: rgba(11, 19, 43, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--secondary-text-color);
+            font-family: var(--font-family-titles);
+            text-align: center;
+            padding: 20px;
+            backdrop-filter: blur(2px);
+            border-radius: var(--border-radius-lg);
+            border: 1px dashed var(--border-color);
+        }
+        .chart-no-data-message i { font-size: 2em; margin-bottom: 10px; color: var(--electric-blue); opacity: 0.5; }
+        .chart-no-data-message span { font-size: 0.9em; letter-spacing: 1px; opacity: 0.7; }
 
         /* --- Fin Vibranium --- */
 
@@ -584,6 +603,15 @@
         footer a { color: var(--electric-cyan); text-decoration: none; transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease; }
         footer a:hover { color: var(--primary-text-color); text-decoration: underline; text-shadow: 0 0 8px var(--electric-cyan); }
         footer .fab.fa-google-drive { color: var(--neon-green); } footer .fab.fa-github { color: var(--neon-purple); }
+
+        /* Chart No Data Overlay */
+        .chart-no-data-message {
+            position: absolute; inset: 0; background: rgba(11, 19, 43, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--secondary-text-color); font-family: var(--font-family-titles); text-align: center; padding: 20px;
+            backdrop-filter: blur(2px); border-radius: var(--border-radius-lg); border: 1px dashed var(--border-color);
+        }
+        .chart-no-data-message i { font-size: 2em; margin-bottom: 10px; color: var(--electric-blue); opacity: 0.5; }
+        .chart-no-data-message span { font-size: 0.9em; letter-spacing: 1px; opacity: 0.7; }
         
 
         @media (min-width: 769px) { 
@@ -1917,7 +1945,7 @@
                     </div>`;
                 mainContent.appendChild(card);
                 
-                // --- VISUALISATION HUD BALLISTIQUE (New Chart Implementation) ---
+                // --- VISUALISATION HUD BALLISTIQUE (No BS Version) ---
                 setTimeout(() => {
                     const canvasEl = document.getElementById(chartCanvasId);
                     if(canvasEl) renderBallisticChart(canvasEl, session.nom_session);
@@ -1940,7 +1968,7 @@
             }
         }
         
-        // --- HUD BALLISTIQUE CHART IMPLEMENTATION ---
+        // --- HUD BALLISTIQUE CHART IMPLEMENTATION ("ZERO BULLSHIT" EDITION) ---
         function renderBallisticChart(canvasEl, sessionName) {
             const canvasId = canvasEl.id;
             destroyChart(canvasId);
@@ -1948,47 +1976,75 @@
             const sessionTemplate = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
             if (!sessionTemplate) return;
 
-            // Récupérer les exercices du plan
-            const exercises = sessionTemplate.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise'));
-            if (exercises.length === 0) {
-                 if (placeholderEl) { placeholderEl.textContent = 'Aucun exercice détecté.'; placeholderEl.style.display = 'flex'; }
+            // 1. Zéro Bullshit Check : Historique vide = Pas de graph.
+            const relevantHistory = workoutHistory.filter(h => h.type === sessionName);
+            if (!relevantHistory || relevantHistory.length === 0) {
+                 if (placeholderEl) { 
+                     // Message Stylisé "HUD Awaiting Data"
+                     placeholderEl.innerHTML = `<div class="chart-no-data-message"><i class="fas fa-satellite-dish"></i><span>AWAITING TELEMETRY<br>TERMINE UNE SÉANCE POUR ACTIVER LE HUD</span></div>`; 
+                     placeholderEl.style.display = 'flex'; 
+                 }
                  return;
             }
             if (placeholderEl) placeholderEl.style.display = 'none';
 
-            // Point Target Global (Cible du HUD = Coin Supérieur Droit)
-            // On normalise tout en % (0-100) pour afficher sur une carte 2D.
-            // X = % Endurance (Reps/TargetReps)
-            // Y = % Force (Weight/TargetWeight)
+            // Récupérer la DERNIÈRE séance pour la comparaison
+            const lastSessionData = relevantHistory[relevantHistory.length - 1];
+            
+            // Récupérer les exercices du plan actuel
+            const exercises = sessionTemplate.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise'));
 
             const dataPoints = exercises.map(ex => {
-                // Parsing Hybride avec parseEliteWeight
-                const currentWeight = parseEliteWeight(ex.weight_text);
-                const targetWeight = parseEliteWeight(ex.final_target_poids); // Renvoie 0 si "Debout"
+                // Trouver la donnée historique correspondante (par nom d'exo)
+                // Note : On utilise l'historique récent pour comparer à l'objectif ACTUEL du plan
+                const historyItem = lastSessionData.exercises ? lastSessionData.exercises.find(h => h.name === ex.name) : null;
                 
-                const currentReps = parseFloat(ex.reps) || 0;
+                // Valeurs Cibles (Plan)
+                const targetWeight = parseEliteWeight(ex.final_target_poids); // 0 si texte
                 const targetReps = parseFloat(ex.final_target_reps) || 12;
 
-                // Calcul Qualitatif vs Quantitatif
-                let xPercent, yPercent;
+                // Valeurs Actuelles (Dernière séance ou Plan si pas trouvé - fallback)
+                // Fallback: si pas d'historique précis pour cet exo (nouveau ?), on prend 0 pour montrer le chemin à faire.
+                const currentWeightRaw = historyItem ? (historyItem.finalWeightDescription || historyItem.weight_description_target) : "0";
+                const currentRepsRaw = historyItem ? (historyItem.finalReps || historyItem.reps_target || 0) : 0;
+                
+                const currentWeight = parseEliteWeight(currentWeightRaw);
+                const currentReps = parseFloat(currentRepsRaw);
 
-                // Si Poids est textuel (TargetWeight == 0 avec le parser), on fait du binaire
-                if (targetWeight === 0 && isNaN(parseFloat(ex.final_target_poids))) {
-                    yPercent = calculateEliteGap(ex.weight_text, ex.final_target_poids, 'qualitative');
+                // Calcul Qualitatif vs Quantitatif (Moteur Elite)
+                let xPercent, yPercent; // X = Reps (Endurance), Y = Poids (Force)
+
+                // Si cible poids est 0 (ex: "Debout" ou "Poids du corps" sans lest), 
+                // on considère que l'axe Y est à 100% si le texte correspond, sinon 0.
+                if (targetWeight === 0) {
+                     // Si c'est du PDC pur sans objectif de lest final, on met Y à 100% pour se focus sur les Reps (X)
+                     // Sauf si le texte cible est explicite (ex: "Debout") et qu'on est pas "Debout".
+                     if (ex.final_target_poids && ex.final_target_poids.length > 3) {
+                         yPercent = calculateEliteGap(currentWeightRaw, ex.final_target_poids, 'qualitative');
+                     } else {
+                         yPercent = 100; // Par défaut pour PDC simple
+                     }
                 } else {
                     yPercent = calculateEliteGap(currentWeight, targetWeight, 'number');
                 }
 
-                // Pour les Reps
                 xPercent = calculateEliteGap(currentReps, targetReps, 'number');
 
-                // Effet Jitter : Ajout de bruit aléatoire pour éviter le chevauchement parfait
-                const jitter = (Math.random() - 0.5) * 5; // +/- 2.5%
+                // Calcul du Delta pour le Tooltip (Le "Gap")
+                const deltaWeight = targetWeight > 0 ? (targetWeight - currentWeight).toFixed(1) : "N/A";
+                const deltaReps = (targetReps - currentReps).toFixed(0);
+
+                // Jitter (Micro décalage pour lisibilité)
+                const jitter = (Math.random() - 0.5) * 4;
 
                 return {
-                    x: Math.min(100, Math.max(0, xPercent)) + jitter,
-                    y: Math.min(100, Math.max(0, yPercent)) + jitter,
-                    exerciseName: ex.name
+                    x: Math.min(120, Math.max(0, xPercent)) + jitter, // Clamp 0-120
+                    y: Math.min(120, Math.max(0, yPercent)) + jitter,
+                    exerciseName: ex.name,
+                    deltaW: deltaWeight,
+                    deltaR: deltaReps,
+                    rawW: currentWeight,
+                    rawR: currentReps
                 };
             });
 
@@ -1999,49 +2055,63 @@
                     datasets: [{
                         label: 'Performance Actuelle',
                         data: dataPoints,
-                        backgroundColor: 'rgba(0, 191, 255, 0.6)', // Electric Blue
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)', // Electric Blue
                         borderColor: '#00BFFF',
                         borderWidth: 1,
                         pointRadius: 6,
-                        pointHoverRadius: 8
+                        pointHoverRadius: 9,
+                        pointHoverBackgroundColor: '#FFF'
                     },
                     {
                         label: 'Cible Absolue',
                         data: [{x: 100, y: 100}],
                         backgroundColor: '#FFD700', // Gold
                         borderColor: '#FFF',
-                        pointRadius: 10,
-                        pointStyle: 'star'
+                        pointRadius: 12,
+                        pointStyle: 'star',
+                        pointHoverRadius: 15
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
                         x: {
-                            min: 0, max: 110,
-                            title: { display: true, text: 'Endurance (Reps %)', color: '#A0AEC0' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#A0AEC0' }
+                            min: 0, max: 120, // Zone de Victoire visible
+                            title: { display: true, text: 'Volume / Endurance (%)', color: '#A0AEC0', font: {size: 10} },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#A0AEC0', stepSize: 20 }
                         },
                         y: {
-                            min: 0, max: 110,
-                            title: { display: true, text: 'Force (Poids %)', color: '#A0AEC0' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#A0AEC0' }
+                            min: 0, max: 120,
+                            title: { display: true, text: 'Force / Charge (%)', color: '#A0AEC0', font: {size: 10} },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#A0AEC0', stepSize: 20 }
                         }
                     },
                     plugins: {
                         tooltip: {
+                            backgroundColor: 'rgba(11, 19, 43, 0.95)',
+                            titleColor: '#22D3EE',
+                            bodyColor: '#F0F4F8',
+                            borderColor: '#22D3EE',
+                            borderWidth: 1,
+                            padding: 10,
                             callbacks: {
                                 label: function(context) {
-                                    if (context.raw.exerciseName) {
-                                        return `${context.raw.exerciseName}: Force ${Math.round(context.raw.y)}% / Endu ${Math.round(context.raw.x)}%`;
-                                    }
-                                    return "Cible Finale";
+                                    const p = context.raw;
+                                    if (!p.exerciseName) return "ZONE CIBLE VIBRANIUM";
+                                    
+                                    // Message Tactique
+                                    let msg = [];
+                                    if (p.deltaW !== "N/A" && parseFloat(p.deltaW) > 0) msg.push(`Manque +${p.deltaW}kg`);
+                                    if (parseFloat(p.deltaR) > 0) msg.push(`Manque +${p.deltaR} reps`);
+                                    
+                                    if (msg.length === 0) return `${p.exerciseName}: ✔️ MAÎTRISÉ`;
+                                    return `${p.exerciseName}: ${msg.join(', ')}`;
                                 }
                             }
                         },
-                        legend: { labels: { color: '#F0F4F8' } }
+                        legend: { display: false } // On cache la légende pour épurer
                     }
                 }
             });
