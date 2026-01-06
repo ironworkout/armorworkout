@@ -564,9 +564,9 @@
         .post-workout-summary h2 { color: var(--electric-cyan); font-size: 1.5em; font-weight: 700; padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; text-align: center; background-color: rgba(var(--bg-color-dark-rgb), 0.2); text-shadow: 0 0 5px var(--electric-cyan); }
         .summary-items-list { list-style: none; padding: 15px 25px; overflow-y: auto; flex-grow: 1; background: var(--bg-color); border-bottom: 1px solid var(--border-color); }
         .summary-item {
-            --item-accent-color: var(--electric-blue-light);
+            /* Sera modifié par JS */
             background-color: rgba(var(--secondary-bg-color-dark-rgb), 0.4); padding: 15px; border-radius: var(--border-radius-md); margin-bottom: 15px;
-            border-left: 4px solid var(--item-accent-color); transition: background-color 0.3s ease, border-color 0.3s ease;
+            border-left: 4px solid var(--electric-blue-light); transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .summary-item:last-child { margin-bottom: 0; }
         .summary-item .exercise-name { display: flex; align-items: center; color: var(--primary-text-color); font-weight: 500; font-size: 1.1em; margin-bottom: 15px; }
@@ -892,6 +892,9 @@
 
         let soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET;
 
+        // Palette de couleurs Néon pour différencier les exos dans le résumé
+        const exerciseColors = ['#FF0000', '#00FF00', '#00BFFF', '#FFD700', '#FF1493', '#9400D3', '#FF8C00', '#39FF14'];
+
         // =================================================================================
         // SECTION 2: FONCTIONS UTILITAIRES ET HELPERS
         // =================================================================================
@@ -901,6 +904,15 @@
             const minutes = Math.floor(cleanSeconds / 60); 
             const remainingSeconds = cleanSeconds % 60; 
             return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; 
+        }
+
+        function getExerciseColor(exerciseName) {
+            let hash = 0;
+            for (let i = 0; i < exerciseName.length; i++) {
+                hash = exerciseName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % exerciseColors.length;
+            return exerciseColors[index];
         }
 
         // =================================================================================
@@ -2172,6 +2184,10 @@
                     li.classList.add('summary-item'); 
                     li.dataset.planIndex = index;
                     
+                    // Code Couleur par Exercice (Nom)
+                    const borderColor = getExerciseColor(item.name);
+                    li.style.borderLeftColor = borderColor;
+
                     const isTimed = item.duration !== undefined && item.duration !== null;
                     const initialValue = isTimed ? item.duration : (item.reps || 0); 
                     const parsedWeight = parseWeightDescription(getFormattedWeight(item));
@@ -2181,10 +2197,36 @@
                         <div class="exercise-name"><span class="exercise-name-text">${dynamicSetsInfo ? dynamicSetsInfo + ': ' : ''}${item.name}</span></div>
                         <div class="fields-grid">
                              <div class="input-group" data-field="performance-and-base">
-                                <label>Performance / Prochaine Base (${isTimed ? 'secondes' : 'répétitions'})</label>
-                                <div class="stepper-control" data-type="performance-and-base"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${initialValue}</span><button class="stepper-btn stepper-plus">+</button></div>
+                                <label>Performance du Jour</label>
+                                <div class="performance-row" style="display:flex; gap:10px; align-items:center;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.75em; color:var(--secondary-text-color); margin-bottom:2px; display:block;">${isTimed ? 'Secs' : 'Reps'}</label>
+                                        <div class="stepper-control" data-type="performance-and-base">
+                                            <button class="stepper-btn stepper-minus">-</button>
+                                            <span class="stepper-value">${initialValue}</span>
+                                            <button class="stepper-btn stepper-plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.75em; color:var(--secondary-text-color); margin-bottom:2px; display:block;">Poids (kg)</label>
+                                        <div class="stepper-control" data-type="weight">
+                                            <button class="stepper-btn stepper-minus">-</button>
+                                            <span class="stepper-value">${parsedWeight.value}</span>
+                                            <button class="stepper-btn stepper-plus">+</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="input-group"><label>Résistance</label><div class="resistance-controls"><div class="resistance-selector" data-type="${parsedWeight.type}"><div class="selected-resistance"><span>${resistanceTypes[parsedWeight.type].emoji}</span><i class="fas fa-caret-down"></i></div><ul class="resistance-options">${Object.entries(resistanceTypes).map(([key, val]) => `<li data-value="${key}"><span>${val.emoji}</span> ${val.text}</li>`).join('')}</ul></div><div class="stepper-control resistance-value-stepper" data-type="weight" style="display: ${['poids', 'poids_elastique'].includes(parsedWeight.type) ? 'flex' : 'none'}"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${parsedWeight.value}</span><button class="stepper-btn stepper-plus">+</button></div></div></div>
+                            <div class="input-group">
+                                <label>Résistance & Suivi</label>
+                                <div class="resistance-controls" style="margin-bottom:8px;">
+                                    <div class="resistance-selector" data-type="${parsedWeight.type}" style="width:100%;">
+                                        <div class="selected-resistance" style="justify-content:space-between;"><span>${resistanceTypes[parsedWeight.type].emoji} ${resistanceTypes[parsedWeight.type].text}</span><i class="fas fa-caret-down"></i></div>
+                                        <ul class="resistance-options">${Object.entries(resistanceTypes).map(([key, val]) => `<li data-value="${key}"><span>${val.emoji}</span> ${val.text}</li>`).join('')}</ul>
+                                    </div>
+                                </div>
+                                <div class="tracking-type-toggle" data-type="tracking-type"><button class="tracking-reps ${!isTimed ? 'active' : ''}" data-value="reps"><i class="fas fa-repeat"></i> Reps</button><button class="tracking-time ${isTimed ? 'active' : ''}" data-value="time"><i class="fas fa-stopwatch"></i> Temps</button></div>
+                            </div>
                             <div class="input-group">
                                 <label>Objectif Final (Graphique)</label>
                                 <div class="range-stepper-control" data-type="final-targets">
@@ -2198,7 +2240,6 @@
                                      </div>
                                 </div>
                             </div>
-                            <div class="input-group"><label>Type de Suivi</label><div class="tracking-type-toggle" data-type="tracking-type"><button class="tracking-reps ${!isTimed ? 'active' : ''}" data-value="reps"><i class="fas fa-repeat"></i> Répétitions</button><button class="tracking-time ${isTimed ? 'active' : ''}" data-value="time"><i class="fas fa-stopwatch"></i> Temps</button></div></div>
                         </div>`;
                     summaryItemsList.appendChild(li);
                 }
@@ -2480,8 +2521,7 @@
                 selector.dataset.type = value;
                 selector.querySelector('.selected-resistance span').textContent = resistanceTypes[value].emoji;
                 selector.classList.remove('open');
-                const weightStepper = selector.closest('.resistance-controls').querySelector('.resistance-value-stepper');
-                weightStepper.style.display = ['poids', 'poids_elastique'].includes(value) ? 'flex' : 'none';
+                // Auto-show/hide weight stepper based on type selection is handled visually, data logic is robust
             } else if (trackingToggle) {
                 const parent = trackingToggle.parentElement;
                 parent.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
@@ -2491,7 +2531,9 @@
                 const newType = trackingToggle.dataset.value;
                 const isTimed = newType === 'time';
                 
-                summaryItem.querySelector('[data-field="performance-and-base"] label').textContent = `Performance / Prochaine Base (${isTimed ? 'secondes' : 'répétitions'})`;
+                // Update label dynamically
+                const perfLabel = summaryItem.querySelector('.performance-row label');
+                if (perfLabel) perfLabel.textContent = isTimed ? 'Secs' : 'Reps';
             }
         }
 
