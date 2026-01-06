@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -522,6 +523,8 @@
         .range-stepper { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
         .range-stepper label { color: var(--secondary-text-color); font-size: 0.8em; min-width: 30px;}
         .range-stepper .stepper-control { flex-grow: 1; }
+        .simple-input { background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--primary-text-color); padding: 8px; border-radius: var(--border-radius-sm); width: 100%; font-family: var(--font-family-main); font-size: 0.9em; }
+        .simple-input:focus { outline: none; border-color: var(--electric-cyan); box-shadow: 0 0 5px rgba(var(--electric-cyan-rgb), 0.3); }
 
         .tracking-type-toggle { display: flex; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); overflow: hidden; }
         .tracking-type-toggle button { flex: 1; background: transparent; border: none; padding: 8px 10px; font-size: 0.85em; color: var(--secondary-text-color); cursor: pointer; transition: all 0.2s ease; }
@@ -1561,6 +1564,7 @@
             }
         }
         
+        // Fonction modifiée pour afficher le "Spider Vibranium" (Radar Chart)
         function renderGlobalPerformanceChart(canvasEl, sessionName) {
             const canvasId = canvasEl.id;
             destroyChart(canvasId);
@@ -1569,85 +1573,87 @@
             if (!sessionTemplate) return;
 
             const relevantHistory = workoutHistory.filter(h => h.type === sessionName);
-            if (relevantHistory.length === 0) {
-                if (placeholderEl) { placeholderEl.textContent = 'Effectuez une séance pour voir le graphique de performance.'; placeholderEl.style.display = 'flex'; }
+            const lastHistoryEntry = relevantHistory.length > 0 ? relevantHistory[relevantHistory.length - 1] : null;
+
+            if (!lastHistoryEntry) {
+                if (placeholderEl) { placeholderEl.textContent = 'Effectuez une séance pour voir le graphique Vibranium.'; placeholderEl.style.display = 'flex'; }
                 return;
             }
 
             if (placeholderEl) placeholderEl.style.display = 'none';
 
+            // Identifier les exercices uniques pour le radar
             const exerciseLabels = [...new Set(sessionTemplate.exercices_et_pauses.filter(ex => ex.type.startsWith('exercise')).map(ex => ex.name))];
             
-            const createScoreArrayFromHistory = (historyEntry) => {
-                if (!historyEntry) return new Array(exerciseLabels.length).fill(null);
-                return exerciseLabels.map(exName => {
-                    const exData = historyEntry.exercises.find(ex => ex.name === exName);
-                    return calculatePerformanceScore(exData);
-                });
-            };
-
-            // Données pour la ligne "Objectif Final"
-            const targetScores = exerciseLabels.map(exName => {
+            // Calculer les % de réussite pour chaque axe
+            const achievementData = exerciseLabels.map(exName => {
+                // 1. Récupérer l'objectif (Target)
                 const exTemplate = sessionTemplate.exercices_et_pauses.find(ex => ex.name === exName);
                 if (!exTemplate) return 0;
-                
+
                 const targetWeightText = exTemplate.final_target_poids || "";
                 const targetReps = parseInt(exTemplate.final_target_reps) || 12;
                 const targetWeight = parseWeightValue(targetWeightText);
-                // Si pas de poids détectable (ex: "Debout"), on prend une base de 25 comme dans calculatePerformanceScore
-                return Math.pow(targetWeight || 25, 1.05) * targetReps;
+                const targetScore = Math.pow(targetWeight || 25, 1.05) * targetReps;
+
+                // 2. Récupérer la performance actuelle (Current)
+                const exData = lastHistoryEntry.exercises.find(ex => ex.name === exName);
+                const currentScore = calculatePerformanceScore(exData) || 0;
+
+                // 3. Calculer le % de l'objectif (100% = Bord Extérieur)
+                if (targetScore === 0) return 0;
+                return (currentScore / targetScore) * 100;
             });
 
             const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
-            const neonYellowColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-yellow').trim();
             const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
+            const neonGoldColor = '#FFD700'; // Or pour le Vibranium
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
             const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
-            const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg-color').trim();
+            
+            // Logique Vibranium : Si > 100%, changer la couleur/forme du point
+            const pointBackgroundColors = achievementData.map(val => val >= 100 ? neonGoldColor : electricBlueColor);
+            const pointStyles = achievementData.map(val => val >= 100 ? 'star' : 'circle');
+            const pointSizes = achievementData.map(val => val >= 100 ? 8 : 4);
 
-            const datasets = [];
-            
-            // Ligne "Actuel"
-            const lastHistoryEntry = relevantHistory[relevantHistory.length - 1];
-            datasets.push({ label: 'Actuel', data: createScoreArrayFromHistory(lastHistoryEntry), borderColor: electricBlueColor, backgroundColor: electricBlueColor+'33', tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 });
-            
-            // Ligne "Initial"
-            const firstHistoryEntry = relevantHistory[0];
-            datasets.push({ label: 'Initial', data: createScoreArrayFromHistory(firstHistoryEntry), borderColor: neonPurpleColor, backgroundColor: neonPurpleColor+'33', tension: 0.3, pointRadius: 3, pointHoverRadius: 5 });
-
-            // Ligne "Objectif Final" (Or)
-            datasets.push({ 
-                label: 'Objectif Final 🏆', 
-                data: targetScores, 
-                borderColor: '#FFD700', // Gold
-                backgroundColor: 'transparent',
-                borderDash: [5, 5],
-                tension: 0.1, 
-                pointRadius: 0, 
-                pointHoverRadius: 0,
-                borderWidth: 2
-            });
-            
             const ctx = canvasEl.getContext('2d');
             activeCharts[canvasId] = new Chart(ctx, {
-                type: 'line',
+                type: 'radar',
                 data: {
                     labels: exerciseLabels.map(name => name.substring(0, 15) + (name.length > 15 ? '...' : '')),
-                    datasets: datasets
+                    datasets: [{
+                        label: 'Maîtrise Vibranium (%)',
+                        data: achievementData,
+                        fill: true,
+                        backgroundColor: electricBlueColor + '33', // Transparence
+                        borderColor: electricBlueColor,
+                        pointBackgroundColor: pointBackgroundColors,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: pointBackgroundColors,
+                        pointStyle: pointStyles,
+                        pointRadius: pointSizes,
+                        pointHoverRadius: pointSizes.map(s => s + 2),
+                        borderWidth: 2
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { title: { display: true, text: 'Indice de Performance', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor, autoSkip: false, maxRotation: 70, minRotation: 70 } }
+                        r: {
+                            angleLines: { color: gridColor },
+                            grid: { color: gridColor },
+                            pointLabels: { color: textColor, font: { size: 10 } },
+                            ticks: { display: false, backdropColor: 'transparent' },
+                            suggestedMin: 0,
+                            suggestedMax: 100 // L'objectif est à 100
+                        }
                     },
                     plugins: {
-                        legend: { labels: { color: textColor } },
+                        legend: { display: false },
                         tooltip: {
-                            backgroundColor: bgColor + 'E6', titleColor: textColor, bodyColor: textColor,
                             callbacks: {
-                                title: (tooltipItems) => exerciseLabels[tooltipItems[0].dataIndex],
-                                label: (context) => `${context.dataset.label}: ${context.raw ? context.raw.toFixed(0) : 'N/A'}`,
+                                label: (context) => `${context.raw.toFixed(0)}% de l'Objectif Final`
                             }
                         }
                     }
@@ -2077,7 +2083,6 @@
                     li.classList.add('summary-item'); 
                     li.dataset.planIndex = index;
                     
-                    const { min, max } = parseRepRange(item);
                     const isTimed = item.duration !== undefined && item.duration !== null;
                     const initialValue = isTimed ? item.duration : (item.reps || 0); 
                     const parsedWeight = parseWeightDescription(getFormattedWeight(item));
@@ -2091,7 +2096,19 @@
                                 <div class="stepper-control" data-type="performance-and-base"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${initialValue}</span><button class="stepper-btn stepper-plus">+</button></div>
                             </div>
                             <div class="input-group"><label>Résistance</label><div class="resistance-controls"><div class="resistance-selector" data-type="${parsedWeight.type}"><div class="selected-resistance"><span>${resistanceTypes[parsedWeight.type].emoji}</span><i class="fas fa-caret-down"></i></div><ul class="resistance-options">${Object.entries(resistanceTypes).map(([key, val]) => `<li data-value="${key}"><span>${val.emoji}</span> ${val.text}</li>`).join('')}</ul></div><div class="stepper-control resistance-value-stepper" data-type="weight" style="display: ${['poids', 'poids_elastique'].includes(parsedWeight.type) ? 'flex' : 'none'}"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value">${parsedWeight.value}</span><button class="stepper-btn stepper-plus">+</button></div></div></div>
-                            <div class="input-group"><label>Prochain Objectif (Min-Max)</label><div class="range-stepper-control" data-type="rep-range"><div class="range-stepper"><label>Min</label><div class="stepper-control" data-type="rep-range-min"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="min">${min}</span><button class="stepper-btn stepper-plus">+</button></div></div><div class="range-stepper"><label>Max</label><div class="stepper-control" data-type="rep-range-max"><button class="stepper-btn stepper-minus">-</button><span class="stepper-value" data-range-type="max">${max}</span><button class="stepper-btn stepper-plus">+</button></div></div></div></div>
+                            <div class="input-group">
+                                <label>Objectif Final (Graphique)</label>
+                                <div class="range-stepper-control" data-type="final-targets">
+                                     <div class="range-stepper">
+                                        <label style="min-width:40px;">Poids</label>
+                                        <input type="text" class="simple-input" data-target-type="weight" value="${item.final_target_poids || ''}" placeholder="Ex: 🎒 +20 kg">
+                                     </div>
+                                     <div class="range-stepper">
+                                        <label style="min-width:40px;">Reps</label>
+                                        <input type="number" class="simple-input" data-target-type="reps" value="${item.final_target_reps || 12}">
+                                     </div>
+                                </div>
+                            </div>
                             <div class="input-group"><label>Type de Suivi</label><div class="tracking-type-toggle" data-type="tracking-type"><button class="tracking-reps ${!isTimed ? 'active' : ''}" data-value="reps"><i class="fas fa-repeat"></i> Répétitions</button><button class="tracking-time ${isTimed ? 'active' : ''}" data-value="time"><i class="fas fa-stopwatch"></i> Temps</button></div></div>
                         </div>`;
                     summaryItemsList.appendChild(li);
@@ -2159,8 +2176,8 @@
 
                 // 1. Lire TOUTES les valeurs de l'UI de manière indépendante
                 const newPerformanceAndBaseValue = parseInt(item.querySelector('[data-type="performance-and-base"] .stepper-value').textContent, 10);
-                const newMinReps = parseInt(item.querySelector('.stepper-value[data-range-type="min"]').textContent, 10);
-                const newMaxReps = parseInt(item.querySelector('.stepper-value[data-range-type="max"]').textContent, 10);
+                const newFinalWeight = item.querySelector('.simple-input[data-target-type="weight"]').value;
+                const newFinalReps = item.querySelector('.simple-input[data-target-type="reps"]').value;
                 const resistanceType = item.querySelector('.resistance-selector').dataset.type;
                 const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
                 const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
@@ -2170,8 +2187,9 @@
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { newWeightText += ` ${weightValue} kg`; }
 
                 // 3. Appliquer les modifications à l'exercice dans le programme principal (Sauvegarde pour la prochaine fois)
-                planItemToUpdate.progression_note = `Reps: ${newMinReps}-${newMaxReps}`;
                 planItemToUpdate.weight_text = newWeightText;
+                planItemToUpdate.final_target_poids = newFinalWeight;
+                planItemToUpdate.final_target_reps = newFinalReps;
                 
                 delete planItemToUpdate.unit;
                 delete planItemToUpdate.weight;
@@ -2391,4 +2409,3 @@
     </script>
 </body>
 </html>
-
