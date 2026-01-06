@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -13,20 +12,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* COULEURS DE BASE (Modifiées dynamiquement par JS selon la ligue) */
             --bg-color-dark: #030712; 
             --secondary-bg-color-dark: #0B132B; 
             --primary-text-color-dark: #F0F4F8; 
             --secondary-text-color-dark: #A0AEC0; 
             --border-color-dark: #1E293B; 
+            
+            /* COULEURS ÉNERGIE (Défaut: Bleu Électrique) */
             --electric-blue: #00BFFF; 
             --electric-cyan: #22D3EE; 
             --electric-blue-light: #4D94FF; 
-            --glow-accent: #0AF; 
             --electric-blue-rgb: 0, 191, 255;
             --electric-cyan-rgb: 34, 211, 238;
-            --glow-accent-rgb: 0, 170, 255;
-            --secondary-bg-color-dark-rgb: 11, 19, 43;
-            --bg-color-dark-rgb: 3, 7, 18;
+            
+            /* ACCENTS STATIQUES */
             --neon-pink: #FF1493; 
             --neon-purple: #9400D3; 
             --neon-green: #39FF14; 
@@ -37,15 +37,14 @@
             --neon-green-rgb: 57, 255, 20;
             --neon-red-rgb: 255, 49, 49;
             --neon-yellow-rgb: 255, 240, 31;
+
+            /* GLOWS */
             --glow-red: 0 0 8px var(--neon-red), 0 0 12px rgba(var(--neon-red-rgb),0.7);
             --glow-green: 0 0 8px var(--neon-green), 0 0 12px rgba(var(--neon-green-rgb),0.7);
-            --glow-yellow: 0 0 8px var(--neon-yellow), 0 0 12px rgba(var(--neon-yellow-rgb),0.7);
-            --glow-pink: 0 0 8px var(--neon-pink), 0 0 12px rgba(var(--neon-pink-rgb),0.7);
-            --glow-purple: 0 0 8px var(--neon-purple), 0 0 12px rgba(var(--neon-purple-rgb),0.7);
-            --electric-yellow: var(--neon-yellow); 
-            --electric-yellow-rgb: var(--neon-yellow-rgb);
+            
+            /* UI COLORS MAPPING */
             --exercise-color-val: var(--electric-blue-light);
-            --exercise-timed-color-val: var(--electric-yellow);
+            --exercise-timed-color-val: var(--neon-yellow);
             --break-color-val: var(--electric-cyan);
             --paused-color-val: #A78BFA; 
             --finished-color-val: var(--neon-green);
@@ -53,7 +52,9 @@
             --preparing-color-val: var(--electric-cyan);
             --get-ready-color-val: var(--neon-purple);
             --idle-color-val: var(--electric-blue);
-            --exercise-color-rgb: 77, 148, 255; 
+            
+            /* RGB MAPPING */
+            --exercise-color-rgb: var(--electric-blue-rgb); 
             --exercise-timed-color-rgb: var(--neon-yellow-rgb);
             --break-color-rgb: var(--electric-cyan-rgb);
             --paused-color-rgb: 167, 139, 250;
@@ -62,6 +63,8 @@
             --preparing-color-rgb: var(--electric-cyan-rgb);
             --get-ready-color-rgb: var(--neon-purple-rgb);
             --idle-color-rgb: var(--electric-blue-rgb);
+
+            /* ALIAS */
             --color-exercise: var(--exercise-color-val);
             --color-exercise-timed: var(--exercise-timed-color-val);
             --color-break: var(--break-color-val);
@@ -69,6 +72,7 @@
             --color-finished: var(--finished-color-val);
             --color-paused: var(--paused-color-val);
             --color-idle: var(--secondary-text-color-dark);
+
             --font-family-main: 'Inter', sans-serif;
             --font-family-timer: 'Orbitron', sans-serif;
             --font-family-titles: 'Orbitron', sans-serif; 
@@ -77,6 +81,7 @@
             --border-radius-sm: 6px;
             --transition-speed: 0.3s;
             --section-transition-speed: 0.4s;
+            
             --bg-color: var(--bg-color-dark);
             --secondary-bg-color: var(--secondary-bg-color-dark);
             --primary-text-color: var(--primary-text-color-dark);
@@ -84,31 +89,98 @@
             --border-color: var(--border-color-dark);
             --accent-border-color: rgba(var(--electric-blue-rgb), 0.4); 
             --input-bg: #1A202C; 
+            
             --current-timer-state-color: var(--idle-color-val);
             --current-timer-state-color-rgb: var(--idle-color-rgb);
             --timer-text-color-main: #FFFFFF;
-            --timer-text-glow-main: 0 0 5px #fff, 
-                                    0 0 8px #fff, 
-                                    0 0 12px rgba(var(--electric-cyan-rgb), 0.6), 
-                                    0 0 18px rgba(var(--electric-cyan-rgb), 0.4);
+            --timer-text-glow-main: 0 0 5px #fff, 0 0 8px #fff, 0 0 12px rgba(var(--electric-cyan-rgb), 0.6);
             --timer-progress-circle-color: var(--electric-cyan);
             
-            /* LIGUES & THÈMES (Gamification) */
             --theme-color: var(--electric-cyan);
-            --reactor-speed: 12s; /* Vitesse par défaut */
+            --reactor-speed: 12s;
         }
 
-        /* Styles spécifiques aux Ligues */
-        body.league-1 { --theme-color: #CD7F32; --reactor-speed: 12s; } /* Bronze */
-        body.league-2 { --theme-color: #C0C0C0; --reactor-speed: 10s; } /* Argent */
-        body.league-3 { --theme-color: #FFD700; --reactor-speed: 9s; } /* Or */
-        body.league-4 { --theme-color: #E5E4E2; --reactor-speed: 8s; } /* Platine */
-        body.league-5 { --theme-color: #B9F2FF; --reactor-speed: 7s; } /* Diamant */
-        body.league-6 { --theme-color: #9400D3; --reactor-speed: 6s; } /* Master */
-        body.league-7 { --theme-color: #FF0000; --reactor-speed: 5s; } /* Grandmaster */
-        body.league-8 { --theme-color: #FF1493; --reactor-speed: 4s; } /* Challenger */
-        body.league-9 { --theme-color: #00FF00; --reactor-speed: 2s; } /* Apex */
-        body.league-10 { --theme-color: #FFFFFF; --reactor-speed: 1s; } /* Legend */
+        /* --- SYSTÈME DE LIGUES & COULEURS DYNAMIQUES (IMPACT SUR TOUT : REACTOR, FOND, GRAPHES) --- */
+        /* Bronze */
+        body.league-1 { 
+            --theme-color: #CD7F32; 
+            --electric-blue: #A0522D; --electric-blue-rgb: 160, 82, 45;
+            --electric-cyan: #CD7F32; --electric-cyan-rgb: 205, 127, 50;
+            --electric-blue-light: #DEB887;
+            --reactor-speed: 12s; 
+        } 
+        /* Argent */
+        body.league-2 { 
+            --theme-color: #C0C0C0; 
+            --electric-blue: #A9A9A9; --electric-blue-rgb: 169, 169, 169;
+            --electric-cyan: #E0E0E0; --electric-cyan-rgb: 224, 224, 224;
+            --electric-blue-light: #F5F5F5;
+            --reactor-speed: 10s; 
+        } 
+        /* Or */
+        body.league-3 { 
+            --theme-color: #FFD700; 
+            --electric-blue: #DAA520; --electric-blue-rgb: 218, 165, 32;
+            --electric-cyan: #FFD700; --electric-cyan-rgb: 255, 215, 0;
+            --electric-blue-light: #FFF8DC;
+            --reactor-speed: 9s; 
+        } 
+        /* Platine */
+        body.league-4 { 
+            --theme-color: #E5E4E2; 
+            --electric-blue: #708090; --electric-blue-rgb: 112, 128, 144;
+            --electric-cyan: #B0C4DE; --electric-cyan-rgb: 176, 196, 222;
+            --electric-blue-light: #F0F8FF;
+            --reactor-speed: 8s; 
+        } 
+        /* Diamant (Bleu Glacé) */
+        body.league-5 { 
+            --theme-color: #B9F2FF; 
+            --electric-blue: #00BFFF; --electric-blue-rgb: 0, 191, 255;
+            --electric-cyan: #E0FFFF; --electric-cyan-rgb: 224, 255, 255;
+            --electric-blue-light: #87CEFA;
+            --reactor-speed: 7s; 
+        } 
+        /* Master (Violet) */
+        body.league-6 { 
+            --theme-color: #9400D3; 
+            --electric-blue: #8A2BE2; --electric-blue-rgb: 138, 43, 226;
+            --electric-cyan: #9932CC; --electric-cyan-rgb: 153, 50, 204;
+            --electric-blue-light: #DA70D6;
+            --reactor-speed: 6s; 
+        } 
+        /* Grandmaster (Rouge) */
+        body.league-7 { 
+            --theme-color: #FF0000; 
+            --electric-blue: #DC143C; --electric-blue-rgb: 220, 20, 60;
+            --electric-cyan: #FF4500; --electric-cyan-rgb: 255, 69, 0;
+            --electric-blue-light: #FA8072;
+            --reactor-speed: 5s; 
+        } 
+        /* Challenger (Rose Néon) */
+        body.league-8 { 
+            --theme-color: #FF1493; 
+            --electric-blue: #C71585; --electric-blue-rgb: 199, 21, 133;
+            --electric-cyan: #FF69B4; --electric-cyan-rgb: 255, 105, 180;
+            --electric-blue-light: #FFB6C1;
+            --reactor-speed: 4s; 
+        } 
+        /* Apex (Vert Toxique) */
+        body.league-9 { 
+            --theme-color: #00FF00; 
+            --electric-blue: #32CD32; --electric-blue-rgb: 50, 205, 50;
+            --electric-cyan: #7FFF00; --electric-cyan-rgb: 127, 255, 0;
+            --electric-blue-light: #98FB98;
+            --reactor-speed: 3s; 
+        } 
+        /* Legende (Blanc Pur/Holo) */
+        body.league-10 { 
+            --theme-color: #FFFFFF; 
+            --electric-blue: #F8F8FF; --electric-blue-rgb: 248, 248, 255;
+            --electric-cyan: #FFFFFF; --electric-cyan-rgb: 255, 255, 255;
+            --electric-blue-light: #FFFFFF;
+            --reactor-speed: 2s; 
+        }
 
         @keyframes subtlePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
         @keyframes electricBorder {
@@ -147,12 +219,13 @@
             font-family: var(--font-family-main); background-color: var(--bg-color); color: var(--primary-text-color); line-height: 1.65;
             transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; display: flex; flex-direction: column;
             min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden;
-            background-image: radial-gradient(ellipse at center, rgba(var(--electric-blue-rgb), 0.08) 0%, transparent 60%), linear-gradient(0deg, rgba(var(--bg-color-dark-rgb), 0.5) 0%, rgba(var(--bg-color-dark-rgb), 0.9) 100%);
+            /* Fond d'écran teinté par la ligue (via --electric-blue-rgb) */
+            background-image: radial-gradient(ellipse at center, rgba(var(--electric-blue-rgb), 0.15) 0%, transparent 60%), linear-gradient(0deg, rgba(var(--bg-color-dark-rgb), 0.5) 0%, rgba(var(--bg-color-dark-rgb), 0.95) 100%);
             position: relative; 
         }
         body::before { 
             content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-image: linear-gradient(rgba(var(--electric-blue-rgb), 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--electric-blue-rgb), 0.05) 1px, transparent 1px);
+            background-image: linear-gradient(rgba(var(--electric-blue-rgb), 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--electric-blue-rgb), 0.08) 1px, transparent 1px);
             background-size: 30px 30px; z-index: -1; opacity: 0.7;
         }
         
@@ -831,18 +904,27 @@
         }
 
         // =================================================================================
-        // SECTION 3: GESTION DU SON ET DES VIBRATIONS
+        // SECTION 3: GESTION DU SON ET DES VIBRATIONS (CHARGEMENT DIFFÉRÉ)
         // =================================================================================
 
         function triggerTriangleSpin() { const t = document.querySelector('.reactor .triangle'); if (!t) return; t.classList.remove('spin-transition'); void t.offsetWidth; t.classList.add('spin-transition'); }
         
+        // Chargement Async des sons pour ne pas bloquer le démarrage
         function initSounds() {
-            try {
-                const bP = "https://ironworkout.github.io/armorworkout/";
-                soundLaser = new Audio(bP + 'laser.mp3'); sound5 = new Audio(bP + '5.mp3'); sound4 = new Audio(bP + '4.mp3'); sound3 = new Audio(bP + '3.mp3');
-                sound2 = new Audio(bP + '2.mp3'); sound1 = new Audio(bP + '1.mp3'); soundWindows = new Audio(bP + 'windows.mp3'); soundET = new Audio(bP + 'e-t.mp3');
-                [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(s => { if (s) s.preload = 'auto'; });
-            } catch (e) { showMessage("Erreur chargement sons.", 5000, true); console.error(`Sound init failed: ${e.message}`); }
+            setTimeout(() => {
+                showMessage("🔊 Chargement des systèmes audio...", 2000);
+                try {
+                    const bP = "https://ironworkout.github.io/armorworkout/";
+                    soundLaser = new Audio(bP + 'laser.mp3'); sound5 = new Audio(bP + '5.mp3'); sound4 = new Audio(bP + '4.mp3'); sound3 = new Audio(bP + '3.mp3');
+                    sound2 = new Audio(bP + '2.mp3'); sound1 = new Audio(bP + '1.mp3'); soundWindows = new Audio(bP + 'windows.mp3'); soundET = new Audio(bP + 'e-t.mp3');
+                    [soundLaser, sound5, sound4, sound3, sound2, sound1, soundWindows, soundET].forEach(s => { 
+                        if (s) {
+                            s.preload = 'auto'; 
+                            s.volume = 0.5; // Prévenir le volume max
+                        }
+                    });
+                } catch (e) { showMessage("Erreur chargement sons.", 5000, true); console.error(`Sound init failed: ${e.message}`); }
+            }, 1000);
         }
 
         function playSound(a) { if (!a || !audioContext || audioContext.state !== 'running') return; a.currentTime = 0; a.play().catch(e => { console.warn("Erreur lecture son:", e.message) }); }
@@ -1532,7 +1614,7 @@
         }
 
         // =================================================================================
-        // SECTION 7: FONCTIONS DE GESTION DES DONNÉES ET GRAPHIQUES
+        // SECTION 7: FONCTIONS DE GESTION DES DONNÉES ET GRAPHIQUES (SPIDER + COLOR LOGIC)
         // =================================================================================
         
         function getExerciseBaseName(fullName) {
@@ -1564,7 +1646,7 @@
             }
         }
         
-        // Fonction modifiée pour afficher le "Spider Vibranium" (Radar Chart)
+        // Fonction modifiée pour afficher le "Spider Vibranium" (Radar Chart) avec couleurs dynamiques
         function renderGlobalPerformanceChart(canvasEl, sessionName) {
             const canvasId = canvasEl.id;
             destroyChart(canvasId);
@@ -1587,7 +1669,6 @@
             
             // Calculer les % de réussite pour chaque axe
             const achievementData = exerciseLabels.map(exName => {
-                // 1. Récupérer l'objectif (Target)
                 const exTemplate = sessionTemplate.exercices_et_pauses.find(ex => ex.name === exName);
                 if (!exTemplate) return 0;
 
@@ -1596,23 +1677,27 @@
                 const targetWeight = parseWeightValue(targetWeightText);
                 const targetScore = Math.pow(targetWeight || 25, 1.05) * targetReps;
 
-                // 2. Récupérer la performance actuelle (Current)
                 const exData = lastHistoryEntry.exercises.find(ex => ex.name === exName);
                 const currentScore = calculatePerformanceScore(exData) || 0;
 
-                // 3. Calculer le % de l'objectif (100% = Bord Extérieur)
                 if (targetScore === 0) return 0;
                 return (currentScore / targetScore) * 100;
             });
 
-            const electricBlueColor = getComputedStyle(document.documentElement).getPropertyValue('--electric-blue').trim();
-            const neonPurpleColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-purple').trim();
-            const neonGoldColor = '#FFD700'; // Or pour le Vibranium
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
+            // Couleurs Dynamiques "Addictives" selon la Ligue CSS actuelle
+            const electricBlueColor = getComputedStyle(document.body).getPropertyValue('--electric-blue').trim();
+            const neonPurpleColor = getComputedStyle(document.body).getPropertyValue('--neon-purple').trim();
+            const neonGoldColor = '#FFD700'; // Vibranium
             const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color-dark').trim() + '80';
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
             
-            // Logique Vibranium : Si > 100%, changer la couleur/forme du point
-            const pointBackgroundColors = achievementData.map(val => val >= 100 ? neonGoldColor : electricBlueColor);
+            // Logique de couleur par point (Progression)
+            const pointColors = achievementData.map(val => {
+                if (val >= 100) return neonGoldColor; // Vibranium
+                if (val >= 75) return neonPurpleColor; // Elite
+                return electricBlueColor; // Standard
+            });
+
             const pointStyles = achievementData.map(val => val >= 100 ? 'star' : 'circle');
             const pointSizes = achievementData.map(val => val >= 100 ? 8 : 4);
 
@@ -1622,15 +1707,15 @@
                 data: {
                     labels: exerciseLabels.map(name => name.substring(0, 15) + (name.length > 15 ? '...' : '')),
                     datasets: [{
-                        label: 'Maîtrise Vibranium (%)',
+                        label: 'Maîtrise (%)',
                         data: achievementData,
                         fill: true,
-                        backgroundColor: electricBlueColor + '33', // Transparence
+                        backgroundColor: electricBlueColor + '20', 
                         borderColor: electricBlueColor,
-                        pointBackgroundColor: pointBackgroundColors,
+                        pointBackgroundColor: pointColors,
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: pointBackgroundColors,
+                        pointHoverBorderColor: pointColors,
                         pointStyle: pointStyles,
                         pointRadius: pointSizes,
                         pointHoverRadius: pointSizes.map(s => s + 2),
@@ -1646,14 +1731,18 @@
                             pointLabels: { color: textColor, font: { size: 10 } },
                             ticks: { display: false, backdropColor: 'transparent' },
                             suggestedMin: 0,
-                            suggestedMax: 100 // L'objectif est à 100
+                            suggestedMax: 100
                         }
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `${context.raw.toFixed(0)}% de l'Objectif Final`
+                                label: (context) => {
+                                    let val = context.raw.toFixed(0);
+                                    let status = val >= 100 ? "VIBRANIUM 🌟" : (val >= 75 ? "ELITE 🔥" : "En cours");
+                                    return `${val}% - ${status}`;
+                                }
                             }
                         }
                     }
@@ -2249,7 +2338,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeDOMReferences();
             addEventListeners();
-            initSounds();
+            initSounds(); // Lancement différé des sons
             checkAndInitGis();
             document.getElementById('current-year').textContent = new Date().getFullYear();
             setState('idle');
