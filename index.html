@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -967,6 +968,7 @@
                 return true;
             } catch (error) {
                 showMessage(`Action impossible sur le fichier corrompu. Veuillez vérifier votre Google Drive.`, 10000, true);
+                console.error("Erreur lors du renommage du fichier corrompu:", error);
                 return false;
             }
         }
@@ -1340,13 +1342,16 @@
 
                     if (item.type.startsWith('exercise')) {
                         const repsDisplay = getFormattedReps(item);
-                        const weightDisplay = getFormattedWeight(item);
+                        const weightDisplay = getFormattedWeight(item); // Correction: Affiche le poids formaté
                         const dynamicSetsInfo = getDynamicSetsInfo(currentItemIndex) || item.sets_info;
                         const isTimed = item.duration !== undefined && item.duration !== null;
                         infoHtml = `<div class="exercise-details" data-timed="${isTimed}" style="border-color: ${isTimed ? 'var(--color-exercise-timed)' : 'var(--color-exercise)'};">`;
                         if (dynamicSetsInfo) { infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`; }
                         infoHtml += `<div class="main-stats"><span><i class="fas fa-repeat"></i> ${repsDisplay}</span>`;
-                        if (weightDisplay.trim() !== "💪 Poids du Corps") infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay.replace(/🏋️|🧘|💪|⚡️/g, '').trim()}</span>`;
+                        // CORRECTION VISIBILITE POIDS: On s'assure que le poids est affiché s'il n'est pas "Poids du Corps"
+                        if (weightDisplay.trim() !== "💪 Poids du Corps") {
+                             infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay}</span>`;
+                        }
                         infoHtml += `</div></div>`;
                     } else if (item.type === 'break') {
                         infoHtml = '';
@@ -1751,6 +1756,9 @@
                     <div id="${doughnutContainerId}" class="doughnut-chart-container ${progressPercent > 100 ? 'gold-pulse' : ''}">
                         <canvas id="consistency-doughnut-chart"></canvas>
                     </div>
+                    <div class="chart-area-container">
+                        <canvas id="progression-area-chart"></canvas>
+                    </div>
                     <div class="streak-counter"><i class="fas fa-fire-alt"></i> ${streak} semaines consécutives</div>
                 </div>
                 <div class="calendar-nav">
@@ -1803,6 +1811,9 @@
                         }
                     }]
                 });
+                
+                // Render Area Chart
+                if(workoutHistory.length > 0) renderProgressionAreaChart();
             }, 0);
 
             const calendarGrid = module.querySelector('.monthly-calendar');
@@ -2242,16 +2253,8 @@
                 if (['poids', 'poids_elastique'].includes(resistanceType)) { 
                     newWeightText += ` ${weightValue} kg`; 
                 } else if (resistanceType === 'elastique') {
-                    // Pour les élastiques simples, on remet le texte par défaut ou on garde l'existant s'il est cohérent
-                    // Ici on simplifie : si c'est élastique, on suppose que l'utilisateur sait lequel c'est, 
-                    // ou on pourrait ajouter un selecteur de couleur d'élastique plus tard.
-                    // Pour l'instant, on reconstruit une chaîne générique si besoin, ou on garde l'ancien texte s'il contient déjà l'info
-                    if (planItemToUpdate.weight_text.includes('Élastique')) {
-                         // On ne touche pas au texte s'il est déjà formaté élastique
-                         newWeightText = planItemToUpdate.weight_text;
-                    } else {
-                         newWeightText += ` Élastique`; 
-                    }
+                    // Pour les élastiques, on reconstruit une chaîne générique "🧘 15kg" pour garder la valeur numérique
+                    newWeightText += ` ${weightValue}kg`; 
                 } else if (resistanceType === 'pdc') {
                     newWeightText = "💪 Poids du Corps";
                 }
