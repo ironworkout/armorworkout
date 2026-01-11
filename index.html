@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2245,48 +2246,50 @@
             if (!finishSummaryBtn) return;
             finishSummaryBtn.disabled = true;
             finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
-
+        
             const isWorkoutMode = currentSummaryContext.mode === 'workout';
             const sessionName = currentSummaryContext.sessionName;
             const sessionIndex = loadedFullProgram.sessions.findIndex(s => s.nom_session === sessionName);
-            
+        
             if (sessionIndex === -1) {
-                closeSummary(); showMessage("Erreur Critique: Session introuvable.", 4000, true); return;
+                closeSummary();
+                showMessage("Erreur Critique: Session introuvable.", 4000, true);
+                return;
             }
-
+        
             const latestWorkoutEntry = isWorkoutMode ? workoutHistory[workoutHistory.length - 1] : null;
             const summaryItems = summaryItemsList.querySelectorAll('.summary-item');
-            
+        
             summaryItems.forEach(item => {
                 const planIndex = parseInt(item.dataset.planIndex, 10);
-                if (isNaN(planIndex)) return; 
-
+                if (isNaN(planIndex)) return;
+        
                 const planItemToUpdate = loadedFullProgram.sessions[sessionIndex].exercices_et_pauses[planIndex];
                 if (!planItemToUpdate) return;
-                
+        
                 const repsTimeValue = parseInt(item.querySelector('[data-type="reps-time"] .stepper-value').textContent, 10);
                 const newFinalWeight = item.querySelector('.simple-input[data-target-type="weight"]').value;
                 const newFinalReps = item.querySelector('.simple-input[data-target-type="reps"]').value;
                 const resistanceType = item.querySelector('.resistance-selector').dataset.type;
                 const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
                 const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
-                
+        
                 let newWeightText = "";
                 switch (resistanceType) {
                     case 'poids': newWeightText = `🏋️ ${weightValue} kg`; break;
                     case 'elastique': newWeightText = `🧘 Élastique ${weightValue}kg`; break;
                     case 'pdc': newWeightText = "💪 Poids du Corps"; break;
                     case 'poids_elastique': newWeightText = `⚡️ ${weightValue} kg`; break;
-                    default: newWeightText = planItemToUpdate.weight_text; 
+                    default: newWeightText = planItemToUpdate.weight_text;
                 }
-
-                planItemToUpdate.weight_text = newWeightText; 
+        
+                planItemToUpdate.weight_text = newWeightText;
                 planItemToUpdate.final_target_poids = newFinalWeight;
                 planItemToUpdate.final_target_reps = newFinalReps;
-                
+        
                 delete planItemToUpdate.unit;
                 delete planItemToUpdate.weight;
-
+        
                 if (trackingType === 'time') {
                     planItemToUpdate.duration = repsTimeValue;
                     delete planItemToUpdate.reps;
@@ -2294,7 +2297,7 @@
                     planItemToUpdate.reps = repsTimeValue;
                     delete planItemToUpdate.duration;
                 }
-                
+        
                 if (isWorkoutMode && latestWorkoutEntry?.exercises) {
                     const exerciseLog = latestWorkoutEntry.exercises.find(ex => ex.originalPlanIndex === planIndex);
                     if(exerciseLog) {
@@ -2309,15 +2312,19 @@
                     }
                 }
             });
-
+        
+            // Lancer les sauvegardes en arrière-plan sans attendre la fin
             if (isWorkoutMode) {
-                await saveHistoryToDrive();
+                saveHistoryToDrive();
             }
-            await saveFullProgramToDrive();
+            saveFullProgramToDrive();
+        
+            // Mettre à jour l'UI immédiatement
+            closeSummary(false); // Cache la modale
+            setState('idle'); // Réinitialise l'état et appelle renderHomeScreen() avec les données mises à jour
             
-            closeSummary(false);
-            setState('idle');
             showMessage("Modifications sauvegardées avec succès !", 3500);
+        
             if (finishSummaryBtn) {
                 finishSummaryBtn.disabled = false;
                 finishSummaryBtn.innerHTML = isWorkoutMode ? '<i class="fas fa-check"></i> Terminer & Sauvegarder' : '<i class="fas fa-save"></i> Enregistrer';
