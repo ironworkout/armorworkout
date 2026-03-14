@@ -925,6 +925,28 @@
         let isSavingDriveData = false;
         let messageTimeoutId = null;
         let gisCheckRetries = 0;
+let wakeLock = null;
+
+async function requestWakeLock() {
+    if ('wakeLock' in navigator && !wakeLock) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; });
+            console.log('Wake Lock actif ✓');
+        } catch (err) {
+            console.warn('Wake Lock refusé:', err.name, err.message);
+        }
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+        console.log('Wake Lock relâché');
+    }
+}
+        
         let audioContext;
         let isEditMode = false;
         let currentSummaryContext = { mode: 'workout', sessionName: null };
@@ -1290,6 +1312,7 @@
                     break;
                 case 'preparing':
                     isWorkoutActive = true; prepareTimeLeft = PREPARE_DURATION;
+                    requestWakeLock();
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; }
                     if(resetBtn) resetBtn.disabled = false;
                     startPrepareCountdown();
