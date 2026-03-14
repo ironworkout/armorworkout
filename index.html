@@ -695,6 +695,19 @@
         .stats-full-width { grid-column: 1 / -1; }
         .stats-no-data { text-align: center; padding: 60px 20px; color: var(--secondary-text-color); }
         .stats-no-data i { font-size: 3em; margin-bottom: 15px; display: block; opacity: 0.3; }
+        .stats-explorer-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .stats-explorer-controls select {
+            flex: 1; min-width: 180px; padding: 8px 12px;
+            background: rgba(var(--secondary-bg-color-dark-rgb), 0.8);
+            border: 1px solid var(--border-color); border-radius: var(--border-radius-md);
+            color: var(--primary-text-color); font-family: var(--font-family-main); font-size: 0.9em; cursor: pointer;
+        }
+        .stats-explorer-chart-wrap { position: relative; height: 220px; }
+        .stats-pr-badge { display: inline-block; background: linear-gradient(135deg, #FFD700, #FF8C00); color: #000; font-size: 0.75em; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+        .stats-progression-meta { font-size: 0.8em; color: var(--secondary-text-color); margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+        .stats-trend-up { color: #39FF14; font-weight: 700; }
+        .stats-trend-down { color: #FF3131; font-weight: 700; }
+        .stats-trend-flat { color: var(--secondary-text-color); }
     </style>
 </head>
 <body class="logged-out dark-theme state-idle">
@@ -925,27 +938,27 @@
         let isSavingDriveData = false;
         let messageTimeoutId = null;
         let gisCheckRetries = 0;
-let wakeLock = null;
+        let wakeLock = null;
 
-async function requestWakeLock() {
-    if ('wakeLock' in navigator && !wakeLock) {
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-            wakeLock.addEventListener('release', () => { wakeLock = null; });
-            console.log('Wake Lock actif ✓');
-        } catch (err) {
-            console.warn('Wake Lock refusé:', err.name, err.message);
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator && !wakeLock) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => { wakeLock = null; });
+                    console.log('Wake Lock actif ✓');
+                } catch (err) {
+                    console.warn('Wake Lock refusé:', err.name, err.message);
+                }
+            }
         }
-    }
-}
 
-function releaseWakeLock() {
-    if (wakeLock) {
-        wakeLock.release();
-        wakeLock = null;
-        console.log('Wake Lock relâché');
-    }
-}
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+                console.log('Wake Lock relâché');
+            }
+        }
         
         let audioContext;
         let isEditMode = false;
@@ -1220,8 +1233,15 @@ function releaseWakeLock() {
             finally { isSavingDriveData = false; updateAuthUI(!!googleAccessToken); } return success;
         }
 
-        async function loadHistoryFromDrive() {
+        async function loadHistoryFromDrive(retryCount = 0) {
             if (!googleAccessToken) return;
+            const MAX_RETRIES_HISTORY = 3;
+            if (retryCount >= MAX_RETRIES_HISTORY) {
+                console.error('loadHistoryFromDrive: échec après ' + MAX_RETRIES_HISTORY + ' tentatives.');
+                showMessage('Impossible de charger l'historique après ' + MAX_RETRIES_HISTORY + ' tentatives. Historique vide.', 6000, true);
+                workoutHistory = [];
+                return;
+            }
             historyFileId = await findOrCreateFile(HISTORY_FILENAME, JSON.stringify([]), 'application/json', true);
             if (historyFileId) {
                 const content = await readFileContent(historyFileId, HISTORY_FILENAME);
@@ -1233,7 +1253,7 @@ function releaseWakeLock() {
                         const renamed = await handleCorruptedFile(historyFileId, HISTORY_FILENAME);
                         if (renamed) {
                             historyFileId = null;
-                            await loadHistoryFromDrive(); // Retry
+                            await loadHistoryFromDrive(retryCount + 1); // Retry sécurisé
                         } else {
                             workoutHistory = [];
                         }
@@ -1242,7 +1262,7 @@ function releaseWakeLock() {
                     const renamed = await handleCorruptedFile(historyFileId, HISTORY_FILENAME);
                     if (renamed) {
                         historyFileId = null;
-                        await loadHistoryFromDrive(); // Retry
+                        await loadHistoryFromDrive(retryCount + 1); // Retry sécurisé
                     } else {
                         workoutHistory = [];
                     }
@@ -1252,8 +1272,15 @@ function releaseWakeLock() {
             }
         }
         
-        async function loadFullProgramFromDrive() {
+        async function loadFullProgramFromDrive(retryCount = 0) {
             programsLoaded = false;
+            const MAX_RETRIES_PROGRAM = 3;
+            if (retryCount >= MAX_RETRIES_PROGRAM) {
+                console.error('loadFullProgramFromDrive: échec après ' + MAX_RETRIES_PROGRAM + ' tentatives.');
+                showMessage('Impossible de charger le programme après ' + MAX_RETRIES_PROGRAM + ' tentatives. Vérifiez votre Drive.', 7000, true);
+                loadedFullProgram = null;
+                return false;
+            }
             programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, DEFAULT_PROGRAM_CONTENT, 'application/json', true); 
             if (programFileId) {
                 const content = await readFileContent(programFileId, FULL_PROGRAM_FILENAME);
@@ -1269,12 +1296,12 @@ function releaseWakeLock() {
                         console.error("Fichier programme corrompu sur Drive:", e);
                         await handleCorruptedFile(programFileId, FULL_PROGRAM_FILENAME);
                         programFileId = null;
-                        await loadFullProgramFromDrive(); // Retry
+                        return await loadFullProgramFromDrive(retryCount + 1); // Retry sécurisé
                     }
                 } else { // content is null, empty, or unreadable
                     await handleCorruptedFile(programFileId, FULL_PROGRAM_FILENAME);
                     programFileId = null;
-                    await loadFullProgramFromDrive(); // Retry
+                    return await loadFullProgramFromDrive(retryCount + 1); // Retry sécurisé
                 }
             }
             loadedFullProgram = null;
@@ -1305,6 +1332,7 @@ function releaseWakeLock() {
             switch (newState) {
                 case 'idle':
                     isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; currentWorkoutType = null; currentWorkoutPlan = [];
+                    releaseWakeLock();
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.classList.add('start-btn'); startPauseBtn.disabled = true; }
                     if(resetBtn) resetBtn.disabled = true;
                     if (wasFinishedState) wasFinishedState = false;
@@ -1312,6 +1340,7 @@ function releaseWakeLock() {
                     break;
                 case 'preparing':
                     isWorkoutActive = true; prepareTimeLeft = PREPARE_DURATION;
+                    requestWakeLock();
                     requestWakeLock();
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas ${getIconForState('preparing')} fa-spin"></i> Prêt...`; }
                     if(resetBtn) resetBtn.disabled = false;
@@ -1357,6 +1386,7 @@ function releaseWakeLock() {
                     break;
                 case 'paused':
                     isTimerRunning = false; isWorkoutActive = true;
+                    releaseWakeLock();
                     if(startPauseBtn) { startPauseBtn.disabled = false; startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Reprendre`; }
                     if(skipBtn) skipBtn.disabled = false;
                     if(prevBtn) prevBtn.disabled = currentItemIndex <= 0;
@@ -1366,6 +1396,7 @@ function releaseWakeLock() {
                     break;
                 case 'finished':
                     isWorkoutActive = false; isTimerRunning = false; workoutFinished = true; wasFinishedState = true; timeLeft = 0; totalTime = 0;
+                    releaseWakeLock();
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-flag-checkered"></i> Terminé`; }
                     if(resetBtn) resetBtn.disabled = false;
                     showMessage('Entraînement terminé ! 💪', 3000);
@@ -1784,6 +1815,74 @@ function releaseWakeLock() {
                 if (bestPreviousScore > 0 && currentScore > bestPreviousScore) prs.add(ex.name);
             });
             return prs;
+        }
+
+        function initStatsExplorer() {
+            const sessionSelect = document.getElementById('stats-session-select');
+            const exerciseSelect = document.getElementById('stats-exercise-select');
+            if (!sessionSelect || !exerciseSelect) return;
+
+            sessionSelect.addEventListener('change', () => {
+                const sessionName = sessionSelect.value;
+                exerciseSelect.innerHTML = '<option value="">— Choisir un exercice —</option>';
+                exerciseSelect.disabled = !sessionName;
+                document.getElementById('stats-explorer-chart-area').style.display = 'none';
+                document.getElementById('stats-explorer-no-data').style.display = 'block';
+                if (!sessionName || !loadedFullProgram) return;
+                const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
+                if (!session) return;
+                const uniqueExercises = [...new Set(session.exercices_et_pauses.filter(e => e.type && e.type.startsWith('exercise')).map(e => e.name))];
+                uniqueExercises.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name.length > 55 ? name.substring(0, 55) + '…' : name;
+                    exerciseSelect.appendChild(opt);
+                });
+            });
+
+            exerciseSelect.addEventListener('change', () => {
+                const sessionName = sessionSelect.value;
+                const exerciseName = exerciseSelect.value;
+                const chartArea = document.getElementById('stats-explorer-chart-area');
+                const noData = document.getElementById('stats-explorer-no-data');
+                const metaDiv = document.getElementById('stats-explorer-meta');
+                if (!exerciseName) { chartArea.style.display = 'none'; noData.style.display = 'block'; return; }
+
+                destroyChart('stats-explorer-canvas');
+                chartArea.style.display = 'block';
+                noData.style.display = 'none';
+                renderExerciseProgressionChart('stats-explorer-canvas', exerciseName, sessionName);
+
+                const relevantHistory = workoutHistory.filter(h => h.type === sessionName);
+                const dataPoints = [];
+                relevantHistory.forEach(h => {
+                    const ex = (h.exercises || []).find(e => e.name === exerciseName);
+                    if (ex) {
+                        const score = calculatePerformanceScore(ex);
+                        if (score && score > 0) dataPoints.push({
+                            date: h.date, score,
+                            reps: ex.finalReps || ex.reps,
+                            weight: ex.finalWeightDescription || ex.weight_text
+                        });
+                    }
+                });
+
+                if (dataPoints.length >= 2) {
+                    const first = dataPoints[0], last = dataPoints[dataPoints.length - 1];
+                    const pct = Math.round(((last.score - first.score) / first.score) * 100);
+                    const trendClass = pct > 5 ? 'stats-trend-up' : pct < -5 ? 'stats-trend-down' : 'stats-trend-flat';
+                    const trendIcon = pct > 5 ? '↑' : pct < -5 ? '↓' : '→';
+                    const isPR = last.score >= Math.max(...dataPoints.map(d => d.score));
+                    const lastWeight = (last.weight || '').replace(/🏋️|🧘|💪|⚡️/g, '').trim();
+                    metaDiv.innerHTML =
+                        `<span class="${trendClass}">${trendIcon} ${pct > 0 ? '+' : ''}${pct}% depuis la 1ère séance</span>` +
+                        `<span><i class="fas fa-calendar-alt"></i> ${dataPoints.length} séances avec données</span>` +
+                        (isPR && dataPoints.length > 1 ? '<span class="stats-pr-badge">🏆 PR en cours !</span>' : '') +
+                        `<span style="opacity:0.6">Dernière perf : ${last.reps || '?'} reps · ${lastWeight || '?'}</span>`;
+                } else {
+                    metaDiv.innerHTML = '<span style="opacity:0.6;font-size:0.85em"><i class="fas fa-info-circle"></i> Effectuez au moins 2 séances de ce type pour voir la progression</span>';
+                }
+            });
         }
 
         function destroyChart(canvasId) {
@@ -2694,6 +2793,27 @@ function releaseWakeLock() {
                         <h4><i class="fas fa-trending-up"></i> Score de performance cumulé</h4>
                         <div class="chart-wrapper"><canvas id="stats-score-chart"></canvas></div>
                     </div>
+                    <div class="stats-chart-card stats-full-width" style="margin-top:20px;">
+                        <h4><i class="fas fa-search-plus"></i> Explorer la progression d'un exercice</h4>
+                        <div class="stats-explorer-controls">
+                            <select id="stats-session-select">
+                                <option value="">— Choisir une séance —</option>
+                                ${loadedFullProgram && loadedFullProgram.sessions ? loadedFullProgram.sessions.map(s => `<option value="${s.nom_session.replace(/"/g,'&quot;')}">${s.nom_session}</option>`).join('') : ''}
+                            </select>
+                            <select id="stats-exercise-select" disabled>
+                                <option value="">— Choisir un exercice —</option>
+                            </select>
+                        </div>
+                        <div id="stats-explorer-no-data" style="text-align:center;color:var(--secondary-text-color);padding:20px 0;font-size:0.9em;">
+                            <i class="fas fa-mouse-pointer" style="margin-right:6px;opacity:0.5;"></i> Sélectionnez une séance puis un exercice
+                        </div>
+                        <div id="stats-explorer-chart-area" style="display:none;">
+                            <div class="stats-explorer-chart-wrap">
+                                <canvas id="stats-explorer-canvas"></canvas>
+                            </div>
+                            <div id="stats-explorer-meta" class="stats-progression-meta"></div>
+                        </div>
+                    </div>
                 </div>`;
             statsSectionEl.appendChild(content);
 
@@ -2701,6 +2821,7 @@ function releaseWakeLock() {
                 renderStatsWeeklyChart();
                 renderStatsTypeChart(sessionCounts);
                 renderStatsScoreChart();
+                initStatsExplorer();
             }, 0);
         }
 
@@ -2800,7 +2921,10 @@ function releaseWakeLock() {
             });
             summaryItemsList?.addEventListener('click', handleSummaryControls);
             document.addEventListener('click', (e) => { if (!e.target.closest('.resistance-selector')) { document.querySelectorAll('.resistance-selector.open').forEach(el => el.classList.remove('open')); }});
-            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState(); });
+            document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState();
+            if (document.visibilityState === 'visible' && isWorkoutActive && !wakeLock) await requestWakeLock();
+        });
             window.addEventListener('beforeunload', () => { if (isWorkoutActive) saveInProgressState(); });
         }
 
