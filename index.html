@@ -3329,13 +3329,13 @@
         // ================================================================
         // FEATURE 8 : Page Stats globales
         // ================================================================
-        function renderStatsSection() {
+                function renderStatsSection() {
             const statsSectionEl = document.getElementById('stats-section');
             if (!statsSectionEl) return;
             statsSectionEl.innerHTML = '';
 
             if (!googleAccessToken) {
-                statsSectionEl.innerHTML = '<div style="text-align:center;padding:60px 20px"><h2 style="font-family:var(--font-family-titles);color:var(--electric-cyan)">Connectez-vous à Drive</h2><p style="margin-top:15px;color:var(--secondary-text-color)">Vos stats et progression de ligue apparaîtront ici.</p></div>';
+                statsSectionEl.innerHTML = '<div style="text-align:center;padding:60px 20px"><h2 style="font-family:var(--font-family-titles);color:var(--electric-cyan)">Connectez-vous a Drive</h2></div>';
                 return;
             }
 
@@ -3350,24 +3350,45 @@
 
             if (!window._statsMainTab) window._statsMainTab = 'ligue';
 
-            const content = document.createElement('div');
-            content.style.cssText = 'padding:20px';
-            content.innerHTML =
-                '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px">' +
-                '<div class="kpi-card"><span class="kpi-icon">\u{1F3CB}\uFE0F</span><span class="kpi-value">' + totalSessions + '</span><span class="kpi-label">S\u00E9ances</span></div>' +
-                '<div class="kpi-card"><span class="kpi-icon">\u23F1\uFE0F</span><span class="kpi-value">' + totalHours + 'h</span><span class="kpi-label">Temps total</span></div>' +
-                '<div class="kpi-card"><span class="kpi-icon">\u26A1</span><span class="kpi-value">' + Math.round(totalVolume/1000) + 'k</span><span class="kpi-label">Volume</span></div>' +
-                '<div class="kpi-card" style="border-color:rgba(255,183,77,.3)"><span class="kpi-icon">\uD83D\uDD25</span><span class="kpi-value">' + streak + '</span><span class="kpi-label">Semaines streak</span></div>' +
-                '</div>' +
-                '<div id="stats-main-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">' +
-                '<button onclick="statsSetTab('ligue')" id="stats-tab-ligue" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s">\u26A1 Ma Ligue</button>' +
-                '<button onclick="statsSetTab('conseiller')" id="stats-tab-conseiller" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s">\uD83C\uDFAF Conseiller</button>' +
-                '<button onclick="statsSetTab('history')" id="stats-tab-history" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s">\uD83D\uDCCA Historique</button>' +
-                '<button onclick="statsSetTab('explorer')" id="stats-tab-explorer" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s">\uD83D\uDD0D Explorer</button>' +
-                '</div>' +
-                '<div id="stats-tab-content"></div>';
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'padding:20px';
 
-            statsSectionEl.appendChild(content);
+            // KPI row
+            const kpiDiv = document.createElement('div');
+            kpiDiv.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px';
+            kpiDiv.innerHTML =
+                '<div class="kpi-card"><span class="kpi-icon">&#127947;</span><span class="kpi-value">' + totalSessions + '</span><span class="kpi-label">Seances</span></div>' +
+                '<div class="kpi-card"><span class="kpi-icon">&#9201;</span><span class="kpi-value">' + totalHours + 'h</span><span class="kpi-label">Temps total</span></div>' +
+                '<div class="kpi-card"><span class="kpi-icon">&#9889;</span><span class="kpi-value">' + Math.round(totalVolume/1000) + 'k</span><span class="kpi-label">Volume</span></div>' +
+                '<div class="kpi-card" style="border-color:rgba(255,183,77,.3)"><span class="kpi-icon">&#128293;</span><span class="kpi-value">' + streak + '</span><span class="kpi-label">Streak</span></div>';
+            wrap.appendChild(kpiDiv);
+
+            // Tab buttons
+            const tabsDiv = document.createElement('div');
+            tabsDiv.id = 'stats-main-tabs';
+            tabsDiv.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px';
+            const tabDefs = [
+                ['ligue', '&#9889; Ma Ligue'],
+                ['conseiller', '&#127919; Conseiller'],
+                ['history', '&#128202; Historique'],
+                ['explorer', '&#128269; Explorer']
+            ];
+            tabDefs.forEach(function(td) {
+                const btn = document.createElement('button');
+                btn.id = 'stats-tab-' + td[0];
+                btn.innerHTML = td[1];
+                btn.style.cssText = 'padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s';
+                btn.addEventListener('click', function() { statsSetTab(td[0]); });
+                tabsDiv.appendChild(btn);
+            });
+            wrap.appendChild(tabsDiv);
+
+            // Content area
+            const contentDiv = document.createElement('div');
+            contentDiv.id = 'stats-tab-content';
+            wrap.appendChild(contentDiv);
+
+            statsSectionEl.appendChild(wrap);
             statsRenderTab(window._statsMainTab, sessionCounts);
         }
 
@@ -3381,13 +3402,16 @@
         function statsRenderTab(tab, sessionCounts) {
             updateLeagueBadge();
             const tier = lgGetTier(lgCurrentGs);
-            ['ligue','conseiller','history','explorer'].forEach(id => {
+
+            ['ligue','conseiller','history','explorer'].forEach(function(id) {
                 const btn = document.getElementById('stats-tab-' + id);
                 if (!btn) return;
                 if (id === tab) {
-                    btn.style.cssText = 'padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s;background:' + tier.ca + ';color:#000';
+                    btn.style.background = tier.ca;
+                    btn.style.color = '#000';
                 } else {
-                    btn.style.cssText = 'padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-family-main);transition:all .2s;background:rgba(255,255,255,.07);color:var(--secondary-text-color)';
+                    btn.style.background = 'rgba(255,255,255,.07)';
+                    btn.style.color = 'var(--secondary-text-color)';
                 }
             });
 
@@ -3397,40 +3421,56 @@
 
             if (tab === 'ligue') {
                 lgActiveTab = 'profil';
-                area.innerHTML = '<div id="league-stats-panel"></div>';
+                const panel = document.createElement('div');
+                panel.id = 'league-stats-panel';
+                area.appendChild(panel);
                 renderLeaguePanel();
+
             } else if (tab === 'conseiller') {
                 lgActiveTab = 'conseiller';
-                area.innerHTML = '<div id="league-stats-panel"></div>';
+                const panel = document.createElement('div');
+                panel.id = 'league-stats-panel';
+                area.appendChild(panel);
                 renderLeaguePanel();
+
             } else if (tab === 'history') {
                 area.innerHTML =
                     '<div class="stats-charts-grid">' +
-                    '<div class="stats-chart-card"><h4><i class="fas fa-calendar-week"></i> S\u00E9ances par semaine</h4><div class="chart-wrapper"><canvas id="stats-weekly-chart"></canvas></div></div>' +
-                    '<div class="stats-chart-card"><h4><i class="fas fa-chart-pie"></i> R\u00E9partition des s\u00E9ances</h4><div class="chart-wrapper"><canvas id="stats-type-chart"></canvas></div></div>' +
-                    '<div class="stats-chart-card stats-full-width"><h4><i class="fas fa-trending-up"></i> Score de performance cumul\u00E9</h4><div class="chart-wrapper"><canvas id="stats-score-chart"></canvas></div></div>' +
+                    '<div class="stats-chart-card"><h4><i class="fas fa-calendar-week"></i> Seances par semaine</h4><div class="chart-wrapper"><canvas id="stats-weekly-chart"></canvas></div></div>' +
+                    '<div class="stats-chart-card"><h4><i class="fas fa-chart-pie"></i> Repartition des seances</h4><div class="chart-wrapper"><canvas id="stats-type-chart"></canvas></div></div>' +
+                    '<div class="stats-chart-card stats-full-width"><h4><i class="fas fa-trending-up"></i> Score de performance cumule</h4><div class="chart-wrapper"><canvas id="stats-score-chart"></canvas></div></div>' +
                     '</div>';
                 setTimeout(function() {
                     renderStatsWeeklyChart();
                     renderStatsTypeChart(sessionCounts);
                     renderStatsScoreChart();
                 }, 0);
+
             } else if (tab === 'explorer') {
-                var sessionOpts = loadedFullProgram && loadedFullProgram.sessions
-                    ? loadedFullProgram.sessions.map(function(s){ return '<option value="' + s.nom_session.replace(/"/g,'&quot;') + '">' + s.nom_session + '</option>'; }).join('')
-                    : '';
-                area.innerHTML =
-                    '<div class="stats-chart-card"><h4><i class="fas fa-search-plus"></i> Progression d'un exercice</h4>' +
+                var sessionOpts = '';
+                if (loadedFullProgram && loadedFullProgram.sessions) {
+                    loadedFullProgram.sessions.forEach(function(s) {
+                        sessionOpts += '<option value="' + s.nom_session.replace(/"/g, '&quot;') + '">' + s.nom_session + '</option>';
+                    });
+                }
+                const explorerDiv = document.createElement('div');
+                explorerDiv.className = 'stats-chart-card';
+                explorerDiv.innerHTML =
+                    '<h4><i class="fas fa-search-plus"></i> Progression d\'un exercice</h4>' +
                     '<div class="stats-explorer-controls">' +
-                    '<select id="stats-session-select"><option value="">\u2014 Choisir une s\u00E9ance \u2014</option>' + sessionOpts + '</select>' +
-                    '<select id="stats-exercise-select" disabled><option value="">\u2014 Choisir un exercice \u2014</option></select>' +
+                    '<select id="stats-session-select"><option value="">-- Choisir une seance --</option>' + sessionOpts + '</select>' +
+                    '<select id="stats-exercise-select" disabled><option value="">-- Choisir un exercice --</option></select>' +
                     '</div>' +
-                    '<div id="stats-explorer-no-data" style="text-align:center;color:var(--secondary-text-color);padding:20px 0;font-size:.9em"><i class="fas fa-mouse-pointer" style="margin-right:6px;opacity:.5"></i> S\u00E9lectionnez une s\u00E9ance puis un exercice</div>' +
-                    '<div id="stats-explorer-chart-area" style="display:none"><div class="stats-explorer-chart-wrap"><canvas id="stats-explorer-canvas"></canvas></div><div id="stats-explorer-meta" class="stats-progression-meta"></div></div>' +
+                    '<div id="stats-explorer-no-data" style="text-align:center;color:var(--secondary-text-color);padding:20px 0;font-size:.9em">Selectionnez une seance puis un exercice</div>' +
+                    '<div id="stats-explorer-chart-area" style="display:none">' +
+                    '<div class="stats-explorer-chart-wrap"><canvas id="stats-explorer-canvas"></canvas></div>' +
+                    '<div id="stats-explorer-meta" class="stats-progression-meta"></div>' +
                     '</div>';
-                setTimeout(function(){ initStatsExplorer(); }, 0);
+                area.appendChild(explorerDiv);
+                setTimeout(function() { initStatsExplorer(); }, 0);
             }
         }
+
 
         function renderStatsWeeklyChart() {
             const ctx = document.getElementById('stats-weekly-chart')?.getContext('2d');
@@ -3649,4 +3689,4 @@
 
     </script>
 </body>
-    </html>
+                    </html>
