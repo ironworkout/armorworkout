@@ -805,6 +805,12 @@
                 </ul>
             </nav>
             <div class="header-actions">
+                <!-- BADGE LIGUE -->
+                <div id="league-badge-pill" style="display:none;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid #FFD740;background:rgba(58,32,8,.7);box-shadow:0 0 12px rgba(255,215,0,.3);font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap" onclick="leagueShowTab('ligues')" title="Ta progression de ligue">
+                    <div id="league-badge-dot" style="width:8px;height:8px;border-radius:50%;background:#FFD740;box-shadow:0 0 8px #FFE880;flex-shrink:0"></div>
+                    <span id="league-badge-text" style="color:#FFD740">—</span>
+                    <span id="league-badge-alert-count" style="display:none;background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px"></span>
+                </div>
                 <div id="drive-status" style="display: none;"> 
                     <span id="drive-status-text">Connecté</span>
                 </div>
@@ -2343,8 +2349,7 @@
           const alertCount = document.getElementById('league-badge-alert-count');
           if (!pill || !dot || !text) return;
 
-          pill.className = 'visible';
-          pill.style.cssText = `display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid ${tier.ca};background:${tier.cb}70;box-shadow:0 0 12px ${tier.glow}50;font-family:var(--font-family-timer);font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap`;
+          pill.style.cssText = `display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid ${tier.ca};background:${tier.cb}70;box-shadow:0 0 12px ${tier.glow}50;font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap`;
           dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${tier.ca};box-shadow:0 0 8px ${tier.glow};flex-shrink:0`;
           text.style.color = tier.ca;
           text.textContent = `${tier.n} · ${pct}%`;
@@ -2361,9 +2366,11 @@
         // Affichage du panneau ligue dans la section stats
         function leagueShowTab(tab) {
           lgActiveTab = tab;
-          const el = document.getElementById('stats-btn');
-          if (el) el.click(); // Active la section stats
-          setTimeout(() => { renderLeaguePanel(); }, 100);
+          // Active la section Stats directement sans passer par le click du bouton
+          showSection('stats-section');
+          if (statsBtn) statsBtn.classList.add('active');
+          renderStatsSection();
+          setTimeout(() => { renderLeaguePanel(); }, 50);
         }
 
         function renderLeaguePanel() {
@@ -3171,7 +3178,7 @@
             // Mettre à jour l'UI immédiatement
             closeSummary(false); // Cache la modale
             setState('idle'); // Réinitialise l'état et appelle renderHomeScreen() avec les données mises à jour
-            
+            updateLeagueBadge();
             showMessage("Modifications sauvegardées avec succès !", 3500);
         
             if (finishSummaryBtn) {
