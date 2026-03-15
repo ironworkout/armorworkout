@@ -2404,212 +2404,358 @@
 
         function lgSetTab(tab) { lgActiveTab=tab; renderLeaguePanel(); }
 
-        function lgRenderProfil(perfs,gs,muscles,tier,pct,nextTier,wksToNext,speed) {
-          const {ca,cb,glow,n,desc,star} = tier;
-          let h = `<div class="league-hero" style="border:1.5px solid ${ca};background:${cb}28">
-            <div class="league-hero-inner">
-              <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0">
-                ${lgRenderBadgeSVG(tier,90,true)}
-                <div style="font-size:10px;color:rgba(255,255,255,.3);text-align:center;max-width:90px">${star}</div>
-              </div>
-              <div style="flex:1;min-width:180px">
-                <div class="league-name-big" style="color:${ca}">${n}</div>
-                <div class="league-desc-text" style="color:${ca}">${desc}</div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">
-                  <span>Score : <strong style="color:${ca}">${gs.toFixed(1)}%</strong></span>
-                  ${nextTier?`<span style="color:${ca}">${pct}% → ${nextTier.n}</span>`:''}
-                </div>
-                <div class="league-prog-bar-bg"><div class="league-prog-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${ca}80,${ca});box-shadow:0 0 10px ${glow}"></div></div>
-                ${wksToNext?`<div style="font-size:11px;color:rgba(255,255,255,.3);text-align:right;margin-top:3px">~${wksToNext} sem. → ${nextTier?.n} · +${speed}%/sem</div>`:''}
-              </div>
-            </div>
-          </div>`;
+        function lgRenderProfil(perfs, gs, muscles, tier, pct, nextTier, wksToNext, speed) {
+          const {ca, cb, glow, n, desc, star} = tier;
+          const tidx = lgGetTierIdx(gs);
+          const alerts = lgDetectAlerts(perfs);
 
-          h += `<div class="stats-chart-card"><h4>Par groupe musculaire</h4>`;
-          Object.entries(LG_W).sort((a,b)=>b[1]-a[1]).forEach(([m,w]) => {
-            const s=muscles[m]||0, mt=lgGetTier(s);
-            h += `<div class="muscle-league-row"><div class="muscle-league-label"><span>${LG_ML[m]}</span><span style="color:${mt.ca};font-size:11px;font-weight:500">${mt.n} · ${Math.round(s)}% · ${(w*100).toFixed(0)}% poids</span></div><div class="muscle-league-bg"><div class="muscle-league-fill" style="width:${s}%;background:${mt.ca};box-shadow:0 0 4px ${mt.glow}"></div></div></div>`;
+          // ── HERO ──────────────────────────────────────────────────────
+          let h = `<div style="border:1.5px solid ${ca};background:${cb}30;border-radius:18px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden">`;
+          // Glow background effect
+          h += `<div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:${ca};opacity:.05;pointer-events:none"></div>`;
+          h += `<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">`;
+          h += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">${lgRenderBadgeSVG(tier, 100, true)}<div style="font-size:9px;color:rgba(255,255,255,.35);text-align:center;max-width:95px;line-height:1.3">${star}</div></div>`;
+          h += `<div style="flex:1;min-width:170px">`;
+          h += `<div style="font-family:var(--font-family-timer);font-size:22px;color:${ca};letter-spacing:1px;margin-bottom:3px">${n}</div>`;
+          h += `<div style="font-size:12px;color:${ca};opacity:.75;margin-bottom:14px;line-height:1.5">${desc}</div>`;
+
+          // Progress bar vers la prochaine ligue
+          if (nextTier) {
+            h += `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">`;
+            h += `<span style="color:rgba(255,255,255,.4)">Score global : <strong style="color:${ca}">${gs.toFixed(1)}%</strong></span>`;
+            h += `<span style="color:${ca};font-weight:600">${pct}% vers ${nextTier.n}</span>`;
+            h += `</div>`;
+            h += `<div style="height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin-bottom:6px;position:relative">`;
+            h += `<div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${ca}90,${ca});border-radius:6px;transition:width .6s;box-shadow:0 0 14px ${glow}"></div>`;
+            h += `<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 60%,rgba(255,255,255,.06));border-radius:6px"></div>`;
+            h += `</div>`;
+            h += `<div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.3)">`;
+            h += `<span>${n}</span>`;
+            if (wksToNext) h += `<span style="color:${ca}">~${wksToNext} sem. si rythme maintenu</span>`;
+            h += `<span>${nextTier.n}</span>`;
+            h += `</div>`;
+          } else {
+            h += `<div style="font-size:13px;color:${ca};font-weight:600;margin-top:6px">&#x1F947; Score Vibranium atteint</div>`;
+          }
+
+          // Streak pill
+          const streak = calculateWeeklyStreak();
+          h += `<div style="margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(255,255,255,.06);border-radius:20px;border:0.5px solid rgba(255,255,255,.1)">`;
+          h += `<span style="font-size:14px">&#x1F525;</span>`;
+          h += `<span style="font-size:12px;color:rgba(255,255,255,.7)">Streak : <strong style="color:#FFB74D">${streak} sem.</strong></span>`;
+          if (alerts.length > 0) h += `<span style="background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">${alerts.length} alerte${alerts.length>1?'s':''}</span>`;
+          h += `</div>`;
+
+          h += `</div></div></div>`;
+
+          // ── TIMELINE LIGUES (mini parcours) ───────────────────────────
+          h += `<div class="stats-chart-card" style="margin-bottom:16px">`;
+          h += `<h4 style="margin-bottom:14px">Ton parcours</h4>`;
+          h += `<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:8px">`;
+          LG_TIERS.forEach((t, i) => {
+            const isPast = tidx > i, isNow = tidx === i, isFuture = tidx < i;
+            const size = isNow ? 52 : 34;
+            h += `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;opacity:${isFuture ? .35 : 1}">`;
+            h += lgRenderBadgeSVG(t, size, isNow);
+            if (isNow) h += `<div style="font-size:9px;color:${t.ca};font-weight:700;white-space:nowrap">${t.n}</div>`;
+            h += `</div>`;
+            if (i < LG_TIERS.length - 1) {
+              h += `<div style="flex:1;min-width:8px;height:2px;background:${isPast ? ca : 'rgba(255,255,255,.1)'};border-radius:1px;flex-shrink:0"></div>`;
+            }
+          });
+          h += `</div></div>`;
+
+          // ── PAR GROUPE MUSCULAIRE ──────────────────────────────────────
+          h += `<div class="stats-chart-card" style="margin-bottom:16px"><h4 style="margin-bottom:16px">Par groupe musculaire</h4>`;
+          Object.entries(LG_W).sort((a, b) => b[1] - a[1]).forEach(([m, w]) => {
+            const s = muscles[m] || 0, mt = lgGetTier(s);
+            const pctM = lgPctInTier(s, mt);
+            h += `<div style="margin-bottom:14px">`;
+            h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:4px">`;
+            h += `<div style="display:flex;align-items:center;gap:8px">`;
+            h += lgRenderBadgeSVG(mt, 22, false);
+            h += `<span style="color:#E2E8F0;font-size:13px;font-weight:500">${LG_ML[m]}</span>`;
+            h += `<span style="font-size:10px;padding:2px 7px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.4);border-radius:10px">${(w*100).toFixed(0)}% poids visuel</span>`;
+            h += `</div>`;
+            h += `<span style="color:${mt.ca};font-weight:600;font-size:12px">${mt.n} · ${Math.round(s)}%</span>`;
+            h += `</div>`;
+            h += `<div style="height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;position:relative">`;
+            h += `<div style="height:100%;width:${Math.min(100,s)}%;background:${mt.ca};box-shadow:0 0 8px ${mt.glow};border-radius:4px;transition:width .5s"></div>`;
+            h += `</div>`;
+            h += `</div>`;
           });
           h += `</div>`;
 
-          h += `<div class="stats-chart-card"><h4>Simule ta progression — glisse poids & reps</h4><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:12px">Basé sur l'historique Drive. Modifie pour voir l'impact sur ton score.</div><div class="exo-grid-2col">`;
-          Object.entries(LG_EX).forEach(([id,ex]) => {
-            const cur = perfs[id]||{p:ex.s[0].p,r:ex.s[0].r};
-            const p = Math.round(lgNorm(id,cur)), mt = lgGetTier(p), adv = lgGetAdvice(id,cur);
-            const [,lo,hi] = ex.repsOpt, inZone = cur.r>=lo&&cur.r<=hi;
-            const bdrCol = adv?.pri==='URGENT'?'rgba(239,68,68,.3)':inZone?'rgba(52,211,153,.2)':'rgba(255,255,255,.06)';
-            const nxt = ex.s.find(s=>s.p>cur.p);
-            h += `<div class="exo-league-card" style="border-color:${bdrCol}">
-              <div class="exo-league-header">
-                <span style="color:#E2E8F0;font-weight:500">${ex.name}</span>
-                <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-                  ${ex.bag?'<span style="font-size:9px;padding:1px 5px;background:rgba(255,150,0,.15);color:#FFAA55;border-radius:6px">×1.28</span>':''}
-                  <span style="font-size:9px;padding:1px 5px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);border-radius:6px">${lo}-${hi}r</span>
-                  ${adv?`<span style="font-size:10px;padding:1px 6px;background:rgba(0,0,0,.2);color:${adv.col};border-radius:6px">${adv.icon}</span>`:''}
-                  <span style="color:${mt.ca};font-weight:600;font-size:11px">${mt.n} · ${p}%</span>
-                </span>
-              </div>
-              <div class="exo-sliders-row">
-                <div><div class="exo-slider-label"><span>Poids</span><span style="color:#22D3EE;font-weight:600" id="lgp-${id}-v">${cur.p} kg</span></div>
-                  <input type="range" min="${ex.s[0].p*.5}" max="${ex.s[4].p*1.1}" value="${cur.p}" step="0.5" oninput="lgUpdatePerf('${id}','p',this.value)"></div>
-                <div><div class="exo-slider-label"><span>Reps</span><span style="color:${inZone?'#6EE7B7':'#FCA5A5'};font-weight:600" id="lgr-${id}-v">${cur.r}</span></div>
-                  <input type="range" min="1" max="40" value="${cur.r}" step="1" oninput="lgUpdatePerf('${id}','r',this.value)"></div>
-              </div>
-              <div class="exo-progbar"><div class="exo-progfill" id="lgprog-${id}" style="width:${p}%;background:${mt.ca}"></div></div>
-              ${adv&&adv.pri!=='GOOD'?`<div class="exo-advice-inline" style="background:${adv.col}12;color:${adv.col}">${adv.icon} ${adv.title}</div>`:''}
-              ${nxt?`<div style="font-size:10px;color:rgba(255,255,255,.2);text-align:right;margin-top:3px">Seuil suivant : ${nxt.p}kg × ${nxt.r}r</div>`:''}
-            </div>`;
-          });
-          h += `</div></div>`;
+          // ── STATUS PAR EXERCICE (depuis Drive, sans sliders) ───────────
+          h += `<div class="stats-chart-card"><h4 style="margin-bottom:14px">Statut par exercice — données Drive</h4>`;
+          if (Object.keys(perfs).length === 0) {
+            h += `<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">Aucun historique disponible. Complète une séance pour voir ta progression.</div>`;
+          } else {
+            h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">`;
+            Object.entries(LG_EX).forEach(([id, ex]) => {
+              const cur = perfs[id];
+              if (!cur) {
+                h += `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.02);border:0.5px solid rgba(255,255,255,.06);opacity:.4">`;
+                h += `<div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px">${ex.name}</div>`;
+                h += `<div style="font-size:11px;color:rgba(255,255,255,.25)">Pas encore dans l'historique</div>`;
+                h += `</div>`;
+                return;
+              }
+              const p = Math.round(lgNorm(id, cur)), mt = lgGetTier(p);
+              const adv = lgGetAdvice(id, cur);
+              const [, lo, hi] = ex.repsOpt, inZone = cur.r >= lo && cur.r <= hi;
+              h += `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid ${adv.pri==='URGENT'?'rgba(239,68,68,.4)':inZone?`${mt.ca}30`:'rgba(255,255,255,.07)'};position:relative;overflow:hidden">`;
+              h += `<div style="position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;background:${mt.ca};opacity:.04;transform:translate(20px,-20px)"></div>`;
+              // Header
+              h += `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">`;
+              h += `<span style="font-size:12px;font-weight:600;color:#E2E8F0;line-height:1.3">${ex.name}</span>`;
+              h += `<span style="font-size:18px;flex-shrink:0;margin-left:6px">${adv.icon}</span>`;
+              h += `</div>`;
+              // Perf actuelle
+              h += `<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">`;
+              h += `<span style="font-size:13px;font-weight:700;color:${mt.ca};font-family:var(--font-family-timer)">${cur.p}kg</span>`;
+              h += `<span style="font-size:13px;color:rgba(255,255,255,.5)">×</span>`;
+              h += `<span style="font-size:13px;font-weight:700;color:${inZone?'#6EE7B7':'#FCA5A5'};font-family:var(--font-family-timer)">${cur.r}r</span>`;
+              if (ex.bag) h += `<span style="font-size:9px;padding:2px 5px;background:rgba(255,150,0,.15);color:#FFAA55;border-radius:5px;align-self:center">sac</span>`;
+              h += `</div>`;
+              // Progress bar
+              h += `<div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:6px">`;
+              h += `<div style="height:100%;width:${p}%;background:${mt.ca};box-shadow:0 0 4px ${mt.glow};border-radius:3px"></div>`;
+              h += `</div>`;
+              // Conseil court
+              h += `<div style="font-size:10px;color:${adv.col};font-weight:600;line-height:1.4">${adv.icon} ${adv.title}</div>`;
+              h += `</div>`;
+            });
+            h += `</div>`;
+          }
+          h += `</div>`;
+
           return h;
         }
 
         function lgUpdatePerf(id, k, v) {
-          if (!lgCurrentPerfs[id]) lgCurrentPerfs[id] = {p:LG_EX[id].s[0].p, r:LG_EX[id].s[0].r};
+          if (!lgCurrentPerfs[id]) lgCurrentPerfs[id] = {p: LG_EX[id].s[0].p, r: LG_EX[id].s[0].r};
           lgCurrentPerfs[id][k] = parseFloat(v);
-          // Refresh léger : recalcule juste le score global sans tout re-rendre
-          const {global:gs,muscles} = lgComputeAll(lgCurrentPerfs);
+          const {global: gs} = lgComputeAll(lgCurrentPerfs);
           lgCurrentGs = gs;
-          const tier = lgGetTier(gs), pct = lgPctInTier(gs,tier);
-          // Update badge
-          const badgeText = document.getElementById('league-badge-text');
-          if(badgeText) badgeText.textContent = `${tier.n} · ${pct}%`;
-          // Full re-render panel
           renderLeaguePanel();
         }
 
         function lgRenderConseiller(perfs, tier) {
-          const {ca,cb} = tier;
-          const id = lgAdvisorExo, ex = LG_EX[id], cur = perfs[id]||{p:ex.s[0].p,r:ex.s[0].r}, adv = lgGetAdvice(id,cur);
-          const [mn,lo,hi,mx] = ex.repsOpt;
-          let h = `<div class="stats-chart-card">
-            <p style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:12px">Fenêtres de reps calibrées sur la composition en fibres musculaires.</p>
-            <div class="adv-selector-grid">`;
-          Object.entries(LG_EX).forEach(([xid,xex]) => {
-            const xcur=perfs[xid]||{p:xex.s[0].p,r:xex.s[0].r}, xadv=lgGetAdvice(xid,xcur);
-            h += `<button class="adv-btn" onclick="lgSetAdvisor('${xid}')" style="border-color:${lgAdvisorExo===xid?ca:xadv?.pri==='URGENT'?'rgba(239,68,68,.3)':xadv?.pri==='ACTION'?'rgba(252,211,77,.3)':'rgba(255,255,255,.07)'};background:${lgAdvisorExo===xid?cb+'60':'rgba(255,255,255,.02)'};color:${lgAdvisorExo===xid?ca:'rgba(255,255,255,.65)'}">
-              <span>${xex.name}</span><span>${xadv?.icon||''}</span>
-            </button>`;
+          const {ca, cb} = tier;
+          const id = lgAdvisorExo, ex = LG_EX[id];
+          const cur = perfs[id] || {p: ex.s[0].p, r: ex.s[0].r};
+          const adv = lgGetAdvice(id, cur);
+          const [mn, lo, hi, mx] = ex.repsOpt;
+
+          let h = '';
+
+          // ── SÉLECTEUR EXERCICE (pills, pas dropdown) ──────────────────
+          h += `<div class="stats-chart-card" style="margin-bottom:14px">`;
+          h += `<h4 style="margin-bottom:12px">Sélectionne un exercice</h4>`;
+          h += `<div style="display:flex;flex-wrap:wrap;gap:7px">`;
+          Object.entries(LG_EX).forEach(([xid, xex]) => {
+            const xcur = perfs[xid] || {p: xex.s[0].p, r: xex.s[0].r};
+            const xadv = lgGetAdvice(xid, xcur);
+            const isActive = lgAdvisorExo === xid;
+            const urgColor = xadv.pri === 'URGENT' ? '#EF4444' : xadv.pri === 'ACTION' ? '#FCD34D' : xadv.pri === 'GOOD' ? '#6EE7B7' : '#93C5FD';
+            h += `<button onclick="lgSetAdvisor('${xid}')" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;border:1.5px solid ${isActive ? ca : urgColor + '60'};background:${isActive ? ca + '25' : 'rgba(255,255,255,.03)'};color:${isActive ? ca : '#E2E8F0'};font-size:12px;font-weight:${isActive?'600':'400'};cursor:pointer;font-family:var(--font-family-main);transition:all .2s">`;
+            h += `<span style="font-size:12px">${xadv.icon}</span>`;
+            h += `<span>${xex.name}</span>`;
+            h += `</button>`;
           });
+          h += `</div></div>`;
+
+          if (!adv) return h;
+
+          // ── CARTE CONSEIL PRINCIPALE ───────────────────────────────────
+          const isUrgent = adv.pri === 'URGENT';
+          const isGood = adv.pri === 'GOOD';
+          h += `<div style="border-radius:16px;padding:20px;margin-bottom:14px;background:${adv.col}10;border:2px solid ${adv.col}50;position:relative;overflow:hidden">`;
+          h += `<div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:${adv.col};opacity:.07;pointer-events:none"></div>`;
+          h += `<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">`;
+          h += `<div style="font-size:36px;flex-shrink:0">${adv.icon}</div>`;
+          h += `<div style="flex:1;min-width:160px">`;
+          h += `<div style="font-size:16px;font-weight:700;color:${adv.col};margin-bottom:6px;line-height:1.3">${adv.title}</div>`;
+          h += `<div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:10px">${adv.conseil}</div>`;
+          h += `<div style="padding:10px 14px;background:rgba(0,0,0,.25);border-radius:10px;border-left:4px solid ${adv.col}">`;
+          h += `<div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:2px">Action</div>`;
+          h += `<div style="font-size:13px;color:#E2E8F0;font-weight:500">${adv.next}</div>`;
+          h += `</div></div></div>`;
+
+          // Perf actuelle mise en avant
+          h += `<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">`;
+          h += `<div style="padding:10px 16px;background:rgba(0,0,0,.2);border-radius:10px;text-align:center">`;
+          h += `<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Poids actuel</div>`;
+          h += `<div style="font-size:20px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">${cur.p}kg</div>`;
+          if (ex.bag) h += `<div style="font-size:9px;color:#FFAA55;margin-top:2px">Eastpack ×1.28</div>`;
           h += `</div>`;
-          if (adv) {
-            h += `<div class="adv-main" style="background:${adv.col}12;border:1.5px solid ${adv.col}50">
-              <div style="font-size:20px;margin-bottom:6px">${adv.icon}</div>
-              <div class="adv-title" style="color:${adv.col}">${adv.title}</div>
-              <div class="adv-body">${adv.conseil}</div>
-              <div class="adv-next" style="border-color:${adv.col}">${adv.next}</div>
-            </div>`;
-            // Zone bar
-            const p40=(v)=>Math.round(v/40*100);
-            h += `<div style="padding:12px;background:rgba(0,0,0,.2);border-radius:10px;border:0.5px solid rgba(255,255,255,.08)">
-              <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Fenêtre de reps — ${ex.name}</div>
-              <div class="zone-bar-wrap">
-                <div class="zone-seg" style="left:0;width:${p40(mn)}%;background:rgba(239,68,68,.25);color:#FCA5A5">force</div>
-                <div class="zone-seg" style="left:${p40(mn)}%;width:${p40(lo-mn)}%;background:rgba(59,130,246,.2);color:#93C5FD">montée</div>
-                <div class="zone-seg" style="left:${p40(lo)}%;width:${p40(hi-lo)}%;background:rgba(52,211,153,.3);color:#6EE7B7;font-weight:700">✓ OPTIMAL</div>
-                <div class="zone-seg" style="left:${p40(hi)}%;width:${p40(mx-hi)}%;background:rgba(252,211,77,.2);color:#FCD34D">↑ poids</div>
-                <div class="zone-seg" style="left:${p40(mx)}%;width:${100-p40(mx)}%;background:rgba(239,68,68,.15);color:#FCA5A5">endur.</div>
-                <div class="zone-cursor" style="left:${Math.min(98,p40(cur.r))}%"></div>
-              </div>
-              <div class="zone-labels-row"><span>1</span><span>${mn}</span><span>${lo}</span><span>${hi}</span><span>${mx}</span><span>40</span></div>
-              <div class="zone-meta-box"><strong style="color:${adv.col}">${cur.p}kg × ${cur.r}r</strong> — ${ex.fiberNote}</div>
-            </div>`;
-            h += `<div class="exo-sliders-row" style="margin-top:12px">
-              <div><div class="exo-slider-label"><span>Poids</span><span style="color:#22D3EE;font-weight:600">${cur.p} kg</span></div>
-                <input type="range" min="${ex.s[0].p*.5}" max="${ex.s[4].p*1.1}" value="${cur.p}" step="0.5" oninput="lgUpdatePerf('${id}','p',this.value)"></div>
-              <div><div class="exo-slider-label"><span>Reps</span><span style="color:${cur.r>=lo&&cur.r<=hi?'#6EE7B7':'#FCA5A5'};font-weight:600">${cur.r}</span></div>
-                <input type="range" min="1" max="40" value="${cur.r}" step="1" oninput="lgUpdatePerf('${id}','r',this.value)"></div>
-            </div>`;
-          }
+          h += `<div style="padding:10px 16px;background:rgba(0,0,0,.2);border-radius:10px;text-align:center">`;
+          h += `<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Reps actuelles</div>`;
+          const inZone = cur.r >= lo && cur.r <= hi;
+          h += `<div style="font-size:20px;font-weight:700;color:${inZone?'#6EE7B7':'#FCA5A5'};font-family:var(--font-family-timer)">${cur.r}r</div>`;
+          h += `<div style="font-size:9px;color:${inZone?'#6EE7B7':'#FCA5A5'};margin-top:2px">${inZone?'Zone optimale':'Hors zone'}</div>`;
           h += `</div>`;
-          // Tableau récap
-          h += `<div class="stats-chart-card"><h4>Fenêtres optimales — tous exercices</h4><div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;min-width:380px">
-            <tr style="color:rgba(255,255,255,.3)"><th style="padding:6px 8px">Exercice</th><th style="padding:6px 8px;text-align:center">Min</th><th style="padding:6px 8px;text-align:center">Optimal</th><th style="padding:6px 8px;text-align:center">Max</th><th style="padding:6px 8px">Fibres</th><th style="padding:6px 8px;text-align:center">Actuel</th></tr>`;
-          Object.entries(LG_EX).forEach(([xid,xex]) => {
-            const xcur=perfs[xid]||{p:xex.s[0].p,r:xex.s[0].r},[xmn,xlo,xhi,xmx]=xex.repsOpt;
-            const inZ=xcur.r>=xlo&&xcur.r<=xhi;
-            const ft=xhi>=20?'Lentes':xhi>=15?'Mixtes':'Rapides';
-            const ftCol=xhi>=20?'#93C5FD':xhi>=15?'#A78BFA':'#FCA5A5';
-            h += `<tr style="border-top:1px solid rgba(255,255,255,.05)"><td style="padding:6px 8px;color:#E2E8F0">${xex.name}</td><td style="padding:6px 8px;text-align:center;color:rgba(255,255,255,.4)">${xmn}</td><td style="padding:6px 8px;text-align:center"><strong style="color:#6EE7B7">${xlo}–${xhi}</strong></td><td style="padding:6px 8px;text-align:center;color:rgba(255,255,255,.4)">${xmx}</td><td style="padding:6px 8px"><span style="font-size:10px;padding:2px 6px;background:${ftCol}15;color:${ftCol};border-radius:8px">${ft}</span></td><td style="padding:6px 8px;text-align:center;color:${inZ?'#6EE7B7':'#FCA5A5'};font-weight:600">${xcur.r}r ${inZ?'✓':'⚠'}</td></tr>`;
+          h += `<div style="padding:10px 16px;background:rgba(0,0,0,.2);border-radius:10px;text-align:center">`;
+          h += `<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Zone cible</div>`;
+          h += `<div style="font-size:20px;font-weight:700;color:#A78BFA;font-family:var(--font-family-timer)">${lo}–${hi}r</div>`;
+          h += `<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">${ex.fiberNote.split('.')[0]}</div>`;
+          h += `</div>`;
+          h += `</div>`;
+
+          h += `</div>`;
+
+          // ── ZONE BAR ─────────────────────────────────────────────────
+          h += `<div class="stats-chart-card" style="margin-bottom:14px">`;
+          h += `<h4 style="margin-bottom:12px">&#x1F9EC; Fenêtre de reps — ${ex.name}</h4>`;
+          h += `<div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:12px;line-height:1.5">${ex.fiberNote}</div>`;
+
+          const p40 = v => Math.round(v / 40 * 100);
+          h += `<div style="position:relative;height:36px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.05);margin-bottom:6px">`;
+          h += `<div style="position:absolute;top:0;left:0;width:${p40(mn)}%;height:100%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;font-size:10px;color:#FCA5A5;font-weight:500">Force</div>`;
+          h += `<div style="position:absolute;top:0;left:${p40(mn)}%;width:${p40(lo-mn)}%;height:100%;background:rgba(59,130,246,.18);display:flex;align-items:center;justify-content:center;font-size:10px;color:#93C5FD">Montée</div>`;
+          h += `<div style="position:absolute;top:0;left:${p40(lo)}%;width:${p40(hi-lo)}%;height:100%;background:rgba(52,211,153,.28);display:flex;align-items:center;justify-content:center;font-size:11px;color:#6EE7B7;font-weight:700">&#x2713; OPTIMAL</div>`;
+          h += `<div style="position:absolute;top:0;left:${p40(hi)}%;width:${p40(mx-hi)}%;height:100%;background:rgba(252,211,77,.18);display:flex;align-items:center;justify-content:center;font-size:10px;color:#FCD34D;font-weight:600">&#x2191; Poids</div>`;
+          h += `<div style="position:absolute;top:0;left:${p40(mx)}%;width:${100-p40(mx)}%;height:100%;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:10px;color:#FCA5A5">Endurance</div>`;
+          // Curseur position actuelle
+          const cursorPos = Math.min(98, p40(cur.r));
+          h += `<div style="position:absolute;top:0;left:${cursorPos}%;width:3px;height:100%;background:white;border-radius:1px;box-shadow:0 0 6px rgba(255,255,255,.8)"></div>`;
+          // Tooltip curseur
+          h += `<div style="position:absolute;top:-22px;left:${Math.max(2,Math.min(88,cursorPos-4))}%;background:white;color:#000;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${cur.r}r ici</div>`;
+          h += `</div>`;
+          h += `<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.25);padding:0 2px">`;
+          h += `<span>1</span><span>${mn}</span><span>${lo}</span><span>${hi}</span><span>${mx}</span><span>40</span>`;
+          h += `</div>`;
+          h += `</div>`;
+
+          // ── TABLEAU RÉCAP TOUS EXERCICES ───────────────────────────────
+          h += `<div class="stats-chart-card"><h4 style="margin-bottom:12px">Fenêtres optimales — vue d'ensemble</h4>`;
+          h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">`;
+          Object.entries(LG_EX).forEach(([xid, xex]) => {
+            const xcur = perfs[xid] || {p: xex.s[0].p, r: xex.s[0].r};
+            const [xmn, xlo, xhi, xmx] = xex.repsOpt;
+            const xInZone = xcur.r >= xlo && xcur.r <= xhi;
+            const xadv = lgGetAdvice(xid, xcur);
+            const isSelected = xid === lgAdvisorExo;
+            h += `<div onclick="lgSetAdvisor('${xid}')" style="padding:10px 12px;border-radius:10px;border:1.5px solid ${isSelected ? ca : xInZone ? '#6EE7B740' : '#FCA5A540'};background:${isSelected ? ca + '15' : 'rgba(255,255,255,.02)'};cursor:pointer;transition:all .15s">`;
+            h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">`;
+            h += `<span style="font-size:11px;font-weight:600;color:#E2E8F0">${xex.name}</span>`;
+            h += `<span style="font-size:14px">${xadv.icon}</span>`;
+            h += `</div>`;
+            h += `<div style="font-size:10px;margin-bottom:4px">`;
+            h += `<span style="color:#22D3EE;font-weight:700">${xcur.p}kg × </span>`;
+            h += `<span style="color:${xInZone ? '#6EE7B7' : '#FCA5A5'};font-weight:700">${xcur.r}r</span>`;
+            h += `<span style="color:rgba(255,255,255,.3);margin-left:6px">zone: ${xlo}–${xhi}r</span>`;
+            h += `</div>`;
+            const ft = xhi >= 20 ? 'Lentes' : xhi >= 15 ? 'Mixtes' : 'Rapides';
+            const ftCol = xhi >= 20 ? '#93C5FD' : xhi >= 15 ? '#A78BFA' : '#FCA5A5';
+            h += `<span style="font-size:9px;padding:1px 6px;background:${ftCol}20;color:${ftCol};border-radius:8px">${ft}</span>`;
+            h += `</div>`;
           });
-          h += `</table></div></div>`;
+          h += `</div></div>`;
+
           return h;
         }
 
-        function lgSetAdvisor(id) { lgAdvisorExo=id; renderLeaguePanel(); }
+        function lgSetAdvisor(id) { lgAdvisorExo = id; renderLeaguePanel(); }
 
-        function lgRenderLigues(tier,tidx) {
-          let h = `<div class="tier-tiles-grid">`;
-          LG_TIERS.forEach((t,i) => {
-            h += `<div class="tier-tile${t===tier?' active':''}" style="${t===tier?`border-color:${t.ca};background:${t.cb}50`:''}">
-              ${t===tier?`<div style="font-size:9px;font-weight:700;color:${t.ca};margin-bottom:4px">◉ TOI</div>`:''}
-              <div style="display:flex;justify-content:center">${lgRenderBadgeSVG(t,62,t===tier)}</div>
-              <div class="tier-tile-name" style="color:${t.ca}">${t.n}</div>
-              <div class="tier-tile-star">${t.star}</div>
-              <div class="tier-tile-desc">${t.desc}</div>
-              <div style="margin-top:4px;font-size:9px;color:rgba(255,255,255,.2)">Score ${t.r[0]}–${t.r[1]}%</div>
-            </div>`;
+        function lgRenderLigues(tier, tidx) {
+          let h = `<div style="margin-bottom:12px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6">13 paliers · ~4-6 semaines par palier à 2 séances/semaine · Chaque palier correspond à une transformation physique visible habillé.</div>`;
+          h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px">`;
+          LG_TIERS.forEach((t) => {
+            const isNow = t === tier;
+            h += `<div style="padding:14px 10px;border-radius:14px;border:${isNow ? '2px' : '1px'} solid ${isNow ? t.ca : 'rgba(255,255,255,.07)'};background:${isNow ? t.cb + '50' : '#090D1A'};text-align:center;transition:all .2s">`;
+            if (isNow) h += `<div style="font-size:9px;font-weight:700;color:${t.ca};margin-bottom:6px;letter-spacing:.5px">&#x25C9; TOI</div>`;
+            h += `<div style="display:flex;justify-content:center;margin-bottom:8px">${lgRenderBadgeSVG(t, 64, isNow)}</div>`;
+            h += `<div style="font-family:var(--font-family-timer);font-size:11px;color:${t.ca};margin-bottom:3px">${t.n}</div>`;
+            h += `<div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:5px">${t.star}</div>`;
+            h += `<div style="font-size:10px;color:rgba(255,255,255,.5);line-height:1.4">${t.desc}</div>`;
+            h += `<div style="margin-top:5px;font-size:9px;color:rgba(255,255,255,.2)">Score ${t.r[0]}–${t.r[1]}%</div>`;
+            h += `</div>`;
           });
-          return h + `</div>`;
+          h += `</div>`;
+          return h;
         }
 
         function lgRenderAlertes(alerts) {
-          if (!alerts.length) return `<div class="stats-chart-card" style="text-align:center;padding:36px"><div style="font-size:22px;margin-bottom:8px">✅</div><div style="color:rgba(255,255,255,.4)">Aucune alerte active</div></div>`;
-          let h = '';
-          alerts.forEach(a => {
-            h += `<div class="league-alert-card" style="background:${a.col}10;border-color:${a.col}40">
-              <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px"><span style="font-size:16px">${a.icon}</span><span style="font-size:13px;font-weight:600;color:#E2E8F0">${a.title}</span></div>
-              <div style="font-size:12px;color:rgba(255,255,255,.55);line-height:1.7">${a.body}</div>
+          if (!alerts.length) {
+            return `<div class="stats-chart-card" style="text-align:center;padding:40px 20px">
+              <div style="font-size:48px;margin-bottom:12px">&#x2705;</div>
+              <div style="font-size:16px;font-weight:600;color:#6EE7B7;margin-bottom:6px">Tout est optimal</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.4)">Aucune alerte active. Continue à progresser !</div>
             </div>`;
+          }
+          let h = `<div style="margin-bottom:14px;font-size:12px;color:rgba(255,255,255,.5)">${alerts.length} point${alerts.length>1?'s':''} à corriger pour maximiser ta progression.</div>`;
+          alerts.forEach(a => {
+            h += `<div style="padding:16px;border-radius:14px;background:${a.col}0D;border:1.5px solid ${a.col}45;margin-bottom:12px">`;
+            h += `<div style="display:flex;gap:12px;align-items:flex-start">`;
+            h += `<span style="font-size:24px;flex-shrink:0">${a.icon}</span>`;
+            h += `<div style="flex:1">`;
+            h += `<div style="font-size:14px;font-weight:700;color:${a.col};margin-bottom:6px">${a.title}</div>`;
+            h += `<div style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">${a.body}</div>`;
+            h += `</div></div></div>`;
           });
-          h += `<div class="stats-chart-card" style="opacity:.65"><div style="font-size:10px;font-weight:500;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Alertes configurées</div>`;
-          [['⚡','Reps < minimum (force pure)','Actif'],['📉','Reps > maximum (endurance)','Actif'],['🔧','Plafond matériel >82%','Actif'],['🔁','Stagnation >8 semaines','Actif (Drive)'],['🏆','Personal Record','Actif (Drive)']].forEach(([ic,t,s]) => {
-            h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid rgba(255,255,255,.05);flex-wrap:wrap;gap:4px"><span style="font-size:12px;color:rgba(255,255,255,.6)">${ic} ${t}</span><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${s.includes('Drive')?'rgba(255,255,255,.06)':'rgba(52,211,153,.1)'};color:${s.includes('Drive')?'rgba(255,255,255,.3)':'#6EE7B7'}">${s}</span></div>`;
+          h += `<div class="stats-chart-card" style="opacity:.6;margin-top:6px"><div style="font-size:10px;font-weight:500;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Alertes actives</div>`;
+          [['&#x26A1;','Reps < minimum (force pure)','Actif'],['&#x1F4C9;','Reps > maximum (endurance)','Actif'],['&#x1F527;','Plafond matériel > 82%','Actif'],['&#x1F504;','Stagnation > 8 semaines','Actif (Drive)'],['&#x1F3C6;','Personal Record','Actif (Drive)']].forEach(([ic,t,s]) => {
+            const isDrive = s.includes('Drive');
+            h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,.05);flex-wrap:wrap;gap:4px">`;
+            h += `<span style="font-size:12px;color:rgba(255,255,255,.6)">${ic} ${t}</span>`;
+            h += `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${isDrive?'rgba(255,255,255,.06)':'rgba(52,211,153,.1)'};color:${isDrive?'rgba(255,255,255,.3)':'#6EE7B7'}">${s}</span>`;
+            h += `</div>`;
           });
           h += `</div>`;
           return h;
         }
 
-        function lgRenderPrediction(gs,tier,nextTier,wksToNext,speed) {
-          const {ca,cb,glow} = tier;
+        function lgRenderPrediction(gs, tier, nextTier, wksToNext, speed) {
+          const {ca, cb, glow} = tier;
           const tidx = lgGetTierIdx(gs);
-          let h = `<div class="stats-chart-card">
-            <p style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:14px">
-              Le score ne dépend <strong style="color:#E2E8F0">jamais</strong> du temps — c'est ta performance pure (poids × reps). Le temps sert uniquement à prédire quand tu atteindras le prochain palier, en divisant la distance restante par ta vitesse de progression réelle.
-            </p>
-            <div class="pred-kpi-grid">
-              ${[['Vitesse actuelle',`+${speed}%/sem`,ca],['Distance restante',nextTier?`${(nextTier.r[0]-gs).toFixed(1)}%`:'—','#FCD34D'],['Semaines estimées',wksToNext?`~${wksToNext}`:'—','#A78BFA']].map(([l,v,c])=>`<div class="pred-kpi"><div class="pred-kpi-label">${l}</div><div class="pred-kpi-val" style="color:${c}">${v}</div></div>`).join('')}
-            </div>
-            <div class="pred-code-block">
-              <div><span style="color:rgba(255,255,255,.4)">vitesse</span> = (${gs.toFixed(1)} − 27) ÷ 8.7 = <strong style="color:${ca}">+${speed}%/sem</strong></div>
-              <div><span style="color:rgba(255,255,255,.4)">sem_restantes</span> = ${nextTier?`(${nextTier.r[0]} − ${gs.toFixed(1)}) ÷ ${speed}`:'—'} = <strong style="color:#A78BFA">${wksToNext?`~${wksToNext} sem.`:'—'}</strong></div>
-            </div>
-            <p style="font-size:11px;color:rgba(255,255,255,.25);line-height:1.6">⚠️ La vitesse ralentira progressivement : ~2.2%/sem maintenant → ~1.5%/sem semaine 24 → ~0.8%/sem en Platine. La prédiction se recalibrera sur ton historique réel Drive.</p>
-          </div>`;
+          let h = `<div class="stats-chart-card" style="margin-bottom:14px">`;
+          h += `<h4 style="margin-bottom:12px">Comment fonctionne la prédiction ?</h4>`;
+          h += `<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:16px">Le score ne dépend <strong style="color:#E2E8F0">jamais</strong> du temps — c'est ta performance actuelle (poids × reps). Le temps sert uniquement à estimer quand tu atteindras le prochain palier, en divisant la distance restante par ta vitesse de progression historique.</div>`;
+
+          // KPI
+          h += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
+          h += `<div style="padding:14px 10px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:5px">Vitesse actuelle</div><div style="font-size:22px;font-weight:700;color:${ca};font-family:var(--font-family-timer)">+${speed}%</div><div style="font-size:10px;color:rgba(255,255,255,.3)">par semaine</div></div>`;
+          h += `<div style="padding:14px 10px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:5px">Distance restante</div><div style="font-size:22px;font-weight:700;color:#FCD34D;font-family:var(--font-family-timer)">${nextTier?(nextTier.r[0]-gs).toFixed(1)+'%':'—'}</div><div style="font-size:10px;color:rgba(255,255,255,.3)">${nextTier?'vers '+nextTier.n:'Vibranium atteint'}</div></div>`;
+          h += `<div style="padding:14px 10px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:5px">Estimation</div><div style="font-size:22px;font-weight:700;color:#A78BFA;font-family:var(--font-family-timer)">${wksToNext?'~'+wksToNext:'—'}</div><div style="font-size:10px;color:rgba(255,255,255,.3)">semaines</div></div>`;
+          h += `</div>`;
+
+          h += `<div style="padding:12px 14px;background:rgba(0,0,0,.25);border-radius:10px;font-family:monospace;font-size:11px;color:#22D3EE;line-height:2.2;margin-bottom:10px">`;
+          h += `<div><span style="color:rgba(255,255,255,.4)">vitesse</span> = (${gs.toFixed(1)} − 27) ÷ 8.7 = <strong style="color:${ca}">+${speed}%/sem</strong></div>`;
+          h += nextTier ? `<div><span style="color:rgba(255,255,255,.4)">sem_restantes</span> = (${nextTier.r[0]} − ${gs.toFixed(1)}) ÷ ${speed} = <strong style="color:#A78BFA">${wksToNext ? '~'+wksToNext+' sem.' : '—'}</strong></div>` : '';
+          h += `</div>`;
+          h += `<div style="font-size:11px;color:rgba(255,255,255,.25);line-height:1.6">&#x26A0;&#xFE0F; La vitesse ralentira : ~2.2%/sem maintenant → ~1.5%/sem semaine 24 → ~0.8%/sem en Platine. Se recalibrera sur l'historique Drive réel.</div>`;
+          h += `</div>`;
+
           // Timeline
-          h += `<div class="stats-chart-card"><h4>Timeline personnalisée</h4>`;
-          LG_TIERS.forEach((t,i) => {
-            const isNow=t===tier,isPast=tidx>i,isFut=tidx<i;
-            const spd=i<6?2.2:i<9?1.6:i<12?1.0:0.6;
-            const d=new Date('2025-01-12');d.setDate(d.getDate()+t.wks*7);
-            const ms=d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
-            h += `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid rgba(255,255,255,.06);align-items:center;opacity:${isPast?.65:1}">
-              <div style="flex-shrink:0">${lgRenderBadgeSVG(t,36,isNow)}</div>
-              <div style="flex:1"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:2px">
-                <span style="font-family:var(--font-family-timer);font-size:11px;color:${t.ca}">${t.n}</span>
-                ${isNow?`<span style="font-size:9px;padding:2px 7px;background:${t.cb}60;color:${t.ca};border-radius:8px;border:0.5px solid ${t.ca}">◉ maintenant</span>`:''}
-                ${isPast?`<span style="font-size:9px;padding:2px 7px;background:rgba(52,211,153,.1);color:#6EE7B7;border-radius:8px">✓ atteint</span>`:''}
-              </div><div style="font-size:11px;color:rgba(255,255,255,.35)">${t.star}</div></div>
-              <div style="text-align:right;min-width:68px">
-                ${isNow&&wksToNext?`<div style="font-size:13px;font-weight:600;color:${t.ca}">~${wksToNext} sem.</div>`:''}
-                ${isPast?`<div style="font-size:11px;color:#6EE7B7">fait ✓</div>`:''}
-                ${isFut?`<div style="font-size:11px;color:rgba(255,255,255,.3)">${ms}</div><div style="font-size:9px;color:rgba(255,255,255,.2)">~${spd}%/sem</div>`:''}
-              </div>
-            </div>`;
+          h += `<div class="stats-chart-card"><h4 style="margin-bottom:14px">Timeline depuis janvier 2025</h4>`;
+          LG_TIERS.forEach((t, i) => {
+            const isNow = t === tier, isPast = tidx > i, isFut = tidx < i;
+            const spd = i < 6 ? 2.2 : i < 9 ? 1.6 : i < 12 ? 1.0 : 0.6;
+            const d = new Date('2025-01-12'); d.setDate(d.getDate() + t.wks * 7);
+            const ms = d.toLocaleDateString('fr-FR', {month: 'short', year: '2-digit'});
+            h += `<div style="display:flex;gap:12px;padding:9px 0;border-bottom:0.5px solid rgba(255,255,255,.06);align-items:center;opacity:${isPast ? .55 : 1}">`;
+            h += `<div style="flex-shrink:0">${lgRenderBadgeSVG(t, 36, isNow)}</div>`;
+            h += `<div style="flex:1">`;
+            h += `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px">`;
+            h += `<span style="font-family:var(--font-family-timer);font-size:11px;color:${t.ca}">${t.n}</span>`;
+            if (isNow) h += `<span style="font-size:9px;padding:2px 7px;background:${t.cb}60;color:${t.ca};border-radius:8px;border:0.5px solid ${t.ca}">&#x25C9; maintenant</span>`;
+            if (isPast) h += `<span style="font-size:9px;padding:2px 7px;background:rgba(52,211,153,.1);color:#6EE7B7;border-radius:8px">&#x2713; atteint</span>`;
+            h += `</div>`;
+            h += `<div style="font-size:11px;color:rgba(255,255,255,.35)">${t.star}</div>`;
+            h += `</div>`;
+            h += `<div style="text-align:right;min-width:72px">`;
+            if (isNow && wksToNext) h += `<div style="font-size:13px;font-weight:700;color:${t.ca}">~${wksToNext} sem.</div>`;
+            if (isPast) h += `<div style="font-size:11px;color:#6EE7B7">&#x2713; fait</div>`;
+            if (isFut) { h += `<div style="font-size:11px;color:rgba(255,255,255,.3)">${ms}</div><div style="font-size:9px;color:rgba(255,255,255,.2)">~${spd}%/sem</div>`; }
+            h += `</div></div>`;
           });
           h += `</div>`;
           return h;
         }
+
+
         // ── FIN SECTION LIGUES ────────────────────────────────────────────────
 
         function renderConsistencyCalendarModule(date) {
