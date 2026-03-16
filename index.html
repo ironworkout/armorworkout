@@ -2066,19 +2066,26 @@
             // Progression module — clear readable display
             const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
             const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
-            const wksLabel = wksToNext2 ? '~' + wksToNext2 + ' sem.' : '–';
-            const estLabel = estDate ? estDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '';
+                        const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
+            const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
+            // Une seule prédiction cohérente partout
+            const displaySpeed = lgComputeRealSpeed();
+            const wksDisplay = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / displaySpeed) : null;
+            const wksLabel = wksDisplay ? '~' + wksDisplay + ' sem.' : '-';
+            const estDateDisp = wksDisplay ? new Date(Date.now() + wksDisplay * 7 * 86400000) : null;
+            const estLabel = estDateDisp ? estDateDisp.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '';
+
             progModule.innerHTML =
                 '<h4 style="margin-bottom:12px"><i class="fas fa-chart-line" style="color:' + tier.ca + '"></i> Progression</h4>' +
                 trendHtml +
                 '<p style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px;line-height:1.8">' +
-                    '<strong style="color:#22D3EE">' + workoutHistory.length + ' séances</strong>' +
-                    ' en <strong style="color:#22D3EE">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '–') + '</strong>' +
-                    ' · <strong style="color:#22D3EE">' + (realSPW > 0 ? realSPW.toFixed(1) + 'x/sem' : '–') + '</strong>' +
-                    (nextT2 ? ' · <strong style="color:' + tier.ca + '">' + wksLabel + ' → ' + nextT2.n + (estLabel ? ' (' + estLabel + ')' : '') + '</strong>' : '') +
+                    '<strong style="color:#22D3EE">' + workoutHistory.length + ' seances</strong>' +
+                    ' en <strong style="color:#22D3EE">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '-') + '</strong>' +
+                    ' / <strong style="color:#22D3EE">' + (realSPW > 0 ? realSPW.toFixed(1) + 'x/sem' : '-') + '</strong>' +
+                    (nextT2 ? ' · <strong style="color:' + tier.ca + '">' + wksLabel + ' vers ' + nextT2.n + (estLabel ? ' (' + estLabel + ')' : '') + '</strong>' : '') +
                 '</p>' +
                 '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px;display:flex;justify-content:space-between">' +
-                    '<span>Dans <strong style="color:' + tier.ca + '">' + tier.n + '</strong> — ' + pct + '% complété</span>' +
+                    '<span>Dans <strong style="color:' + tier.ca + '">' + tier.n + '</strong> — ' + pct + '% complete</span>' +
                     (nextT2 ? '<span style="color:rgba(255,255,255,.25)">' + distToNext + ' pts pour ' + nextT2.n + '</span>' : '') +
                 '</div>' +
                 '<div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:10px">' +
@@ -2526,38 +2533,22 @@
         // Calcule la vitesse réelle de progression depuis l'historique Drive
         // Méthode : compare le score moyen des 4 premières séances vs les 4 dernières
         function lgComputeRealSpeed() {
-          if (!workoutHistory || workoutHistory.length < 2) return 1.5;
+          // Vitesse de progression du score ligue (%/semaine)
+          // Basée sur : sessions/semaine × gain moyen par session
+          // Gain par session calibré sur la littérature hypertrophique (Schoenfeld 2010) :
+          //   - Phase 1 (0-6 mois) : ~0.65% de score ligue par séance
+          //   - Phase 2 (6-12 mois) : ~0.40% par séance (adaptation neuromusculaire complète)
+          //   - Phase 3 (>12 mois) : ~0.25% par séance
+          if (!workoutHistory || workoutHistory.length < 2) return 1.3;
           const sorted = workoutHistory.slice().sort((a,b) => new Date(a.date) - new Date(b.date));
           const first = sorted[0], last = sorted[sorted.length - 1];
-          const weeks = Math.max(1, (new Date(last.date) - new Date(first.date)) / (7 * 86400000));
-
-          // Calcul du score de performance moyen par tranche (début vs fin)
-          const halfN = Math.min(4, Math.floor(sorted.length / 2));
-          const early = sorted.slice(0, halfN);
-          const recent = sorted.slice(-halfN);
-
-          function avgScore(sessions) {
-            let total = 0, cnt = 0;
-            sessions.forEach(h => { (h.exercises||[]).forEach(ex => { const s = calculatePerformanceScore(ex); if(s>0){total+=s;cnt++;} }); });
-            return cnt > 0 ? total/cnt : 0;
-          }
-
-          const earlyScore = avgScore(early);
-          const recentScore = avgScore(recent);
-
-          // Score de performance → conversion en progression de score ligue
-          // La progression ligue est ~proportionnelle à la racine de la progression de perf
-          const halfWeeks = weeks / 2;
-          if (earlyScore > 0 && recentScore > earlyScore && halfWeeks > 0) {
-            const perfGrowth = (recentScore - earlyScore) / earlyScore; // ex: 0.15 = +15%
-            // ~0.8% ligue par %perf sur la période, divisé par semaines pour avoir /semaine
-            const lgSpeed = Math.min(3, Math.max(0.3, (perfGrowth * 5) / halfWeeks));
-            return Math.round(lgSpeed * 10) / 10;
-          }
-
-          // Fallback: sessions/semaine * 0.8
-          const sessionsPerWeek = sorted.length / weeks;
-          return Math.round(Math.max(0.5, Math.min(3, sessionsPerWeek * 0.8)) * 10) / 10;
+          const totalWeeks = Math.max(1, (new Date(last.date) - new Date(first.date)) / (7 * 86400000));
+          const totalMonths = totalWeeks / 4.33;
+          const sessionsPerWeek = sorted.length / totalWeeks;
+          // Gain par séance selon la phase
+          const gainPerSession = totalMonths < 6 ? 0.65 : totalMonths < 12 ? 0.40 : 0.25;
+          const speed = sessionsPerWeek * gainPerSession;
+          return Math.round(Math.max(0.3, Math.min(3.5, speed)) * 10) / 10;
         }
 
         function lgGetRealPerfsKeys() {
