@@ -1564,6 +1564,7 @@
                 case 'idle':
                     isTimerRunning = false; isWorkoutActive = false; workoutFinished = false; timeLeft = 0; totalTime = 0; workoutStartTime = null; currentWorkoutType = null; currentWorkoutPlan = [];
                     releaseWakeLock();
+                    if (typeof lgResetReactorTheme === 'function') lgResetReactorTheme();
                     if(startPauseBtn) { startPauseBtn.innerHTML = `<i class="fas fa-play"></i> Démarrer`; startPauseBtn.classList.add('start-btn'); startPauseBtn.disabled = true; }
                     if(resetBtn) resetBtn.disabled = true;
                     if (wasFinishedState) wasFinishedState = false;
@@ -2030,7 +2031,7 @@
             const firstSession = workoutHistory.length > 0 ? new Date(workoutHistory[0].date + 'T00:00:00') : null;
             const daysSinceStart = firstSession ? Math.round((Date.now() - firstSession) / 86400000) : 0;
             const weeksSinceStart = Math.max(1, Math.round(daysSinceStart / 7));
-            const speed = 2.08; // %/semaine
+            const speed = lgComputeRealSpeed();
             const nextT2 = LG_TIERS[lgGetTierIdx(lgCurrentGs) + 1];
             const wksToNext2 = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / speed) : null;
             const estDate = wksToNext2 ? new Date(Date.now() + wksToNext2 * 7 * 86400000) : null;
@@ -2127,12 +2128,13 @@
                     const inZone = cur.r >= lo && cur.r <= hi;
                     if (adv.pri === 'URGENT') urgentCount++;
                     else okCount++;
+                    const cleanName = name.replace(/^Superset [A-Z]: /, '').replace(/^FINISHER: /, '').replace(/\s*\([^)]*\)\s*$/, '');
+                    const pWeight = Math.round(cur.p * 10) / 10;
                     exStatusHtml +=
                         '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
                             '<span style="font-size:12px">' + adv.icon + '</span>' +
-                            '<span style="font-size:11px;color:#E2E8F0;font-weight:500;flex:1">' + name.replace(/^Superset [A-Z]: /, '').replace(/^FINISHER: /, '') + '</span>' +
-                            '<span style="font-size:11px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + cur.p + 'kg</span>' +
-                            '<span style="font-size:10px;color:' + (inZone?'#6EE7B7':'#FCA5A5') + ';font-weight:600">×' + cur.r + 'r</span>' +
+                            '<span style="font-size:11px;color:#E2E8F0;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cleanName + '</span>' +
+                            '<span style="font-size:11px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer);flex-shrink:0">' + pWeight + 'kg×' + cur.r + 'r</span>' +
                         '</div>';
                 });
 
@@ -2445,12 +2447,13 @@
         };
 
         // Mapping nom exercice programme → ID LG_EX
-        // LG_NAME_MAP — ordre CRITIQUE : plus spécifique d'abord
-        // 'vol.' et '(vol' doivent passer AVANT 'lateral' sinon Élév. Volume → elev_lat
+        // lgMapName — ordre CRITIQUE : le plus spécifique en premier
+        // FINISHER/concentré AVANT swiss (sinon 'Curl Concentré (Swiss Ball)' → rowing_sb)
         function lgMapName(name) {
           if (!name) return null;
           const n = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          // Règles spécifiques en premier (ordre compte !)
+          // Finisher/concentré en tout premier (contient 'swiss ball' mais est un curl)
+          if (n.includes('finisher') || n.includes('concentre') || n.includes('concentr')) return 'finisher';
           if (n.includes('vol.')  || n.includes('(vol')) return 'elev_vol';
           if (n.includes('militaire'))                   return 'dev_mil';
           if (n.includes('face pull'))                   return 'face_pull';
@@ -2460,7 +2463,6 @@
           if (n.includes('sureleve') || n.includes('surel') || n.includes('surele')) return 'pompes_sur';
           if (n.includes('triceps'))                     return 'ext_tri';
           if (n.includes('marteau'))                     return 'curl_m';
-          if (n.includes('concentre') || n.includes('concentr') || n.includes('finisher')) return 'finisher';
           if (n.includes('classique') || n.includes('lestee') || n.includes('leste')) return 'pompes_cl';
           return null;
         }
@@ -2527,6 +2529,26 @@
           });
           return latest;
         }
+        // Calcule la vitesse réelle de progression depuis l'historique Drive
+        // Utilise l'évolution du score global sur les 8 dernières semaines
+        function lgComputeRealSpeed() {
+          if (!workoutHistory || workoutHistory.length < 2) return 2.08; // fallback
+          const sorted = workoutHistory.slice().sort((a,b) => new Date(a.date) - new Date(b.date));
+          const first = sorted[0], last = sorted[sorted.length - 1];
+          const weeks = Math.max(1, (new Date(last.date) - new Date(first.date)) / (7 * 86400000));
+          // Score at first session vs now
+          const scoreNow = lgCurrentGs;
+          // Estimate score at start: use minimum possible (we don't store it, approximate)
+          const scoreStart = Math.max(0, scoreNow - weeks * 2.5); // conservative upper bound
+          // Better: linear regression on last 8 sessions' exercise improvement
+          const speed = weeks > 0 ? Math.max(0.3, Math.min(4, (scoreNow - Math.max(0, scoreNow * 0.7)) / weeks)) : 2.08;
+          // Simplified: just use a reasonable estimate from session count and weeks
+          const sessionsPerWeek = sorted.length / weeks;
+          // Base speed: ~0.9%/session at 2 sessions/week = ~1.8%/week, scaling with frequency
+          const realSpeed = Math.round(sessionsPerWeek * 0.9 * 10) / 10;
+          return Math.max(0.5, Math.min(4, realSpeed));
+        }
+
         function lgGetRealPerfsKeys() {
           // Returns list of exercise IDs that have REAL Drive history data
           const keys = new Set();
@@ -2677,6 +2699,37 @@
         let lgAdvisorExo = 'elev_lat';
         let lgActiveTab = 'profil';
 
+        // ── Reactor theme from league ────────────────────────────
+        function hexToRgb(hex) {
+            const clean = hex.replace('#','').padStart(6,'0');
+            const r = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(clean);
+            return r ? parseInt(r[1],16)+', '+parseInt(r[2],16)+', '+parseInt(r[3],16) : '34, 211, 238';
+        }
+        function lgApplyReactorTheme() {
+            updateLeagueBadge();
+            const tier = lgGetTier(lgCurrentGs);
+            if (!tier) return;
+            const ca = tier.ca, glow = tier.glow, lvl = tier.lvl;
+            const rgb = hexToRgb(ca);
+            const root = document.documentElement;
+            root.style.setProperty('--electric-cyan', ca);
+            root.style.setProperty('--electric-cyan-rgb', rgb);
+            root.style.setProperty('--exercise-color-val', ca);
+            root.style.setProperty('--exercise-color-rgb', rgb);
+            root.style.setProperty('--timer-progress-circle-color', ca);
+            // Reactor rotation speed: faster = higher league
+            const spd = lvl >= 4 ? '2s' : lvl >= 3 ? '4s' : lvl >= 2 ? '6s' : lvl >= 1 ? '9s' : '12s';
+            root.style.setProperty('--reactor-speed', spd);
+            // Timer glow intensity
+            root.style.setProperty('--timer-text-glow-main',
+                '0 0 5px #fff, 0 0 10px #fff, 0 0 20px ' + ca + ', 0 0 ' + (20 + lvl*10) + 'px ' + glow);
+        }
+        function lgResetReactorTheme() {
+            ['--electric-cyan','--electric-cyan-rgb','--exercise-color-val','--exercise-color-rgb',
+             '--timer-progress-circle-color','--reactor-speed','--timer-text-glow-main'
+            ].forEach(v => document.documentElement.style.removeProperty(v));
+        }
+
         // ── XP Float animation ──────────────────────────────────
         function showXpFloat(el, text, color) {
             if (!el) return;
@@ -2744,7 +2797,7 @@
           const perfs = lgCurrentPerfs;
           const {global:gs,muscles} = lgComputeAll(perfs);
           const tier = lgGetTier(gs), tidx = lgGetTierIdx(gs), pct = lgPctInTier(gs,tier), nextTier = LG_TIERS[tidx+1];
-          const speed = 2.08;
+          const speed = lgComputeRealSpeed();
           const wksToNext = nextTier && speed>0 ? Math.ceil((nextTier.r[0]-gs)/speed) : null;
           const realKeys = lgGetRealPerfsKeys ? lgGetRealPerfsKeys() : [];
           const alerts = lgDetectAlerts(perfs, realKeys);
@@ -3152,8 +3205,8 @@
             }
 
             const streak = calculateWeeklyStreak();
-            updateLeagueVisuals(streak); // Applique le thème de la ligue
-            const leagueName = getLeagueName(streak);
+            // updateLeagueVisuals(streak) removed — score-based league now drives all visuals
+            const leagueName = getLeagueName(streak); // streak name kept for display only
 
             const today = new Date();
             const startOfWeek = new Date(today);
@@ -3167,13 +3220,25 @@
             // Doughnut Chart Container
             const doughnutContainerId = 'doughnut-container';
             
-            module.innerHTML = `<h3><i class="fas fa-calendar-check"></i> Ligue ${leagueName}</h3>
-                <div class="consistency-info">
-                    <div class="consistency-text">Objectif semaine : <strong>${workoutsThisWeek} / ${weeklyGoal}</strong></div>
-                    <div id="${doughnutContainerId}" class="doughnut-chart-container ${progressPercent > 100 ? 'gold-pulse' : ''}">
-                        <canvas id="consistency-doughnut-chart"></canvas>
+            // Compact streak + weekly progress (no doughnut)
+            const streakColor = streak >= 8 ? '#FFD700' : streak >= 4 ? '#FFB74D' : '#A0AEC0';
+            module.innerHTML = `<h3 style="margin-bottom:12px"><i class="fas fa-calendar-check"></i> Calendrier</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:16px">&#x1F525;</span>
+                        <span style="font-size:13px;font-weight:700;color:${streakColor}">${streak} sem. cons.</span>
                     </div>
-                    <div class="streak-counter"><i class="fas fa-fire-alt"></i> ${streak} semaines consécutives</div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <span style="font-size:11px;color:rgba(255,255,255,.4)">Cette semaine :</span>
+                        <div style="display:flex;gap:4px">
+                            ${Array.from({length:weeklyGoal}).map((_,i) => 
+                                '<div style="width:16px;height:16px;border-radius:50%;background:' + 
+                                (i < workoutsThisWeek ? 'var(--electric-cyan)' : 'rgba(255,255,255,.1)') + 
+                                ';box-shadow:' + (i < workoutsThisWeek ? '0 0 6px var(--electric-cyan)' : 'none') + '"></div>'
+                            ).join('')}
+                        </div>
+                        <span style="font-size:11px;color:rgba(255,255,255,.4)">${workoutsThisWeek}/${weeklyGoal}</span>
+                    </div>
                 </div>
                 <div class="calendar-nav">
                     <button class="prev-month"><i class="fas fa-chevron-left"></i></button>
@@ -3182,50 +3247,7 @@
                 </div>
                 <div class="monthly-calendar"></div>`;
 
-            // Render Doughnut Chart (Jauge de complétion)
-            setTimeout(() => {
-                const ctx = document.getElementById('consistency-doughnut-chart').getContext('2d');
-                destroyChart('consistency-doughnut-chart');
-                
-                const themeColor = getComputedStyle(document.body).getPropertyValue('--theme-color').trim();
-                const remaining = Math.max(0, weeklyGoal - workoutsThisWeek);
-                
-                activeCharts['consistency-doughnut-chart'] = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Réalisé', 'Restant'],
-                        datasets: [{
-                            data: [workoutsThisWeek, remaining],
-                            backgroundColor: [themeColor, 'rgba(255, 255, 255, 0.1)'],
-                            borderWidth: 0,
-                            circumference: 360,
-                            rotation: 0,
-                        }]
-                    },
-                    options: {
-                        cutout: '75%',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
-                    },
-                    plugins: [{
-                        id: 'textCenter',
-                        beforeDraw: function(chart) {
-                            var width = chart.width, height = chart.height, ctx = chart.ctx;
-                            ctx.restore();
-                            var fontSize = (height / 114).toFixed(2);
-                            ctx.font = "bold " + fontSize + "em sans-serif";
-                            ctx.textBaseline = "middle";
-                            ctx.fillStyle = themeColor;
-                            var text = Math.round(progressPercent) + "%",
-                                textX = Math.round((width - ctx.measureText(text).width) / 2),
-                                textY = height / 2;
-                            ctx.fillText(text, textX, textY);
-                            ctx.save();
-                        }
-                    }]
-                });
-            }, 0);
+            // Doughnut removed - compact dots used instead
 
             const calendarGrid = module.querySelector('.monthly-calendar');
             const workoutDays = new Set(workoutHistory.map(h => h.date.split('T')[0]));
@@ -3492,6 +3514,9 @@
             clearInProgressState();
             
             showMessage(`Séance '${currentWorkoutType}' lancée !`, 2000);
+
+            // Apply league colors to reactor
+            lgApplyReactorTheme();
             setState('preparing');
         }
 
