@@ -1794,14 +1794,49 @@
                     if (item.type.startsWith('exercise')) {
                         const repsDisplay = getFormattedReps(item);
                         const weightDisplay = item.weight_text || getFormattedWeight(item);
-                        
                         const dynamicSetsInfo = getDynamicSetsInfo(currentItemIndex) || item.sets_info;
                         const isTimed = item.duration !== undefined && item.duration !== null;
-                        infoHtml = `<div class="exercise-details" data-timed="${isTimed}" style="border-color: ${isTimed ? 'var(--color-exercise-timed)' : 'var(--color-exercise)'};">`;
-                        if (dynamicSetsInfo) { infoHtml += `<span class="sets-info-text"><i class="fas fa-layer-group"></i> ${dynamicSetsInfo}</span>`; }
-                        infoHtml += `<div class="main-stats"><span><i class="fas fa-repeat"></i> ${repsDisplay}</span>`;
-                        if (weightDisplay.trim() !== "💪 Poids du Corps") infoHtml += `<span><i class="fas fa-weight-hanging"></i> ${weightDisplay.replace(/🏋️|🧘|💪|⚡️/g, '').trim()}</span>`;
-                        infoHtml += `</div></div>`;
+
+                        // League-themed colors
+                        updateLeagueBadge();
+                        const lgT = lgGetTier(lgCurrentGs);
+                        const lca = lgT ? lgT.ca : 'var(--electric-cyan)';
+                        const lglow = lgT ? lgT.glow : 'var(--electric-cyan)';
+                        const ringSpd = lgT ? (lgT.lvl >= 3 ? '1.8s' : lgT.lvl >= 2 ? '2.5s' : '4s') : '3s';
+
+                        // Conseil rapide pour cet exercice
+                        const exId = lgMapName(item.name);
+                        const perfs = lgCurrentPerfs || {};
+                        let advBadge = '';
+                        if (exId && perfs[exId]) {
+                            const adv = lgGetAdvice(exId, perfs[exId]);
+                            if (adv && adv.pri !== 'GOOD') {
+                                advBadge = '<div style="margin-top:8px;padding:5px 10px;border-radius:8px;background:' + adv.col + '18;border:1px solid ' + adv.col + '40;font-size:11px;color:' + adv.col + ';font-weight:600">' + adv.icon + ' ' + adv.title + '</div>';
+                            }
+                        }
+
+                        infoHtml = '<div class="exercise-details" data-timed="' + isTimed + '" style="border-color:' + lca + '80;background:' + lca + '08;position:relative;overflow:hidden">';
+                        // Subtle glow orb
+                        infoHtml += '<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:' + lca + ';opacity:.06;pointer-events:none;filter:blur(20px)"></div>';
+                        if (dynamicSetsInfo) {
+                            infoHtml += '<span class="sets-info-text" style="color:' + lca + '"><i class="fas fa-layer-group"></i> ' + dynamicSetsInfo + '</span>';
+                        }
+                        // Main stats with league colors
+                        infoHtml += '<div class="main-stats">';
+                        infoHtml += '<span style="color:' + lca + ';text-shadow:0 0 8px ' + lglow + '"><i class="fas fa-repeat" style="color:' + lca + '"></i> ' + repsDisplay + '</span>';
+                        if (weightDisplay.trim() !== '💪 Poids du Corps') {
+                            infoHtml += '<span style="color:' + lca + ';text-shadow:0 0 8px ' + lglow + '"><i class="fas fa-weight-hanging" style="color:' + lca + '"></i> ' + weightDisplay.replace(/🏋️|🧘|💪|⚡️/g,'').trim() + '</span>';
+                        }
+                        infoHtml += '</div>';
+                        // Next target hint
+                        if (exId && LG_EX[exId]) {
+                            const ex = LG_EX[exId];
+                            const cur = perfs[exId] || {p:ex.s[0].p, r:ex.s[0].r};
+                            const nxt = ex.s.find(s => s.p > cur.p);
+                            if (nxt) infoHtml += '<div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:4px">Prochain seuil : <span style="color:' + lca + ';font-weight:600">' + nxt.p + 'kg × ' + nxt.r + 'r</span></div>';
+                        }
+                        infoHtml += advBadge;
+                        infoHtml += '</div>';
                     } else if (item.type === 'break') {
                         infoHtml = createUpcomingExercisesHtml(currentItemIndex);
                     }
@@ -1985,6 +2020,80 @@
                 (nextT ? '<div style="font-size:10px;color:rgba(255,255,255,.3);text-align:right">~' + (lgCurrentGs && nextT ? Math.ceil((nextT.r[0]-lgCurrentGs)/2.08) : '?') + ' sem. au prochain palier</div>' : '') +
                 '<div style="margin-top:10px;font-size:10px;color:' + tier.ca + ';text-align:center;opacity:.6">Voir ma progression detaillee →</div>';
             sidebar.appendChild(leagueCard);
+
+            // ── BARRE DE PROGRESSION TEMPORELLE ─────────────────────
+            const progModule = document.createElement('div');
+            progModule.className = 'sidebar-module shimmer-card';
+            progModule.style.cssText = 'border:1px solid ' + tier.ca + '50';
+
+            // Calculs progression
+            const firstSession = workoutHistory.length > 0 ? new Date(workoutHistory[0].date + 'T00:00:00') : null;
+            const daysSinceStart = firstSession ? Math.round((Date.now() - firstSession) / 86400000) : 0;
+            const weeksSinceStart = Math.max(1, Math.round(daysSinceStart / 7));
+            const speed = 2.08; // %/semaine
+            const nextT2 = LG_TIERS[lgGetTierIdx(lgCurrentGs) + 1];
+            const wksToNext2 = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / speed) : null;
+            const estDate = wksToNext2 ? new Date(Date.now() + wksToNext2 * 7 * 86400000) : null;
+
+            // Calcul tendance reps/poids sur les 4 dernières séances
+            let trendHtml = '';
+            if (workoutHistory.length >= 2) {
+                const recent4 = workoutHistory.slice(-4);
+                const earliest = workoutHistory.slice(-8, -4);
+                if (earliest.length > 0) {
+                    let recentScore = 0, earlyScore = 0, cnt = 0;
+                    recent4.forEach(h => { (h.exercises||[]).forEach(ex => { recentScore += calculatePerformanceScore(ex)||0; cnt++; }); });
+                    earliest.forEach(h => { (h.exercises||[]).forEach(ex => { earlyScore += calculatePerformanceScore(ex)||0; }); });
+                    if (earlyScore > 0 && cnt > 0) {
+                        const trend = Math.round(((recentScore/Math.max(1,recent4.length)) - (earlyScore/Math.max(1,earliest.length))) / Math.max(1, earlyScore/Math.max(1,earliest.length)) * 100);
+                        const trendCol = trend > 0 ? '#6EE7B7' : trend < -5 ? '#F87171' : '#FCD34D';
+                        const trendIcon = trend > 5 ? '&#x2197;' : trend < -5 ? '&#x2198;' : '&#x2192;';
+                        trendHtml = '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:' + trendCol + '12;border-radius:8px;margin-bottom:10px">' +
+                            '<span style="font-size:16px;color:' + trendCol + '">' + trendIcon + '</span>' +
+                            '<span style="font-size:12px;color:rgba(255,255,255,.7)">Performance</span>' +
+                            '<span style="font-size:13px;font-weight:700;color:' + trendCol + ';margin-left:auto">' + (trend > 0 ? '+' : '') + trend + '%</span>' +
+                            '<span style="font-size:10px;color:rgba(255,255,255,.3)">vs 4 sem. avant</span>' +
+                        '</div>';
+                    }
+                }
+            }
+
+            progModule.innerHTML =
+                '<h4 style="margin-bottom:14px"><i class="fas fa-chart-line" style="color:' + tier.ca + '"></i> Progression</h4>' +
+                trendHtml +
+                // Stats rapides
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
+                    '<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;text-align:center">' +
+                        '<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">En route depuis</div>' +
+                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '–') + '</div>' +
+                    '</div>' +
+                    '<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;text-align:center">' +
+                        '<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Rythme</div>' +
+                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart).toFixed(1) + 'x/sem' : '–') + '</div>' +
+                    '</div>' +
+                '</div>' +
+                // Barre vers prochain palier
+                (nextT2 ? (
+                    '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:6px;display:flex;justify-content:space-between">' +
+                        '<span>' + tier.n + '</span>' +
+                        '<span style="color:' + tier.ca + '">' + pct + '% vers ' + nextT2.n + '</span>' +
+                    '</div>' +
+                    '<div style="height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;margin-bottom:6px;position:relative">' +
+                        '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + tier.ca + '80,' + tier.ca + ');border-radius:5px;box-shadow:0 0 12px ' + tier.glow + ';transition:width .8s ease"></div>' +
+                        '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 70%,rgba(255,255,255,.06));border-radius:5px"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.25);margin-bottom:12px">' +
+                        '<span>maintenant ' + lgCurrentGs.toFixed(1) + '%</span>' +
+                        '<span>~' + (wksToNext2 || '?') + ' sem. → ' + nextT2.n + (estDate ? ' (' + estDate.toLocaleDateString('fr-FR',{month:'short'}) + ')' : '') + '</span>' +
+                    '</div>'
+                ) : '<div style="font-size:12px;color:' + tier.ca + ';text-align:center;margin-bottom:12px;font-weight:600">&#x1F947; Vibranium atteint !</div>') +
+                // Score global
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:' + tier.ca + '12;border-radius:8px;border:1px solid ' + tier.ca + '30">' +
+                    '<span style="font-size:11px;color:rgba(255,255,255,.6)">Score global</span>' +
+                    '<span style="font-size:15px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</span>' +
+                '</div>';
+
+            sidebar.appendChild(progModule);
 
             // Calendrier + historique
             sidebar.appendChild(renderConsistencyCalendarModule(displayedCalendarDate));
@@ -2405,9 +2514,11 @@
               // Parse le poids depuis finalWeightDescription ou weight_description_target
               const wDesc = ex.finalWeightDescription || ex.weight_description_target || '';
               const wMatch = wDesc.match(/(\d+[.,]?\d*)\s*kg/i);
-              const p = wMatch ? parseFloat(wMatch[1].replace(',','.')) : 0;
-              const r = ex.finalReps || ex.reps_target || LG_EX[id].s[0].r;
-              if (p > 0) {
+              // Si pas de kg dans la description (ex: '🟪 Tension Max'), on prend le bronze comme fallback
+              const p = wMatch ? parseFloat(wMatch[1].replace(',','.')) : LG_EX[id].s[0].p;
+              const r = ex.finalReps || (typeof ex.reps_target === 'number' ? ex.reps_target : null) || LG_EX[id].s[0].r;
+              // Toujours enregistrer si on a au moins les reps réelles
+              if (r > 0) {
                 if (!latest[id] || lgSc(p,r,id) > lgSc(latest[id].p,latest[id].r,id)) {
                   latest[id] = {p, r};
                 }
@@ -3621,18 +3732,27 @@
                 }
             });
         
-            // Lancer les sauvegardes en arrière-plan sans attendre la fin
-            if (isWorkoutMode) {
-                saveHistoryToDrive();
+            // Sauvegardes robustes avec await + feedback d'erreur
+            let saveOk = true;
+            try {
+                finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde Drive...';
+                const prog_ok = await saveFullProgramToDrive();
+                if (!prog_ok) { showMessage('⚠️ Programme non sauvegardé. Reconnectez-vous et réessayez.', 7000, true); saveOk = false; }
+                if (isWorkoutMode) {
+                    const hist_ok = await saveHistoryToDrive();
+                    if (!hist_ok) { showMessage('⚠️ Historique non sauvegardé. Reconnectez-vous et réessayez.', 7000, true); saveOk = false; }
+                }
+            } catch(saveErr) {
+                showMessage('❌ Erreur Drive : ' + saveErr.message, 8000, true);
+                saveOk = false;
             }
-            saveFullProgramToDrive();
-        
-            // Mettre à jour l'UI immédiatement
-            closeSummary(false); // Cache la modale
-            setState('idle'); // Réinitialise l'état et appelle renderHomeScreen() avec les données mises à jour
+
+            if (saveOk) showMessage('✅ Sauvegardé sur Drive !', 3000);
+
+            closeSummary(false);
+            setState('idle');
             updateLeagueBadge();
-            showMessage("Modifications sauvegardées avec succès !", 3500);
-        
+
             if (finishSummaryBtn) {
                 finishSummaryBtn.disabled = false;
                 finishSummaryBtn.innerHTML = isWorkoutMode ? '<i class="fas fa-check"></i> Terminer & Sauvegarder' : '<i class="fas fa-save"></i> Enregistrer';
