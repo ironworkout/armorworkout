@@ -1034,12 +1034,16 @@
 
     <div id="post-workout-summary" class="post-workout-summary" role="dialog" aria-modal="true" aria-labelledby="summary-title">
         <div class="post-workout-summary-content">
-            <h2 id="summary-title">Résumé & Objectifs</h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-color);flex-shrink:0;background:rgba(var(--bg-color-dark-rgb),.2)">
+                <h2 id="summary-title" style="margin:0;font-size:1.3em;color:var(--electric-cyan);text-shadow:0 0 5px var(--electric-cyan)">Résumé & Objectifs</h2>
+                <button onclick="closeSummary(true)" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0" onmouseover="this.style.borderColor='var(--neon-red)';this.style.color='var(--neon-red)'" onmouseout="this.style.borderColor='rgba(255,255,255,.2)';this.style.color='rgba(255,255,255,.5)'">&#x2715;</button>
+            </div>
             <div id="analysis-chart-container" style="padding: 0 20px; height: 200px; display: none;">
                 <canvas id="analysis-chart"></canvas>
             </div>
             <ul id="summary-items-list" class="summary-items-list"></ul>
-            <div class="summary-controls">
+            <div class="summary-controls" style="justify-content:space-between">
+                <button onclick="closeSummary(true)" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:10px 20px;border-radius:var(--border-radius-md);font-size:.9em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-family-titles);transition:all .2s"><i class="fas fa-times"></i> Annuler</button>
                 <button id="finish-summary-btn"><i class="fas fa-check"></i> Terminer & Sauvegarder</button>
             </div>
         </div>
@@ -2049,51 +2053,41 @@
                         const trend = Math.round(((recentScore/Math.max(1,recent4.length)) - (earlyScore/Math.max(1,earliest.length))) / Math.max(1, earlyScore/Math.max(1,earliest.length)) * 100);
                         const trendCol = trend > 0 ? '#6EE7B7' : trend < -5 ? '#F87171' : '#FCD34D';
                         const trendIcon = trend > 5 ? '&#x2197;' : trend < -5 ? '&#x2198;' : '&#x2192;';
-                        trendHtml = '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:' + trendCol + '12;border-radius:8px;margin-bottom:10px">' +
-                            '<span style="font-size:16px;color:' + trendCol + '">' + trendIcon + '</span>' +
-                            '<span style="font-size:12px;color:rgba(255,255,255,.7)">Performance</span>' +
-                            '<span style="font-size:13px;font-weight:700;color:' + trendCol + ';margin-left:auto">' + (trend > 0 ? '+' : '') + trend + '%</span>' +
-                            '<span style="font-size:10px;color:rgba(255,255,255,.3)">vs 4 sem. avant</span>' +
+                        const trendLabel = trend > 10 ? 'Belle progression !' : trend > 0 ? 'Progression en cours' : trend < -5 ? 'Régression détectée' : 'Plateau — varie les charges';
+                        trendHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + trendCol + '12;border-radius:8px;margin-bottom:12px;border:1px solid ' + trendCol + '30">' +
+                            '<span style="font-size:20px;color:' + trendCol + '">' + trendIcon + '</span>' +
+                            '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:' + trendCol + '">' + trendLabel + '</div>' +
+                            '<div style="font-size:10px;color:rgba(255,255,255,.4)">Score de charge moyen : ' + (trend > 0 ? '+' : '') + trend + '% vs les 4 séances précédentes</div></div>' +
                         '</div>';
                     }
                 }
             }
 
+            // Progression module — clear readable display
+            const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
+            const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
+            const wksLabel = wksToNext2 ? '~' + wksToNext2 + ' sem.' : '–';
+            const estLabel = estDate ? estDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '';
             progModule.innerHTML =
-                '<h4 style="margin-bottom:14px"><i class="fas fa-chart-line" style="color:' + tier.ca + '"></i> Progression</h4>' +
+                '<h4 style="margin-bottom:12px"><i class="fas fa-chart-line" style="color:' + tier.ca + '"></i> Progression</h4>' +
                 trendHtml +
-                // Stats rapides
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
-                    '<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;text-align:center">' +
-                        '<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">En route depuis</div>' +
-                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '–') + '</div>' +
-                    '</div>' +
-                    '<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;text-align:center">' +
-                        '<div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Rythme</div>' +
-                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart).toFixed(1) + 'x/sem' : '–') + '</div>' +
-                    '</div>' +
+                '<p style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px;line-height:1.8">' +
+                    '<strong style="color:#22D3EE">' + workoutHistory.length + ' séances</strong>' +
+                    ' en <strong style="color:#22D3EE">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '–') + '</strong>' +
+                    ' · <strong style="color:#22D3EE">' + (realSPW > 0 ? realSPW.toFixed(1) + 'x/sem' : '–') + '</strong>' +
+                    (nextT2 ? ' · <strong style="color:' + tier.ca + '">' + wksLabel + ' → ' + nextT2.n + (estLabel ? ' (' + estLabel + ')' : '') + '</strong>' : '') +
+                '</p>' +
+                '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px;display:flex;justify-content:space-between">' +
+                    '<span>Dans <strong style="color:' + tier.ca + '">' + tier.n + '</strong> — ' + pct + '% complété</span>' +
+                    (nextT2 ? '<span style="color:rgba(255,255,255,.25)">' + distToNext + ' pts pour ' + nextT2.n + '</span>' : '') +
                 '</div>' +
-                // Barre vers prochain palier
-                (nextT2 ? (
-                    '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:6px;display:flex;justify-content:space-between">' +
-                        '<span>' + tier.n + '</span>' +
-                        '<span style="color:' + tier.ca + '">' + pct + '% vers ' + nextT2.n + '</span>' +
-                    '</div>' +
-                    '<div style="height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;margin-bottom:6px;position:relative">' +
-                        '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + tier.ca + '80,' + tier.ca + ');border-radius:5px;box-shadow:0 0 12px ' + tier.glow + ';transition:width .8s ease"></div>' +
-                        '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 70%,rgba(255,255,255,.06));border-radius:5px"></div>' +
-                    '</div>' +
-                    '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.25);margin-bottom:12px">' +
-                        '<span>maintenant ' + lgCurrentGs.toFixed(1) + '%</span>' +
-                        '<span>~' + (wksToNext2 || '?') + ' sem. → ' + nextT2.n + (estDate ? ' (' + estDate.toLocaleDateString('fr-FR',{month:'short'}) + ')' : '') + '</span>' +
-                    '</div>'
-                ) : '<div style="font-size:12px;color:' + tier.ca + ';text-align:center;margin-bottom:12px;font-weight:600">&#x1F947; Vibranium atteint !</div>') +
-                // Score global
-                '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:' + tier.ca + '12;border-radius:8px;border:1px solid ' + tier.ca + '30">' +
-                    '<span style="font-size:11px;color:rgba(255,255,255,.6)">Score global</span>' +
-                    '<span style="font-size:15px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</span>' +
+                '<div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:10px">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + tier.ca + ';border-radius:4px;box-shadow:0 0 10px ' + tier.glow + ';transition:width .8s"></div>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:' + tier.ca + '12;border-radius:8px;border:1px solid ' + tier.ca + '25">' +
+                    '<span style="font-size:11px;color:rgba(255,255,255,.5)">Score global</span>' +
+                    '<span style="font-size:14px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</span>' +
                 '</div>';
-
             sidebar.appendChild(progModule);
 
             // Calendrier + historique
@@ -2530,23 +2524,40 @@
           return latest;
         }
         // Calcule la vitesse réelle de progression depuis l'historique Drive
-        // Utilise l'évolution du score global sur les 8 dernières semaines
+        // Méthode : compare le score moyen des 4 premières séances vs les 4 dernières
         function lgComputeRealSpeed() {
-          if (!workoutHistory || workoutHistory.length < 2) return 2.08; // fallback
+          if (!workoutHistory || workoutHistory.length < 2) return 1.5;
           const sorted = workoutHistory.slice().sort((a,b) => new Date(a.date) - new Date(b.date));
           const first = sorted[0], last = sorted[sorted.length - 1];
           const weeks = Math.max(1, (new Date(last.date) - new Date(first.date)) / (7 * 86400000));
-          // Score at first session vs now
-          const scoreNow = lgCurrentGs;
-          // Estimate score at start: use minimum possible (we don't store it, approximate)
-          const scoreStart = Math.max(0, scoreNow - weeks * 2.5); // conservative upper bound
-          // Better: linear regression on last 8 sessions' exercise improvement
-          const speed = weeks > 0 ? Math.max(0.3, Math.min(4, (scoreNow - Math.max(0, scoreNow * 0.7)) / weeks)) : 2.08;
-          // Simplified: just use a reasonable estimate from session count and weeks
+
+          // Calcul du score de performance moyen par tranche (début vs fin)
+          const halfN = Math.min(4, Math.floor(sorted.length / 2));
+          const early = sorted.slice(0, halfN);
+          const recent = sorted.slice(-halfN);
+
+          function avgScore(sessions) {
+            let total = 0, cnt = 0;
+            sessions.forEach(h => { (h.exercises||[]).forEach(ex => { const s = calculatePerformanceScore(ex); if(s>0){total+=s;cnt++;} }); });
+            return cnt > 0 ? total/cnt : 0;
+          }
+
+          const earlyScore = avgScore(early);
+          const recentScore = avgScore(recent);
+
+          // Score de performance → conversion en progression de score ligue
+          // La progression ligue est ~proportionnelle à la racine de la progression de perf
+          const halfWeeks = weeks / 2;
+          if (earlyScore > 0 && recentScore > earlyScore && halfWeeks > 0) {
+            const perfGrowth = (recentScore - earlyScore) / earlyScore; // ex: 0.15 = +15%
+            // ~0.8% ligue par %perf sur la période, divisé par semaines pour avoir /semaine
+            const lgSpeed = Math.min(3, Math.max(0.3, (perfGrowth * 5) / halfWeeks));
+            return Math.round(lgSpeed * 10) / 10;
+          }
+
+          // Fallback: sessions/semaine * 0.8
           const sessionsPerWeek = sorted.length / weeks;
-          // Base speed: ~0.9%/session at 2 sessions/week = ~1.8%/week, scaling with frequency
-          const realSpeed = Math.round(sessionsPerWeek * 0.9 * 10) / 10;
-          return Math.max(0.5, Math.min(4, realSpeed));
+          return Math.round(Math.max(0.5, Math.min(3, sessionsPerWeek * 0.8)) * 10) / 10;
         }
 
         function lgGetRealPerfsKeys() {
@@ -2842,7 +2853,7 @@
           if (nextTier) {
             h += `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">`;
             h += `<span style="color:rgba(255,255,255,.4)">Score global : <strong style="color:${ca}">${gs.toFixed(1)}%</strong></span>`;
-            h += `<span style="color:${ca};font-weight:600">${pct}% vers ${nextTier.n}</span>`;
+            h += `<span style="color:${ca};font-weight:600">${pct}% dans ${n}</span>`;
             h += `</div>`;
             h += `<div style="height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin-bottom:6px;position:relative">`;
             h += `<div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${ca}90,${ca});border-radius:6px;transition:width .6s;box-shadow:0 0 14px ${glow}"></div>`;
@@ -2850,7 +2861,10 @@
             h += `</div>`;
             h += `<div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.3)">`;
             h += `<span>${n}</span>`;
-            if (wksToNext) h += `<span style="color:${ca}">~${wksToNext} sem. si rythme maintenu</span>`;
+            if (wksToNext) {
+              const dist = (nextTier.r[0] - gs).toFixed(1);
+              h += `<span style="color:${ca};font-weight:500">~${wksToNext} sem. → ${nextTier.n}</span>`;
+            }
             h += `<span>${nextTier.n}</span>`;
             h += `</div>`;
           } else {
@@ -3657,7 +3671,7 @@
                                     '<div class="selected-resistance"><span>' + resistanceTypes[parsedWeight.type].emoji + ' ' + resistanceTypes[parsedWeight.type].text + '</span><i class="fas fa-caret-down"></i></div>' +
                                     '<ul class="resistance-options">' + Object.entries(resistanceTypes).map(([k,v])=>'<li data-value="'+k+'"><span>'+v.emoji+'</span> '+v.text+'</li>').join('') + '</ul>' +
                                 '</div>' +
-                                '<div class="stepper-control" data-type="weight" style="flex:1;display:' + (weightVisible?'flex':'none') + '">' +
+                                '<div class="stepper-control" data-type="weight" data-res-type="' + parsedWeight.type + '" style="flex:1;display:' + (weightVisible?'flex':'none') + '">' +
                                     '<button class="stepper-btn stepper-minus">-</button>' +
                                     '<span class="stepper-value">' + parsedWeight.value + '</span>' +
                                     '<button class="stepper-btn stepper-plus">+</button>' +
@@ -4165,6 +4179,12 @@
             });
             summaryItemsList?.addEventListener('click', handleSummaryControls);
             document.addEventListener('click', (e) => { if (!e.target.closest('.resistance-selector')) { document.querySelectorAll('.resistance-selector.open').forEach(el => el.classList.remove('open')); }});
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (postWorkoutSummary && postWorkoutSummary.classList.contains('visible')) { closeSummary(true); }
+                if (isEditMode) { isEditMode = false; if(editProgramBtn) editProgramBtn.classList.remove('active'); document.querySelectorAll('.session-card-large').forEach(c => c.classList.remove('edit-mode-active')); showMessage('Mode édition désactivé.', 2000); }
+            }
+        });
             document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState();
             if (document.visibilityState === 'visible' && isWorkoutActive && !wakeLock) await requestWakeLock();
@@ -4249,9 +4269,19 @@
                 let value = parseFloat(valueEl.textContent);
                 const type = stepperControl.dataset.type;
                 const isPlus = stepperBtn.classList.contains('stepper-plus');
-                const step = (type === 'weight') ? 0.5 : 1;
-                
+                // 0.1 step for elastique or sac (data-res-type), 0.5 for heavy weights
+                const parentResType = stepperControl.dataset?.resType
+                    || stepperControl.closest('.resistance-controls')?.querySelector('.resistance-selector')?.dataset?.type
+                    || 'poids';
+                // Also use 0.1 if current value < 15 (likely sac/small weights)
+                const currentVal2 = parseFloat(stepperControl.querySelector('.stepper-value')?.textContent || '10');
+                const step = type === 'weight'
+                    ? (parentResType === 'elastique' || currentVal2 < 15 ? 0.1 : 0.5)
+                    : 1;
+
                 value = isPlus ? value + step : Math.max(0, value - step);
+                // Round to avoid float drift (0.1+0.1+0.1 != 0.3)
+                value = Math.round(value * 10) / 10;
                 valueEl.textContent = (type === 'weight') ? value.toFixed(1).replace(/\.0$/, '') : value;
             } else if (resistanceSelect) {
                 const selector = resistanceSelect.closest('.resistance-selector');
