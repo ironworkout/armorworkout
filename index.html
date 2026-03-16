@@ -792,6 +792,147 @@
             .pred-kpi-grid { grid-template-columns: 1fr 1fr; }
             .exo-sliders-row { grid-template-columns: 1fr; }
         }
+
+        /* ── ARC REACTOR EXERCISE CARDS ─────────────────────────────────── */
+        @keyframes reactorPulse {
+            0%,100% { box-shadow: 0 0 6px var(--exo-glow), 0 0 12px var(--exo-glow-dim), inset 0 0 6px var(--exo-glow-dim); }
+            50%     { box-shadow: 0 0 14px var(--exo-glow), 0 0 28px var(--exo-glow-dim), inset 0 0 10px var(--exo-glow-dim); }
+        }
+        @keyframes ringRotate {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes ringRotateRev {
+            to { transform: rotate(-360deg); }
+        }
+        @keyframes corePulse {
+            0%,100% { transform: scale(1); opacity:.9; }
+            50%     { transform: scale(1.15); opacity:1; }
+        }
+        @keyframes scoreReveal {
+            from { transform: scale(.7); opacity:0; }
+            to   { transform: scale(1);  opacity:1; }
+        }
+        @keyframes progressFill {
+            from { width: 0%; }
+        }
+        @keyframes xpFloat {
+            0%   { transform: translateY(0) scale(1); opacity:1; }
+            100% { transform: translateY(-40px) scale(1.3); opacity:0; }
+        }
+        @keyframes ligueGlow {
+            0%,100% { text-shadow: 0 0 8px var(--league-ca,#FFD740), 0 0 20px var(--league-ca,#FFD740); }
+            50%     { text-shadow: 0 0 16px var(--league-ca,#FFD740), 0 0 40px var(--league-ca,#FFD740); }
+        }
+        @keyframes borderChase {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        @keyframes shimmerSlide {
+            0%   { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* Arc Reactor ring container */
+        .arc-reactor-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .arc-reactor-wrap .ring1 {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid;
+            border-color: var(--exo-glow) transparent transparent;
+            animation: ringRotate var(--ring-speed, 3s) linear infinite;
+        }
+        .arc-reactor-wrap .ring2 {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px dashed;
+            border-color: transparent var(--exo-glow-dim) transparent;
+            animation: ringRotateRev var(--ring-speed-rev, 5s) linear infinite;
+        }
+        .arc-reactor-wrap .ring3 {
+            position: absolute;
+            border-radius: 50%;
+            border: .8px solid;
+            border-color: transparent transparent var(--exo-glow) transparent;
+            animation: ringRotate var(--ring-speed3, 7s) linear infinite;
+        }
+        .arc-reactor-wrap .core {
+            position: relative;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: corePulse var(--core-speed, 2s) ease-in-out infinite;
+            font-family: var(--font-family-timer);
+            font-weight: 700;
+        }
+
+        /* Session cards — hover lift */
+        .session-card-large { transition: all .25s ease !important; }
+        .session-card-large:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--electric-cyan-20, rgba(34,211,238,.15)) !important;
+        }
+
+        /* Shimmer effect on cards */
+        .shimmer-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
+            animation: shimmerSlide 4s ease-in-out infinite;
+        }
+
+        /* XP floating text */
+        .xp-float {
+            position: absolute;
+            font-family: var(--font-family-timer);
+            font-size: 14px;
+            font-weight: 700;
+            pointer-events: none;
+            animation: xpFloat 1.2s ease-out forwards;
+            z-index: 999;
+        }
+
+        /* League name glow */
+        .league-name-glow {
+            animation: ligueGlow 2.5s ease-in-out infinite;
+        }
+
+        /* Animated progress bars */
+        .animated-bar {
+            animation: progressFill .8s ease-out both;
+        }
+
+        /* Score badge pop */
+        .score-pop {
+            animation: scoreReveal .4s cubic-bezier(.175,.885,.32,1.275) both;
+        }
+
+        /* Chase border on active badge */
+        .chase-border {
+            background: linear-gradient(90deg, var(--electric-cyan), var(--neon-purple), var(--electric-cyan));
+            background-size: 200% 100%;
+            animation: borderChase 2s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Reactor summary item */
+        .summary-item { transition: border-color .2s; }
+        .summary-item:hover { border-left-width: 5px !important; }
+
     </style>
 </head>
 <body class="logged-out dark-theme state-idle">
@@ -2425,6 +2566,18 @@
         let lgAdvisorExo = 'elev_lat';
         let lgActiveTab = 'profil';
 
+        // ── XP Float animation ──────────────────────────────────
+        function showXpFloat(el, text, color) {
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const span = document.createElement('div');
+            span.className = 'xp-float';
+            span.style.cssText = 'color:' + (color||'#FFD740') + ';left:' + (rect.left + rect.width/2) + 'px;top:' + rect.top + 'px;position:fixed';
+            span.textContent = text;
+            document.body.appendChild(span);
+            setTimeout(() => span.remove(), 1300);
+        }
+
         function updateLeagueBadge() {
           lgCurrentPerfs = lgExtractLatestPerfs();
           // Fallback si pas de données Drive : utiliser DEMO
@@ -2466,6 +2619,11 @@
           if (statsBtn) statsBtn.classList.add('active');
           renderStatsSection();
           setTimeout(() => { renderLeaguePanel(); }, 50);
+        }
+        function leagueShowTabFromBadge(e) {
+          const pill = document.getElementById('league-badge-pill');
+          showXpFloat(pill, '⚡ Voir ma ligue', lgGetTier(lgCurrentGs).ca);
+          leagueShowTab('ligues');
         }
 
         function renderLeaguePanel() {
@@ -2588,39 +2746,58 @@
           if (Object.keys(perfs).length === 0) {
             h += `<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">Aucun historique disponible. Complète une séance pour voir ta progression.</div>`;
           } else {
-            h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">`;
+            h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">`;
             Object.entries(LG_EX).forEach(([id, ex]) => {
               const cur = perfs[id];
               if (!cur) {
-                h += `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.02);border:0.5px solid rgba(255,255,255,.06);opacity:.4">`;
-                h += `<div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px">${ex.name}</div>`;
-                h += `<div style="font-size:11px;color:rgba(255,255,255,.25)">Pas encore dans l'historique</div>`;
+                h += `<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);opacity:.45;display:flex;align-items:center;gap:10px">`;
+                h += `<div style="width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">?</div>`;
+                h += `<div><div style="font-size:11px;color:rgba(255,255,255,.4);font-weight:500;margin-bottom:2px">${ex.name}</div><div style="font-size:10px;color:rgba(255,255,255,.2)">Pas encore dans l'historique</div></div>`;
                 h += `</div>`;
                 return;
               }
               const p = Math.round(lgNorm(id, cur)), mt = lgGetTier(p);
               const adv = lgGetAdvice(id, cur);
               const [, lo, hi] = ex.repsOpt, inZone = cur.r >= lo && cur.r <= hi;
-              h += `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid ${adv.pri==='URGENT'?'rgba(239,68,68,.4)':inZone?`${mt.ca}30`:'rgba(255,255,255,.07)'};position:relative;overflow:hidden">`;
-              h += `<div style="position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;background:${mt.ca};opacity:.04;transform:translate(20px,-20px)"></div>`;
-              // Header
-              h += `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">`;
-              h += `<span style="font-size:12px;font-weight:600;color:#E2E8F0;line-height:1.3">${ex.name}</span>`;
-              h += `<span style="font-size:18px;flex-shrink:0;margin-left:6px">${adv.icon}</span>`;
+              const borderCol = adv.pri==='URGENT'?'rgba(239,68,68,.5)':adv.pri==='ACTION'?`${mt.ca}60`:adv.pri==='GOOD'?`${mt.ca}40`:'rgba(255,255,255,.1)';
+              const ringSpeed = p > 70 ? '1.8s' : p > 40 ? '3s' : '5s';
+              const ringSpeedRev = p > 70 ? '2.4s' : p > 40 ? '4.5s' : '7s';
+              const coreSize = 44;
+              // Card
+              h += `<div class="shimmer-card" style="padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,rgba(0,0,0,.1) 100%);border:1px solid ${borderCol};position:relative;overflow:hidden;--exo-glow:${mt.ca};--exo-glow-dim:${mt.ca}40;animation:reactorPulse 3s ease-in-out infinite">`;
+              // Glow orb bg
+              h += `<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:${mt.ca};opacity:.06;pointer-events:none;filter:blur(16px)"></div>`;
+              // Header row : reactor + info
+              h += `<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">`;
+              // Arc Reactor mini
+              h += `<div class="arc-reactor-wrap" style="--ring-speed:${ringSpeed};--ring-speed-rev:${ringSpeedRev};--ring-speed3:${parseFloat(ringSpeed)+2}s;--exo-glow:${mt.ca};--exo-glow-dim:${mt.ca}60;width:${coreSize}px;height:${coreSize}px;flex-shrink:0">`;
+              h += `<div class="ring1" style="width:${coreSize}px;height:${coreSize}px;opacity:.7"></div>`;
+              h += `<div class="ring2" style="width:${coreSize*0.78}px;height:${coreSize*0.78}px;opacity:.5"></div>`;
+              h += `<div class="ring3" style="width:${coreSize*0.56}px;height:${coreSize*0.56}px;opacity:.4"></div>`;
+              h += `<div class="core score-pop" style="width:${coreSize*0.42}px;height:${coreSize*0.42}px;background:${mt.ca}20;box-shadow:0 0 8px ${mt.ca};--core-speed:${p>60?'1.5s':'2.5s'};font-size:10px;color:${mt.ca}">${p}%</div>`;
               h += `</div>`;
-              // Perf actuelle
-              h += `<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">`;
-              h += `<span style="font-size:13px;font-weight:700;color:${mt.ca};font-family:var(--font-family-timer)">${cur.p}kg</span>`;
-              h += `<span style="font-size:13px;color:rgba(255,255,255,.5)">×</span>`;
-              h += `<span style="font-size:13px;font-weight:700;color:${inZone?'#6EE7B7':'#FCA5A5'};font-family:var(--font-family-timer)">${cur.r}r</span>`;
-              if (ex.bag) h += `<span style="font-size:9px;padding:2px 5px;background:rgba(255,150,0,.15);color:#FFAA55;border-radius:5px;align-self:center">sac</span>`;
+              // Name + ligue
+              h += `<div style="flex:1;min-width:0">`;
+              h += `<div style="font-size:11px;font-weight:600;color:#E2E8F0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ex.name}</div>`;
+              h += `<div style="font-size:10px;color:${mt.ca};margin-top:1px">${mt.n}</div>`;
               h += `</div>`;
-              // Progress bar
-              h += `<div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:6px">`;
-              h += `<div style="height:100%;width:${p}%;background:${mt.ca};box-shadow:0 0 4px ${mt.glow};border-radius:3px"></div>`;
+              h += `<span style="font-size:16px;flex-shrink:0">${adv.icon}</span>`;
               h += `</div>`;
-              // Conseil court
-              h += `<div style="font-size:10px;color:${adv.col};font-weight:600;line-height:1.4">${adv.icon} ${adv.title}</div>`;
+              // Perf
+              h += `<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px">`;
+              h += `<span style="font-size:16px;font-weight:700;color:${mt.ca};font-family:var(--font-family-timer)">${cur.p}kg</span>`;
+              h += `<span style="font-size:11px;color:rgba(255,255,255,.4)">×</span>`;
+              h += `<span style="font-size:16px;font-weight:700;color:${inZone?'#6EE7B7':'#FCA5A5'};font-family:var(--font-family-timer)">${cur.r}r</span>`;
+              if (ex.bag) h += `<span style="font-size:9px;padding:1px 5px;background:rgba(255,150,0,.15);color:#FFAA55;border-radius:5px;margin-left:2px">sac</span>`;
+              const nxtSeuil = ex.s.find(s => s.p > cur.p);
+              if (nxtSeuil) h += `<span style="font-size:9px;color:rgba(255,255,255,.25);margin-left:auto">→ ${nxtSeuil.p}kg</span>`;
+              h += `</div>`;
+              // Animated progress bar
+              h += `<div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:6px">`;
+              h += `<div class="animated-bar" style="height:100%;width:${p}%;background:linear-gradient(90deg,${mt.ca}80,${mt.ca});box-shadow:0 0 6px ${mt.glow};border-radius:3px"></div>`;
+              h += `</div>`;
+              // Conseil
+              h += `<div style="font-size:10px;color:${adv.col};font-weight:500;line-height:1.4;padding:5px 8px;border-radius:6px;background:${adv.col}0E">${adv.icon} ${adv.title}</div>`;
               h += `</div>`;
             });
             h += `</div>`;
@@ -3386,21 +3563,32 @@
         
                 const planItemToUpdate = loadedFullProgram.sessions[sessionIndex].exercices_et_pauses[planIndex];
                 if (!planItemToUpdate) return;
-        
-                const repsTimeValue = parseInt(item.querySelector('[data-type="reps-time"] .stepper-value').textContent, 10);
-                const newFinalWeight = item.querySelector('.simple-input[data-target-type="weight"]').value;
-                const newFinalReps = item.querySelector('.simple-input[data-target-type="reps"]').value;
-                const resistanceType = item.querySelector('.resistance-selector').dataset.type;
-                const weightValue = parseFloat(item.querySelector('.stepper-control[data-type="weight"] .stepper-value').textContent);
-                const trackingType = item.querySelector('.tracking-type-toggle .active').dataset.value;
-        
-                let newWeightText = "";
-                switch (resistanceType) {
-                    case 'poids': newWeightText = `🏋️ ${weightValue} kg`; break;
-                    case 'elastique': newWeightText = `🧘 Élastique ${weightValue}kg`; break;
-                    case 'pdc': newWeightText = "💪 Poids du Corps"; break;
-                    case 'poids_elastique': newWeightText = `⚡️ ${weightValue} kg`; break;
-                    default: newWeightText = planItemToUpdate.weight_text;
+
+                // Null-safe reads — these elements may not exist in the simplified summary
+                const repsTimeEl    = item.querySelector('[data-type="reps-time"] .stepper-value');
+                const weightInputEl = item.querySelector('.simple-input[data-target-type="weight"]');
+                const repsInputEl   = item.querySelector('.simple-input[data-target-type="reps"]');
+                const resSelectorEl = item.querySelector('.resistance-selector');
+                const weightStepEl  = item.querySelector('.stepper-control[data-type="weight"] .stepper-value');
+                const trackingEl    = item.querySelector('.tracking-type-toggle .active');
+
+                const repsTimeValue = repsTimeEl   ? parseInt(repsTimeEl.textContent, 10)    : (planItemToUpdate.reps || planItemToUpdate.duration || 0);
+                const resistanceType= resSelectorEl ? resSelectorEl.dataset.type              : null;
+                const weightValue   = weightStepEl  ? parseFloat(weightStepEl.textContent)    : 0;
+                const trackingType  = trackingEl    ? trackingEl.dataset.value                : (planItemToUpdate.duration !== undefined ? 'time' : 'reps');
+
+                // Final targets: keep existing if no input in DOM
+                const newFinalWeight = weightInputEl ? weightInputEl.value : (planItemToUpdate.final_target_poids || '');
+                const newFinalReps   = repsInputEl   ? repsInputEl.value   : (planItemToUpdate.final_target_reps  || '');
+
+                let newWeightText = planItemToUpdate.weight_text; // default: keep existing
+                if (resistanceType) {
+                    switch (resistanceType) {
+                        case 'poids':          newWeightText = `🏋️ ${weightValue} kg`; break;
+                        case 'elastique':      newWeightText = `🧘 Élastique ${weightValue}kg`; break;
+                        case 'pdc':            newWeightText = '💪 Poids du Corps'; break;
+                        case 'poids_elastique':newWeightText = `⚡️ ${weightValue} kg`; break;
+                    }
                 }
         
                 planItemToUpdate.weight_text = newWeightText;
