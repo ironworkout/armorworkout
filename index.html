@@ -1798,64 +1798,121 @@
         function renderHomeScreen() {
             showSection('home-section');
             if (!homeSection) return;
-            homeSection.innerHTML = ''; 
-            
+            homeSection.innerHTML = '';
+
             if (!googleAccessToken) {
-                homeSection.innerHTML = `<div class="app-section" style="text-align:center; padding: 40px 20px;"><h2>Bienvenue sur ArmorWorkout</h2><p style="margin-top:15px; max-width: 500px; margin-left: auto; margin-right: auto;">Connectez-vous à Google Drive pour synchroniser votre programme, suivre vos progrès et sauvegarder votre historique d'entraînement.</p></div>`;
+                homeSection.innerHTML = '<div class="app-section" style="text-align:center;padding:40px 20px"><h2>Bienvenue sur ArmorWorkout</h2><p style="margin-top:15px;max-width:500px;margin-left:auto;margin-right:auto">Connectez-vous a Google Drive pour synchroniser votre programme et suivre votre progression de ligue.</p></div>';
                 return;
             }
             if (!loadedFullProgram || !loadedFullProgram.sessions || loadedFullProgram.sessions.length === 0) {
-                 homeSection.innerHTML = `<div class="app-section" style="text-align:center; padding: 40px 20px;"><h2>Programme introuvable</h2><p style="margin-top:15px; max-width: 600px; margin-left: auto; margin-right: auto;">Aucun programme n'a été chargé depuis votre Google Drive. Assurez-vous que le fichier <code>${FULL_PROGRAM_FILENAME}</code> existe à la racine de votre Drive et qu'il n'est pas vide.</p></div>`;
-                 return;
+                homeSection.innerHTML = '<div class="app-section" style="text-align:center;padding:40px 20px"><h2>Programme introuvable</h2><p style="margin-top:15px;max-width:600px;margin-left:auto;margin-right:auto">Fichier <code>' + FULL_PROGRAM_FILENAME + '</code> introuvable sur votre Drive.</p></div>';
+                return;
             }
 
-            const homeGrid = document.createElement('div'); homeGrid.className = 'home-grid';
-            const mainContent = document.createElement('div'); mainContent.className = 'home-main-content';
-            const sidebar = document.createElement('div'); sidebar.className = 'home-sidebar';
+            // Refresh ligue data
+            updateLeagueBadge();
+            const perfs  = lgCurrentPerfs || {};
+            const tier   = lgGetTier(lgCurrentGs);
+            const pct    = lgPctInTier(lgCurrentGs, tier);
+            const nextT  = LG_TIERS[lgGetTierIdx(lgCurrentGs) + 1];
 
+            const homeGrid    = document.createElement('div'); homeGrid.className = 'home-grid';
+            const mainContent = document.createElement('div'); mainContent.className = 'home-main-content';
+            const sidebar     = document.createElement('div'); sidebar.className = 'home-sidebar';
+
+            // ── SIDEBAR : ligue + calendrier ──────────────────────────────
+            // Mini carte ligue en haut de la sidebar
+            const leagueCard = document.createElement('div');
+            leagueCard.className = 'sidebar-module';
+            leagueCard.style.cssText = 'cursor:pointer;border:1.5px solid ' + tier.ca + '80';
+            leagueCard.onclick = () => leagueShowTab('ligues');
+            leagueCard.innerHTML =
+                '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
+                    lgRenderBadgeSVG(tier, 52, true) +
+                    '<div style="flex:1">' +
+                        '<div style="font-family:var(--font-family-timer);font-size:14px;color:' + tier.ca + '">' + tier.n + '</div>' +
+                        '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">' + tier.desc + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px">' +
+                    '<span>Score : <strong style="color:' + tier.ca + '">' + lgCurrentGs.toFixed(1) + '%</strong></span>' +
+                    (nextT ? '<span style="color:' + tier.ca + '">' + pct + '% → ' + nextT.n + '</span>' : '<span style="color:' + tier.ca + '">Vibranium !</span>') +
+                '</div>' +
+                '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-bottom:4px">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + tier.ca + ';box-shadow:0 0 8px ' + tier.glow + ';border-radius:4px;transition:width .5s"></div>' +
+                '</div>' +
+                (nextT ? '<div style="font-size:10px;color:rgba(255,255,255,.3);text-align:right">~' + (lgCurrentGs && nextT ? Math.ceil((nextT.r[0]-lgCurrentGs)/2.08) : '?') + ' sem. au prochain palier</div>' : '') +
+                '<div style="margin-top:10px;font-size:10px;color:' + tier.ca + ';text-align:center;opacity:.6">Voir ma progression detaillee →</div>';
+            sidebar.appendChild(leagueCard);
+
+            // Calendrier + historique
             sidebar.appendChild(renderConsistencyCalendarModule(displayedCalendarDate));
-            
+
+            // ── SESSION CARDS ─────────────────────────────────────────────
             loadedFullProgram.sessions.forEach(session => {
                 const card = document.createElement('div');
                 card.className = 'session-card-large';
                 card.dataset.sessionName = session.nom_session;
-                
+
                 const lastSession = workoutHistory.slice().reverse().find(h => h.type === session.nom_session);
-                let lastSessionText = "Aucun historique.";
+                let lastSessionText = 'Jamais effectuee.';
                 if (lastSession) {
-                    const lastDate = new Date(lastSession.date); const now = new Date();
-                    const diffDays = Math.round((now - lastDate) / (1000 * 60 * 60 * 24));
-                    if (diffDays === 0) lastSessionText = "Aujourd'hui";
-                    else if (diffDays === 1) lastSessionText = "Hier";
-                    else lastSessionText = `Il y a ${diffDays} j.`;
+                    const diffDays = Math.round((Date.now() - new Date(lastSession.date + 'T00:00:00')) / 86400000);
+                    lastSessionText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? 'Hier' : 'Il y a ' + diffDays + ' j.';
                 }
 
-                const globalChartCanvasId = `global-chart-${session.nom_session.replace(/\s+/g, '-')}`;
-                
-                card.innerHTML = `
-                    <div class="session-card-summary">
-                        <div class="session-card-header">
-                            <h3>${session.nom_session}</h3>
-                            <div class="last-session-info"><i class="fas fa-history"></i> ${lastSessionText}</div>
-                        </div>
-                        <p>${session.description_session || ''}</p>
-                        <div class="global-performance-chart-container">
-                            <canvas id="${globalChartCanvasId}"></canvas>
-                            <div id="${globalChartCanvasId}-placeholder" class="chart-placeholder"></div>
-                        </div>
-                    </div>`;
+                // Statut exercices pour cette séance
+                const sessionExercises = session.exercices_et_pauses.filter(e => e.type.startsWith('exercise'));
+                const uniqueExNames    = [...new Set(sessionExercises.map(e => e.name))];
+                let exStatusHtml = '';
+                let urgentCount = 0, okCount = 0, noDataCount = 0;
+
+                uniqueExNames.forEach(name => {
+                    const exId = lgMapName(name);
+                    if (!exId || !perfs[exId]) { noDataCount++; return; }
+                    const cur  = perfs[exId];
+                    const adv  = lgGetAdvice(exId, cur);
+                    const lgEx = LG_EX[exId];
+                    const [, lo, hi] = lgEx.repsOpt;
+                    const inZone = cur.r >= lo && cur.r <= hi;
+                    if (adv.pri === 'URGENT') urgentCount++;
+                    else okCount++;
+                    exStatusHtml +=
+                        '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
+                            '<span style="font-size:12px">' + adv.icon + '</span>' +
+                            '<span style="font-size:11px;color:#E2E8F0;font-weight:500;flex:1">' + name.replace(/^Superset [A-Z]: /, '').replace(/^FINISHER: /, '') + '</span>' +
+                            '<span style="font-size:11px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + cur.p + 'kg</span>' +
+                            '<span style="font-size:10px;color:' + (inZone?'#6EE7B7':'#FCA5A5') + ';font-weight:600">×' + cur.r + 'r</span>' +
+                        '</div>';
+                });
+
+                // Pastilles de résumé
+                let pillsHtml = '';
+                if (okCount > 0)      pillsHtml += '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(52,211,153,.1);color:#6EE7B7">&#x2713; ' + okCount + ' ok</span>';
+                if (urgentCount > 0)  pillsHtml += '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(239,68,68,.1);color:#F87171">&#x26A0; ' + urgentCount + ' a corriger</span>';
+                if (noDataCount > 0)  pillsHtml += '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35)">' + noDataCount + ' sans data</span>';
+
+                card.innerHTML =
+                    '<div class="session-card-summary">' +
+                        '<div class="session-card-header">' +
+                            '<h3>' + session.nom_session + '</h3>' +
+                            '<div class="last-session-info"><i class="fas fa-history"></i> ' + lastSessionText + '</div>' +
+                        '</div>' +
+                        '<p>' + (session.description_session || '') + '</p>' +
+                        (pillsHtml ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">' + pillsHtml + '</div>' : '') +
+                        (exStatusHtml
+                            ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:10px">' + exStatusHtml + '</div>'
+                            : '<div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.3)">Effectuez une premiere seance pour voir le statut de vos exercices.</div>') +
+                    '</div>';
+
                 mainContent.appendChild(card);
-                
-                setTimeout(() => {
-                    const canvasEl = document.getElementById(globalChartCanvasId);
-                    if(canvasEl) renderGlobalPerformanceChart(canvasEl, session.nom_session);
-                }, 0);
             });
 
             homeGrid.appendChild(mainContent);
             homeGrid.appendChild(sidebar);
             homeSection.appendChild(homeGrid);
         }
+
 
         // =================================================================================
         // SECTION 7: FONCTIONS DE GESTION DES DONNÉES ET GRAPHIQUES (SPIDER + COLOR LOGIC)
@@ -2138,18 +2195,23 @@
         };
 
         // Mapping nom exercice programme → ID LG_EX
-        const LG_NAME_MAP = {
-          'militaire': 'dev_mil', 'latéral': 'elev_lat', 'latérale': 'elev_lat', 'face pull': 'face_pull', 'volume': 'elev_vol',
-          'tirage': 'tirage_v', 'rowing': 'rowing_sb', 'swiss': 'rowing_sb', 'surélevé': 'pompes_sur', 'surél': 'pompes_sur',
-          'pieds surel': 'pompes_sur', 'triceps': 'ext_tri', 'marteau': 'curl_m', 'concentré': 'finisher', 'concentre': 'finisher',
-          'classique': 'pompes_cl', 'lestée': 'pompes_cl', 'lestee': 'pompes_cl'
-        };
+        // LG_NAME_MAP — ordre CRITIQUE : plus spécifique d'abord
+        // 'vol.' et '(vol' doivent passer AVANT 'lateral' sinon Élév. Volume → elev_lat
         function lgMapName(name) {
           if (!name) return null;
           const n = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          for (const [k,v] of Object.entries(LG_NAME_MAP)) {
-            if (n.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,''))) return v;
-          }
+          // Règles spécifiques en premier (ordre compte !)
+          if (n.includes('vol.')  || n.includes('(vol')) return 'elev_vol';
+          if (n.includes('militaire'))                   return 'dev_mil';
+          if (n.includes('face pull'))                   return 'face_pull';
+          if (n.includes('lateral') || n.includes('laterale')) return 'elev_lat';
+          if (n.includes('tirage'))                      return 'tirage_v';
+          if (n.includes('rowing') || n.includes('swiss')) return 'rowing_sb';
+          if (n.includes('sureleve') || n.includes('surel') || n.includes('surele')) return 'pompes_sur';
+          if (n.includes('triceps'))                     return 'ext_tri';
+          if (n.includes('marteau'))                     return 'curl_m';
+          if (n.includes('concentre') || n.includes('concentr') || n.includes('finisher')) return 'finisher';
+          if (n.includes('classique') || n.includes('lestee') || n.includes('leste')) return 'pompes_cl';
           return null;
         }
 
@@ -2213,6 +2275,21 @@
           });
           return latest;
         }
+        function lgGetRealPerfsKeys() {
+          // Returns list of exercise IDs that have REAL Drive history data
+          const keys = new Set();
+          if (!workoutHistory) return [];
+          workoutHistory.forEach(session => {
+            (session.exercises || []).forEach(ex => {
+              const id = lgMapName(ex.name);
+              if (!id) return;
+              const wDesc = ex.finalWeightDescription || ex.weight_description_target || '';
+              const wMatch = wDesc.match(/(\d+[.,]?\d*)\s*kg/i);
+              if (wMatch) keys.add(id);
+            });
+          });
+          return Array.from(keys);
+        }
 
         // Calcul du score global depuis les perfs réelles
         function lgComputeAll(perfs) {
@@ -2248,14 +2325,31 @@
         }
 
         // Détection alertes
-        function lgDetectAlerts(perfs) {
+        // realPerfs = perfs qui viennent vraiment de l'historique Drive (pas du fallback DEMO)
+        function lgDetectAlerts(perfs, realPerfsKeys) {
           const alerts = [];
+          const hasRealData = realPerfsKeys && realPerfsKeys.length > 0;
           Object.entries(perfs).forEach(([id,cur]) => {
             const ex=LG_EX[id]; if(!ex) return;
+            // N'alerter que si cet exercice a de vraies données Drive
+            if (hasRealData && !realPerfsKeys.includes(id)) return;
             const [mn,,hi,mx]=ex.repsOpt;
-            if(cur.r<mn) alerts.push({icon:'⚡',col:'#F87171',title:`Zone force pure : ${ex.name}`,body:`${cur.r}r < ${mn}r minimum. Tu construis de la force, pas du muscle. Descends le poids pour rester en ${mn}-${hi}r.`});
-            if(cur.r>mx) alerts.push({icon:'📉',col:'#93C5FD',title:`Zone endurance : ${ex.name}`,body:`${cur.r}r > ${mx}r plafond. La tension mécanique est insuffisante. Monte le poids et reviens à ~${hi}r.`});
-            if(cur.p>=ex.s[4].p*.82) alerts.push({icon:'🔧',col:'#FCD34D',title:`Plafond matériel proche : ${ex.name}`,body:`${Math.round(cur.p/ex.s[4].p*100)}% du seuil Vibranium. Anticiper : haltères ajustables ou salle.`});
+            if(cur.r < mn) alerts.push({
+              icon:'⚡', col:'#F87171',
+              title:`Zone force pure : ${ex.name}`,
+              body:`${cur.r} reps < minimum (${mn}r) pour ce muscle. Tu développes la force, pas la masse. Descends le poids pour viser ${lo}-${hi}r.`
+            });
+            if(cur.r > mx) alerts.push({
+              icon:'📉', col:'#93C5FD',
+              title:`Trop de reps : ${ex.name}`,
+              body:`${cur.r} reps dépasse le plafond (${mx}r). Fatigue métabolique > tension mécanique = pas d'hypertrophie. Monte le poids, reviens à ~${hi}r.`
+            });
+            // Plafond matériel : seulement si on est vraiment proche ET qu'on a des données réelles
+            if(hasRealData && cur.p >= ex.s[4].p * 0.85) alerts.push({
+              icon:'🔧', col:'#FCD34D',
+              title:`Approche du plafond matériel : ${ex.name}`,
+              body:`${cur.p}kg = ${Math.round(cur.p/ex.s[4].p*100)}% du maximum élastique/sac (${ex.s[4].p}kg). Dans quelques progressions tu atteindras la limite. Anticiper : haltères ajustables ou abonnement salle.`
+            });
           });
           return alerts;
         }
@@ -2341,7 +2435,8 @@
           lgCurrentGs = gs;
           const tier = lgGetTier(gs);
           const pct = lgPctInTier(gs,tier);
-          const alerts = lgDetectAlerts(lgCurrentPerfs);
+          const realKeys = lgGetRealPerfsKeys ? lgGetRealPerfsKeys() : [];
+          const alerts = lgDetectAlerts(lgCurrentPerfs, realKeys);
 
           const pill = document.getElementById('league-badge-pill');
           const dot = document.getElementById('league-badge-dot');
@@ -2382,7 +2477,8 @@
           const tier = lgGetTier(gs), tidx = lgGetTierIdx(gs), pct = lgPctInTier(gs,tier), nextTier = LG_TIERS[tidx+1];
           const speed = 2.08;
           const wksToNext = nextTier && speed>0 ? Math.ceil((nextTier.r[0]-gs)/speed) : null;
-          const alerts = lgDetectAlerts(perfs);
+          const realKeys = lgGetRealPerfsKeys ? lgGetRealPerfsKeys() : [];
+          const alerts = lgDetectAlerts(perfs, realKeys);
 
           const tabs = [['profil','Mon niveau'],['conseiller','🎯 Conseiller'],['ligues','Ligues'],['alertes',`Alertes${alerts.length?` (${alerts.length})`:''}`],['prediction','Prédiction']];
           let h = `<div style="padding:16px 0 8px"><h3 style="font-family:var(--font-family-titles);font-size:1.1em;display:flex;align-items:center;gap:8px;margin-bottom:14px"><i class="fas fa-trophy" style="color:${tier.ca}"></i> Progression Ligue</h3>`;
@@ -2407,7 +2503,8 @@
         function lgRenderProfil(perfs, gs, muscles, tier, pct, nextTier, wksToNext, speed) {
           const {ca, cb, glow, n, desc, star} = tier;
           const tidx = lgGetTierIdx(gs);
-          const alerts = lgDetectAlerts(perfs);
+          const realKeys = lgGetRealPerfsKeys ? lgGetRealPerfsKeys() : [];
+          const alerts = lgDetectAlerts(perfs, realKeys);
 
           // ── HERO ──────────────────────────────────────────────────────
           let h = `<div style="border:1.5px solid ${ca};background:${cb}30;border-radius:18px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden">`;
@@ -3117,132 +3214,153 @@
         function populateAndShowSummary(context) {
             currentSummaryContext = context;
             if (!postWorkoutSummary || !summaryItemsList || !summaryTitle || !finishSummaryBtn) return;
-            
-            let planToShow, sessionName;
+
             const isWorkoutMode = context.mode === 'workout';
-            const chartContainer = document.getElementById('analysis-chart-container');
+            const sessionName   = context.sessionName;
+            let planToShow;
 
             if (isWorkoutMode) {
-                sessionName = context.sessionName; planToShow = originalCompletedWorkoutPlan;
-                summaryTitle.textContent = `Résumé: ${sessionName || 'Entraînement'}`; finishSummaryBtn.innerHTML = `<i class="fas fa-check"></i> Terminer & Sauvegarder`;
-                
-                if (chartContainer) {
-                    chartContainer.style.display = 'block';
-                    renderAnalysisChart(planToShow);
-                }
-
-            } else { // 'edit' mode
-                sessionName = context.sessionName; 
+                planToShow = originalCompletedWorkoutPlan;
+                summaryTitle.textContent = 'Séance terminée !';
+                finishSummaryBtn.innerHTML = '<i class="fas fa-check"></i> Sauvegarder & Continuer';
+            } else {
                 const session = loadedFullProgram.sessions.find(s => s.nom_session === sessionName);
                 planToShow = session ? JSON.parse(JSON.stringify(session.exercices_et_pauses)) : [];
-                summaryTitle.textContent = `Édition : ${sessionName}`; finishSummaryBtn.innerHTML = `<i class="fas fa-save"></i> Enregistrer`;
-                if (chartContainer) chartContainer.style.display = 'none';
+                summaryTitle.textContent = 'Modifier : ' + sessionName;
+                finishSummaryBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
             }
+
+            // ── Masquer l'ancien graphique d'analyse ──
+            const chartContainer = document.getElementById('analysis-chart-container');
+            if (chartContainer) chartContainer.style.display = 'none';
+
             summaryItemsList.innerHTML = '';
-            
+
+            // ── Header résumé de séance (mode workout seulement) ──
+            if (isWorkoutMode) {
+                const duration = workoutStartTime ? Math.round((Date.now() - workoutStartTime) / 1000) : 0;
+                const exCount  = planToShow.filter(i => i.type.startsWith('exercise')).length;
+                const prCount  = currentWorkoutPRs ? currentWorkoutPRs.size : 0;
+
+                // Ligue impact
+                updateLeagueBadge();
+                const tier   = lgGetTier(lgCurrentGs);
+                const pct    = lgPctInTier(lgCurrentGs, tier);
+                const nextT  = LG_TIERS[lgGetTierIdx(lgCurrentGs) + 1];
+
+                const headerLi = document.createElement('li');
+                headerLi.style.cssText = 'list-style:none;margin-bottom:16px;padding:0;background:none;border:none';
+                headerLi.innerHTML =
+                    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px">' +
+                        '<div style="padding:10px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:10px;text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Durée</div>' +
+                            '<div style="font-size:18px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + formatTime(duration) + '</div>' +
+                        '</div>' +
+                        '<div style="padding:10px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:10px;text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Exercices</div>' +
+                            '<div style="font-size:18px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + exCount + '</div>' +
+                        '</div>' +
+                        (prCount > 0 ? '<div style="padding:10px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);border-radius:10px;text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,215,0,.7);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">PRs</div>' +
+                            '<div style="font-size:18px;font-weight:700;color:#FFD700;font-family:var(--font-family-timer)">&#x1F3C6; ' + prCount + '</div>' +
+                        '</div>' : '') +
+                        '<div style="padding:10px;background:' + tier.cb + '50;border:1px solid ' + tier.ca + '60;border-radius:10px;text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Ligue</div>' +
+                            '<div style="font-size:14px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + tier.n + '</div>' +
+                            '<div style="font-size:10px;color:' + tier.ca + ';opacity:.7">' + pct + '% ' + (nextT ? '→ ' + nextT.n : '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    // Barre de progression ligue
+                    '<div style="margin-bottom:14px">' +
+                        '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px">' +
+                            '<span>' + tier.n + '</span>' +
+                            (nextT ? '<span style="color:' + tier.ca + '">' + pct + '% vers ' + nextT.n + '</span>' : '<span style="color:' + tier.ca + '">Vibranium !</span>') +
+                        '</div>' +
+                        '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">' +
+                            '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + tier.ca + '80,' + tier.ca + ');box-shadow:0 0 10px ' + tier.glow + ';border-radius:4px"></div>' +
+                        '</div>' +
+                    '</div>';
+                summaryItemsList.appendChild(headerLi);
+            }
+
+            // ── Exercices ──
             planToShow.forEach((item, index) => {
-                if (item.type.startsWith('exercise')) {
-                    const li = document.createElement('li');
-                    li.classList.add('summary-item'); 
-                    li.dataset.planIndex = index;
-                    
-                    const borderColor = getExerciseColor(item.name);
-                    li.style.borderLeftColor = borderColor;
+                if (!item.type.startsWith('exercise')) return;
 
-                    const isTimed = item.duration !== undefined && item.duration !== null;
-                    const initialValue = isTimed ? item.duration : (item.reps || 0); 
-                    const parsedWeight = parseWeightDescription(item.weight_text || getFormattedWeight(item));
-                    const dynamicSetsInfo = getDynamicSetsInfo(index, planToShow);
-                    const weightStepperIsVisible = ['poids', 'elastique', 'poids_elastique'].includes(parsedWeight.type);
+                const li = document.createElement('li');
+                li.classList.add('summary-item');
+                li.dataset.planIndex = index;
 
-                    li.innerHTML = `
-                        <div class="exercise-name">
-                            <span class="exercise-name-text">${dynamicSetsInfo ? dynamicSetsInfo + ': ' : ''}${item.name}</span>
-                            ${isWorkoutMode && currentWorkoutPRs.has(item.name) ? '<span class="pr-badge-inline">🏆 PR</span>' : ''}
-                            <button class="exercise-chart-toggle-btn" data-index="${index}" data-exercise-name="${item.name.replace(/"/g,'&quot;')}" data-session-name="${(sessionName||'').replace(/"/g,'&quot;')}" title="Voir la progression">📈</button>
-                        </div>
-                        <div class="exercise-progression-container" id="prog-chart-container-${index}">
-                            <canvas id="prog-chart-${index}"></canvas>
-                        </div>
-                        <div class="fields-grid">
-                             <div class="input-group" data-field="performance">
-                                <label>Performance</label>
-                                <div class="performance-row" style="display:flex; gap:10px; align-items:stretch;">
-                                    <div class="stepper-control" data-type="reps-time" style="flex:1;">
-                                        <button class="stepper-btn stepper-minus">-</button>
-                                        <span class="stepper-value">${initialValue}</span>
-                                        <button class="stepper-btn stepper-plus">+</button>
-                                    </div>
-                                    <div class="tracking-type-toggle" data-type="tracking-type"><button class="tracking-reps ${!isTimed ? 'active' : ''}" data-value="reps"><i class="fas fa-repeat"></i></button><button class="tracking-time ${isTimed ? 'active' : ''}" data-value="time"><i class="fas fa-stopwatch"></i></button></div>
-                                </div>
-                            </div>
-                            <div class="input-group" data-field="resistance">
-                                <label>Résistance</label>
-                                <div class="resistance-controls">
-                                    <div class="resistance-selector" data-type="${parsedWeight.type}">
-                                        <div class="selected-resistance"><span>${resistanceTypes[parsedWeight.type].emoji} ${resistanceTypes[parsedWeight.type].text}</span><i class="fas fa-caret-down"></i></div>
-                                        <ul class="resistance-options">${Object.entries(resistanceTypes).map(([key, val]) => `<li data-value="${key}"><span>${val.emoji}</span> ${val.text}</li>`).join('')}</ul>
-                                    </div>
-                                    <div class="stepper-control" data-type="weight" style="flex:1; display:${weightStepperIsVisible ? 'flex' : 'none'};">
-                                        <button class="stepper-btn stepper-minus">-</button>
-                                        <span class="stepper-value">${parsedWeight.value}</span>
-                                        <button class="stepper-btn stepper-plus">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="input-group">
-                                <label>Objectif Final (Graphique)</label>
-                                <div class="range-stepper-control" data-type="final-targets">
-                                     <div class="range-stepper">
-                                        <label style="min-width:40px;">Poids</label>
-                                        <input type="text" class="simple-input" data-target-type="weight" value="${item.final_target_poids || ''}" placeholder="Ex: 🎒 +20 kg">
-                                     </div>
-                                     <div class="range-stepper">
-                                        <label style="min-width:40px;">Reps</label>
-                                        <input type="number" class="simple-input" data-target-type="reps" value="${item.final_target_reps || 12}">
-                                     </div>
-                                </div>
-                            </div>
-                        </div>`;
-                    summaryItemsList.appendChild(li);
+                const borderColor  = getExerciseColor(item.name);
+                li.style.borderLeftColor = borderColor;
+
+                const isTimed      = item.duration !== undefined && item.duration !== null;
+                const initialValue = isTimed ? item.duration : (item.reps || 0);
+                const parsedWeight = parseWeightDescription(item.weight_text || getFormattedWeight(item));
+                const dynamicSets  = getDynamicSetsInfo(index, planToShow);
+                const weightVisible= ['poids','elastique','poids_elastique'].includes(parsedWeight.type);
+                const isPR         = isWorkoutMode && currentWorkoutPRs && currentWorkoutPRs.has(item.name);
+
+                // Conseil ligue pour cet exercice
+                const exId  = lgMapName(item.name);
+                const perfs = lgCurrentPerfs || {};
+                let adviceHtml = '';
+                if (exId && perfs[exId]) {
+                    const adv = lgGetAdvice(exId, perfs[exId]);
+                    if (adv && adv.pri !== 'GOOD') {
+                        adviceHtml =
+                            '<div style="padding:8px 10px;border-radius:8px;background:' + adv.col + '12;border-left:3px solid ' + adv.col + ';margin-bottom:10px;font-size:11px;color:' + adv.col + '">' +
+                            adv.icon + ' ' + adv.conseil + '</div>';
+                    }
                 }
+
+                li.innerHTML =
+                    '<div class="exercise-name">' +
+                        '<span class="exercise-name-text">' + (dynamicSets ? dynamicSets + ': ' : '') + item.name + '</span>' +
+                        (isPR ? '<span class="pr-badge-inline">&#x1F3C6; PR</span>' : '') +
+                        '<button class="exercise-chart-toggle-btn" data-index="' + index + '" data-exercise-name="' + item.name.replace(/"/g,'&quot;') + '" data-session-name="' + (sessionName||'').replace(/"/g,'&quot;') + '" title="Voir la progression">&#x1F4C8;</button>' +
+                    '</div>' +
+                    '<div class="exercise-progression-container" id="prog-chart-container-' + index + '"><canvas id="prog-chart-' + index + '"></canvas></div>' +
+                    adviceHtml +
+                    '<div class="fields-grid">' +
+                        '<div class="input-group" data-field="performance">' +
+                            '<label>' + (isTimed ? 'Durée (s)' : 'Reps réalisées') + '</label>' +
+                            '<div class="performance-row" style="display:flex;gap:10px;align-items:stretch">' +
+                                '<div class="stepper-control" data-type="reps-time" style="flex:1">' +
+                                    '<button class="stepper-btn stepper-minus">-</button>' +
+                                    '<span class="stepper-value">' + initialValue + '</span>' +
+                                    '<button class="stepper-btn stepper-plus">+</button>' +
+                                '</div>' +
+                                '<div class="tracking-type-toggle" data-type="tracking-type">' +
+                                    '<button class="tracking-reps ' + (!isTimed?'active':'') + '" data-value="reps"><i class="fas fa-repeat"></i></button>' +
+                                    '<button class="tracking-time ' + (isTimed?'active':'') + '" data-value="time"><i class="fas fa-stopwatch"></i></button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="input-group" data-field="resistance">' +
+                            '<label>Résistance</label>' +
+                            '<div class="resistance-controls">' +
+                                '<div class="resistance-selector" data-type="' + parsedWeight.type + '">' +
+                                    '<div class="selected-resistance"><span>' + resistanceTypes[parsedWeight.type].emoji + ' ' + resistanceTypes[parsedWeight.type].text + '</span><i class="fas fa-caret-down"></i></div>' +
+                                    '<ul class="resistance-options">' + Object.entries(resistanceTypes).map(([k,v])=>'<li data-value="'+k+'"><span>'+v.emoji+'</span> '+v.text+'</li>').join('') + '</ul>' +
+                                '</div>' +
+                                '<div class="stepper-control" data-type="weight" style="flex:1;display:' + (weightVisible?'flex':'none') + '">' +
+                                    '<button class="stepper-btn stepper-minus">-</button>' +
+                                    '<span class="stepper-value">' + parsedWeight.value + '</span>' +
+                                    '<button class="stepper-btn stepper-plus">+</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+
+                summaryItemsList.appendChild(li);
             });
+
             postWorkoutSummary.classList.add('visible');
         }
 
-        function renderAnalysisChart(plan) {
-            const ctx = document.getElementById('analysis-chart').getContext('2d');
-            destroyChart('analysis-chart');
+        function renderAnalysisChart(plan) { /* désactivé — remplacé par le système de ligue */ }
 
-            const exercises = plan.filter(item => item.type.startsWith('exercise'));
-            const labels = exercises.map((ex, i) => `Ex ${i+1}`);
-            
-            // Comparaison : Réalisé vs Prochaine Étape (Min) vs Objectif Final
-            const realizedData = exercises.map(ex => ex.reps || (ex.duration ? ex.duration/3 : 0));
-            const nextStepData = exercises.map(ex => parseRepRange(ex).min);
-            const finalGoalData = exercises.map(ex => parseInt(ex.final_target_reps) || 12);
-
-            const electricBlue = getComputedStyle(document.body).getPropertyValue('--electric-blue').trim();
-            const neonPurple = getComputedStyle(document.body).getPropertyValue('--neon-purple').trim();
-            const goldColor = '#FFD700';
-
-            activeCharts['analysis-chart'] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Réalisé', data: realizedData, backgroundColor: electricBlue },
-                        { label: 'Prochaine Étape', data: nextStepData, backgroundColor: neonPurple + '80' },
-                        { label: 'Objectif Final', data: finalGoalData, backgroundColor: goldColor, type: 'line', borderColor: goldColor, borderDash: [5,5], pointRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } },
-                    plugins: { legend: { labels: { color: '#fff' } } }
-                }
-            });
-        }
 
         async function finishSummary() {
             if (!finishSummaryBtn) return;
@@ -3835,4 +3953,4 @@
 
     </script>
 </body>
-                    </html>
+    </html>
