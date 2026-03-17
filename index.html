@@ -1327,37 +1327,54 @@
 
         async function tokenCallback(tokenResponse) {
             if (driveStatusElement) driveStatusElement.className = '';
-            if (tokenResponse.error) { if (tokenResponse.error !== "popup_failed_to_open" && tokenResponse.error !== "popup_closed_by_user") handleTokenError(tokenResponse); else updateAuthUI(false); return; }
-            if (tokenResponse && tokenResponse.access_token) {
-                googleAccessToken = tokenResponse.access_token;
-                // Persist le token dans le cache (durée de vie : 55 min pour anticiper l'expiration de 60 min)
-                const expiryMs = Date.now() + (tokenResponse.expires_in ? (tokenResponse.expires_in - 300) * 1000 : 3300 * 1000);
-                try { localStorage.setItem(GOOGLE_TOKEN_CACHE_KEY, googleAccessToken); localStorage.setItem(GOOGLE_TOKEN_EXPIRY_KEY, String(expiryMs)); } catch(e) { console.warn('Cache token impossible:', e); }
-                scheduleTokenRefresh(expiryMs);
-                showMessage("Connecté ! Chargement des données...", 2500);
-                if (driveStatusElement) { driveStatusElement.classList.remove('error', 'success'); driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
-                if (driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
-                try {
-                    await loadHistoryFromDrive();
-                    const streak = calculateWeeklyStreak();
-                    updateLeagueVisuals(streak);
-                    const programLoadSuccess = await loadFullProgramFromDrive();
-                    
-                    if (programLoadSuccess) {
-                        showMessage("Programme et données chargés depuis votre Drive.", 3000);
-                        if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
-                        if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
-                    } else {
-                        showMessage(`Erreur chargement '${FULL_PROGRAM_FILENAME}' depuis Drive. Assurez-vous que le fichier existe.`, 8000, true);
-                        if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
-                        if (driveStatusTextElement) driveStatusTextElement.textContent = 'Prog absent';
-                    }
-                } catch (error) {
-                    showMessage("Erreur majeure lors du chargement des données.", 6000, true);
-                    if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
-                    if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Données';
-                } finally { updateAuthUI(true); loadInProgressState(); renderHomeScreen(); updateLeagueBadge(); }
-            } else handleTokenError({ error: "Réponse de token invalide ou vide" });
+            if (tokenResponse.error) {
+                if (tokenResponse.error !== "popup_failed_to_open" && tokenResponse.error !== "popup_closed_by_user") handleTokenError(tokenResponse);
+                else updateAuthUI(false);
+                return;
+            }
+            if (!tokenResponse || !tokenResponse.access_token) { handleTokenError({ error: "Réponse de token invalide ou vide" }); return; }
+
+            const isFirstLogin = !googleAccessToken || !programsLoaded;
+            googleAccessToken = tokenResponse.access_token;
+
+            // Cache le token
+            const expiryMs = Date.now() + (tokenResponse.expires_in ? (tokenResponse.expires_in - 300) * 1000 : 3300 * 1000);
+            try { localStorage.setItem(GOOGLE_TOKEN_CACHE_KEY, googleAccessToken); localStorage.setItem(GOOGLE_TOKEN_EXPIRY_KEY, String(expiryMs)); } catch(e) {}
+            scheduleTokenRefresh(expiryMs);
+
+            if (!isFirstLogin) {
+                // Refresh silencieux — juste mettre à jour le token, pas recharger les données
+                updateAuthUI(true);
+                updateLeagueBadge();
+                return;
+            }
+
+            // Première connexion — charger toutes les données
+            if (driveStatusElement) { driveStatusElement.classList.add('loading'); driveStatusElement.style.display = 'inline-flex'; }
+            if (driveStatusTextElement) driveStatusTextElement.textContent = 'Chargement...';
+            try {
+                await loadHistoryFromDrive();
+                const streak = calculateWeeklyStreak();
+                updateLeagueVisuals(streak);
+                const programLoadSuccess = await loadFullProgramFromDrive();
+                if (programLoadSuccess) {
+                    if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'error'); driveStatusElement.classList.add('success'); }
+                    if (driveStatusTextElement) driveStatusTextElement.textContent = 'Connecté';
+                } else {
+                    showMessage(`Fichier programme introuvable sur Drive.`, 6000, true);
+                    if (driveStatusElement) { driveStatusElement.classList.remove('loading'); driveStatusElement.classList.add('error'); }
+                    if (driveStatusTextElement) driveStatusTextElement.textContent = 'Prog absent';
+                }
+            } catch (error) {
+                showMessage("Erreur chargement des données Drive.", 6000, true);
+                if (driveStatusElement) { driveStatusElement.classList.remove('loading', 'success'); driveStatusElement.classList.add('error'); }
+                if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur';
+            } finally {
+                updateAuthUI(true);
+                loadInProgressState();
+                renderHomeScreen();
+                updateLeagueBadge();
+            }
         }
 
         function handleAuthClick() {
@@ -2065,8 +2082,6 @@
 
             // Progression module — clear readable display
             const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
-            const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
-                        const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
             const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
             // Une seule prédiction cohérente partout
             const displaySpeed = lgComputeRealSpeed();
@@ -4307,4 +4322,4 @@
 
     </script>
 </body>
-                            </html>
+    </html>
