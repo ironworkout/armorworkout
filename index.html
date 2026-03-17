@@ -2047,30 +2047,46 @@
             const estLabel = estDateDisp ? estDateDisp.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) : '';
             const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
 
-            // Tendance : comparaison score de charge (plus simple et direct)
+            // Tendance : compare chaque exercice vs sa dernière occurrence (même type de séance)
+            // Évite le biais séance A vs séance B
             let trendLine = '';
-            if (workoutHistory.length >= 4) {
-                const recent = workoutHistory.slice(-4);
-                const older  = workoutHistory.slice(-8, -4);
-                if (older.length >= 2) {
-                    let rScore = 0, oScore = 0;
-                    recent.forEach(h => (h.exercises||[]).forEach(ex => { rScore += calculatePerformanceScore(ex)||0; }));
-                    older.forEach(h  => (h.exercises||[]).forEach(ex => { oScore += calculatePerformanceScore(ex)||0; }));
-                    if (oScore > 0) {
-                        const diff = Math.round(((rScore/recent.length) - (oScore/older.length)) / (oScore/older.length) * 100);
-                        const col  = diff > 3 ? '#6EE7B7' : diff < -3 ? '#F87171' : '#FCD34D';
-                        const icon = diff > 3 ? '&#x2197;' : diff < -3 ? '&#x2198;' : '&#x2192;';
-                        // Message lisible : charge moyenne par séance
-                        const msg = diff > 10 ? 'Très belle progression sur les dernières séances' :
-                                    diff > 3  ? 'Tu charges plus lourd qu\'avant' :
-                                    diff < -3 ? 'Charge en baisse — reprends le rythme' :
-                                                'Plateau — essaie d\'augmenter poids ou reps';
-                        trendLine = '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:' + col + '10;border:1px solid ' + col + '30;margin-bottom:10px">' +
-                            '<span style="font-size:16px;color:' + col + '">' + icon + '</span>' +
-                            '<span style="font-size:11px;color:' + col + ';font-weight:500">' + msg + '</span>' +
-                            '<span style="font-size:11px;font-weight:700;color:' + col + ';margin-left:auto">' + (diff > 0 ? '+' : '') + diff + '%</span>' +
-                        '</div>';
+            if (workoutHistory.length >= 3) {
+                let improved = 0, total = 0, maxImprovePct = 0;
+                // Pour chaque exercice, compare la dernière occurrence vs l'avant-dernière
+                const exHistory = {};
+                workoutHistory.forEach(h => {
+                    (h.exercises||[]).forEach(ex => {
+                        const id = lgMapName(ex.name);
+                        if (!id) return;
+                        if (!exHistory[id]) exHistory[id] = [];
+                        const s = calculatePerformanceScore(ex);
+                        if (s > 0) exHistory[id].push(s);
+                    });
+                });
+                Object.values(exHistory).forEach(scores => {
+                    if (scores.length >= 2) {
+                        total++;
+                        const last = scores[scores.length - 1];
+                        const prev = scores[scores.length - 2];
+                        if (last > prev * 1.005) { // +0.5% = progression réelle
+                            improved++;
+                            maxImprovePct = Math.max(maxImprovePct, Math.round((last-prev)/prev*100));
+                        }
                     }
+                });
+                if (total >= 2) {
+                    const ratio = improved / total; // fraction d'exercices en progression
+                    const col  = ratio >= 0.5 ? '#6EE7B7' : ratio >= 0.25 ? '#FCD34D' : '#F87171';
+                    const icon = ratio >= 0.5 ? '&#x2197;' : ratio >= 0.25 ? '&#x2192;' : '&#x2198;';
+                    const msg  = ratio >= 0.7 ? 'Tu progresses sur ' + improved + '/' + total + ' exercices 🔥' :
+                                 ratio >= 0.5 ? 'Progression sur ' + improved + '/' + total + ' exercices' :
+                                 ratio >= 0.25 ? improved + '/' + total + ' exercices progressent — maintiens le rythme' :
+                                                'Peu de progression récente — monte les charges ou les reps';
+                    trendLine = '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:' + col + '10;border:1px solid ' + col + '30;margin-bottom:10px">' +
+                        '<span style="font-size:16px;color:' + col + '">' + icon + '</span>' +
+                        '<span style="font-size:11px;color:' + col + ';font-weight:500;flex:1">' + msg + '</span>' +
+                        (maxImprovePct > 0 ? '<span style="font-size:11px;font-weight:700;color:' + col + ';flex-shrink:0">+' + maxImprovePct + '%</span>' : '') +
+                    '</div>';
                 }
             }
 
@@ -4333,4 +4349,4 @@
 
     </script>
 </body>
-</html>
+    </html>
