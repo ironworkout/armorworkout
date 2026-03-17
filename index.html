@@ -808,6 +808,16 @@
             0%,100% { transform: scale(1); opacity:.9; }
             50%     { transform: scale(1.15); opacity:1; }
         }
+        @keyframes cursorSlide {
+            from { left: 0% !important; opacity:0; }
+            to   { opacity:1; }
+        }
+        @keyframes prFlashAnim {
+            0%   { transform: translate(-50%,-50%) scale(.6); opacity:0; }
+            15%  { transform: translate(-50%,-50%) scale(1.1); opacity:1; }
+            70%  { transform: translate(-50%,-50%) scale(1); opacity:1; }
+            100% { transform: translate(-50%,-50%) scale(1); opacity:0; }
+        }
         @keyframes scoreReveal {
             from { transform: scale(.7); opacity:0; }
             to   { transform: scale(1);  opacity:1; }
@@ -1016,6 +1026,7 @@
     
                 <div class="progress-tracker" id="progress-tracker">
                     <span id="progress-text-area"></span>
+                    <span id="wakelock-indicator" style="display:none;align-items:center;gap:4px;font-size:10px;color:rgba(52,211,153,.7);padding:2px 8px;border-radius:10px;background:rgba(52,211,153,.1);border:0.5px solid rgba(52,211,153,.2)"><i class="fas fa-lock" style="font-size:9px"></i> actif</span>
                     <span id="drive-connection-status-main" style="display: none;"> 
                         <i class="fab fa-google-drive"></i>
                         <span id="drive-connection-text">Connecté</span>
@@ -1179,7 +1190,13 @@
             if ('wakeLock' in navigator && !wakeLock) {
                 try {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => { wakeLock = null; });
+                    // Show wake lock indicator
+                    const wlIndicator = document.getElementById('wakelock-indicator');
+                    if (wlIndicator) { wlIndicator.style.display = 'inline-flex'; wlIndicator.title = 'Écran maintenu allumé'; }
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                        const ind = document.getElementById('wakelock-indicator');
+                        if (ind) ind.style.display = 'none'; });
                     console.log('Wake Lock actif ✓');
                 } catch (err) {
                     console.warn('Wake Lock refusé:', err.name, err.message);
@@ -1687,7 +1704,36 @@
 
         function handleItemCompletion() {
             if (currentState === 'finished') return;
-            const item = currentWorkoutPlan[currentItemIndex]; 
+            const item = currentWorkoutPlan[currentItemIndex];
+
+            // Live PR check: compare current exercise perf to history
+            if (item && item.type.startsWith('exercise') && workoutHistory.length >= 1) {
+                const exName = item.name;
+                const curReps = item.reps || 0;
+                const curWeight = parseWeightDescription(item.weight_text || getFormattedWeight(item)).value || 0;
+                const curScore = curWeight > 0 ? Math.pow(curWeight, 1.05) * curReps : curReps;
+                let bestPrev = 0;
+                workoutHistory.forEach(h => {
+                    (h.exercises||[]).forEach(ex => {
+                        if (ex.name === exName) {
+                            const w = (() => { const m=(ex.finalWeightDescription||ex.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i); return m?parseFloat(m[1]):0; })();
+                            const r = ex.finalReps || ex.reps_target || 0;
+                            const s = w > 0 ? Math.pow(w, 1.05) * r : r;
+                            if (s > bestPrev) bestPrev = s;
+                        }
+                    });
+                });
+                if (bestPrev > 0 && curScore > bestPrev * 1.005 && !currentWorkoutPRs.has(exName)) {
+                    currentWorkoutPRs.add(exName);
+                    // Flash PR notification
+                    const prFlash = document.createElement('div');
+                    prFlash.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(255,215,0,.95);color:#000;font-family:var(--font-family-timer);font-size:22px;font-weight:700;padding:16px 32px;border-radius:16px;text-align:center;pointer-events:none;animation:prFlashAnim 2s ease-out forwards';
+                    prFlash.innerHTML = '&#x1F3C6; PERSONAL RECORD !<div style="font-size:13px;font-weight:500;margin-top:4px">' + exName.replace(/^(Superset [A-Z]: |FINISHER: )/,'') + '</div>';
+                    document.body.appendChild(prFlash);
+                    setTimeout(() => prFlash.remove(), 2100);
+                }
+            }
+
             if (currentState === 'exercise' && item && (item.duration === undefined || item.duration === null) && currentState !== 'completed') { setState('completed'); return; }
             currentItemIndex++; timeLeft = 0; 
             if (currentItemIndex >= currentWorkoutPlan.length) { setState('finished'); }
@@ -1871,6 +1917,8 @@
                         infoHtml += '</div>';
                     } else if (item.type === 'break') {
                         infoHtml = createUpcomingExercisesHtml(currentItemIndex);
+                        const lTier = lgGetTier(lgCurrentGs);
+                        if (lTier) document.documentElement.style.setProperty('--color-break', lTier.ca);
                     }
                     break;
             }
@@ -2137,6 +2185,13 @@
                 const card = document.createElement('div');
                 card.className = 'session-card-large';
                 card.dataset.sessionName = session.nom_session;
+                card.style.cursor = 'pointer';
+                card.title = 'Cliquer pour lancer ' + session.nom_session;
+                card.addEventListener('click', (e) => {
+                    // Ne pas lancer si on clique sur un bouton ou badge interne
+                    if (e.target.closest('button, .delete-workout-btn, a')) return;
+                    loadSession(session.nom_session);
+                });
 
                 const lastSession = workoutHistory.slice().reverse().find(h => h.type === session.nom_session);
                 let lastSessionText = 'Jamais effectuee.';
@@ -2186,7 +2241,7 @@
                         '<p>' + (session.description_session || '') + '</p>' +
                         (pillsHtml ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">' + pillsHtml + '</div>' : '') +
                         (exStatusHtml
-                            ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:10px">' + exStatusHtml + '</div>'
+                            ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:5px;margin-top:10px">' + exStatusHtml + '</div>'
                             : '<div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.3)">Effectuez une premiere seance pour voir le statut de vos exercices.</div>') +
                     '</div>';
 
@@ -2230,7 +2285,7 @@
         function detectPRs(exercisesSummary) {
             const prs = new Set();
             if (!workoutHistory || workoutHistory.length < 2) return prs;
-            // On compare contre tout l'historique sauf la dernière entrée (la séance qu'on vient d'ajouter)
+            // On compare contre tout l'historique sauf la dernière entrée (la séance qu\'on vient d'ajouter)
             const previousHistory = workoutHistory.slice(0, -1);
             exercisesSummary.forEach(ex => {
                 const currentScore = calculatePerformanceScore(ex);
@@ -2532,13 +2587,22 @@
           return hi+(mx-hi)*.5+(r-mx)*.1;
         }
         function lgSc(p,r,id){ const ex=LG_EX[id]; return Math.pow(Math.max(0,p),1.05)*lgFReps(r,ex.repsOpt)*(ex.bag?LG_EASTPACK:1); }
-        function lgNorm(id,cur){
-          const ex=LG_EX[id],s=ex.s;
-          const sC=lgSc(cur.p,cur.r,id),sB=lgSc(s[0].p,s[0].r,id),sV=lgSc(s[4].p,s[4].r,id);
-          return sV<=sB?0:Math.max(0,Math.min(100,(sC-sB)/(sV-sB)*100));
+                function lgNorm(id, cur) {
+          const ex = LG_EX[id]; if (!ex) return 0;
+          const [,lo,hi] = ex.repsOpt;
+          // Pour exercices élastique/bodyweight (p = valeur bronze) : score basé principalement sur les reps
+          const isBronzeP = cur.p <= ex.s[0].p * 1.05;
+          if (isBronzeP && !ex.bag) {
+            // Score purement basé sur position dans la fenêtre de reps
+            const repsScore = Math.min(100, Math.max(0, (cur.r - ex.s[0].r) / Math.max(1, ex.s[4].r - ex.s[0].r) * 100));
+            return Math.round(repsScore);
+          }
+          // Score standard : poids^1.05 × reps_factor, normalisé sur le max Vibranium
+          const sc = lgSc(cur.p, cur.r, id);
+          const maxSc = lgSc(ex.s[4].p, ex.s[4].r, id);
+          return Math.round(Math.min(100, sc / Math.max(1, maxSc) * 100));
         }
 
-        // Extraire les dernières perf par exercice depuis l'historique Drive
         function lgExtractLatestPerfs() {
           const latest = {};
           if (!workoutHistory) return latest;
@@ -2552,11 +2616,10 @@
               // Si pas de kg dans la description (ex: '🟪 Tension Max'), on prend le bronze comme fallback
               const p = wMatch ? parseFloat(wMatch[1].replace(',','.')) : LG_EX[id].s[0].p;
               const r = ex.finalReps || (typeof ex.reps_target === 'number' ? ex.reps_target : null) || LG_EX[id].s[0].r;
-              // Toujours enregistrer si on a au moins les reps réelles
+              // Toujours enregistrer la DERNIÈRE occurrence (pas le meilleur score)
+              // workoutHistory est trié chronologiquement → la dernière entrée écrase toujours
               if (r > 0) {
-                if (!latest[id] || lgSc(p,r,id) > lgSc(latest[id].p,latest[id].r,id)) {
-                  latest[id] = {p, r};
-                }
+                latest[id] = {p, r}; // overwrite = keep latest
               }
             });
           });
@@ -2579,8 +2642,11 @@
           const sessionsPerWeek = sorted.length / totalWeeks;
           // Gain par séance selon la phase
           const gainPerSession = totalMonths < 6 ? 0.65 : totalMonths < 12 ? 0.40 : 0.25;
-          const speed = sessionsPerWeek * gainPerSession;
-          return Math.round(Math.max(0.3, Math.min(3.5, speed)) * 10) / 10;
+          // Correction par niveau : la progression ralentit en montant (loi des rendements décroissants)
+          // Score 0-30 (Bronze) = ×1.0, 30-50 (Argent) = ×0.8, 50-70 (Or) = ×0.6, 70+ (Platine+) = ×0.4
+          const levelFactor = lgCurrentGs < 30 ? 1.0 : lgCurrentGs < 50 ? 0.8 : lgCurrentGs < 70 ? 0.6 : 0.4;
+          const speed = sessionsPerWeek * gainPerSession * levelFactor;
+          return Math.round(Math.max(0.2, Math.min(3.5, speed)) * 10) / 10;
         }
 
         function lgGetRealPerfsKeys() {
@@ -2625,7 +2691,7 @@
           const nxtP=ex.s.find(s=>s.p>cur.p);
           switch(z){
             case 'TROP_LOURD': return{z,col:'#F87171',icon:'⬇️',pri:'URGENT',title:'Descends le poids — hors zone hypertrophique',conseil:`${cur.r}r = zone force pure (min : ${mn}r). Descends le poids pour atteindre ${lo}-${hi}r.`,next:`Cible : ~${lo}r avec technique parfaite.`};
-            case 'BAS_OPT':    return{z,col:'#93C5FD',icon:'📈',pri:'NORMAL',title:'Augmente les reps en priorité',conseil:`${cur.r}/${hi}r cible. Progresse d'abord en reps jusqu'à ${hi}. Consolider avant d'augmenter la charge.`,next:`Objectif : ${hi}r à ${cur.p}kg.`};
+            case 'BAS_OPT':    return{z,col:'#93C5FD',icon:'📈',pri:'NORMAL',title:'Augmente les reps en priorité',conseil:`${cur.r}/${hi}r cible. Progresse d\'abord en reps jusqu'à ${hi}. Consolider avant d'augmenter la charge.`,next:`Objectif : ${hi}r à ${cur.p}kg.`};
             case 'OPTIMAL':    return{z,col:'#6EE7B7',icon:'✅',pri:'GOOD',title:'Dans la zone optimale — continue',conseil:ex.fiberNote,next:cur.r<hi?`${hi-cur.r}r à gagner avant de monter le poids.`:nxtP?`Signal : passe à ${nxtP.p}kg.`:'Vibranium sur cet exercice !'};
             case 'HAUT_OPT':   return{z,col:'#FCD34D',icon:'⬆️',pri:'ACTION',title:'Monte le poids maintenant',conseil:ex.adviceHigh,next:nxtP?`Passe à ${nxtP.p}kg et reviens à ~${lo}r.`:'Prévoir changement de matériel.'};
             case 'TROP_LEGER': return{z,col:'#F87171',icon:'🔴',pri:'URGENT',title:'Trop de reps — monte le poids',conseil:`${cur.r}r > plafond (${mx}r). Endurance, plus hypertrophie. Monte le poids.`,next:nxtP?`Passe à ${nxtP.p}kg × ${lo}r.`:'Prévoir changement de matériel.'};
@@ -2795,7 +2861,7 @@
           const alertCount = document.getElementById('league-badge-alert-count');
           if (!pill || !dot || !text) return;
 
-          pill.style.cssText = `display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid ${tier.ca};background:${tier.cb}70;box-shadow:0 0 12px ${tier.glow}50;font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap`;
+          pill.style.cssText = `display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid ${tier.ca};background:${tier.cb}70;box-shadow:0 0 12px ${tier.glow}50;font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap;transition:border-color .6s,background .6s,box-shadow .6s`;
           dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${tier.ca};box-shadow:0 0 8px ${tier.glow};flex-shrink:0`;
           text.style.color = tier.ca;
           text.textContent = `${tier.n} · ${pct}%`;
@@ -2904,19 +2970,36 @@
 
           h += `</div></div></div>`;
 
-          // ── TIMELINE LIGUES (mini parcours) ───────────────────────────
+          // ── TIMELINE LIGUES ──────────────────────────────────────────
+          // Calculer la date approximative d'atteinte de chaque palier passé
+          const tierDates = {};
+          if (workoutHistory && workoutHistory.length > 0) {
+            const sorted = workoutHistory.slice().sort((a,b) => new Date(a.date)-new Date(b.date));
+            // Reconstruire l'évolution du score dans le temps (approximation par session)
+            sorted.forEach((h2, si) => {
+              const fakePct = si / Math.max(1, sorted.length - 1);
+              const approxGs = gs * fakePct;
+              LG_TIERS.forEach((t, ti) => {
+                if (!tierDates[ti] && approxGs >= t.r[0]) {
+                  tierDates[ti] = h2.date;
+                }
+              });
+            });
+          }
           h += `<div class="stats-chart-card" style="margin-bottom:16px">`;
           h += `<h4 style="margin-bottom:14px">Ton parcours</h4>`;
           h += `<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:8px">`;
           LG_TIERS.forEach((t, i) => {
             const isPast = tidx > i, isNow = tidx === i, isFuture = tidx < i;
             const size = isNow ? 52 : 34;
-            h += `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;opacity:${isFuture ? .35 : 1}">`;
+            const dateLabel = isPast && tierDates[i] ? tierDates[i].slice(5).replace('-','/') : '';
+            h += `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;opacity:${isFuture ? .3 : 1}">`;
             h += lgRenderBadgeSVG(t, size, isNow);
             if (isNow) h += `<div style="font-size:9px;color:${t.ca};font-weight:700;white-space:nowrap">${t.n}</div>`;
+            if (isPast && dateLabel) h += `<div style="font-size:8px;color:rgba(255,255,255,.3);white-space:nowrap">&#x2713; ${dateLabel}</div>`;
             h += `</div>`;
             if (i < LG_TIERS.length - 1) {
-              h += `<div style="flex:1;min-width:8px;height:2px;background:${isPast ? ca : 'rgba(255,255,255,.1)'};border-radius:1px;flex-shrink:0"></div>`;
+              h += `<div style="flex:1;min-width:6px;height:2px;background:${isPast ? ca : isNow ? ca+'40' : 'rgba(255,255,255,.08)'};border-radius:1px;flex-shrink:0"></div>`;
             }
           });
           h += `</div></div>`;
@@ -3092,9 +3175,9 @@
           h += `<div style="position:absolute;top:0;left:${p40(lo)}%;width:${p40(hi-lo)}%;height:100%;background:rgba(52,211,153,.28);display:flex;align-items:center;justify-content:center;font-size:11px;color:#6EE7B7;font-weight:700">&#x2713; OPTIMAL</div>`;
           h += `<div style="position:absolute;top:0;left:${p40(hi)}%;width:${p40(mx-hi)}%;height:100%;background:rgba(252,211,77,.18);display:flex;align-items:center;justify-content:center;font-size:10px;color:#FCD34D;font-weight:600">&#x2191; Poids</div>`;
           h += `<div style="position:absolute;top:0;left:${p40(mx)}%;width:${100-p40(mx)}%;height:100%;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:10px;color:#FCA5A5">Endurance</div>`;
-          // Curseur position actuelle
+          // Curseur position actuelle (animé depuis la gauche)
           const cursorPos = Math.min(98, p40(cur.r));
-          h += `<div style="position:absolute;top:0;left:${cursorPos}%;width:3px;height:100%;background:white;border-radius:1px;box-shadow:0 0 6px rgba(255,255,255,.8)"></div>`;
+          h += `<div style="position:absolute;top:0;left:${cursorPos}%;width:3px;height:100%;background:white;border-radius:1px;box-shadow:0 0 6px rgba(255,255,255,.8);animation:cursorSlide .6s cubic-bezier(.22,1,.36,1) both" id="zone-cursor"></div>`;
           // Tooltip curseur
           h += `<div style="position:absolute;top:-22px;left:${Math.max(2,Math.min(88,cursorPos-4))}%;background:white;color:#000;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${cur.r}r ici</div>`;
           h += `</div>`;
@@ -3430,8 +3513,22 @@
         // SECTION 8: GESTION DE SESSION ET SAUVEGARDE
         // =================================================================================
 
-        async function saveFullProgramToDrive(){ if(!googleAccessToken || !loadedFullProgram) return false; if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true); if(programFileId) return await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME); else { showMessage("Sauvegarde du programme impossible.", 4000, true); return false; } }
-        async function saveHistoryToDrive(){ if(!googleAccessToken || !workoutHistory) return false; if(!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, '[]', 'application/json', true); if(historyFileId) return await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME); else { showMessage("Sauvegarde de l'historique impossible.", 4000, true); return false; } }
+        async function saveFullProgramToDrive(retries=2) {
+            if(!googleAccessToken || !loadedFullProgram) return false;
+            if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true);
+            if(!programFileId) { showMessage('Sauvegarde programme impossible.', 4000, true); return false; }
+            const ok = await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME);
+            if(!ok && retries > 0) { await new Promise(r=>setTimeout(r,1200)); return saveFullProgramToDrive(retries-1); }
+            return !!ok;
+        }
+        async function saveHistoryToDrive(retries=2) {
+            if(!googleAccessToken || !workoutHistory) return false;
+            if(!historyFileId) historyFileId = await findOrCreateFile(HISTORY_FILENAME, '[]', 'application/json', true);
+            if(!historyFileId) { showMessage("Sauvegarde historique impossible.", 4000, true); return false; }
+            const ok = await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME);
+            if(!ok && retries > 0) { await new Promise(r=>setTimeout(r,1200)); return saveHistoryToDrive(retries-1); }
+            return !!ok;
+        }
 
         function saveInProgressState() {
             if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; }
@@ -3651,6 +3748,35 @@
                 const weightVisible= ['poids','elastique','poids_elastique'].includes(parsedWeight.type);
                 const isPR         = isWorkoutMode && currentWorkoutPRs && currentWorkoutPRs.has(item.name);
 
+                // Delta vs séance précédente identique
+                let deltaHtml = '';
+                if (workoutHistory.length >= 2) {
+                    const prevSessions = workoutHistory.slice(0,-1).filter(h => h.type === sessionName);
+                    if (prevSessions.length > 0) {
+                        const prevSess = prevSessions[prevSessions.length - 1];
+                        const prevEx = (prevSess.exercises || []).find(e => e.name === item.name);
+                        if (prevEx) {
+                            const prevW = (() => { const m=(prevEx.finalWeightDescription||prevEx.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i); return m?parseFloat(m[1]):0; })();
+                            const prevR = prevEx.finalReps || prevEx.reps_target || 0;
+                            const curW = parseWeightDescription(item.weight_text || getFormattedWeight(item)).value || 0;
+                            const curR = item.reps || 0;
+                            const wDiff = curW && prevW ? Math.round((curW - prevW)*10)/10 : null;
+                            const rDiff = curR && prevR ? curR - prevR : null;
+                            if (wDiff !== null || rDiff !== null) {
+                                const parts = [];
+                                if (wDiff > 0) parts.push('<span style="color:#6EE7B7">+' + wDiff + 'kg</span>');
+                                else if (wDiff < 0) parts.push('<span style="color:#F87171">' + wDiff + 'kg</span>');
+                                if (rDiff > 0) parts.push('<span style="color:#6EE7B7">+' + rDiff + ' rep</span>');
+                                else if (rDiff < 0) parts.push('<span style="color:#F87171">' + rDiff + ' rep</span>');
+                                if (parts.length > 0) {
+                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">vs séance précédente : ' + parts.join(' · ') + '</div>';
+                                } else if (wDiff === 0 && rDiff === 0) {
+                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:6px">= même charge, pas de progression</div>';
+                                }
+                            }
+                        }
+                    }
+                }
                 // Conseil ligue pour cet exercice
                 const exId  = lgMapName(item.name);
                 const perfs = lgCurrentPerfs || {};
@@ -3671,7 +3797,7 @@
                         '<button class="exercise-chart-toggle-btn" data-index="' + index + '" data-exercise-name="' + item.name.replace(/"/g,'&quot;') + '" data-session-name="' + (sessionName||'').replace(/"/g,'&quot;') + '" title="Voir la progression">&#x1F4C8;</button>' +
                     '</div>' +
                     '<div class="exercise-progression-container" id="prog-chart-container-' + index + '"><canvas id="prog-chart-' + index + '"></canvas></div>' +
-                    adviceHtml +
+                    deltaHtml + adviceHtml +
                     '<div class="fields-grid">' +
                         '<div class="input-group" data-field="performance">' +
                             '<label>' + (isTimed ? 'Durée (s)' : 'Reps réalisées') + '</label>' +
@@ -3797,12 +3923,15 @@
             // Sauvegardes robustes avec await + feedback d'erreur
             let saveOk = true;
             try {
-                finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde Drive...';
+                finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 1/2 Programme...';
                 const prog_ok = await saveFullProgramToDrive();
-                if (!prog_ok) { showMessage('⚠️ Programme non sauvegardé. Reconnectez-vous et réessayez.', 7000, true); saveOk = false; }
+                if (!prog_ok) { showMessage('⚠️ Programme non sauvegardé. Reconnectez-vous SVP.', 7000, true); saveOk = false; }
                 if (isWorkoutMode) {
+                    finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 2/2 Historique...';
                     const hist_ok = await saveHistoryToDrive();
-                    if (!hist_ok) { showMessage('⚠️ Historique non sauvegardé. Reconnectez-vous et réessayez.', 7000, true); saveOk = false; }
+                    if (!hist_ok) { showMessage('⚠️ Historique non sauvegardé. Reconnectez-vous SVP.', 7000, true); saveOk = false; }
+                    // Recalculate league speed after new session saved
+                    updateLeagueBadge();
                 }
             } catch(saveErr) {
                 showMessage('❌ Erreur Drive : ' + saveErr.message, 8000, true);
@@ -4068,16 +4197,75 @@
                 renderLeaguePanel();
 
             } else if (tab === 'history') {
+                // Sélecteur d'exercice pour voir l'évolution poids/reps dans le temps
+                const exOptions = Object.entries(LG_EX).map(([id,ex]) => '<option value="' + id + '">' + ex.name + '</option>').join('');
                 area.innerHTML =
                     '<div class="stats-charts-grid">' +
-                    '<div class="stats-chart-card"><h4><i class="fas fa-calendar-week"></i> Seances par semaine</h4><div class="chart-wrapper"><canvas id="stats-weekly-chart"></canvas></div></div>' +
-                    '<div class="stats-chart-card"><h4><i class="fas fa-chart-pie"></i> Repartition des seances</h4><div class="chart-wrapper"><canvas id="stats-type-chart"></canvas></div></div>' +
-                    '<div class="stats-chart-card stats-full-width"><h4><i class="fas fa-trending-up"></i> Score de performance cumule</h4><div class="chart-wrapper"><canvas id="stats-score-chart"></canvas></div></div>' +
+                    '<div class="stats-chart-card stats-full-width">' +
+                    '<h4 style="margin-bottom:12px"><i class="fas fa-dumbbell"></i> Évolution poids & reps par exercice</h4>' +
+                    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
+                    '<select id="hist-exo-select" style="flex:1;min-width:160px;padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#E2E8F0;font-size:12px">' +
+                    '<option value="">-- Choisir un exercice --</option>' + exOptions + '</select>' +
+                    '</div>' +
+                    '<div id="hist-exo-chart-area" style="display:none"><div class="chart-wrapper" style="height:220px"><canvas id="hist-exo-canvas"></canvas></div>' +
+                    '<div id="hist-exo-meta" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;text-align:center"></div></div>' +
+                    '<div id="hist-exo-empty" style="text-align:center;color:rgba(255,255,255,.3);padding:30px 0;font-size:12px">Sélectionnez un exercice pour voir son évolution</div>' +
+                    '</div>' +
+                    '<div class="stats-chart-card"><h4><i class="fas fa-calendar-week"></i> Séances / semaine</h4><div class="chart-wrapper"><canvas id="stats-weekly-chart"></canvas></div></div>' +
+                    '<div class="stats-chart-card stats-full-width"><h4><i class="fas fa-trending-up"></i> Score global cumulé</h4><div class="chart-wrapper"><canvas id="stats-score-chart"></canvas></div></div>' +
                     '</div>';
                 setTimeout(function() {
                     renderStatsWeeklyChart();
-                    renderStatsTypeChart(sessionCounts);
                     renderStatsScoreChart();
+                    const sel = document.getElementById('hist-exo-select');
+                    if (sel) sel.addEventListener('change', function() {
+                        const id = this.value;
+                        const chartArea = document.getElementById('hist-exo-chart-area');
+                        const empty = document.getElementById('hist-exo-empty');
+                        const meta = document.getElementById('hist-exo-meta');
+                        if (!id || !LG_EX[id]) { if(chartArea) chartArea.style.display='none'; if(empty) empty.style.display='block'; return; }
+                        // Collect history for this exercise
+                        const exName = LG_EX[id].name;
+                        const pts = [];
+                        workoutHistory.forEach(h => {
+                            (h.exercises||[]).forEach(ex => {
+                                if (lgMapName(ex.name) === id) {
+                                    const wm = (ex.finalWeightDescription||ex.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i);
+                                    const w = wm ? parseFloat(wm[1]) : null;
+                                    const r = ex.finalReps || ex.reps_target || null;
+                                    if (r) pts.push({date: h.date, w, r});
+                                }
+                            });
+                        });
+                        if (pts.length < 2) { if(chartArea) chartArea.style.display='none'; if(empty) { empty.style.display='block'; empty.textContent = 'Pas assez de données pour ' + exName; } return; }
+                        if(chartArea) chartArea.style.display='block';
+                        if(empty) empty.style.display='none';
+                        if(meta) meta.textContent = pts.length + ' entrainements · ' + pts[0].date + ' → ' + pts[pts.length-1].date;
+                        destroyChart('hist-exo-canvas');
+                        const tier = lgGetTier(lgCurrentGs);
+                        const col = tier ? tier.ca : '#22D3EE';
+                        const ctx2 = document.getElementById('hist-exo-canvas');
+                        if (!ctx2) return;
+                        activeCharts['hist-exo-canvas'] = new Chart(ctx2, {
+                            type: 'line',
+                            data: {
+                                labels: pts.map(p => p.date.slice(5)),
+                                datasets: [
+                                    { label: 'Poids (kg)', data: pts.map(p=>p.w), borderColor: col, backgroundColor: col+'20', tension:.35, pointRadius:4, fill:true, yAxisID:'y' },
+                                    { label: 'Reps', data: pts.map(p=>p.r), borderColor: '#A78BFA', backgroundColor: '#A78BFA20', tension:.35, pointRadius:4, borderDash:[4,3], fill:false, yAxisID:'y2' }
+                                ]
+                            },
+                            options: {
+                                responsive:true, maintainAspectRatio:false,
+                                plugins:{ legend:{ labels:{ color:'rgba(255,255,255,.6)', font:{size:11} } } },
+                                scales:{
+                                    y:{ position:'left', grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'rgba(255,255,255,.5)', font:{size:10}} },
+                                    y2:{ position:'right', grid:{drawOnChartArea:false}, ticks:{color:'#A78BFA', font:{size:10}} },
+                                    x:{ ticks:{color:'rgba(255,255,255,.4)', font:{size:10}, maxTicksLimit:8} }
+                                }
+                            }
+                        });
+                    });
                 }, 0);
 
             } else if (tab === 'explorer') {
@@ -4208,6 +4396,26 @@
                 if (isEditMode) { isEditMode = false; if(editProgramBtn) editProgramBtn.classList.remove('active'); document.querySelectorAll('.session-card-large').forEach(c => c.classList.remove('edit-mode-active')); showMessage('Mode édition désactivé.', 2000); }
             }
         });
+            // Touch swipe to navigate workout
+            (function() {
+                let touchStartX = 0, touchStartY = 0;
+                document.addEventListener('touchstart', e => {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', e => {
+                    if (!isWorkoutActive) return;
+                    const dx = e.changedTouches[0].clientX - touchStartX;
+                    const dy = e.changedTouches[0].clientY - touchStartY;
+                    if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx) * 0.8) return; // not a horizontal swipe
+                    if (dx < -40) { // swipe left = next
+                        if (skipBtn && !skipBtn.disabled) { initAudioContext(); handleItemCompletion(); }
+                    } else if (dx > 40) { // swipe right = prev
+                        if (prevBtn && !prevBtn.disabled) { initAudioContext(); handlePreviousClick(); }
+                    }
+                }, { passive: true });
+            })();
+
             document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'hidden') {
                 if (isWorkoutActive) saveInProgressState();
