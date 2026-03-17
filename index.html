@@ -1305,7 +1305,7 @@
         // sans aucune intervention : l'utilisateur reste connecté des jours/semaines.
         function scheduleTokenRefresh(expiryMs) {
             if (tokenRefreshTimeout) clearTimeout(tokenRefreshTimeout);
-            const msUntilRefresh = expiryMs - Date.now() - (5 * 60 * 1000); // 5 min avant expiry
+            const msUntilRefresh = expiryMs - Date.now() - (10 * 60 * 1000); // 10 min avant expiry
             if (msUntilRefresh <= 0) {
                 // Déjà expiré ou proche — refresh immédiat silencieux
                 if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
@@ -1317,12 +1317,22 @@
         }
 
         function handleTokenError(error) {
-            let msg = `Erreur Authentification Google: ${error.type || error.error || 'Inconnue'}`;
-            if (error.type === 'popup_closed_by_user' || error.error === 'popup_closed_by_user') msg = "Fenêtre de connexion Google fermée.";
-            else if (error.type === 'popup_failed_to_open') msg = "Impossible d'ouvrir la fenêtre de connexion. Vérifiez les bloqueurs de popups.";
-            else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') msg = "Accès aux données Drive refusé par l'utilisateur.";
+            // Si c'est un échec silencieux et qu'on a encore un token valide, ignorer
+            const cachedToken  = localStorage.getItem(GOOGLE_TOKEN_CACHE_KEY);
+            const cachedExpiry = parseInt(localStorage.getItem(GOOGLE_TOKEN_EXPIRY_KEY) || '0', 10);
+            const isSilentFail = !error.type?.includes('popup') && !error.error?.includes('popup') && error.error !== 'access_denied';
+            if (isSilentFail && cachedToken && cachedExpiry > Date.now() && googleAccessToken) {
+                console.log('Silent auth fail ignored — still have valid cached token');
+                return;
+            }
+            let msg = 'Erreur Authentification Google: ' + (error.type || error.error || 'Inconnue');
+            if (error.type === 'popup_closed_by_user' || error.error === 'popup_closed_by_user') msg = "Fenêtre de connexion fermée.";
+            else if (error.type === 'popup_failed_to_open') msg = "Impossible d'ouvrir la fenêtre Google. Vérifiez les bloqueurs de popups.";
+            else if (error.type === 'USER_CANCELLED' || error.error === 'access_denied') msg = "Accès Drive refusé.";
             if (driveStatusElement) { driveStatusElement.className = 'error'; driveStatusElement.style.display = 'inline-flex'; }
-            showMessage(msg, 7000, true); if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Auth'; updateAuthUI(false);
+            if (driveStatusTextElement) driveStatusTextElement.textContent = 'Erreur Auth';
+            showMessage(msg, 7000, true);
+            updateAuthUI(false);
         }
 
         async function tokenCallback(tokenResponse) {
@@ -2020,97 +2030,88 @@
 
             // ── SIDEBAR : ligue + calendrier ──────────────────────────────
             // Mini carte ligue en haut de la sidebar
+            // ── BLOC LIGUE + PROGRESSION (fusionné, une seule carte) ───────
             const leagueCard = document.createElement('div');
-            leagueCard.className = 'sidebar-module';
-            leagueCard.style.cssText = 'cursor:pointer;border:1.5px solid ' + tier.ca + '80';
+            leagueCard.className = 'sidebar-module shimmer-card';
+            leagueCard.style.cssText = 'cursor:pointer;border:1.5px solid ' + tier.ca + '60';
             leagueCard.onclick = () => leagueShowTab('ligues');
-            leagueCard.innerHTML =
-                '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
-                    lgRenderBadgeSVG(tier, 52, true) +
-                    '<div style="flex:1">' +
-                        '<div style="font-family:var(--font-family-timer);font-size:14px;color:' + tier.ca + '">' + tier.n + '</div>' +
-                        '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">' + tier.desc + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px">' +
-                    '<span>Score : <strong style="color:' + tier.ca + '">' + lgCurrentGs.toFixed(1) + '%</strong></span>' +
-                    (nextT ? '<span style="color:' + tier.ca + '">' + pct + '% → ' + nextT.n + '</span>' : '<span style="color:' + tier.ca + '">Vibranium !</span>') +
-                '</div>' +
-                '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-bottom:4px">' +
-                    '<div style="height:100%;width:' + pct + '%;background:' + tier.ca + ';box-shadow:0 0 8px ' + tier.glow + ';border-radius:4px;transition:width .5s"></div>' +
-                '</div>' +
-                (nextT ? '<div style="font-size:10px;color:rgba(255,255,255,.3);text-align:right">~' + (lgCurrentGs && nextT ? Math.ceil((nextT.r[0]-lgCurrentGs)/2.08) : '?') + ' sem. au prochain palier</div>' : '') +
-                '<div style="margin-top:10px;font-size:10px;color:' + tier.ca + ';text-align:center;opacity:.6">Voir ma progression detaillee →</div>';
-            sidebar.appendChild(leagueCard);
 
-            // ── BARRE DE PROGRESSION TEMPORELLE ─────────────────────
-            const progModule = document.createElement('div');
-            progModule.className = 'sidebar-module shimmer-card';
-            progModule.style.cssText = 'border:1px solid ' + tier.ca + '50';
-
-            // Calculs progression
             const firstSession = workoutHistory.length > 0 ? new Date(workoutHistory[0].date + 'T00:00:00') : null;
             const daysSinceStart = firstSession ? Math.round((Date.now() - firstSession) / 86400000) : 0;
             const weeksSinceStart = Math.max(1, Math.round(daysSinceStart / 7));
+            const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
             const speed = lgComputeRealSpeed();
             const nextT2 = LG_TIERS[lgGetTierIdx(lgCurrentGs) + 1];
-            const wksToNext2 = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / speed) : null;
-            const estDate = wksToNext2 ? new Date(Date.now() + wksToNext2 * 7 * 86400000) : null;
+            const wksDisplay = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / speed) : null;
+            const estDateDisp = wksDisplay ? new Date(Date.now() + wksDisplay * 7 * 86400000) : null;
+            const estLabel = estDateDisp ? estDateDisp.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) : '';
+            const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
 
-            // Calcul tendance reps/poids sur les 4 dernières séances
-            let trendHtml = '';
-            if (workoutHistory.length >= 2) {
-                const recent4 = workoutHistory.slice(-4);
-                const earliest = workoutHistory.slice(-8, -4);
-                if (earliest.length > 0) {
-                    let recentScore = 0, earlyScore = 0, cnt = 0;
-                    recent4.forEach(h => { (h.exercises||[]).forEach(ex => { recentScore += calculatePerformanceScore(ex)||0; cnt++; }); });
-                    earliest.forEach(h => { (h.exercises||[]).forEach(ex => { earlyScore += calculatePerformanceScore(ex)||0; }); });
-                    if (earlyScore > 0 && cnt > 0) {
-                        const trend = Math.round(((recentScore/Math.max(1,recent4.length)) - (earlyScore/Math.max(1,earliest.length))) / Math.max(1, earlyScore/Math.max(1,earliest.length)) * 100);
-                        const trendCol = trend > 0 ? '#6EE7B7' : trend < -5 ? '#F87171' : '#FCD34D';
-                        const trendIcon = trend > 5 ? '&#x2197;' : trend < -5 ? '&#x2198;' : '&#x2192;';
-                        const trendLabel = trend > 10 ? 'Belle progression !' : trend > 0 ? 'Progression en cours' : trend < -5 ? 'Régression détectée' : 'Plateau — varie les charges';
-                        trendHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + trendCol + '12;border-radius:8px;margin-bottom:12px;border:1px solid ' + trendCol + '30">' +
-                            '<span style="font-size:20px;color:' + trendCol + '">' + trendIcon + '</span>' +
-                            '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:' + trendCol + '">' + trendLabel + '</div>' +
-                            '<div style="font-size:10px;color:rgba(255,255,255,.4)">Score de charge moyen : ' + (trend > 0 ? '+' : '') + trend + '% vs les 4 séances précédentes</div></div>' +
+            // Tendance : comparaison score de charge (plus simple et direct)
+            let trendLine = '';
+            if (workoutHistory.length >= 4) {
+                const recent = workoutHistory.slice(-4);
+                const older  = workoutHistory.slice(-8, -4);
+                if (older.length >= 2) {
+                    let rScore = 0, oScore = 0;
+                    recent.forEach(h => (h.exercises||[]).forEach(ex => { rScore += calculatePerformanceScore(ex)||0; }));
+                    older.forEach(h  => (h.exercises||[]).forEach(ex => { oScore += calculatePerformanceScore(ex)||0; }));
+                    if (oScore > 0) {
+                        const diff = Math.round(((rScore/recent.length) - (oScore/older.length)) / (oScore/older.length) * 100);
+                        const col  = diff > 3 ? '#6EE7B7' : diff < -3 ? '#F87171' : '#FCD34D';
+                        const icon = diff > 3 ? '&#x2197;' : diff < -3 ? '&#x2198;' : '&#x2192;';
+                        // Message lisible : charge moyenne par séance
+                        const msg = diff > 10 ? 'Très belle progression sur les dernières séances' :
+                                    diff > 3  ? 'Tu charges plus lourd qu\'avant' :
+                                    diff < -3 ? 'Charge en baisse — reprends le rythme' :
+                                                'Plateau — essaie d\'augmenter poids ou reps';
+                        trendLine = '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:' + col + '10;border:1px solid ' + col + '30;margin-bottom:10px">' +
+                            '<span style="font-size:16px;color:' + col + '">' + icon + '</span>' +
+                            '<span style="font-size:11px;color:' + col + ';font-weight:500">' + msg + '</span>' +
+                            '<span style="font-size:11px;font-weight:700;color:' + col + ';margin-left:auto">' + (diff > 0 ? '+' : '') + diff + '%</span>' +
                         '</div>';
                     }
                 }
             }
 
-            // Progression module — clear readable display
-            const realSPW = weeksSinceStart > 0 ? (workoutHistory.length / weeksSinceStart) : 0;
-            const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
-            // Une seule prédiction cohérente partout
-            const displaySpeed = lgComputeRealSpeed();
-            const wksDisplay = nextT2 ? Math.ceil((nextT2.r[0] - lgCurrentGs) / displaySpeed) : null;
-            const wksLabel = wksDisplay ? '~' + wksDisplay + ' sem.' : '-';
-            const estDateDisp = wksDisplay ? new Date(Date.now() + wksDisplay * 7 * 86400000) : null;
-            const estLabel = estDateDisp ? estDateDisp.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '';
+            leagueCard.innerHTML =
+                // Badge + nom ligue (compact, pas de répétition)
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+                    lgRenderBadgeSVG(tier, 44, true) +
+                    '<div style="flex:1;min-width:0">' +
+                        '<div style="font-family:var(--font-family-timer);font-size:15px;color:' + tier.ca + '">' + tier.n + '</div>' +
+                        '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:1px">' + tier.desc + '</div>' +
+                    '</div>' +
+                    '<div style="text-align:right;flex-shrink:0">' +
+                        '<div style="font-size:13px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</div>' +
+                        '<div style="font-size:10px;color:rgba(255,255,255,.3)">' + pct + '%→' + (nextT2 ? nextT2.n : '!') + '</div>' +
+                    '</div>' +
+                '</div>' +
+                // Barre vers prochain palier
+                '<div style="height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:4px">' +
+                    '<div class="animated-bar" style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + tier.ca + '90,' + tier.ca + ');border-radius:4px;box-shadow:0 0 8px ' + tier.glow + '"></div>' +
+                '</div>' +
+                (nextT2 ? '<div style="font-size:10px;color:rgba(255,255,255,.25);text-align:right;margin-bottom:12px">' + distToNext + ' pts · ' + (wksDisplay ? '~' + wksDisplay + ' sem.' : '') + (estLabel ? ' (' + estLabel + ')' : '') + '</div>' : '<div style="margin-bottom:12px"></div>') +
+                // Tendance lisible
+                trendLine +
+                // Stats rapides
+                '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">' +
+                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
+                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + workoutHistory.length + '</div>' +
+                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">séances</div>' +
+                    '</div>' +
+                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
+                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (daysSinceStart || '—') + (daysSinceStart ? 'j' : '') + '</div>' +
+                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">en route</div>' +
+                    '</div>' +
+                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
+                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (realSPW > 0 ? realSPW.toFixed(1) : '—') + '</div>' +
+                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">x/semaine</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="font-size:10px;color:' + tier.ca + ';text-align:center;opacity:.55">Voir ma progression détaillée →</div>';
 
-            progModule.innerHTML =
-                '<h4 style="margin-bottom:12px"><i class="fas fa-chart-line" style="color:' + tier.ca + '"></i> Progression</h4>' +
-                trendHtml +
-                '<p style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px;line-height:1.8">' +
-                    '<strong style="color:#22D3EE">' + workoutHistory.length + ' seances</strong>' +
-                    ' en <strong style="color:#22D3EE">' + (daysSinceStart > 0 ? daysSinceStart + 'j' : '-') + '</strong>' +
-                    ' / <strong style="color:#22D3EE">' + (realSPW > 0 ? realSPW.toFixed(1) + 'x/sem' : '-') + '</strong>' +
-                    (nextT2 ? ' · <strong style="color:' + tier.ca + '">' + wksLabel + ' vers ' + nextT2.n + (estLabel ? ' (' + estLabel + ')' : '') + '</strong>' : '') +
-                '</p>' +
-                '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:5px;display:flex;justify-content:space-between">' +
-                    '<span>Dans <strong style="color:' + tier.ca + '">' + tier.n + '</strong> — ' + pct + '% complete</span>' +
-                    (nextT2 ? '<span style="color:rgba(255,255,255,.25)">' + distToNext + ' pts pour ' + nextT2.n + '</span>' : '') +
-                '</div>' +
-                '<div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:10px">' +
-                    '<div style="height:100%;width:' + pct + '%;background:' + tier.ca + ';border-radius:4px;box-shadow:0 0 10px ' + tier.glow + ';transition:width .8s"></div>' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:' + tier.ca + '12;border-radius:8px;border:1px solid ' + tier.ca + '25">' +
-                    '<span style="font-size:11px;color:rgba(255,255,255,.5)">Score global</span>' +
-                    '<span style="font-size:14px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</span>' +
-                '</div>';
-            sidebar.appendChild(progModule);
+            sidebar.appendChild(leagueCard);
 
             // Calendrier + historique
             sidebar.appendChild(renderConsistencyCalendarModule(displayedCalendarDate));
@@ -4192,8 +4193,18 @@
             }
         });
             document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'hidden' && isWorkoutActive) saveInProgressState();
-            if (document.visibilityState === 'visible' && isWorkoutActive && !wakeLock) await requestWakeLock();
+            if (document.visibilityState === 'hidden') {
+                if (isWorkoutActive) saveInProgressState();
+            }
+            if (document.visibilityState === 'visible') {
+                if (isWorkoutActive && !wakeLock) await requestWakeLock();
+                // Check token still valid when coming back to foreground
+                const cachedExpiry = parseInt(localStorage.getItem(GOOGLE_TOKEN_EXPIRY_KEY) || '0', 10);
+                if (googleAccessToken && cachedExpiry > 0 && cachedExpiry < Date.now() + 120000) {
+                    // Token expires in <2 min or already expired — refresh silently
+                    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
+                }
+            }
         });
             window.addEventListener('beforeunload', () => { if (isWorkoutActive) saveInProgressState(); });
         }
@@ -4322,4 +4333,4 @@
 
     </script>
 </body>
-    </html>
+</html>
