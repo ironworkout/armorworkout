@@ -808,6 +808,10 @@
             0%,100% { transform: scale(1); opacity:.9; }
             50%     { transform: scale(1.15); opacity:1; }
         }
+        @keyframes cardAppear {
+            from { opacity:0; transform:translateY(16px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
         @keyframes cursorSlide {
             from { left: 0% !important; opacity:0; }
             to   { opacity:1; }
@@ -957,7 +961,7 @@
             </nav>
             <div class="header-actions">
                 <!-- BADGE LIGUE -->
-                <div id="league-badge-pill" style="display:none;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid #FFD740;background:rgba(58,32,8,.7);box-shadow:0 0 12px rgba(255,215,0,.3);font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap" onclick="leagueShowTab('ligues')" title="Ta progression de ligue">
+                <div id="league-badge-pill" style="display:none;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid #FFD740;background:rgba(58,32,8,.7);box-shadow:0 0 12px rgba(255,215,0,.3);font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap" onclick="leagueShowTab(&apos;ligues&apos;)" title="Ta progression de ligue">
                     <div id="league-badge-dot" style="width:8px;height:8px;border-radius:50%;background:#FFD740;box-shadow:0 0 8px #FFE880;flex-shrink:0"></div>
                     <span id="league-badge-text" style="color:#FFD740">—</span>
                     <span id="league-badge-alert-count" style="display:none;background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px"></span>
@@ -1027,6 +1031,7 @@
                 <div class="progress-tracker" id="progress-tracker">
                     <span id="progress-text-area"></span>
                     <span id="wakelock-indicator" style="display:none;align-items:center;gap:4px;font-size:10px;color:rgba(52,211,153,.7);padding:2px 8px;border-radius:10px;background:rgba(52,211,153,.1);border:0.5px solid rgba(52,211,153,.2)"><i class="fas fa-lock" style="font-size:9px"></i> actif</span>
+                    <span id="drive-workout-status" style="display:none;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:10px"></span>
                     <span id="drive-connection-status-main" style="display: none;"> 
                         <i class="fab fa-google-drive"></i>
                         <span id="drive-connection-text">Connecté</span>
@@ -1373,6 +1378,7 @@
                 // Refresh silencieux — juste mettre à jour le token, pas recharger les données
                 updateAuthUI(true);
                 updateLeagueBadge();
+                setTimeout(flushSaveQueue, 500); // retry any queued saves
                 return;
             }
 
@@ -2067,6 +2073,17 @@
 
             // Refresh ligue data
             updateLeagueBadge();
+
+            // Determine suggested next session
+            const lastWorkoutType = workoutHistory.length > 0 ? workoutHistory[workoutHistory.length-1].type : null;
+            const sessions = loadedFullProgram.sessions;
+            let nextSessionSuggestion = null;
+            if (lastWorkoutType && sessions && sessions.length > 1) {
+                const lastIdx = sessions.findIndex(s => s.nom_session === lastWorkoutType);
+                nextSessionSuggestion = sessions[(lastIdx + 1) % sessions.length];
+            } else if (sessions && sessions.length > 0) {
+                nextSessionSuggestion = sessions[0];
+            }
             const perfs  = lgCurrentPerfs || {};
             const tier   = lgGetTier(lgCurrentGs);
             const pct    = lgPctInTier(lgCurrentGs, tier);
@@ -2094,6 +2111,40 @@
             const estDateDisp = wksDisplay ? new Date(Date.now() + wksDisplay * 7 * 86400000) : null;
             const estLabel = estDateDisp ? estDateDisp.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) : '';
             const distToNext = nextT2 ? (nextT2.r[0] - lgCurrentGs).toFixed(1) : null;
+
+            // Semaine en cours vs semaine précédente
+            let weekCompareHtml = '';
+            {
+                const now = new Date();
+                const getWeekStart = (d) => { const s=new Date(d); s.setDate(d.getDate()-(d.getDay()===0?6:d.getDay()-1)); s.setHours(0,0,0,0); return s; };
+                const thisWeekStart = getWeekStart(now);
+                const lastWeekStart = new Date(thisWeekStart); lastWeekStart.setDate(lastWeekStart.getDate()-7);
+                const thisWeek = workoutHistory.filter(h => new Date(h.date+'T00:00:00') >= thisWeekStart);
+                const lastWeek = workoutHistory.filter(h => {
+                    const d = new Date(h.date+'T00:00:00');
+                    return d >= lastWeekStart && d < thisWeekStart;
+                });
+                if (lastWeek.length > 0 || thisWeek.length > 0) {
+                    let thisVol = 0, lastVol = 0;
+                    thisWeek.forEach(h => (h.exercises||[]).forEach(ex => { thisVol += calculatePerformanceScore(ex)||0; }));
+                    lastWeek.forEach(h => (h.exercises||[]).forEach(ex => { lastVol += calculatePerformanceScore(ex)||0; }));
+                    const volDiff = lastVol > 0 ? Math.round((thisVol - lastVol) / lastVol * 100) : null;
+                    const col = volDiff > 5 ? '#6EE7B7' : volDiff < -5 ? '#F87171' : '#FCD34D';
+                    weekCompareHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
+                        '<div style="padding:7px 10px;background:' + tier.ca + '15;border-radius:8px;border:0.5px solid ' + tier.ca + '40;text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:2px">Cette semaine</div>' +
+                            '<div style="font-size:16px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + thisWeek.length + '</div>' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.3)">séance' + (thisWeek.length!==1?'s':'') + '</div>' +
+                        '</div>' +
+                        '<div style="padding:7px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:0.5px solid rgba(255,255,255,.08);text-align:center">' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:2px">Semaine préc.</div>' +
+                            '<div style="font-size:16px;font-weight:700;color:rgba(255,255,255,.5);font-family:var(--font-family-timer)">' + lastWeek.length + '</div>' +
+                            '<div style="font-size:9px;color:rgba(255,255,255,.3)">séance' + (lastWeek.length!==1?'s':'') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    (volDiff !== null ? '<div style="text-align:center;font-size:11px;color:' + col + ';margin-bottom:10px;font-weight:500">' + (volDiff > 0 ? '+' : '') + volDiff + '% de volume vs semaine précédente</div>' : '');
+                }
+            }
 
             // Tendance : compare chaque exercice vs sa dernière occurrence (même type de séance)
             // Évite le biais séance A vs séance B
@@ -2157,6 +2208,7 @@
                 '</div>' +
                 (nextT2 ? '<div style="font-size:10px;color:rgba(255,255,255,.25);text-align:right;margin-bottom:12px">' + distToNext + ' pts · ' + (wksDisplay ? '~' + wksDisplay + ' sem.' : '') + (estLabel ? ' (' + estLabel + ')' : '') + '</div>' : '<div style="margin-bottom:12px"></div>') +
                 // Tendance lisible
+                weekCompareHtml +
                 trendLine +
                 // Stats rapides
                 '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">' +
@@ -2173,7 +2225,10 @@
                         '<div style="font-size:9px;color:rgba(255,255,255,.35)">x/semaine</div>' +
                     '</div>' +
                 '</div>' +
-                '<div style="font-size:10px;color:' + tier.ca + ';text-align:center;opacity:.55">Voir ma progression détaillée →</div>';
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">' +
+                    '<div style="font-size:10px;color:' + tier.ca + ';opacity:.55;cursor:pointer" onclick="leagueShowTab(&apos;ligues&apos;)">Voir ma progression →</div>' +
+                    (nextSessionSuggestion ? '<button data-launch-session="NEXTSESSION" style="padding:5px 12px;border-radius:14px;background:' + tier.ca + '25;border:1px solid ' + tier.ca + '60;color:' + tier.ca + ';font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-family-main)">▶ NEXTNAME</button>' : '').replace('NEXTSESSION', nextSessionSuggestion ? nextSessionSuggestion.nom_session : '').replace('NEXTNAME', nextSessionSuggestion ? nextSessionSuggestion.nom_session.split(':').pop().trim().slice(0,20) : '') +
+                '</div>';
 
             sidebar.appendChild(leagueCard);
 
@@ -2182,10 +2237,13 @@
 
             // ── SESSION CARDS ─────────────────────────────────────────────
             loadedFullProgram.sessions.forEach(session => {
+                const cardIdx = loadedFullProgram.sessions.indexOf(session);
                 const card = document.createElement('div');
                 card.className = 'session-card-large';
                 card.dataset.sessionName = session.nom_session;
                 card.style.cursor = 'pointer';
+                card.style.animation = 'cardAppear .4s ease both';
+                card.style.animationDelay = (cardIdx * 80) + 'ms';
                 card.title = 'Cliquer pour lancer ' + session.nom_session;
                 card.addEventListener('click', (e) => {
                     // Ne pas lancer si on clique sur un bouton ou badge interne
@@ -2217,9 +2275,11 @@
                     if (adv.pri === 'URGENT') urgentCount++;
                     else okCount++;
                     const cleanName = name.replace(/^Superset [A-Z]: /, '').replace(/^FINISHER: /, '').replace(/\s*\([^)]*\)\s*$/, '');
+                    const exIdForClick = lgMapName(name);
                     const pWeight = Math.round(cur.p * 10) / 10;
+                    const exDataAttr = exIdForClick ? ' data-exo-click="' + exIdForClick + '"' : '';
                     exStatusHtml +=
-                        '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
+                        '<div' + exDataAttr + ' style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;' + (exIdForClick ? 'cursor:pointer;' : '') + 'background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
                             '<span style="font-size:12px">' + adv.icon + '</span>' +
                             '<span style="font-size:11px;color:#E2E8F0;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cleanName + '</span>' +
                             '<span style="font-size:11px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer);flex-shrink:0">' + pWeight + 'kg×' + cur.r + 'r</span>' +
@@ -2639,7 +2699,15 @@
           const first = sorted[0], last = sorted[sorted.length - 1];
           const totalWeeks = Math.max(1, (new Date(last.date) - new Date(first.date)) / (7 * 86400000));
           const totalMonths = totalWeeks / 4.33;
-          const sessionsPerWeek = sorted.length / totalWeeks;
+          // Use ACTIVE weeks only (weeks that had at least 1 session) to avoid diluting speed with rest periods
+          const weekSet = new Set();
+          sorted.forEach(h => {
+            const d = new Date(h.date + 'T00:00:00');
+            const mon = new Date(d); mon.setDate(d.getDate() - (d.getDay()===0?6:d.getDay()-1));
+            weekSet.add(mon.toISOString().slice(0,10));
+          });
+          const activeWeeks = Math.max(1, weekSet.size);
+          const sessionsPerWeek = sorted.length / activeWeeks;
           // Gain par séance selon la phase
           const gainPerSession = totalMonths < 6 ? 0.65 : totalMonths < 12 ? 0.40 : 0.25;
           // Correction par niveau : la progression ralentit en montant (loi des rendements décroissants)
@@ -2691,7 +2759,7 @@
           const nxtP=ex.s.find(s=>s.p>cur.p);
           switch(z){
             case 'TROP_LOURD': return{z,col:'#F87171',icon:'⬇️',pri:'URGENT',title:'Descends le poids — hors zone hypertrophique',conseil:`${cur.r}r = zone force pure (min : ${mn}r). Descends le poids pour atteindre ${lo}-${hi}r.`,next:`Cible : ~${lo}r avec technique parfaite.`};
-            case 'BAS_OPT':    return{z,col:'#93C5FD',icon:'📈',pri:'NORMAL',title:'Augmente les reps en priorité',conseil:`${cur.r}/${hi}r cible. Progresse d\'abord en reps jusqu'à ${hi}. Consolider avant d'augmenter la charge.`,next:`Objectif : ${hi}r à ${cur.p}kg.`};
+            case 'BAS_OPT':    return{z,col:'#93C5FD',icon:'📈',pri:'NORMAL',title:'Augmente les reps en priorité',conseil:`${cur.r}/${hi}r cible. Progresse d'abord en reps jusqu'à ${hi}. Consolider avant d'augmenter la charge.`,next:`Objectif : ${hi}r à ${cur.p}kg.`};
             case 'OPTIMAL':    return{z,col:'#6EE7B7',icon:'✅',pri:'GOOD',title:'Dans la zone optimale — continue',conseil:ex.fiberNote,next:cur.r<hi?`${hi-cur.r}r à gagner avant de monter le poids.`:nxtP?`Signal : passe à ${nxtP.p}kg.`:'Vibranium sur cet exercice !'};
             case 'HAUT_OPT':   return{z,col:'#FCD34D',icon:'⬆️',pri:'ACTION',title:'Monte le poids maintenant',conseil:ex.adviceHigh,next:nxtP?`Passe à ${nxtP.p}kg et reviens à ~${lo}r.`:'Prévoir changement de matériel.'};
             case 'TROP_LEGER': return{z,col:'#F87171',icon:'🔴',pri:'URGENT',title:'Trop de reps — monte le poids',conseil:`${cur.r}r > plafond (${mx}r). Endurance, plus hypertrophie. Monte le poids.`,next:nxtP?`Passe à ${nxtP.p}kg × ${lo}r.`:'Prévoir changement de matériel.'};
@@ -2699,30 +2767,56 @@
         }
 
         // Détection alertes
-        // realPerfs = perfs qui viennent vraiment de l'historique Drive (pas du fallback DEMO)
         function lgDetectAlerts(perfs, realPerfsKeys) {
           const alerts = [];
           const hasRealData = realPerfsKeys && realPerfsKeys.length > 0;
+
+          // Stagnation : même poids×reps sur les 4 dernières occurrences d'un exercice
+          if (workoutHistory && workoutHistory.length >= 4) {
+            Object.entries(LG_EX).forEach(([id, ex]) => {
+              const exOccurrences = [];
+              workoutHistory.forEach(h => {
+                (h.exercises||[]).forEach(sess_ex => {
+                  if (lgMapName(sess_ex.name) === id) {
+                    const wm = (sess_ex.finalWeightDescription||sess_ex.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i);
+                    const w = wm ? parseFloat(wm[1]) : 0;
+                    const r = sess_ex.finalReps || sess_ex.reps_target || 0;
+                    if (w > 0 && r > 0) exOccurrences.push({w, r});
+                  }
+                });
+              });
+              if (exOccurrences.length >= 4) {
+                const last4 = exOccurrences.slice(-4);
+                const allSame = last4.every(o => o.w === last4[0].w && o.r === last4[0].r);
+                if (allSame) {
+                  alerts.push({
+                    icon:'🔄', col:'#FCD34D',
+                    title:`Stagnation : ${ex.name}`,
+                    body:`${last4[0].w}kg × ${last4[0].r}r identique sur les 4 dernières séances. Signal de plateau : si tu es dans la zone optimale (${ex.repsOpt[1]}-${ex.repsOpt[2]}r), c'est le moment de monter le poids.`
+                  });
+                }
+              }
+            });
+          }
+
           Object.entries(perfs).forEach(([id,cur]) => {
             const ex=LG_EX[id]; if(!ex) return;
-            // N'alerter que si cet exercice a de vraies données Drive
             if (hasRealData && !realPerfsKeys.includes(id)) return;
             const [mn,,hi,mx]=ex.repsOpt;
             if(cur.r < mn) alerts.push({
               icon:'⚡', col:'#F87171',
               title:`Zone force pure : ${ex.name}`,
-              body:`${cur.r} reps < minimum (${mn}r) pour ce muscle. Tu développes la force, pas la masse. Descends le poids pour viser ${lo}-${hi}r.`
+              body:`${cur.r}r < minimum (${mn}r). Descends le poids pour rester en hypertrophie (${mn}-${hi}r).`
             });
             if(cur.r > mx) alerts.push({
               icon:'📉', col:'#93C5FD',
               title:`Trop de reps : ${ex.name}`,
-              body:`${cur.r} reps dépasse le plafond (${mx}r). Fatigue métabolique > tension mécanique = pas d'hypertrophie. Monte le poids, reviens à ~${hi}r.`
+              body:`${cur.r}r > plafond (${mx}r). Endurance > hypertrophie. Monte le poids, reviens à ~${hi}r.`
             });
-            // Plafond matériel : seulement si on est vraiment proche ET qu'on a des données réelles
             if(hasRealData && cur.p >= ex.s[4].p * 0.85) alerts.push({
               icon:'🔧', col:'#FCD34D',
-              title:`Approche du plafond matériel : ${ex.name}`,
-              body:`${cur.p}kg = ${Math.round(cur.p/ex.s[4].p*100)}% du maximum élastique/sac (${ex.s[4].p}kg). Dans quelques progressions tu atteindras la limite. Anticiper : haltères ajustables ou abonnement salle.`
+              title:`Plafond matériel proche : ${ex.name}`,
+              body:`${cur.p}kg = ${Math.round(cur.p/ex.s[4].p*100)}% du max (${ex.s[4].p}kg). Anticiper : haltères ajustables ou salle.`
             });
           });
           return alerts;
@@ -2865,6 +2959,10 @@
           dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${tier.ca};box-shadow:0 0 8px ${tier.glow};flex-shrink:0`;
           text.style.color = tier.ca;
           text.textContent = `${tier.n} · ${pct}%`;
+          const nextTierForTooltip = LG_TIERS[lgGetTierIdx(gs) + 1];
+          const speed4tooltip = lgComputeRealSpeed();
+          const wks4tooltip = nextTierForTooltip ? Math.ceil((nextTierForTooltip.r[0] - gs) / speed4tooltip) : null;
+          pill.title = tier.n + ' · Score ' + gs.toFixed(1) + '%' + (nextTierForTooltip && wks4tooltip ? ' · ~' + wks4tooltip + ' sem. vers ' + nextTierForTooltip.n : '');
           pill.onclick = () => leagueShowTab('ligues');
 
           if (alerts.length > 0) {
@@ -3513,12 +3611,38 @@
         // SECTION 8: GESTION DE SESSION ET SAUVEGARDE
         // =================================================================================
 
+        // ── Offline save queue ───────────────────────────────────────
+        const SAVE_QUEUE_KEY = 'armorworkout_save_queue';
+        function enqueueFailedSave(type) {
+            try {
+                const q = JSON.parse(localStorage.getItem(SAVE_QUEUE_KEY)||'[]');
+                if (!q.includes(type)) { q.push(type); localStorage.setItem(SAVE_QUEUE_KEY, JSON.stringify(q)); }
+            } catch(e) {}
+        }
+        async function flushSaveQueue() {
+            if (!googleAccessToken) return;
+            try {
+                const q = JSON.parse(localStorage.getItem(SAVE_QUEUE_KEY)||'[]');
+                if (q.length === 0) return;
+                let remaining = [];
+                for (const type of q) {
+                    const ok = type === 'program' ? await saveFullProgramToDrive(0) : await saveHistoryToDrive(0);
+                    if (!ok) remaining.push(type);
+                }
+                localStorage.setItem(SAVE_QUEUE_KEY, JSON.stringify(remaining));
+                if (remaining.length === 0 && q.length > 0) showMessage('Sauvegardes en attente envoyées vers Drive.', 2500);
+            } catch(e) {}
+        }
+        // Flush queue when coming back online
+        window.addEventListener('online', () => setTimeout(flushSaveQueue, 1000));
+
         async function saveFullProgramToDrive(retries=2) {
             if(!googleAccessToken || !loadedFullProgram) return false;
             if(!programFileId) programFileId = await findOrCreateFile(FULL_PROGRAM_FILENAME, '{}', 'application/json', true);
             if(!programFileId) { showMessage('Sauvegarde programme impossible.', 4000, true); return false; }
             const ok = await updateFileContent(programFileId, loadedFullProgram, FULL_PROGRAM_FILENAME);
             if(!ok && retries > 0) { await new Promise(r=>setTimeout(r,1200)); return saveFullProgramToDrive(retries-1); }
+            if(!ok) enqueueFailedSave('program');
             return !!ok;
         }
         async function saveHistoryToDrive(retries=2) {
@@ -3527,9 +3651,11 @@
             if(!historyFileId) { showMessage("Sauvegarde historique impossible.", 4000, true); return false; }
             const ok = await updateFileContent(historyFileId, workoutHistory, HISTORY_FILENAME);
             if(!ok && retries > 0) { await new Promise(r=>setTimeout(r,1200)); return saveHistoryToDrive(retries-1); }
+            if(!ok) enqueueFailedSave('history');
             return !!ok;
         }
 
+        let _lastSaveProgressOk = true;
         function saveInProgressState() {
             if (!isWorkoutActive || currentState === 'finished') { clearInProgressState(); return; }
             const stateToSave = {
@@ -3930,7 +4056,10 @@
                     finishSummaryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 2/2 Historique...';
                     const hist_ok = await saveHistoryToDrive();
                     if (!hist_ok) { showMessage('⚠️ Historique non sauvegardé. Reconnectez-vous SVP.', 7000, true); saveOk = false; }
-                    // Recalculate league speed after new session saved
+                    // Re-extract perfs from updated in-memory workoutHistory (not Drive)
+                    lgCurrentPerfs = lgExtractLatestPerfs();
+                    const _gs = lgComputeAll(lgCurrentPerfs).global;
+                    lgCurrentGs = _gs;
                     updateLeagueBadge();
                 }
             } catch(saveErr) {
@@ -4218,6 +4347,12 @@
                     renderStatsWeeklyChart();
                     renderStatsScoreChart();
                     const sel = document.getElementById('hist-exo-select');
+                    // Auto-select if coming from home exercise click
+                    if (sel && window._homeExoClick) {
+                        sel.value = window._homeExoClick;
+                        window._homeExoClick = null;
+                        setTimeout(() => sel.dispatchEvent(new Event('change')), 50);
+                    }
                     if (sel) sel.addEventListener('change', function() {
                         const id = this.value;
                         const chartArea = document.getElementById('hist-exo-chart-area');
@@ -4257,7 +4392,10 @@
                             },
                             options: {
                                 responsive:true, maintainAspectRatio:false,
-                                plugins:{ legend:{ labels:{ color:'rgba(255,255,255,.6)', font:{size:11} } } },
+                                plugins:{
+                                    legend:{ labels:{ color:'rgba(255,255,255,.6)', font:{size:11} } },
+                                    tooltip:{ callbacks:{ label: ctx => ctx.dataset.label + ': ' + ctx.raw + (ctx.dataset.label.includes('Poids')?'kg':'r') } }
+                                },
                                 scales:{
                                     y:{ position:'left', grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'rgba(255,255,255,.5)', font:{size:10}} },
                                     y2:{ position:'right', grid:{drawOnChartArea:false}, ticks:{color:'#A78BFA', font:{size:10}} },
@@ -4272,7 +4410,7 @@
                 var sessionOpts = '';
                 if (loadedFullProgram && loadedFullProgram.sessions) {
                     loadedFullProgram.sessions.forEach(function(s) {
-                        sessionOpts += '<option value="' + s.nom_session.replace(/"/g, '&quot;') + '">' + s.nom_session + '</option>';
+                        var sn = s.nom_session; sessionOpts += '<option value="' + sn + '">' + sn + '</option>';
                     });
                 }
                 const explorerDiv = document.createElement('div');
@@ -4439,6 +4577,25 @@
             const nextMonthBtn = e.target.closest('.next-month');
             const deleteCalendarBtn = e.target.closest('.delete-workout-btn');
             const deleteRecentBtn = e.target.closest('.delete-recent-workout-btn');
+            const exoClickEl = e.target.closest('[data-exo-click]');
+            const launchBtn = e.target.closest('[data-launch-session]');
+
+            if (launchBtn) {
+                e.stopPropagation();
+                const sessionToLaunch = launchBtn.dataset.launchSession;
+                if (sessionToLaunch) loadSession(sessionToLaunch);
+                return;
+            }
+
+            if (exoClickEl) {
+                e.stopPropagation();
+                window._homeExoClick = exoClickEl.dataset.exoClick;
+                showSection('stats-section');
+                if (statsBtn) statsBtn.classList.add('active');
+                renderStatsSection();
+                setTimeout(() => statsSetTab('history'), 50);
+                return;
+            }
 
             if (deleteCalendarBtn) {
                 e.stopPropagation();
