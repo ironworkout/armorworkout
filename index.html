@@ -2128,8 +2128,9 @@
                     let thisVol = 0, lastVol = 0;
                     thisWeek.forEach(h => (h.exercises||[]).forEach(ex => { thisVol += calculatePerformanceScore(ex)||0; }));
                     lastWeek.forEach(h => (h.exercises||[]).forEach(ex => { lastVol += calculatePerformanceScore(ex)||0; }));
-                    const volDiff = lastVol > 0 ? Math.round((thisVol - lastVol) / lastVol * 100) : null;
-                    const col = volDiff > 5 ? '#6EE7B7' : volDiff < -5 ? '#F87171' : '#FCD34D';
+                    // Ne montrer le diff de volume que si la semaine courante a au moins 1 séance
+                    const volDiff = (lastVol > 0 && thisWeek.length > 0) ? Math.round((thisVol - lastVol) / lastVol * 100) : null;
+                    const col = volDiff === null ? '#A0AEC0' : volDiff > 5 ? '#6EE7B7' : volDiff < -5 ? '#F87171' : '#FCD34D';
                     weekCompareHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
                         '<div style="padding:7px 10px;background:' + tier.ca + '15;border-radius:8px;border:0.5px solid ' + tier.ca + '40;text-align:center">' +
                             '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:2px">Cette semaine</div>' +
@@ -2142,7 +2143,7 @@
                             '<div style="font-size:9px;color:rgba(255,255,255,.3)">séance' + (lastWeek.length!==1?'s':'') + '</div>' +
                         '</div>' +
                     '</div>' +
-                    (volDiff !== null ? '<div style="text-align:center;font-size:11px;color:' + col + ';margin-bottom:10px;font-weight:500">' + (volDiff > 0 ? '+' : '') + volDiff + '% de volume vs semaine précédente</div>' : '');
+                    (volDiff !== null ? '<div style="text-align:center;font-size:11px;color:' + col + ';margin-bottom:10px;font-weight:500">' + (volDiff > 0 ? '+' : '') + volDiff + '% volume vs sem. précédente</div>' : '<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.25);margin-bottom:10px">Première séance à venir cette semaine</div>');
                 }
             }
 
@@ -2199,7 +2200,7 @@
                     '</div>' +
                     '<div style="text-align:right;flex-shrink:0">' +
                         '<div style="font-size:13px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</div>' +
-                        '<div style="font-size:10px;color:rgba(255,255,255,.3)">' + pct + '%→' + (nextT2 ? nextT2.n : '!') + '</div>' +
+                        '<div style="font-size:10px;color:rgba(255,255,255,.3)">' + pct + '% dans ' + tier.n + '</div>' +
                     '</div>' +
                 '</div>' +
                 // Barre vers prochain palier
@@ -2210,20 +2211,16 @@
                 // Tendance lisible
                 weekCompareHtml +
                 trendLine +
-                // Stats rapides
-                '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">' +
-                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
-                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + workoutHistory.length + '</div>' +
-                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">séances</div>' +
+                // Stat rapide unique: séances + vitesse
+                '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+                    '<div style="flex:1;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:7px;display:flex;align-items:center;gap:6px">' +
+                        '<span style="font-size:14px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + workoutHistory.length + '</span>' +
+                        '<span style="font-size:9px;color:rgba(255,255,255,.35)">' + (workoutHistory.length > 1 ? 'séances' : 'séance') + '</span>' +
                     '</div>' +
-                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
-                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (daysSinceStart || '—') + (daysSinceStart ? 'j' : '') + '</div>' +
-                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">en route</div>' +
-                    '</div>' +
-                    '<div style="padding:6px 4px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">' +
-                        '<div style="font-size:15px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + (realSPW > 0 ? realSPW.toFixed(1) : '—') + '</div>' +
-                        '<div style="font-size:9px;color:rgba(255,255,255,.35)">x/semaine</div>' +
-                    '</div>' +
+                    (realSPW > 0 ? '<div style="flex:1;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:7px;display:flex;align-items:center;gap:6px">' +
+                        '<span style="font-size:14px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + realSPW.toFixed(1) + '</span>' +
+                        '<span style="font-size:9px;color:rgba(255,255,255,.35)">/sem.</span>' +
+                    '</div>' : '') +
                 '</div>' +
                 '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">' +
                     '<div style="font-size:10px;color:' + tier.ca + ';opacity:.55;cursor:pointer" onclick="leagueShowTab(&apos;ligues&apos;)">Voir ma progression →</div>' +
@@ -2279,10 +2276,12 @@
                     const pWeight = Math.round(cur.p * 10) / 10;
                     const exDataAttr = exIdForClick ? ' data-exo-click="' + exIdForClick + '"' : '';
                     exStatusHtml +=
-                        '<div' + exDataAttr + ' style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;' + (exIdForClick ? 'cursor:pointer;' : '') + 'background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
-                            '<span style="font-size:12px">' + adv.icon + '</span>' +
-                            '<span style="font-size:11px;color:#E2E8F0;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cleanName + '</span>' +
-                            '<span style="font-size:11px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer);flex-shrink:0">' + pWeight + 'kg×' + cur.r + 'r</span>' +
+                        '<div' + exDataAttr + ' style="padding:6px 8px;border-radius:7px;' + (exIdForClick ? 'cursor:pointer;' : '') + 'background:rgba(255,255,255,.025);border:0.5px solid ' + (adv.pri==='URGENT'?'rgba(239,68,68,.3)':adv.pri==='ACTION'?'rgba(252,211,77,.25)':adv.pri==='GOOD'?'rgba(52,211,153,.2)':'rgba(255,255,255,.07)') + '">' +
+                            '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">' +
+                                '<span style="font-size:11px">' + adv.icon + '</span>' +
+                                '<span style="font-size:12px;font-weight:700;color:#22D3EE;font-family:var(--font-family-timer)">' + pWeight + 'kg×' + cur.r + 'r</span>' +
+                            '</div>' +
+                            '<div style="font-size:10px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + cleanName + '</div>' +
                         '</div>';
                 });
 
@@ -2771,28 +2770,32 @@
           const alerts = [];
           const hasRealData = realPerfsKeys && realPerfsKeys.length > 0;
 
-          // Stagnation : même poids×reps sur les 4 dernières occurrences d'un exercice
+          // Stagnation : même poids×reps sur les 4 dernières SÉANCES distinctes
+          // (on agrège par session pour éviter les faux positifs dus aux séries multiples)
           if (workoutHistory && workoutHistory.length >= 4) {
             Object.entries(LG_EX).forEach(([id, ex]) => {
-              const exOccurrences = [];
+              // 1 entrée par session : on prend la dernière série (poids le plus élevé)
+              const perSession = [];
               workoutHistory.forEach(h => {
+                let bestW = 0, bestR = 0;
                 (h.exercises||[]).forEach(sess_ex => {
                   if (lgMapName(sess_ex.name) === id) {
                     const wm = (sess_ex.finalWeightDescription||sess_ex.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i);
                     const w = wm ? parseFloat(wm[1]) : 0;
                     const r = sess_ex.finalReps || sess_ex.reps_target || 0;
-                    if (w > 0 && r > 0) exOccurrences.push({w, r});
+                    if (w > 0 && r > 0 && w >= bestW) { bestW = w; bestR = r; }
                   }
                 });
+                if (bestW > 0 && bestR > 0) perSession.push({date: h.date, w: bestW, r: bestR});
               });
-              if (exOccurrences.length >= 4) {
-                const last4 = exOccurrences.slice(-4);
+              if (perSession.length >= 4) {
+                const last4 = perSession.slice(-4);
                 const allSame = last4.every(o => o.w === last4[0].w && o.r === last4[0].r);
                 if (allSame) {
                   alerts.push({
                     icon:'🔄', col:'#FCD34D',
                     title:`Stagnation : ${ex.name}`,
-                    body:`${last4[0].w}kg × ${last4[0].r}r identique sur les 4 dernières séances. Signal de plateau : si tu es dans la zone optimale (${ex.repsOpt[1]}-${ex.repsOpt[2]}r), c'est le moment de monter le poids.`
+                    body:`${last4[0].w}kg × ${last4[0].r}r identique sur les 4 dernières séances. Si tu es dans la zone optimale (${ex.repsOpt[1]}-${ex.repsOpt[2]}r), c'est le moment de monter le poids.`
                   });
                 }
               }
@@ -2819,7 +2822,15 @@
               body:`${cur.p}kg = ${Math.round(cur.p/ex.s[4].p*100)}% du max (${ex.s[4].p}kg). Anticiper : haltères ajustables ou salle.`
             });
           });
-          return alerts;
+          // Trier : URGENT d'abord, puis ACTION, puis stagnation
+          // Limiter à 3 alertes max affichées (les plus importantes)
+          const priorityOrder = {'URGENT': 0, 'ACTION': 1, 'stagnation': 2, 'default': 3};
+          alerts.sort((a, b) => {
+            const pa = a.icon === '🔄' ? 2 : (a.col === '#F87171' ? 0 : 1);
+            const pb = b.icon === '🔄' ? 2 : (b.col === '#F87171' ? 0 : 1);
+            return pa - pb;
+          });
+          return alerts.slice(0, 5); // cap at 5 max
         }
 
         // Badge SVG hexagonal électrique
@@ -2958,11 +2969,11 @@
           pill.style.cssText = `display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid ${tier.ca};background:${tier.cb}70;box-shadow:0 0 12px ${tier.glow}50;font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap;transition:border-color .6s,background .6s,box-shadow .6s`;
           dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${tier.ca};box-shadow:0 0 8px ${tier.glow};flex-shrink:0`;
           text.style.color = tier.ca;
-          text.textContent = `${tier.n} · ${pct}%`;
+          text.textContent = `${tier.n} · ${gs.toFixed(1)}%`; // global score, not within-tier %
           const nextTierForTooltip = LG_TIERS[lgGetTierIdx(gs) + 1];
           const speed4tooltip = lgComputeRealSpeed();
           const wks4tooltip = nextTierForTooltip ? Math.ceil((nextTierForTooltip.r[0] - gs) / speed4tooltip) : null;
-          pill.title = tier.n + ' · Score ' + gs.toFixed(1) + '%' + (nextTierForTooltip && wks4tooltip ? ' · ~' + wks4tooltip + ' sem. vers ' + nextTierForTooltip.n : '');
+          pill.title = tier.n + ' · Score global ' + gs.toFixed(1) + '%' + (nextTierForTooltip && wks4tooltip ? ' · ~' + wks4tooltip + ' sem. vers ' + nextTierForTooltip.n : '');
           pill.onclick = () => leagueShowTab('ligues');
 
           if (alerts.length > 0) {
@@ -3337,12 +3348,15 @@
           if (!alerts.length) {
             return `<div class="stats-chart-card" style="text-align:center;padding:40px 20px">
               <div style="font-size:48px;margin-bottom:12px">&#x2705;</div>
-              <div style="font-size:16px;font-weight:600;color:#6EE7B7;margin-bottom:6px">Tout est optimal</div>
-              <div style="font-size:12px;color:rgba(255,255,255,.4)">Aucune alerte active. Continue à progresser !</div>
+              <div style="font-size:16px;font-weight:600;color:#6EE7B7;margin-bottom:6px">Tout est optimal !</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.4)">Aucune alerte. Continue à progresser !</div>
             </div>`;
           }
-          let h = `<div style="margin-bottom:14px;font-size:12px;color:rgba(255,255,255,.5)">${alerts.length} point${alerts.length>1?'s':''} à corriger pour maximiser ta progression.</div>`;
-          alerts.forEach(a => {
+          // Montrer max 3 alertes, les + importantes en premier (déjà triées)
+          const visibleAlerts = alerts.slice(0, 3);
+          const hiddenCount = alerts.length - visibleAlerts.length;
+          let h = `<div style="margin-bottom:14px;font-size:12px;color:rgba(255,255,255,.5)">${alerts.length} point${alerts.length>1?'s':''} — priorité : ${visibleAlerts[0].title.split(':')[0]}</div>`;
+          visibleAlerts.forEach(a => {
             h += `<div style="padding:16px;border-radius:14px;background:${a.col}0D;border:1.5px solid ${a.col}45;margin-bottom:12px">`;
             h += `<div style="display:flex;gap:12px;align-items:flex-start">`;
             h += `<span style="font-size:24px;flex-shrink:0">${a.icon}</span>`;
@@ -3351,6 +3365,14 @@
             h += `<div style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">${a.body}</div>`;
             h += `</div></div></div>`;
           });
+          if (hiddenCount > 0) {
+            h += `<div style="text-align:center;margin-bottom:14px"><button onclick="this.parentElement.querySelector('.hidden-alerts').style.display='block';this.style.display='none'" style="background:rgba(255,255,255,.07);border:0.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:6px 14px;border-radius:10px;font-size:11px;cursor:pointer">+ ${hiddenCount} alerte${hiddenCount>1?'s':''} supplémentaire${hiddenCount>1?'s':''}</button></div>`;
+            h += `<div class="hidden-alerts" style="display:none">`;
+            alerts.slice(3).forEach(a => {
+              h += '<div style="padding:16px;border-radius:14px;background:' + a.col + '0D;border:1.5px solid ' + a.col + '45;margin-bottom:12px"><div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:24px;flex-shrink:0">' + a.icon + '</span><div><div style="font-size:14px;font-weight:700;color:' + a.col + ';margin-bottom:6px">' + a.title + '</div><div style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">' + a.body + '</div></div></div></div>';
+            });
+            h += '</div>';
+          }
           h += `<div class="stats-chart-card" style="opacity:.6;margin-top:6px"><div style="font-size:10px;font-weight:500;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Alertes actives</div>`;
           [['&#x26A1;','Reps < minimum (force pure)','Actif'],['&#x1F4C9;','Reps > maximum (endurance)','Actif'],['&#x1F527;','Plafond matériel > 82%','Actif'],['&#x1F504;','Stagnation > 8 semaines','Actif (Drive)'],['&#x1F3C6;','Personal Record','Actif (Drive)']].forEach(([ic,t,s]) => {
             const isDrive = s.includes('Drive');
@@ -4260,8 +4282,8 @@
             tabsDiv.id = 'stats-main-tabs';
             tabsDiv.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px';
             const tabDefs = [
-                ['ligue', '&#9889; Ma Ligue'],
-                ['conseiller', '&#127919; Conseiller'],
+                ['ligue', '&#9889; Ligue'],
+                ['conseiller', '&#127919; Conseil'],
                 ['history', '&#128202; Historique'],
                 ['explorer', '&#128269; Explorer']
             ];
@@ -4714,4 +4736,4 @@
 
     </script>
 </body>
-    </html>
+              h += '<div style="padding:16px;border-radius:14px;background:' + a.col + '0D;border:1.5px solid ' + a.col + '45;margin-bottom:12px"><div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:24px;flex-shrink:0">' + a.icon + '</span><div><div style="font-size:14px;font-weight:700;color:' + a.col + ';margin-bottom:6px">' + a.title + '</div><div style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">' + a.body + '</div></div></div></div>';
