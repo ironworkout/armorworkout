@@ -650,24 +650,72 @@
         /* ================================================================
            FEATURE 5 : PROCHAINS EXERCICES PENDANT LE BREAK
         ================================================================ */
-        .upcoming-exercises-list {
-            list-style: none; margin-top: 10px;
-            display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 95%;
+        /* Upcoming exercises: notification-style cards */
+        .upcoming-break-panel {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 50;
+            max-width: 220px;
+            pointer-events: none;
         }
-        .upcoming-exercise-item {
-            display: flex; align-items: center; gap: 10px;
-            background: rgba(var(--electric-blue-rgb), 0.06);
-            border: 1px solid rgba(var(--electric-blue-rgb), 0.2);
-            border-radius: var(--border-radius-sm); padding: 7px 12px;
-            font-size: 0.82em; color: var(--secondary-text-color);
-            animation: fadeIn 0.3s ease;
+        @media (max-width: 768px) {
+            .upcoming-break-panel {
+                position: static;
+                transform: none;
+                max-width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-top: 12px;
+            }
         }
-        .upcoming-exercise-item .upcoming-idx {
-            font-family: var(--font-family-timer); font-size: 0.8em;
-            color: var(--electric-cyan); min-width: 18px; text-align: center; opacity: 0.8;
+        .upcoming-notif {
+            background: rgba(11,19,43,0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 10px 14px;
+            border: 1px solid rgba(var(--electric-blue-rgb), 0.25);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            animation: notifSlideIn 0.3s cubic-bezier(.22,1,.36,1) both;
+            pointer-events: auto;
         }
-        .upcoming-exercise-item .upcoming-name { flex: 1; font-weight: 500; color: var(--primary-text-color); }
-        .upcoming-exercise-item .upcoming-meta { font-size: 0.8em; opacity: 0.7; white-space: nowrap; }
+        .upcoming-notif.next-up {
+            border-color: var(--color-break);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(var(--electric-cyan-rgb),0.15);
+        }
+        .upcoming-notif .notif-label {
+            font-size: 9px; text-transform: uppercase; letter-spacing: .08em;
+            color: var(--color-break); margin-bottom: 5px; font-weight: 600;
+        }
+        .upcoming-notif .notif-name {
+            font-size: 12px; font-weight: 600; color: var(--primary-text-color);
+            margin-bottom: 4px; line-height: 1.3;
+        }
+        .upcoming-notif .notif-meta {
+            font-size: 11px; color: rgba(255,255,255,.5);
+            font-family: var(--font-family-timer);
+        }
+        .upcoming-notif .notif-idx {
+            font-size: 9px; color: rgba(255,255,255,.25); margin-top: 3px;
+        }
+        @keyframes notifSlideIn {
+            from { opacity:0; transform: translateX(20px); }
+            to   { opacity:1; transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            @keyframes notifSlideIn {
+                from { opacity:0; transform: translateY(10px); }
+                to   { opacity:1; transform: translateY(0); }
+            }
+        }
+        /* Legacy — keep for non-break states */
+        .upcoming-exercises-list { list-style:none; display:none; }
+        .upcoming-exercise-item { display:none; }
 
         /* ================================================================
            FEATURE 8 : PAGE STATS
@@ -961,12 +1009,13 @@
             </nav>
             <div class="header-actions">
                 <!-- BADGE LIGUE -->
-                <div id="league-badge-pill" style="display:none;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid #FFD740;background:rgba(58,32,8,.7);box-shadow:0 0 12px rgba(255,215,0,.3);font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap" onclick="leagueShowTab(&apos;ligues&apos;)" title="Ta progression de ligue">
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><div id="league-badge-pill" style="display:none;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;cursor:pointer;border:1.5px solid #FFD740;background:rgba(58,32,8,.7);box-shadow:0 0 12px rgba(255,215,0,.3);font-family:'Orbitron',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap" onclick="leagueShowTab(&apos;ligues&apos;)" title="Ta progression de ligue">
                     <div id="league-badge-dot" style="width:8px;height:8px;border-radius:50%;background:#FFD740;box-shadow:0 0 8px #FFE880;flex-shrink:0"></div>
                     <span id="league-badge-text" style="color:#FFD740">—</span>
                     <span id="league-badge-alert-count" style="display:none;background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px"></span>
                 </div>
-                <div id="drive-status" style="display: none;"> 
+                <div id="league-badge-subinfo" style="font-size:10px;color:rgba(255,255,255,.45);text-align:right;margin-top:2px;white-space:nowrap;display:none"></div>
+                </div>"drive-status" style="display: none;"> 
                     <span id="drive-status-text">Connecté</span>
                 </div>
                 <button id="signin-button" disabled><i class="fab fa-google"></i> Se connecter à Drive</button>
@@ -1710,6 +1759,9 @@
 
         function handleItemCompletion() {
             if (currentState === 'finished') return;
+            // Clean up floating break panel when moving away from break
+            const bp = document.getElementById('upcoming-break-panel');
+            if (bp) bp.remove();
             const item = currentWorkoutPlan[currentItemIndex];
 
             // Live PR check: compare current exercise perf to history
@@ -3017,6 +3069,19 @@
           const wks4tooltip = nextTierForTooltip ? Math.ceil((nextTierForTooltip.r[0] - gs) / speed4tooltip) : null;
           pill.title = tier.n + ' · Score global ' + gs.toFixed(1) + '%' + (nextTierForTooltip && wks4tooltip ? ' · ~' + wks4tooltip + ' sem. vers ' + nextTierForTooltip.n : '');
           pill.onclick = () => leagueShowTab('ligues');
+          // Afficher les infos en permanence sous le badge
+          let subInfo = document.getElementById('league-badge-subinfo');
+          if (!subInfo) {
+            subInfo = document.createElement('div');
+            subInfo.id = 'league-badge-subinfo';
+            subInfo.style.cssText = 'font-size:10px;color:rgba(255,255,255,.45);text-align:right;margin-top:2px;white-space:nowrap;line-height:1.3;display:none';
+            pill.parentElement && pill.parentElement.insertAdjacentElement('afterend', subInfo) || pill.insertAdjacentElement('afterend', subInfo);
+            // Only show on non-mobile (≥600px)
+            const mq = window.matchMedia('(min-width:600px)');
+            const toggleSub = () => { subInfo.style.display = mq.matches ? 'block' : 'none'; };
+            mq.addEventListener('change', toggleSub); toggleSub();
+          }
+          subInfo.innerHTML = gs.toFixed(1) + '% global' + (nextTierForTooltip && wks4tooltip ? ' &nbsp;·&nbsp; <span style="color:' + tier.ca + '">~' + wks4tooltip + ' sem. → ' + nextTierForTooltip.n + '</span>' : '');
 
           if (alerts.length > 0) {
             alertCount.style.display = 'inline';
@@ -3634,29 +3699,64 @@
             
             if (workoutHistory.length === 0) return container;
 
-            container.innerHTML = `<h4><i class="fas fa-history"></i> Historique Récent</h4>`;
+            // ── Mini sparkline de progression globale ──────────────
+            const sparkCanvas = document.createElement('canvas');
+            sparkCanvas.id = 'sidebar-sparkline';
+            sparkCanvas.style.cssText = 'width:100%;height:60px;margin-bottom:10px;margin-top:4px';
+            container.appendChild(sparkCanvas);
+
+            // Build sparkline data: cumulative score per session
+            const sparkData = workoutHistory.slice(-10).map(h => {
+                return (h.exercises||[]).reduce((acc,ex) => acc + (calculatePerformanceScore(ex)||0), 0);
+            });
+            const sparkLabels = workoutHistory.slice(-10).map(h => h.date.slice(5));
+
+            setTimeout(() => {
+                destroyChart('sidebar-sparkline');
+                const ctx = sparkCanvas.getContext('2d');
+                const tier = lgGetTier(lgCurrentGs);
+                const col = tier ? tier.ca : '#22D3EE';
+                // Gradient fill
+                const grad = ctx.createLinearGradient(0, 0, 0, 60);
+                grad.addColorStop(0, col + '40');
+                grad.addColorStop(1, 'transparent');
+                activeCharts['sidebar-sparkline'] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sparkLabels,
+                        datasets: [{ data: sparkData, borderColor: col, backgroundColor: grad,
+                            fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }]
+                    },
+                    options: {
+                        responsive: false, maintainAspectRatio: false,
+                        animation: { duration: 600 },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                });
+            }, 0);
+
+            // ── Historique texte ───────────────────────────────────
+            container.innerHTML += '<h4 style="margin-bottom:10px"><i class="fas fa-history"></i> Historique Récent</h4>';
             const list = document.createElement('ul');
             list.className = 'recent-workouts-list';
 
             const recentWorkouts = workoutHistory.slice().reverse().slice(0, 5);
-
             recentWorkouts.forEach(workout => {
                 const li = document.createElement('li');
-                const date = new Date(workout.date + 'T00:00:00'); 
-                const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
-
+                const date = new Date(workout.date + 'T00:00:00');
+                const formattedDate = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                 li.innerHTML = `
                     <div class="workout-info-text">
-                        <span class="workout-name">${workout.type}</span>
+                        <span class="workout-name">${workout.type.replace(/^SÉANCE [A-Z] : /, '')}</span>
                         <span class="workout-date">${formattedDate}</span>
                     </div>
-                    <button class="delete-recent-workout-btn" data-date-iso="${workout.date}" title="Supprimer cette séance">
+                    <button class="delete-recent-workout-btn" data-date-iso="${workout.date}" title="Supprimer">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 `;
                 list.appendChild(li);
             });
-
             container.appendChild(list);
             return container;
         }
@@ -3989,7 +4089,7 @@
                 const weightVisible= ['poids','elastique','poids_elastique'].includes(parsedWeight.type);
                 const isPR         = isWorkoutMode && currentWorkoutPRs && currentWorkoutPRs.has(item.name);
 
-                // Delta vs séance précédente identique
+                // Delta vs séance précédente + tendance 3 séances
                 let deltaHtml = '';
                 if (workoutHistory.length >= 2) {
                     const prevSessions = workoutHistory.slice(0,-1).filter(h => h.type === sessionName);
@@ -4010,12 +4110,28 @@
                                 if (rDiff > 0) parts.push('<span style="color:#6EE7B7">+' + rDiff + ' rep</span>');
                                 else if (rDiff < 0) parts.push('<span style="color:#F87171">' + rDiff + ' rep</span>');
                                 if (parts.length > 0) {
-                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">vs séance précédente : ' + parts.join(' · ') + '</div>';
+                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">vs séance préc. : ' + parts.join(' · ') + '</div>';
                                 } else if (wDiff === 0 && rDiff === 0) {
-                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:6px">= même charge, pas de progression</div>';
+                                    deltaHtml = '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:4px">= même charge</div>';
                                 }
                             }
                         }
+                    }
+                    // Tendance 3 dernières séances pour cet exercice
+                    const last3sessions = prevSessions.slice(-3);
+                    const last3perfs = last3sessions.map(sess => {
+                        const ex3 = (sess.exercises||[]).find(e => e.name === item.name);
+                        if (!ex3) return null;
+                        const wm3 = (ex3.finalWeightDescription||ex3.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i);
+                        return { w: wm3 ? parseFloat(wm3[1]) : 0, r: ex3.finalReps || ex3.reps_target || 0 };
+                    }).filter(Boolean);
+                    if (last3perfs.length >= 2) {
+                        // Score de progression : compare premier vs dernier des 3
+                        const s0 = Math.pow(last3perfs[0].w||1, 1.05) * last3perfs[0].r;
+                        const sN = Math.pow(last3perfs[last3perfs.length-1].w||1, 1.05) * last3perfs[last3perfs.length-1].r;
+                        const trend = sN > s0 * 1.02 ? '↗ en progression' : sN < s0 * 0.98 ? '↘ en régression' : '→ stable';
+                        const trendCol = sN > s0 * 1.02 ? '#6EE7B7' : sN < s0 * 0.98 ? '#FCD34D' : 'rgba(255,255,255,.3)';
+                        deltaHtml += '<div style="font-size:10px;color:' + trendCol + ';margin-bottom:6px">Tendance 3 séances : ' + trend + '</div>';
                     }
                 }
                 // Conseil ligue pour cet exercice
@@ -4252,29 +4368,46 @@
                     upcomingItems.push({ item: it, idx: i });
                 }
             }
+
+            // Remove any existing panel
+            const existingPanel = document.getElementById('upcoming-break-panel');
+            if (existingPanel) existingPanel.remove();
+
             if (upcomingItems.length === 0) {
-                return `<div class="break-info" style="border-color: var(--color-break);"><i class="fas fa-coffee" style="color: var(--color-break)"></i><span>Dernière pause !</span></div>`;
+                return `<div class="break-info" style="border-color:var(--color-break);text-align:center;padding:12px 20px"><i class="fas fa-coffee" style="color:var(--color-break);font-size:1.3em;margin-bottom:6px;display:block"></i><span style="font-weight:600;color:var(--color-break)">Dernière pause !</span></div>`;
             }
-            const firstEx = upcomingItems[0];
-            const firstDynamicSets = getDynamicSetsInfo(firstEx.idx);
-            let html = createNextExercisePreviewHtml(firstEx.item, 'break', firstDynamicSets);
-            if (upcomingItems.length > 1) {
-                html += `<ul class="upcoming-exercises-list">`;
-                upcomingItems.slice(1).forEach((entry, i) => {
-                    const setsInfo = getDynamicSetsInfo(entry.idx);
-                    const reps = getFormattedReps(entry.item);
-                    const weight = getFormattedWeight(entry.item);
-                    const weightClean = weight.trim() !== '💪 Poids du Corps' ? weight.replace(/🏋️|🧘|💪|⚡️/g, '').trim() : '';
-                    const meta = [setsInfo, reps, weightClean].filter(Boolean).join(' · ');
-                    html += `<li class="upcoming-exercise-item">
-                        <span class="upcoming-idx">${i + 2}</span>
-                        <span class="upcoming-name">${entry.item.name}</span>
-                        <span class="upcoming-meta">${meta}</span>
-                    </li>`;
-                });
-                html += `</ul>`;
-            }
-            return html;
+
+            // Inject notification panel into body (fixed, right side on desktop)
+            const panel = document.createElement('div');
+            panel.id = 'upcoming-break-panel';
+            panel.className = 'upcoming-break-panel';
+
+            upcomingItems.forEach((entry, i) => {
+                const setsInfo = getDynamicSetsInfo(entry.idx);
+                const reps = getFormattedReps(entry.item);
+                const weight = getFormattedWeight(entry.item);
+                const weightClean = weight.trim() !== '💪 Poids du Corps' ? weight.replace(/🏋️|🧘|💪|⚡️/g, '').trim() : '';
+                const meta = [setsInfo, reps, weightClean].filter(Boolean).join(' · ');
+                const cleanName = entry.item.name.replace(/^(Superset [A-Z]: |FINISHER: )/, '');
+
+                const notif = document.createElement('div');
+                notif.className = 'upcoming-notif' + (i === 0 ? ' next-up' : '');
+                notif.style.animationDelay = (i * 80) + 'ms';
+                notif.innerHTML =
+                    '<div class="notif-label">' + (i === 0 ? '▶ À suivre' : 'Ensuite') + '</div>' +
+                    '<div class="notif-name">' + cleanName + '</div>' +
+                    '<div class="notif-meta">' + meta + '</div>';
+                panel.appendChild(notif);
+            });
+
+            document.body.appendChild(panel);
+
+            // Clean up panel when break ends
+            const cleanup = () => { panel.remove(); document.body.removeEventListener('statechange-cleanup', cleanup); };
+            setTimeout(() => { if (!document.getElementById('upcoming-break-panel')) return; }, 60000);
+
+            // Return minimal inline placeholder (panel is floating)
+            return `<div style="text-align:center;padding:8px 0;color:rgba(255,255,255,.3);font-size:11px"><i class="fas fa-arrow-right" style="margin-right:5px"></i>Prochains exercices →</div>`;
         }
 
         // ================================================================
