@@ -2130,7 +2130,16 @@
                     lastWeek.forEach(h => (h.exercises||[]).forEach(ex => { lastVol += calculatePerformanceScore(ex)||0; }));
                     // Ne montrer le diff de volume que si la semaine courante a au moins 1 séance
                     const volDiff = (lastVol > 0 && thisWeek.length > 0) ? Math.round((thisVol - lastVol) / lastVol * 100) : null;
-                    const col = volDiff === null ? '#A0AEC0' : volDiff > 5 ? '#6EE7B7' : volDiff < -5 ? '#F87171' : '#FCD34D';
+                    // Neutre si la semaine est encore en cours et qu'on n'a pas moins de sessions que la semaine d'avant
+                    // Rouge seulement si on a clairement MOINS de séances ET la semaine est terminée (dimanche)
+                    const weekDayNow = new Date().getDay(); // 0=dim, 1=lun...
+                    const weekAlmostDone = weekDayNow === 0 || weekDayNow >= 5; // ven/sam/dim
+                    const fewerSessions = thisWeek.length < lastWeek.length;
+                    const col = volDiff === null ? '#A0AEC0'
+                        : volDiff > 5 ? '#6EE7B7'
+                        : (volDiff < -10 && weekAlmostDone && fewerSessions) ? '#F87171'
+                        : volDiff < -5 ? '#FCD34D'
+                        : '#A0AEC0'; // neutral when partially through week
                     weekCompareHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
                         '<div style="padding:7px 10px;background:' + tier.ca + '15;border-radius:8px;border:0.5px solid ' + tier.ca + '40;text-align:center">' +
                             '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:2px">Cette semaine</div>' +
@@ -2143,7 +2152,10 @@
                             '<div style="font-size:9px;color:rgba(255,255,255,.3)">séance' + (lastWeek.length!==1?'s':'') + '</div>' +
                         '</div>' +
                     '</div>' +
-                    (volDiff !== null ? '<div style="text-align:center;font-size:11px;color:' + col + ';margin-bottom:10px;font-weight:500">' + (volDiff > 0 ? '+' : '') + volDiff + '% volume vs sem. précédente</div>' : '<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.25);margin-bottom:10px">Première séance à venir cette semaine</div>');
+                    (volDiff !== null
+                        ? '<div style="text-align:center;font-size:11px;color:' + col + ';margin-bottom:10px;font-weight:500">' +
+                          (volDiff > 0 ? '+' + volDiff + '% volume ↑' : volDiff === 0 ? '= volume stable' : volDiff + '% volume' + (weekAlmostDone ? ' ↓' : ' — semaine en cours')) + '</div>'
+                        : '<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px">Première séance à venir 💪</div>');
                 }
             }
 
@@ -2176,12 +2188,12 @@
                 });
                 if (total >= 2) {
                     const ratio = improved / total; // fraction d'exercices en progression
-                    const col  = ratio >= 0.5 ? '#6EE7B7' : ratio >= 0.25 ? '#FCD34D' : '#F87171';
-                    const icon = ratio >= 0.5 ? '&#x2197;' : ratio >= 0.25 ? '&#x2192;' : '&#x2198;';
+                    const col  = ratio >= 0.5 ? '#6EE7B7' : '#FCD34D'; // jamais rouge — tendance neutre si faible
+                    const icon = ratio >= 0.5 ? '&#x2197;' : '&#x2192;'; // jamais flèche vers le bas
                     const msg  = ratio >= 0.7 ? 'Tu progresses sur ' + improved + '/' + total + ' exercices 🔥' :
                                  ratio >= 0.5 ? 'Progression sur ' + improved + '/' + total + ' exercices' :
                                  ratio >= 0.25 ? improved + '/' + total + ' exercices progressent — maintiens le rythme' :
-                                                'Peu de progression récente — monte les charges ou les reps';
+                                                'Charges stables — prêt à progresser sur ' + total + ' exercices';
                     trendLine = '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:' + col + '10;border:1px solid ' + col + '30;margin-bottom:10px">' +
                         '<span style="font-size:16px;color:' + col + '">' + icon + '</span>' +
                         '<span style="font-size:11px;color:' + col + ';font-weight:500;flex:1">' + msg + '</span>' +
@@ -2200,7 +2212,7 @@
                     '</div>' +
                     '<div style="text-align:right;flex-shrink:0">' +
                         '<div style="font-size:13px;font-weight:700;color:' + tier.ca + ';font-family:var(--font-family-timer)">' + lgCurrentGs.toFixed(1) + '%</div>' +
-                        '<div style="font-size:10px;color:rgba(255,255,255,.3)">' + pct + '% dans ' + tier.n + '</div>' +
+                        '<div style="font-size:10px;color:rgba(255,255,255,.4)">+' + pct + '% vers ' + (nextT2 ? nextT2.n : 'max !') + '</div>' +
                     '</div>' +
                 '</div>' +
                 // Barre vers prochain palier
@@ -2582,8 +2594,8 @@
         const LG_EX = {
           dev_mil:   {name:"Dév. Militaire",      muscle:"epaules",       bag:false, repsOpt:[5,8,12,16],   fiberNote:"Deltoïde antérieur : 55% fibres rapides. Zone 8-12r.",  adviceHigh:"Fibres rapides — ne dépasse pas 15r. Monte le poids.",  adviceLow:"Trop lourd — passe à 8-12r.", s:[{p:10,r:8},{p:18,r:10},{p:25,r:10},{p:35,r:12},{p:45,r:12}]},
           elev_lat:  {name:"Élév. Lat.",           muscle:"epaules",       bag:true,  repsOpt:[10,15,25,35], fiberNote:"Deltoïde médial : ~60% fibres lentes. Zone 15-25r OPTIMALE.", adviceHigh:"Fibres lentes — monte le poids seulement au-delà de 25r.", adviceLow:"Trop lourd. Zone cible 15-25r.", s:[{p:3,r:12},{p:5,r:15},{p:7.5,r:18},{p:11,r:20},{p:15,r:25}]},
-          face_pull: {name:"Face Pulls",           muscle:"epaules",       bag:false, repsOpt:[12,15,25,35], fiberNote:"Deltoïde postérieur : ~65% fibres lentes. Zone 15-25r.", adviceHigh:"Continue jusqu'à 25r avant de monter le poids.", adviceLow:"Trop lourd. Zone 15-25r.", s:[{p:10,r:15},{p:18,r:18},{p:24,r:20},{p:32,r:22},{p:40,r:25}]},
-          elev_vol:  {name:"Élév. Volume",         muscle:"epaules",       bag:false, repsOpt:[15,20,30,40], fiberNote:"Congestion — fibres lentes. Zone 20-30r.", adviceHigh:"Au-delà de 30r c'est du cardio. Monte le poids.", adviceLow:"Séries longues 20-30r.", s:[{p:2,r:18},{p:4,r:22},{p:6,r:25},{p:9,r:28},{p:12,r:30}]},
+          face_pull: {name:"Face Pulls",           muscle:"epaules",       bag:false, pump:true, repsOpt:[12,15,25,35], fiberNote:"Deltoïde postérieur : ~65% fibres lentes. Zone 15-25r.", adviceHigh:"Continue jusqu'à 25r avant de monter le poids.", adviceLow:"Trop lourd. Zone 15-25r.", s:[{p:10,r:15},{p:18,r:18},{p:24,r:20},{p:32,r:22},{p:40,r:25}]},
+          elev_vol:  {name:"Élév. Volume",         muscle:"epaules",       bag:false, pump:true, repsOpt:[15,20,30,40], fiberNote:"Congestion — fibres lentes. Zone 20-30r.", adviceHigh:"Au-delà de 30r c'est du cardio. Monte le poids.", adviceLow:"Séries longues 20-30r.", s:[{p:2,r:18},{p:4,r:22},{p:6,r:25},{p:9,r:28},{p:12,r:30}]},
           tirage_v:  {name:"Tirage Vertical",      muscle:"dos_largeur",   bag:false, repsOpt:[6,8,15,20],   fiberNote:"Grand dorsal : 50/50 fibres. Zone 8-15r.", adviceHigh:"Ne dépasse pas 15r — monte le poids.", adviceLow:"Zone 8-15r.", s:[{p:10,r:8},{p:18,r:10},{p:25,r:12},{p:35,r:12},{p:45,r:12}]},
           rowing_sb: {name:"Rowing Swiss Ball",    muscle:"dos_epaisseur", bag:false, repsOpt:[8,10,16,22],  fiberNote:"Milieu dos : légèrement rapide. Zone 10-16r.", adviceHigh:"Au-delà de 16r, fatigue posturale. Monte le poids.", adviceLow:"Zone 10-16r.", s:[{p:12,r:10},{p:20,r:12},{p:28,r:14},{p:36,r:14},{p:42,r:16}]},
           pompes_sur:{name:"Pompes Pieds Surél.",  muscle:"pecs",          bag:true,  repsOpt:[5,6,12,16],   fiberNote:"Pecs supérieurs : ~60% fibres rapides. Zone 6-12r.", adviceHigh:"12r = plafond pecs. Monte le poids.", adviceLow:"Zone 6-12r.", s:[{p:3,r:8},{p:6,r:9},{p:11,r:10},{p:18,r:11},{p:26,r:12}]},
@@ -2648,15 +2660,32 @@
         function lgSc(p,r,id){ const ex=LG_EX[id]; return Math.pow(Math.max(0,p),1.05)*lgFReps(r,ex.repsOpt)*(ex.bag?LG_EASTPACK:1); }
                 function lgNorm(id, cur) {
           const ex = LG_EX[id]; if (!ex) return 0;
-          const [,lo,hi] = ex.repsOpt;
-          // Pour exercices élastique/bodyweight (p = valeur bronze) : score basé principalement sur les reps
+          const [mn, lo, hi, mx] = ex.repsOpt;
+
+          // ── PUMP exercises (elev_vol, face_pull) ──────────────
+          // Science (Schoenfeld 2010) : le stress métabolique produit l'hypertrophie
+          // via un mécanisme différent de la tension mécanique. Pour ces exercices,
+          // le poids absolu est secondaire — la position dans la fenêtre de reps
+          // optimale (20-30r) est le vrai indicateur de progression.
+          // Score = % de chemin parcouru entre le minimum (hors zone) et le max Vibranium.
+          if (ex.pump) {
+            // 0% = sous le minimum (< mn), 50% = milieu de zone optimale, 100% = vibranium
+            if (cur.r < mn) return Math.max(0, Math.round((cur.r / mn) * 25)); // en-dessous de la zone
+            const pctInRange = (cur.r - mn) / Math.max(1, ex.s[4].r - mn);
+            // Bonus poids : si on a progressé en poids on ajoute max 20 points
+            const wPct = (cur.p - ex.s[0].p) / Math.max(1, ex.s[4].p - ex.s[0].p);
+            const score = pctInRange * 80 + wPct * 20;
+            return Math.round(Math.min(100, Math.max(0, score)));
+          }
+
+          // ── Elastique/bodyweight (p ≈ valeur bronze) ──────────
           const isBronzeP = cur.p <= ex.s[0].p * 1.05;
           if (isBronzeP && !ex.bag) {
-            // Score purement basé sur position dans la fenêtre de reps
             const repsScore = Math.min(100, Math.max(0, (cur.r - ex.s[0].r) / Math.max(1, ex.s[4].r - ex.s[0].r) * 100));
             return Math.round(repsScore);
           }
-          // Score standard : poids^1.05 × reps_factor, normalisé sur le max Vibranium
+
+          // ── Score standard : poids^1.05 × reps_factor ─────────
           const sc = lgSc(cur.p, cur.r, id);
           const maxSc = lgSc(ex.s[4].p, ex.s[4].r, id);
           return Math.round(Math.min(100, sc / Math.max(1, maxSc) * 100));
@@ -2901,7 +2930,20 @@
         // Mise à jour du badge dans le header
         let lgCurrentPerfs = {};
         let lgCurrentGs = 0;
-        let lgAdvisorExo = 'elev_lat';
+        let lgAdvisorExo = 'elev_lat'; // will be overridden by lgPickBestAdvisor()
+        function lgPickBestAdvisor(perfs) {
+          // Trouve l'exercice le plus urgent : URGENT > stagnation > ACTION > NORMAL
+          const priorityMap = {'URGENT': 0, 'ACTION': 1, 'NORMAL': 2, 'GOOD': 3};
+          let bestId = 'elev_lat', bestPri = 99;
+          Object.entries(perfs).forEach(([id, cur]) => {
+            if (!LG_EX[id]) return;
+            const adv = lgGetAdvice(id, cur);
+            if (!adv) return;
+            const pri = priorityMap[adv.pri] ?? 99;
+            if (pri < bestPri) { bestPri = pri; bestId = id; }
+          });
+          return bestId;
+        }
         let lgActiveTab = 'profil';
 
         // ── Reactor theme from league ────────────────────────────
@@ -3081,16 +3123,36 @@
 
           // ── TIMELINE LIGUES ──────────────────────────────────────────
           // Calculer la date approximative d'atteinte de chaque palier passé
+          // Calcul RÉEL des dates de passage de palier session par session
           const tierDates = {};
           if (workoutHistory && workoutHistory.length > 0) {
             const sorted = workoutHistory.slice().sort((a,b) => new Date(a.date)-new Date(b.date));
-            // Reconstruire l'évolution du score dans le temps (approximation par session)
-            sorted.forEach((h2, si) => {
-              const fakePct = si / Math.max(1, sorted.length - 1);
-              const approxGs = gs * fakePct;
+            // Pour chaque session, recalculer les perfs cumulatives jusqu'à cette date
+            sorted.forEach((session) => {
+              // Perfs jusqu'à cette session (incluse)
+              const sessionDate = session.date;
+              const histUpToNow = sorted.filter(h => h.date <= sessionDate);
+              // Extraire les meilleures perfs connues jusqu'à cette date
+              const perfsAtDate = {};
+              histUpToNow.forEach(h => {
+                (h.exercises||[]).forEach(ex => {
+                  const id = lgMapName(ex.name);
+                  if (!id) return;
+                  const wm = (ex.finalWeightDescription||ex.weight_description_target||'').match(/(\d+[.,]?\d*)\s*kg/i);
+                  const w = wm ? parseFloat(wm[1]) : LG_EX[id]?.s[0]?.p || 0;
+                  const rv = ex.finalReps || ex.reps_target || LG_EX[id]?.s[0]?.r || 0;
+                  if (w > 0 && rv > 0) {
+                    if (!perfsAtDate[id] || lgSc(w,rv,id) > lgSc(perfsAtDate[id].p, perfsAtDate[id].r, id)) {
+                      perfsAtDate[id] = {p:w, r:rv};
+                    }
+                  }
+                });
+              });
+              if (Object.keys(perfsAtDate).length === 0) return;
+              const scoreAtDate = lgComputeAll(perfsAtDate).global;
               LG_TIERS.forEach((t, ti) => {
-                if (!tierDates[ti] && approxGs >= t.r[0]) {
-                  tierDates[ti] = h2.date;
+                if (!tierDates[ti] && scoreAtDate >= t.r[0]) {
+                  tierDates[ti] = sessionDate;
                 }
               });
             });
@@ -3462,6 +3524,12 @@
             
             // Compact streak + weekly progress (no doughnut)
             const streakColor = streak >= 8 ? '#FFD700' : streak >= 4 ? '#FFB74D' : '#A0AEC0';
+            // Label encourageant selon la progression de la semaine
+            const weekLabel = workoutsThisWeek === 0 ? 'Lance ta semaine ! 💪'
+                : workoutsThisWeek >= weeklyGoal ? 'Objectif semaine atteint ! 🎉'
+                : workoutsThisWeek + '/' + weeklyGoal + ' — continue !';
+            const weekLabelColor = workoutsThisWeek >= weeklyGoal ? '#6EE7B7' : 'rgba(255,255,255,.6)';
+
             module.innerHTML = `<h3 style="margin-bottom:12px"><i class="fas fa-calendar-check"></i> Calendrier</h3>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
                     <div style="display:flex;align-items:center;gap:8px">
@@ -3469,15 +3537,14 @@
                         <span style="font-size:13px;font-weight:700;color:${streakColor}">${streak} sem. cons.</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px">
-                        <span style="font-size:11px;color:rgba(255,255,255,.4)">Cette semaine :</span>
                         <div style="display:flex;gap:4px">
                             ${Array.from({length:weeklyGoal}).map((_,i) => 
-                                '<div style="width:16px;height:16px;border-radius:50%;background:' + 
+                                '<div style="width:14px;height:14px;border-radius:50%;background:' + 
                                 (i < workoutsThisWeek ? 'var(--electric-cyan)' : 'rgba(255,255,255,.1)') + 
                                 ';box-shadow:' + (i < workoutsThisWeek ? '0 0 6px var(--electric-cyan)' : 'none') + '"></div>'
                             ).join('')}
                         </div>
-                        <span style="font-size:11px;color:rgba(255,255,255,.4)">${workoutsThisWeek}/${weeklyGoal}</span>
+                        <span style="font-size:11px;color:${weekLabelColor};font-weight:500">${weekLabel}</span>
                     </div>
                 </div>
                 <div class="calendar-nav">
@@ -3491,6 +3558,15 @@
 
             const calendarGrid = module.querySelector('.monthly-calendar');
             const workoutDays = new Set(workoutHistory.map(h => h.date.split('T')[0]));
+            // Map date → couleur selon le type de séance (A=cyan, B=violet, etc.)
+            const sessionColors = {};
+            const sessionTypeList = loadedFullProgram && loadedFullProgram.sessions ? loadedFullProgram.sessions.map(s => s.nom_session) : [];
+            const dotPalette = ['#22D3EE','#A78BFA','#34D399','#F472B6','#FBBF24'];
+            workoutHistory.forEach(h => {
+                const dateKey = h.date.split('T')[0];
+                const typeIdx = sessionTypeList.indexOf(h.type);
+                sessionColors[dateKey] = dotPalette[Math.max(0, typeIdx) % dotPalette.length];
+            });
             
             const month = date.getMonth();
             const year = date.getFullYear();
@@ -3519,6 +3595,9 @@
                 if (workoutDays.has(dateString)) {
                     const dot = document.createElement('span');
                     dot.className = 'day-dot';
+                    const dotColor = sessionColors[dateString] || 'var(--electric-cyan)';
+                    dot.style.background = dotColor;
+                    dot.style.boxShadow = '0 0 6px ' + dotColor + ', 0 0 10px ' + dotColor + '80';
                     dayCell.appendChild(dot);
                     const deleteBtn = document.createElement('i');
                     deleteBtn.className = 'fas fa-trash-alt delete-workout-btn';
@@ -3529,6 +3608,20 @@
                 calendarGrid.appendChild(dayCell);
             }
 
+            // Legend: session type → color
+            if (sessionTypeList.length > 1) {
+                const legend = document.createElement('div');
+                legend.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;margin-bottom:4px';
+                sessionTypeList.forEach((name, i) => {
+                    const col = dotPalette[i % dotPalette.length];
+                    const shortName = name.replace(/^SÉANCE [A-Z] : /, '').slice(0, 18);
+                    const entry = document.createElement('div');
+                    entry.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,.5)';
+                    entry.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + col + ';box-shadow:0 0 4px ' + col + ';flex-shrink:0;display:inline-block"></span>' + shortName;
+                    legend.appendChild(entry);
+                });
+                module.appendChild(legend);
+            }
             const recentWorkoutsEl = renderRecentWorkoutsList();
             module.appendChild(recentWorkoutsEl);
 
@@ -4342,6 +4435,8 @@
 
             } else if (tab === 'conseiller') {
                 lgActiveTab = 'conseiller';
+                // Auto-select most urgent exercise on first open
+                lgAdvisorExo = lgPickBestAdvisor(lgCurrentPerfs);
                 const panel = document.createElement('div');
                 panel.id = 'league-stats-panel';
                 area.appendChild(panel);
@@ -4354,10 +4449,12 @@
                     '<div class="stats-charts-grid">' +
                     '<div class="stats-chart-card stats-full-width">' +
                     '<h4 style="margin-bottom:12px"><i class="fas fa-dumbbell"></i> Évolution poids & reps par exercice</h4>' +
-                    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
+                    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">' +
                     '<select id="hist-exo-select" style="flex:1;min-width:160px;padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#E2E8F0;font-size:12px">' +
                     '<option value="">-- Choisir un exercice --</option>' + exOptions + '</select>' +
-                    '</div>' +
+                    '<div id="hist-period-btns" style="display:flex;gap:4px;flex-shrink:0">' +
+                    ['4sem','3mois','Tout'].map(function(p,i){return '<button data-period="'+(i===0?'4w':i===1?'3m':'all')+'" onclick="window._histPeriod=this.dataset.period;document.getElementById(\'hist-exo-select\').dispatchEvent(new Event(\'change\'))" style="padding:4px 10px;border-radius:8px;font-size:11px;border:0.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);cursor:pointer;font-family:var(--font-family-main)">' + p + '</button>';}).join('') +
+                    '</div></div>' +
                     '<div id="hist-exo-chart-area" style="display:none"><div class="chart-wrapper" style="height:220px"><canvas id="hist-exo-canvas"></canvas></div>' +
                     '<div id="hist-exo-meta" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;text-align:center"></div></div>' +
                     '<div id="hist-exo-empty" style="text-align:center;color:rgba(255,255,255,.3);padding:30px 0;font-size:12px">Sélectionnez un exercice pour voir son évolution</div>' +
@@ -4394,10 +4491,26 @@
                                 }
                             });
                         });
-                        if (pts.length < 2) { if(chartArea) chartArea.style.display='none'; if(empty) { empty.style.display='block'; empty.textContent = 'Pas assez de données pour ' + exName; } return; }
+                        // Apply period filter
+                        const period = window._histPeriod || 'all';
+                        const now2 = new Date();
+                        const filteredPts = pts.filter(p2 => {
+                            if (period === 'all') return true;
+                            const d2 = new Date(p2.date + 'T00:00:00');
+                            const diffDays2 = (now2 - d2) / 86400000;
+                            return period === '4w' ? diffDays2 <= 28 : diffDays2 <= 92;
+                        });
+                        // Style active period button
+                        document.querySelectorAll('#hist-period-btns button').forEach(function(b){
+                            b.style.background = b.dataset.period === period ? 'rgba(34,211,238,.25)' : 'rgba(255,255,255,.06)';
+                            b.style.color = b.dataset.period === period ? '#22D3EE' : 'rgba(255,255,255,.6)';
+                            b.style.borderColor = b.dataset.period === period ? 'rgba(34,211,238,.5)' : 'rgba(255,255,255,.2)';
+                        });
+                        const ptsToUse = filteredPts.length >= 2 ? filteredPts : pts; // fallback to all if too few
+                        if (ptsToUse.length < 2) { if(chartArea) chartArea.style.display='none'; if(empty) { empty.style.display='block'; empty.textContent = 'Pas assez de données pour ' + exName; } return; }
                         if(chartArea) chartArea.style.display='block';
                         if(empty) empty.style.display='none';
-                        if(meta) meta.textContent = pts.length + ' entrainements · ' + pts[0].date + ' → ' + pts[pts.length-1].date;
+                        if(meta) meta.textContent = ptsToUse.length + ' séances · ' + ptsToUse[0].date + ' → ' + ptsToUse[ptsToUse.length-1].date;
                         destroyChart('hist-exo-canvas');
                         const tier = lgGetTier(lgCurrentGs);
                         const col = tier ? tier.ca : '#22D3EE';
@@ -4406,10 +4519,10 @@
                         activeCharts['hist-exo-canvas'] = new Chart(ctx2, {
                             type: 'line',
                             data: {
-                                labels: pts.map(p => p.date.slice(5)),
+                                labels: ptsToUse.map(p => p.date.slice(5)),
                                 datasets: [
-                                    { label: 'Poids (kg)', data: pts.map(p=>p.w), borderColor: col, backgroundColor: col+'20', tension:.35, pointRadius:4, fill:true, yAxisID:'y' },
-                                    { label: 'Reps', data: pts.map(p=>p.r), borderColor: '#A78BFA', backgroundColor: '#A78BFA20', tension:.35, pointRadius:4, borderDash:[4,3], fill:false, yAxisID:'y2' }
+                                    { label: 'Poids (kg)', data: ptsToUse.map(p=>p.w), borderColor: col, backgroundColor: col+'20', tension:.35, pointRadius:4, fill:true, yAxisID:'y' },
+                                    { label: 'Reps', data: ptsToUse.map(p=>p.r), borderColor: '#A78BFA', backgroundColor: '#A78BFA20', tension:.35, pointRadius:4, borderDash:[4,3], fill:false, yAxisID:'y2' }
                                 ]
                             },
                             options: {
@@ -4735,4 +4848,4 @@
         }
 
     </script>
-</body>
+    </body>
